@@ -1,0 +1,32 @@
+{
+  "general": {
+    "portal_url": "http://localhost:8000"
+  },
+  "directory": {
+    "ldap_url": "ldaps://localhost:1636",
+    "ldap_bind_dn": "CN=svc-helpdesk,CN=Users,DC=corp,DC=local",
+    "ldap_bind_password": "Svc-readonly-pass-1",
+    "ldap_base_dn": "DC=corp,DC=local",
+    "ldap_ca_file": {
+      "file": "ad/out/ca.pem"
+    },
+    "ldap_user_filter": "(&(objectCategory=person)(objectClass=user)(|(mail=*)(userPrincipalName=*))(!(sAMAccountName=svc-*)))",
+    "ad_change_group_bases": [
+      "CN=Users,DC=corp,DC=local"
+    ],
+    "ad_change_ou_bases": [
+      "OU=Workstations,DC=corp,DC=local",
+      "CN=Users,DC=corp,DC=local"
+    ],
+    "ad_new_user_ou": "CN=Users,DC=corp,DC=local",
+    "ad_new_user_domain": "example.com",
+    "ad_group_lists": [
+      "Distribution lists: [EMAIL]"
+    ]
+  },
+  "windows_sign_in": {
+    "keytab_file": "ad/out/http.keytab",
+    "enabled": true,
+    "silent": false
+  }
+}

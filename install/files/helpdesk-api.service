@@ -1,0 +1,21 @@
+[Unit]
+Description=Layer 8: web app and API
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+User=helpdesk
+Group=helpdesk
+EnvironmentFile=/etc/helpdesk/helpdesk.env
+WorkingDirectory=/opt/helpdesk/app
+ExecStart=/opt/helpdesk/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1 --workers 2
+Restart=on-failure
+RestartSec=3
+# Not NoNewPrivileges: the API runs `sudo systemctl restart helpdesk-worker` for Settings > Status.
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/helpdesk
+
+[Install]
+WantedBy=multi-user.target

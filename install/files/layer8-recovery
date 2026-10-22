@@ -1,0 +1,414 @@
+#!/usr/bin/python3
+"""Layer 8 recovery helper: the only privileged commands the recovery menu (layer8-console) may
+run, through sudo. Each subcommand is fixed and checks its values; nothing goes through a shell.
+
+    sudo layer8-recovery net-show
+    sudo layer8-recovery net-static ens18 10.1.10.20/24 10.1.10.1   (reverts in 2 minutes unless net-confirm)
+    sudo layer8-recovery net-dhcp ens18
+    sudo layer8-recovery net-confirm | net-revert
+    sudo layer8-recovery dns-set "10.1.10.10 10.1.10.11" corp.example
+    sudo layer8-recovery hostname-set helpdesk.corp.example
+    sudo layer8-recovery ping HOST | lookup NAME | selfcheck | disk | time
+    sudo layer8-recovery svc-status | svc-restart NAME | svc-log NAME
+    sudo layer8-recovery admins | admin-reset EMAIL | admin-create EMAIL NAME | sign-out-everyone   (passwords on stdin)
+    sudo layer8-recovery tls-selfsigned
+    sudo layer8-recovery backup-list | backup-now
+    sudo layer8-recovery reboot | poweroff
+
+Python standard library only (Debian's python3), so it works even if the app's own environment is broken.
+"""
+
+import ipaddress
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(os.environ.get("LAYER8_RECOVERY_ROOT", "/"))  # tests point this at a temp folder
+INTERFACES = ROOT / "etc/network/interfaces"
+RESOLV = ROOT / "etc/resolv.conf"
+DHCLIENT = ROOT / "etc/dhcp/dhclient.conf"
+DHCPCD = ROOT / "etc/dhcpcd.conf"  # Debian 13's DHCP client
+HOSTS = ROOT / "etc/hosts"
+STATE = ROOT / "var/lib/layer8-recovery"
+APP, ETC = Path("/opt/helpdesk"), Path("/etc/helpdesk")
+SERVICES = {"api": "helpdesk-api", "worker": "helpdesk-worker", "web": "nginx", "database": "postgresql"}
+REVERT_SECONDS = 120
+MARK = "# Managed by the Layer 8 recovery menu"
+
+
+class Refused(ValueError):
+    """A value that isn't allowed; the message is shown to the user."""
+
+
+# --- Checks
+
+
+def iface(name: str) -> str:
+    if not re.fullmatch(r"[a-zA-Z0-9_.:-]{1,15}", name) or name == "lo":
+        raise Refused(f"{name!r} isn't a network interface name")
+    if ROOT == Path("/") and not Path(f"/sys/class/net/{name}").exists():
+        raise Refused(f"There's no interface {name}")
+    return name
+
+
+def address_with_prefix(text: str) -> ipaddress.IPv4Interface:
+    try:
+        a = ipaddress.IPv4Interface(text.strip())
+    except ValueError:
+        raise Refused(f"{text!r} isn't an address with its prefix, like 10.1.10.20/24") from None
+    if a.network.prefixlen in (0, 32) or a.ip in (a.network.network_address, a.network.broadcast_address):
+        raise Refused(f"{text} isn't a usable host address")
+    return a
+
+
+def gateway_for(text: str, addr: ipaddress.IPv4Interface) -> ipaddress.IPv4Address:
+    try:
+        g = ipaddress.IPv4Address(text.strip())
+    except ValueError:
+        raise Refused(f"{text!r} isn't an IPv4 address") from None
+    if g not in addr.network or g == addr.ip:
+        raise Refused(f"The gateway {g} must be another address in {addr.network}")
+    return g
+
+
+def nameservers(text: str) -> list[str]:
+    out = []
+    for part in text.replace(",", " ").split():
+        try:
+            out.append(str(ipaddress.ip_address(part)))
+        except ValueError:
+            raise Refused(f"{part!r} isn't an IP address") from None
+    if not 1 <= len(out) <= 3:
+        raise Refused("Give one to three DNS servers")
+    return out
+
+
+def domain(text: str, what: str = "domain") -> str:
+    text = text.strip().lower().rstrip(".")
+    if not re.fullmatch(r"(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*", text):
+        raise Refused(f"{text!r} isn't a valid {what}")
+    return text
+
+
+def email(text: str) -> str:
+    text = text.strip()
+    if not re.fullmatch(r"[^@\s]{1,200}(@[^@\s]{1,200})?", text):
+        raise Refused(f"{text!r} isn't an email or user name")
+    return text
+
+
+def target(text: str) -> str:
+    """Something to ping or look up: an IP address or a host name."""
+    try:
+        return str(ipaddress.ip_address(text.strip()))
+    except ValueError:
+        return domain(text, "host name or address")
+
+
+# --- Files
+
+
+def interfaces_text(name: str, addr: ipaddress.IPv4Interface | None = None, gateway: ipaddress.IPv4Address | None = None) -> str:
+    """/etc/network/interfaces for one interface: DHCP, or a static address."""
+    lines = [MARK, "source /etc/network/interfaces.d/*", "", "auto lo", "iface lo inet loopback", "", f"allow-hotplug {name}"]
+    if addr is None:
+        lines.append(f"iface {name} inet dhcp")
+    else:
+        lines += [f"iface {name} inet static", f"    address {addr.with_prefixlen}", f"    gateway {gateway}"]
+    return "\n".join(lines) + "\n"
+
+
+def resolv_text(servers: list[str], search: str) -> str:
+    return "\n".join([MARK, *([f"search {search}"] if search else []), *(f"nameserver {s}" for s in servers)]) + "\n"
+
+
+def dhcpcd_text(current: str) -> str:
+    """Keep dhcpcd from rewriting resolv.conf once DNS servers are set here."""
+    kept = re.sub(rf"\n?{re.escape(MARK)} BEGIN.*?{re.escape(MARK)} END\n?", "\n", current, flags=re.S).rstrip("\n")
+    return (kept + "\n\n" if kept else "") + f"{MARK} BEGIN\nnohook resolv.conf\n{MARK} END\n"
+
+
+def dhclient_text(current: str, servers: list[str], search: str) -> str:
+    """Keep DHCP from replacing the DNS servers set here: a managed block in dhclient.conf."""
+    kept = re.sub(rf"\n?{re.escape(MARK)} BEGIN.*?{re.escape(MARK)} END\n?", "\n", current, flags=re.S).rstrip("\n")
+    block = [f"{MARK} BEGIN", f"supersede domain-name-servers {', '.join(servers)};"]
+    if search:
+        block.append(f'supersede domain-search "{search}";')
+    block.append(f"{MARK} END")
+    return (kept + "\n\n" if kept else "") + "\n".join(block) + "\n"
+
+
+def hosts_text(current: str, fqdn: str) -> str:
+    short = fqdn.split(".")[0]
+    lines = [line for line in current.splitlines() if not line.startswith("127.0.1.1")]
+    names = f"{fqdn} {short}" if fqdn != short else short
+    out, placed = [], False
+    for line in lines:
+        out.append(line)
+        if line.startswith("127.0.0.1") and not placed:
+            out.append(f"127.0.1.1\t{names}")
+            placed = True
+    if not placed:
+        out.insert(0, f"127.0.1.1\t{names}")
+    return "\n".join(out) + "\n"
+
+
+def write(path: Path, text: str, mode: int = 0o644) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".layer8-new")
+    tmp.write_text(text)
+    tmp.chmod(mode)
+    try:
+        tmp.replace(path)
+    except OSError:
+        # A file that can't be swapped (bind-mounted resolv.conf in a container): write it in place.
+        tmp.unlink(missing_ok=True)
+        path.write_text(text)
+
+
+# --- Running things
+
+
+def run(*cmd: str, stdin: str | None = None, check: bool = False, quiet: bool = False) -> int:
+    """Run and show the output (unless quiet); the exit status is passed on."""
+    out = subprocess.DEVNULL if quiet else None
+    r = subprocess.run(list(cmd), input=stdin, text=True, stdout=out, stderr=out)
+    if check and r.returncode:
+        raise Refused(f"{cmd[0]} failed (exit {r.returncode})")
+    return r.returncode
+
+
+def app(*args: str, stdin: str | None = None) -> int:
+    """The app's own CLI, as its service account with its settings."""
+    env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"}
+    for line in (ETC / "helpdesk.env").read_text().splitlines():
+        if "=" in line and not line.lstrip().startswith("#"):
+            k, v = line.split("=", 1)
+            env[k.strip()] = v.strip().strip('"')
+    cmd = ["/usr/sbin/runuser", "-u", "helpdesk", "--", str(APP / "venv/bin/python"), "-m", "app.cli", *args]
+    return subprocess.run(cmd, input=stdin, text=True, env=env, cwd=APP / "app").returncode
+
+
+def interface_down(name: str) -> None:
+    """Down with the settings it came up with (ifdown reads the current file), and no address left
+    behind: going from DHCP to static must release the lease, not keep both addresses."""
+    run("ifdown", "--force", name)
+    if shutil.which("dhcpcd"):
+        # A DHCP client still running for it would answer the next ifup instead of starting afresh.
+        run("dhcpcd", "--release", name)
+    run("ip", "address", "flush", "dev", name, "scope", "global")
+
+
+def interface_up(name: str) -> None:
+    run("ip", "link", "set", "dev", name, "up")
+    run("ifup", name)
+
+
+# --- Commands
+
+
+def cmd_net_show() -> int:
+    run("ip", "-brief", "address")
+    print()
+    run("ip", "route")
+    print()
+    print(RESOLV.read_text() if RESOLV.exists() else "(no /etc/resolv.conf)")
+    return run("hostname", "--fqdn")
+
+
+def _apply_interfaces(name: str, text: str) -> int:
+    STATE.mkdir(parents=True, exist_ok=True)
+    backup = STATE / "interfaces.prev"
+    if INTERFACES.exists() and not backup.exists():
+        shutil.copy2(INTERFACES, backup)
+    interface_down(name)
+    write(INTERFACES, text)
+    (STATE / "iface").write_text(name)
+    interface_up(name)
+    # A safety net: back to the old settings unless confirmed (a wrong address over SSH locks you out).
+    # KillMode=process: the DHCP client that ifup starts must outlive the revert unit itself.
+    run("systemd-run", "--unit", "layer8-net-revert", "--on-active", f"{REVERT_SECONDS}s", "--property", "KillMode=process", "/usr/local/sbin/layer8-recovery", "net-revert")
+    print(f"Applied. It goes back to the previous settings in {REVERT_SECONDS // 60} minutes unless confirmed.")
+    return 0
+
+
+def cmd_net_static(name: str, addr: str, gateway: str) -> int:
+    a = address_with_prefix(addr)
+    return _apply_interfaces(iface(name), interfaces_text(name, a, gateway_for(gateway, a)))
+
+
+def cmd_net_dhcp(name: str) -> int:
+    return _apply_interfaces(iface(name), interfaces_text(iface(name)))
+
+
+def cmd_net_confirm() -> int:
+    run("systemctl", "stop", "layer8-net-revert.timer")
+    (STATE / "interfaces.prev").unlink(missing_ok=True)
+    print("Kept.")
+    return 0
+
+
+def cmd_net_revert() -> int:
+    backup = STATE / "interfaces.prev"
+    if not backup.exists():
+        print("Nothing to revert.")
+        return 0
+    name = (STATE / "iface").read_text().strip() if (STATE / "iface").exists() else ""
+    if name:
+        interface_down(iface(name))
+    shutil.copy2(backup, INTERFACES)
+    backup.unlink()
+    if name:
+        interface_up(name)
+    print("Back to the previous network settings.")
+    return 0
+
+
+def cmd_dns_set(servers: str, search: str = "") -> int:
+    s = nameservers(servers)
+    d = domain(search, "search domain") if search.strip() else ""
+    write(DHCLIENT, dhclient_text(DHCLIENT.read_text() if DHCLIENT.exists() else "", s, d))
+    if DHCPCD.exists():
+        write(DHCPCD, dhcpcd_text(DHCPCD.read_text()))
+        # A running dhcpcd only rereads its config on a rebind, and would write resolv.conf over ours.
+        run("dhcpcd", "--rebind", quiet=True)
+    write(RESOLV, resolv_text(s, d))
+    print("DNS set: " + ", ".join(s) + (f"; search {d}" if d else ""))
+    return 0
+
+
+def cmd_hostname_set(name: str) -> int:
+    fqdn = domain(name, "host name")
+    run("hostnamectl", "set-hostname", fqdn.split(".")[0], check=True)
+    write(HOSTS, hosts_text(HOSTS.read_text() if HOSTS.exists() else "127.0.0.1\tlocalhost\n", fqdn))
+    print(f"Host name: {fqdn}. If people use a new name for the service desk, also make a certificate for it (HTTPS menu) and update Settings > General.")
+    return 0
+
+
+def cmd_ping(host: str) -> int:
+    return run("ping", "-c", "4", "-W", "2", target(host))
+
+
+def cmd_lookup(name: str) -> int:
+    return run("getent", "ahosts", target(name))
+
+
+def cmd_selfcheck() -> int:
+    return run("curl", "-sk", "-o", "/dev/null", "-w", "Layer 8 answers locally: HTTP %{http_code} in %{time_total}s\n", "https://127.0.0.1/api/health")
+
+
+def cmd_disk() -> int:
+    return run("df", "-h", "/", "/var/lib/helpdesk")
+
+
+def cmd_time() -> int:
+    return run("timedatectl")
+
+
+def cmd_svc_status() -> int:
+    for label, unit in SERVICES.items():
+        state = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True).stdout.strip() or "unknown"
+        print(f"{label:10} {unit:18} {state}")
+    return 0
+
+
+def _unit(label: str) -> str:
+    if label not in SERVICES:
+        raise Refused(f"Not one of: {', '.join(SERVICES)}")
+    return SERVICES[label]
+
+
+def cmd_svc_restart(label: str) -> int:
+    return run("systemctl", "restart", _unit(label))
+
+
+def cmd_svc_log(label: str) -> int:
+    return run("journalctl", "-u", _unit(label), "-n", "80", "--no-pager")
+
+
+def cmd_admins() -> int:
+    return app("admins")
+
+
+def cmd_admin_reset(user: str) -> int:
+    return app("set-password", email(user), "--password-stdin", stdin=sys.stdin.read())
+
+
+def cmd_admin_create(user: str, name: str) -> int:
+    if not 1 <= len(name.strip()) <= 200:
+        raise Refused("Give a name")
+    return app("create-admin", email(user), name.strip(), "--password-stdin", stdin=sys.stdin.read())
+
+
+def cmd_sign_out_everyone() -> int:
+    return app("sign-out-everyone")
+
+
+def cmd_tls_selfsigned() -> int:
+    conf = Path("/etc/nginx/sites-available/helpdesk").read_text()
+    m = re.search(r"server_name\s+([^;\s]+)", conf)
+    host = domain(m.group(1) if m else run_hostname(), "host name")
+    tls = ETC / "tls"
+    run("openssl", "req", "-x509", "-newkey", "rsa:3072", "-nodes", "-days", "1825", "-subj", f"/CN={host}", "-addext", f"subjectAltName=DNS:{host}",
+        "-keyout", str(tls / "key.pem"), "-out", str(tls / "cert.pem"), check=True)
+    (tls / "key.pem").chmod(0o600)
+    run("systemctl", "reload", "nginx")
+    print(f"New self-signed certificate for {host}; browsers will warn until it's replaced by one your PCs trust.")
+    return 0
+
+
+def run_hostname() -> str:
+    return subprocess.run(["hostname", "--fqdn"], capture_output=True, text=True).stdout.strip()
+
+
+def cmd_backup_list() -> int:
+    return app("backup", "list")
+
+
+def cmd_backup_now() -> int:
+    return app("backup", "create")
+
+
+def cmd_reboot() -> int:
+    return run("systemctl", "reboot")
+
+
+def cmd_poweroff() -> int:
+    return run("systemctl", "poweroff")
+
+
+COMMANDS = {
+    "net-show": (cmd_net_show, 0), "net-static": (cmd_net_static, 3), "net-dhcp": (cmd_net_dhcp, 1), "net-confirm": (cmd_net_confirm, 0),
+    "net-revert": (cmd_net_revert, 0), "dns-set": (cmd_dns_set, (1, 2)), "hostname-set": (cmd_hostname_set, 1), "ping": (cmd_ping, 1),
+    "lookup": (cmd_lookup, 1), "selfcheck": (cmd_selfcheck, 0), "disk": (cmd_disk, 0), "time": (cmd_time, 0), "svc-status": (cmd_svc_status, 0),
+    "svc-restart": (cmd_svc_restart, 1), "svc-log": (cmd_svc_log, 1), "admins": (cmd_admins, 0), "admin-reset": (cmd_admin_reset, 1),
+    "admin-create": (cmd_admin_create, 2), "sign-out-everyone": (cmd_sign_out_everyone, 0), "tls-selfsigned": (cmd_tls_selfsigned, 0),
+    "backup-list": (cmd_backup_list, 0), "backup-now": (cmd_backup_now, 0), "reboot": (cmd_reboot, 0), "poweroff": (cmd_poweroff, 0),
+}
+
+
+def main(argv: list[str]) -> int:
+    if not argv or argv[0] not in COMMANDS:
+        print("Usage: layer8-recovery " + " | ".join(COMMANDS), file=sys.stderr)
+        return 2
+    fn, arity = COMMANDS[argv[0]]
+    args = argv[1:]
+    lo, hi = arity if isinstance(arity, tuple) else (arity, arity)
+    if not lo <= len(args) <= hi:
+        print(f"{argv[0]} takes {lo if lo == hi else f'{lo} to {hi}'} value(s)", file=sys.stderr)
+        return 2
+    try:
+        return fn(*args)
+    except Refused as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"Couldn't do that: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

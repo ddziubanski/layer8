@@ -1,0 +1,2 @@
+# The recovery console account may run only the recovery helper's fixed commands (it checks every value).
+layer8 ALL=(root) NOPASSWD: /usr/local/sbin/layer8-recovery

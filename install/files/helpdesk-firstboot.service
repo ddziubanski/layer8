@@ -1,0 +1,23 @@
+[Unit]
+Description=Layer 8 setup (first boot of the appliance)
+After=network-online.target
+Wants=network-online.target
+Before=getty@tty1.service
+ConditionPathExists=!/var/lib/helpdesk/.installed
+
+[Service]
+Type=oneshot
+# Unattended when the ISO was built with an answers file; else the wizard on the console.
+ExecStart=/bin/sh -c 'if [ -f /opt/helpdesk-setup/answers.json ]; then /opt/helpdesk-setup/bundle/install/install.sh --answers /opt/helpdesk-setup/answers.json; else /opt/helpdesk-setup/bundle/install/wizard.sh; fi'
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TimeoutSec=0
+Environment=TERM=linux
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

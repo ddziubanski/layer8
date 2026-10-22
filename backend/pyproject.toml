@@ -1,0 +1,43 @@
+[project]
+name = "helpdesk"
+version = "0.1.0"
+license = "MIT"
+license-files = ["../LICENSE"]
+description = "Self-hosted IT service desk"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    "pydantic-settings>=2.4",
+    "httpx>=0.27",
+    "msal>=1.28",
+    "python-multipart>=0.0.9",
+    "argon2-cffi>=23.1",
+    "ldap3>=2.9",
+    # Portal single sign-on. Builds against the system Kerberos libraries (krb5 headers).
+    "gssapi>=1.8",
+    # Report PDFs (pure Python).
+    "fpdf2>=2.8",
+    # Backup encryption (scrypt, AES-GCM). Backups also need pg_dump/pg_restore (PostgreSQL client).
+    "cryptography>=42",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+# Noto Sans (Apache 2.0) for report PDFs: covers names in most scripts.
+app = ["reports/fonts/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

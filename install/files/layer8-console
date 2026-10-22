@@ -1,0 +1,172 @@
+#!/bin/sh
+# Layer 8 recovery console: the login shell of the "layer8" account, on the local console and over
+# SSH. A menu of the recovery tasks an appliance needs (network, DNS, break-glass passwords,
+# services, certificate, backups, power); each runs through the fixed commands of
+# /usr/local/sbin/layer8-recovery. A full shell needs the OS administrator's (sdadmin) password.
+set -u
+
+TITLE="Layer 8 recovery console"
+HELPER="sudo -n /usr/local/sbin/layer8-recovery"
+export NEWT_COLORS='root=,black window=,lightgray border=black,lightgray title=black,lightgray button=white,green actbutton=white,green'
+
+ask() { whiptail --title "$TITLE" --inputbox "$1" 12 76 "${2:-}" 3>&1 1>&2 2>&3; }
+secret() {
+  while :; do
+    a=$(whiptail --title "$TITLE" --passwordbox "$1" 10 76 3>&1 1>&2 2>&3) || return 1
+    b=$(whiptail --title "$TITLE" --passwordbox "Once more, to check:" 10 76 3>&1 1>&2 2>&3) || return 1
+    [ "$a" = "$b" ] && { printf '%s' "$a"; return 0; }
+    whiptail --title "$TITLE" --msgbox "They didn't match. Try again." 8 50
+  done
+}
+yesno() { whiptail --title "$TITLE" --yesno "$1" 12 76; }
+note() { whiptail --title "$TITLE" --msgbox "$1" 12 76; }
+
+# Show some output. A box that scrolls starts with the keys in the text (Enter doesn't close it),
+# so only output too long for the screen gets one, and its title says how to close it.
+box() {
+  # Fit the terminal (an 80-column console cuts off a wider box), up to 100 x 24.
+  cols=$(tput cols 2>/dev/null || echo 80); rows=$(tput lines 2>/dev/null || echo 24)
+  w=$((cols - 4)); [ "$w" -gt 100 ] && w=100
+  h=$((rows - 2)); [ "$h" -gt 24 ] && h=24
+  if [ "$(printf '%s\n' "$1" | wc -l)" -le $((h - 7)) ]; then
+    whiptail --title "$TITLE" --msgbox "$1" "$h" "$w"
+  else
+    whiptail --title "$TITLE (Tab, then Enter to close)" --scrolltext --msgbox "$1" "$h" "$w"
+  fi
+}
+
+# Run a helper command and show what it printed.
+show() {
+  box "$($HELPER "$@" 2>&1)"
+}
+
+pick_iface() {
+  set -- $(ls /sys/class/net | grep -v '^lo$')
+  [ $# -eq 1 ] && { echo "$1"; return; }
+  items=""
+  for i in "$@"; do items="$items $i $(cat /sys/class/net/$i/operstate 2>/dev/null)"; done
+  # shellcheck disable=SC2086
+  whiptail --title "$TITLE" --menu "Which network interface?" 15 60 6 $items 3>&1 1>&2 2>&3
+}
+
+network() {
+  while :; do
+    c=$(whiptail --title "$TITLE" --menu "Network" 17 76 8 \
+      show "Show addresses, routes and DNS" \
+      static "Set a static address" \
+      dhcp "Use DHCP" \
+      dns "Set DNS servers and search domain" \
+      hostname "Set the host name" \
+      ping "Ping an address or name" \
+      lookup "Look up a name in DNS" \
+      back "Back" 3>&1 1>&2 2>&3) || return
+    case $c in
+      show) show net-show ;;
+      static|dhcp)
+        i=$(pick_iface) || continue
+        if [ "$c" = static ]; then
+          a=$(ask "Address with its prefix, e.g. 10.1.10.20/24:") || continue
+          g=$(ask "Gateway, e.g. 10.1.10.1:") || continue
+          out=$($HELPER net-static "$i" "$a" "$g" 2>&1)
+        else
+          out=$($HELPER net-dhcp "$i" 2>&1)
+        fi
+        rc=$?
+        box "$out"
+        [ $rc = 0 ] || continue
+        # Over SSH the session may have moved: confirming needs the console to still answer.
+        if yesno "Keep the new network settings?\n\nIf you don't answer (for example, the change cut this SSH session off), it goes back to the previous settings in 2 minutes."; then
+          show net-confirm
+        else
+          show net-revert
+        fi ;;
+      dns)
+        s=$(ask "DNS servers (one to three), e.g. 10.1.10.10 10.1.10.11:") || continue
+        d=$(ask "Search domain (optional), e.g. corp.example:") || continue
+        show dns-set "$s" "$d" ;;
+      hostname)
+        h=$(ask "Host name, e.g. helpdesk.corp.example:" "$(hostname --fqdn)") || continue
+        show hostname-set "$h" ;;
+      ping) t=$(ask "Address or name to ping:") && show ping "$t" ;;
+      lookup) t=$(ask "Name to look up:") && show lookup "$t" ;;
+      back) return ;;
+    esac
+  done
+}
+
+signin() {
+  while :; do
+    c=$(whiptail --title "$TITLE" --menu "Sign-in recovery (break glass)" 15 76 5 \
+      list "Show the admins and which can sign in with a local password" \
+      reset "Reset a local admin's password" \
+      create "Make a break-glass local admin" \
+      signout "Sign everyone out" \
+      back "Back" 3>&1 1>&2 2>&3) || return
+    case $c in
+      list) show admins ;;
+      reset)
+        u=$(ask "The admin's email or user name:") || continue
+        p=$(secret "New password for $u (at least 12 characters):") || continue
+        out=$(printf '%s\n' "$p" | $HELPER admin-reset "$u" 2>&1); note "$out" ;;
+      create)
+        u=$(ask "Email or user name for the break-glass admin, e.g. breakglass:") || continue
+        n=$(ask "Name:" "Break-glass admin") || continue
+        p=$(secret "Password (at least 12 characters; keep it in the safe):") || continue
+        out=$(printf '%s\n' "$p" | $HELPER admin-create "$u" "$n" 2>&1); note "$out" ;;
+      signout) yesno "Sign out every signed-in person (technicians and requesters)?" && show sign-out-everyone ;;
+      back) return ;;
+    esac
+  done
+}
+
+services() {
+  while :; do
+    c=$(whiptail --title "$TITLE" --menu "Services" 16 76 6 \
+      status "Are they running?" \
+      check "Does Layer 8 answer (HTTPS on this machine)?" \
+      restart "Restart one" \
+      log "Recent log of one" \
+      back "Back" 3>&1 1>&2 2>&3) || return
+    case $c in
+      status) show svc-status ;;
+      check) show selfcheck ;;
+      restart|log)
+        s=$(whiptail --title "$TITLE" --menu "Which?" 14 60 4 api "Web app and API" worker "Worker (email, sync, jobs)" web "Web server (nginx)" database "Database" 3>&1 1>&2 2>&3) || continue
+        if [ "$c" = restart ]; then show svc-restart "$s"; else show svc-log "$s"; fi ;;
+      back) return ;;
+    esac
+  done
+}
+
+full_console() {
+  note "A full shell needs the OS administrator's password (the sdadmin account).\n\nType 'exit' there to come back to this menu."
+  su - sdadmin
+}
+
+while :; do
+  c=$(whiptail --title "$TITLE" --menu "$(hostname --fqdn): what needs fixing?" 20 76 11 \
+    network "Network: address, DHCP, DNS, host name, ping" \
+    signin "Sign-in recovery: break-glass admin passwords" \
+    services "Services: status, restart, logs" \
+    https "HTTPS: make a new self-signed certificate" \
+    backups "Backups: list, back up now" \
+    disk "Disk space and time" \
+    shell "Full console (needs the sdadmin password)" \
+    reboot "Restart this machine" \
+    poweroff "Shut down this machine" \
+    exit "Log out" 3>&1 1>&2 2>&3) || exit 0
+  case $c in
+    network) network ;;
+    signin) signin ;;
+    services) services ;;
+    https) yesno "Replace the HTTPS certificate with a new self-signed one?\n\nBrowsers will warn until it's replaced by one your PCs trust." && show tls-selfsigned ;;
+    backups)
+      b=$(whiptail --title "$TITLE" --menu "Backups" 12 60 2 list "List backups" now "Back up now" 3>&1 1>&2 2>&3) || continue
+      if [ "$b" = now ]; then show backup-now; else show backup-list; fi ;;
+    disk) box "$($HELPER disk 2>&1; echo; $HELPER time 2>&1)" ;;
+    shell) full_console ;;
+    reboot) yesno "Restart this machine now? Layer 8 is down until it's back." && $HELPER reboot ;;
+    poweroff) yesno "Shut down this machine? Someone has to switch it on again." && $HELPER poweroff ;;
+    exit) exit 0 ;;
+  esac
+done

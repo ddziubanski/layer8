@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Self-Service Portal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1b2421;background:#f4f5f2;font-size:14px}
+a{color:#0f6b5c}a:hover{color:#0a4a40}
+.side{background:#14211e;color:#cfe0db;padding:20px 0}
+.side a{display:block;padding:10px 22px;color:#cfe0db;text-decoration:none;min-height:24px}
+.side a.on{background:#1f3631;color:#fff;border-left:3px solid #4fc3a8;padding-left:19px}
+.btn{background:#0f6b5c;color:#fff;border:0;border-radius:6px;padding:11px 16px;font:600 14px 'IBM Plex Sans',sans-serif;min-height:44px}
+.btn2{background:#fff;color:#1b2421;border:1px solid #c9d0cc;border-radius:6px;padding:10px 14px;font:500 13px 'IBM Plex Sans',sans-serif;min-height:44px}
+.chip{display:inline-block;padding:3px 8px;border-radius:10px;font-size:12px;font-weight:600}
+.g{background:#dff1ec;color:#0b5a4d}.a{background:#fdf0d8;color:#8a5300}.r{background:#fbe4e1;color:#9c1c14}.n{background:#e6e9e6;color:#46524e}
+.row{display:grid;grid-template-columns:84px minmax(200px,1fr) 150px 90px 140px 90px 90px;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid #e3e7e4;background:#fff}
+.row.h{background:#eceeeb;font-weight:600;font-size:12px;color:#46524e;text-transform:uppercase;letter-spacing:.04em}
+.card{background:#fff;border:1px solid #dfe4e0;border-radius:8px;padding:16px}
+.lbl{font-size:12px;color:#46524e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+input,select,textarea{font:14px 'IBM Plex Sans',sans-serif;border:1px solid #c9d0cc;border-radius:6px;padding:11px;width:100%;box-sizing:border-box;min-height:44px;background:#fff}
+</style>
+</helmet>
+<div style="min-height:720px;background:#f4f5f2">
+<header style="background:#14211e;color:#fff;padding:16px 40px;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><b style="font-size:17px;flex:1">IT Help Portal</b><a href="#" style="color:#cfe0db">My tickets</a><a href="#" style="color:#cfe0db">Knowledge base</a></header>
+<div style="max-width:1100px;margin:0 auto;padding:36px 24px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:28px">
+<div><h1 style="margin:0 0 6px;font-size:28px">How can we help?</h1><p style="margin:0 0 18px;color:#46524e">Describe the problem and we will route it to the right team. You can also email [HELPDESK ADDRESS].</p>
+<div class="card" style="display:grid;gap:14px">
+<div><label class="lbl" for="c">Category</label><select id="c"><option>Network or Wi-Fi</option></select></div>
+<div><label class="lbl" for="s">Subject</label><input id="s" placeholder="Short summary"></div>
+<div><label class="lbl" for="d">Details</label><textarea id="d" rows="5" placeholder="What happened, and when?"></textarea></div>
+<div><div class="lbl">Attachments</div><div style="border:2px dashed #b9c4bf;border-radius:8px;padding:22px;text-align:center;color:#46524e">Drop files here or <a href="#">browse</a><br><span style="font-size:12px">Screenshots, logs, documents. Up to 25 MB each.</span></div></div>
+<div><button class="btn">Submit ticket</button></div></div></div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="card"><div class="lbl">Suggested articles</div><a href="#">Reset your password</a><br><a href="#">Connect to office Wi-Fi</a><br><a href="#">Map a shared printer</a></div>
+<div class="card"><div class="lbl">Your recent tickets</div><div style="display:flex;justify-content:space-between;padding:6px 0">#4820 Printer issue <span class="chip a">In progress</span></div><div style="display:flex;justify-content:space-between;padding:6px 0">#4790 VPN access <span class="chip g">Resolved</span></div><p style="margin:10px 0 0;font-size:12px;color:#46524e">Status updates are also sent to your email. Reply to any update to add to the ticket.</p></div>
+</div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ticket Detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1b2421;background:#f4f5f2;font-size:14px}
+a{color:#0f6b5c}a:hover{color:#0a4a40}
+.side{background:#14211e;color:#cfe0db;padding:20px 0}
+.side a{display:block;padding:10px 22px;color:#cfe0db;text-decoration:none;min-height:24px}
+.side a.on{background:#1f3631;color:#fff;border-left:3px solid #4fc3a8;padding-left:19px}
+.btn{background:#0f6b5c;color:#fff;border:0;border-radius:6px;padding:11px 16px;font:600 14px 'IBM Plex Sans',sans-serif;min-height:44px}
+.btn2{background:#fff;color:#1b2421;border:1px solid #c9d0cc;border-radius:6px;padding:10px 14px;font:500 13px 'IBM Plex Sans',sans-serif;min-height:44px}
+.chip{display:inline-block;padding:3px 8px;border-radius:10px;font-size:12px;font-weight:600}
+.g{background:#dff1ec;color:#0b5a4d}.a{background:#fdf0d8;color:#8a5300}.r{background:#fbe4e1;color:#9c1c14}.n{background:#e6e9e6;color:#46524e}
+.row{display:grid;grid-template-columns:84px minmax(200px,1fr) 150px 90px 140px 90px 90px;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid #e3e7e4;background:#fff}
+.row.h{background:#eceeeb;font-weight:600;font-size:12px;color:#46524e;text-transform:uppercase;letter-spacing:.04em}
+.card{background:#fff;border:1px solid #dfe4e0;border-radius:8px;padding:16px}
+.lbl{font-size:12px;color:#46524e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+input,select,textarea{font:14px 'IBM Plex Sans',sans-serif;border:1px solid #c9d0cc;border-radius:6px;padding:11px;width:100%;box-sizing:border-box;min-height:44px;background:#fff}
+</style>
+</helmet>
+<div style="min-height:720px;display:grid;grid-template-columns:210px 1fr">
+<aside class="side"><div style="padding:0 22px 20px;font-weight:600;font-size:17px;color:#fff">Service Desk</div>
+<a href="#" class="on">Queue</a><a href="#" class="">My tickets</a><a href="#">Assets</a><a href="#">Changes</a><a href="#">Knowledge</a><a href="#">Reports</a><a href="#">Routing rules</a></aside>
+<main style="padding:24px 28px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-content:start">
+<div style="grid-column:1/-1"><a href="#">Queue</a> / #4821<div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap"><h1 style="margin:0;font-size:24px;flex:1">Switch port flapping, 2nd floor</h1><span class="chip r">High</span><span class="chip n">Email</span><span class="chip g">Open</span></div></div>
+<div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+<div class="card"><div class="lbl">R. Alvarez, via email, 9:02 AM</div><p style="margin:0 0 10px">Our desks on the 2nd floor keep losing connection for a few seconds at a time. Screenshot of the error attached.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap"><span class="chip n" style="padding:8px 10px">error-screenshot.png 214 KB</span><span class="chip n" style="padding:8px 10px">ping-log.txt 8 KB</span></div></div>
+<div class="card" style="background:#eef6f3;border-color:#bfdcd3"><div class="lbl">Auto-diagnosis</div>Requester device linked to switch SW-2F-01, port 14. 38 link-state changes in the last hour. No open changes on this switch.</div>
+<div class="card"><div class="lbl">Reply or internal note</div><label for="n" style="display:none">Reply</label><textarea id="n" rows="4" placeholder="Write a reply. It is sent to the requester by email."></textarea>
+<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap"><button class="btn2">Attach file</button><span style="flex:1"></span><button class="btn2">Internal note</button><button class="btn">Send reply</button></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="card"><div class="lbl">Assignment</div><label for="q" style="display:none">Queue</label><select id="q"><option>Network (rule: subject contains "switch")</option></select><div style="height:8px"></div><label for="a" style="display:none">Assignee</label><select id="a"><option>Unassigned</option></select><div style="margin-top:10px"><span class="chip r">SLA breach in 0h 42m</span></div></div>
+<div class="card"><div class="lbl">Linked</div>Asset: SW-2F-01<br>User: R. Alvarez<br>Similar: #4602, #4311</div>
+<div class="card"><div class="lbl">Actions</div><div style="display:grid;gap:8px"><button class="btn2">Bounce switch port</button><button class="btn2">Link a change</button><button class="btn2">Escalate</button></div></div>
+</div></main></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Development database. Production setup is handled by the installer.
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: helpdesk
+      POSTGRES_PASSWORD: helpdesk
+      POSTGRES_DB: helpdesk
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./dev/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helpdesk"]
+      interval: 2s
+      retries: 15
+
+  # Optional test domain controller: docker compose --profile ad up -d ad
+  ad:
+    profiles: ["ad"]
+    build: ./dev/ad
+    hostname: dc1
+    domainname: corp.local
+    # Samba stores NT ACLs in security.* extended attributes.
+    cap_add: ["SYS_ADMIN"]
+    ports:
+      - "127.0.0.1:1636:636"
+      - "127.0.0.1:1389:389"
+      # Kerberos KDC, for the portal single sign-on tests (TCP; the tests' krb5.conf forces it).
+      - "127.0.0.1:1088:88"
+    volumes:
+      - addata:/var/lib/samba
+      - ./dev/ad/out:/out
+
+volumes:
+  pgdata:
+  addata:

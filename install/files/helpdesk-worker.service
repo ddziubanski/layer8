@@ -1,0 +1,22 @@
+[Unit]
+Description=Layer 8: background worker (email, directory sync, rules, reports, backups)
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+User=helpdesk
+Group=helpdesk
+EnvironmentFile=/etc/helpdesk/helpdesk.env
+WorkingDirectory=/opt/helpdesk/app
+ExecStart=/opt/helpdesk/venv/bin/python -m app.worker
+# It exits 75 when an admin asks it to restart; start it again then and after any failure.
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/helpdesk
+
+[Install]
+WantedBy=multi-user.target

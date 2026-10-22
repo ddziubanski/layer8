@@ -1,0 +1,85 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { App } from "./App";
+import { createQueryClient } from "./queryClient";
+import { ME, mockApi } from "./test/util";
+
+afterEach(() => vi.unstubAllGlobals());
+
+function mount() {
+  return render(
+    <QueryClientProvider client={createQueryClient()}>
+      <App />
+    </QueryClientProvider>,
+  );
+}
+
+test("signed out: shows the login page without hammering the server", async () => {
+  const calls = mockApi({ "GET /api/auth/me": () => new Response(JSON.stringify({ detail: "Not signed in" }), { status: 401 }) });
+  mount();
+  expect(await screen.findByRole("button", { name: "Sign in" })).toBeInTheDocument();
+  await new Promise((r) => setTimeout(r, 300));
+  // One check (React StrictMode isn't used here). The bug looped thousands of times.
+  expect(calls.filter((c) => c.path === "/api/auth/me").length).toBeLessThanOrEqual(2);
+});
+
+test("a 401 elsewhere sends you back to the login page once", async () => {
+  let signedIn = true;
+  const calls = mockApi({
+    "GET /api/auth/me": () => (signedIn ? ME : new Response(JSON.stringify({ detail: "Not signed in" }), { status: 401 })),
+    "GET /api/tickets/views": () => {
+      signedIn = false;
+      return new Response(JSON.stringify({ detail: "Not signed in" }), { status: 401 });
+    },
+    "GET /api/tickets": () => new Response(JSON.stringify({ detail: "Not signed in" }), { status: 401 }),
+  });
+  mount();
+  expect(await screen.findByRole("button", { name: "Sign in" })).toBeInTheDocument();
+  await new Promise((r) => setTimeout(r, 300));
+  expect(calls.filter((c) => c.path === "/api/auth/me").length).toBeLessThanOrEqual(4);
+});
+
+test("signing in shows the console", async () => {
+  let signedIn = false;
+  mockApi({
+    "GET /api/auth/me": () => (signedIn ? ME : new Response(JSON.stringify({ detail: "Not signed in" }), { status: 401 })),
+    "POST /api/auth/login": () => {
+      signedIn = true;
+      return ME;
+    },
+    "GET /api/tickets/views": { unassigned: 0, mine: 0, my_queues: 0, sla_at_risk: 0, waiting_on_user: 0, from_email: 0, from_portal: 0 },
+    "GET /api/tickets": { items: [], total: 0, limit: 50, offset: 0 },
+  });
+  mount();
+  await userEvent.type(await screen.findByLabelText("Email or username"), "agent@corp.local");
+  await userEvent.type(screen.getByLabelText("Password"), "agent-test-pass-123");
+  await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+  await waitFor(() => expect(screen.getByRole("heading", { name: "Ticket queue" })).toBeInTheDocument());
+});
+
+test("the first-run admin/admin must choose a new password before anything else", async () => {
+  let me = { ...ME, role: "admin" as const, display_name: "Administrator", must_change_password: true };
+  const calls = mockApi({
+    "GET /api/auth/me": () => me,
+    "POST /api/auth/password": () => {
+      me = { ...me, must_change_password: false };
+      return new Response(null, { status: 204 });
+    },
+    "GET /api/tickets/views": { unassigned: 0, mine: 0, my_queues: 0, sla_at_risk: 0, waiting_on_user: 0, from_email: 0, from_portal: 0 },
+    "GET /api/tickets": { items: [], total: 0, limit: 50, offset: 0 },
+  });
+  mount();
+  expect(await screen.findByRole("heading", { name: "Choose a new password" })).toBeInTheDocument();
+  await userEvent.type(screen.getByLabelText("Current password"), "admin");
+  await userEvent.type(screen.getByLabelText("New password"), "a-much-better-one");
+  await userEvent.type(screen.getByLabelText("New password again"), "a-much-better-onf");
+  await userEvent.click(screen.getByRole("button", { name: "Save password" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("don't match");
+  await userEvent.clear(screen.getByLabelText("New password again"));
+  await userEvent.type(screen.getByLabelText("New password again"), "a-much-better-one");
+  await userEvent.click(screen.getByRole("button", { name: "Save password" }));
+  await waitFor(() => expect(screen.getByRole("heading", { name: "Ticket queue" })).toBeInTheDocument());
+  expect(calls.find((c) => c.path === "/api/auth/password")?.body).toEqual({ current_password: "admin", new_password: "a-much-better-one" });
+});

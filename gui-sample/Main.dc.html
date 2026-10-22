@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agent Queue</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1b2421;background:#f4f5f2;font-size:14px}
+a{color:#0f6b5c}a:hover{color:#0a4a40}
+.side{background:#14211e;color:#cfe0db;padding:20px 0}
+.side a{display:block;padding:10px 22px;color:#cfe0db;text-decoration:none;min-height:24px}
+.side a.on{background:#1f3631;color:#fff;border-left:3px solid #4fc3a8;padding-left:19px}
+.btn{background:#0f6b5c;color:#fff;border:0;border-radius:6px;padding:11px 16px;font:600 14px 'IBM Plex Sans',sans-serif;min-height:44px}
+.btn2{background:#fff;color:#1b2421;border:1px solid #c9d0cc;border-radius:6px;padding:10px 14px;font:500 13px 'IBM Plex Sans',sans-serif;min-height:44px}
+.chip{display:inline-block;padding:3px 8px;border-radius:10px;font-size:12px;font-weight:600}
+.g{background:#dff1ec;color:#0b5a4d}.a{background:#fdf0d8;color:#8a5300}.r{background:#fbe4e1;color:#9c1c14}.n{background:#e6e9e6;color:#46524e}
+.row{display:grid;grid-template-columns:84px minmax(200px,1fr) 150px 90px 140px 90px 90px;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid #e3e7e4;background:#fff}
+.row.h{background:#eceeeb;font-weight:600;font-size:12px;color:#46524e;text-transform:uppercase;letter-spacing:.04em}
+.card{background:#fff;border:1px solid #dfe4e0;border-radius:8px;padding:16px}
+.lbl{font-size:12px;color:#46524e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+input,select,textarea{font:14px 'IBM Plex Sans',sans-serif;border:1px solid #c9d0cc;border-radius:6px;padding:11px;width:100%;box-sizing:border-box;min-height:44px;background:#fff}
+</style>
+</helmet>
+<div style="min-height:720px;display:grid;grid-template-columns:210px 1fr">
+<aside class="side"><div style="padding:0 22px 20px;font-weight:600;font-size:17px;color:#fff">Service Desk</div>
+<a href="#" class="on">Queue</a><a href="#" class="">My tickets</a><a href="#">Assets</a><a href="#">Changes</a><a href="#">Knowledge</a><a href="#">Reports</a><a href="#">Routing rules</a></aside>
+<main style="padding:24px 28px">
+<div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><h1 style="margin:0;font-size:24px;flex:1">Ticket queue</h1><input aria-label="Search tickets" placeholder="Search tickets, users, assets" style="max-width:320px"><button class="btn">New ticket</button></div>
+<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap"><span class="chip g" style="padding:8px 12px">Unassigned 7</span><span class="chip n" style="padding:8px 12px">My open 12</span><span class="chip r" style="padding:8px 12px">SLA at risk 3</span><span class="chip n" style="padding:8px 12px">Waiting on user 9</span><span class="chip n" style="padding:8px 12px">From email 18</span><span class="chip n" style="padding:8px 12px">From portal 11</span></div>
+<div style="border:1px solid #dfe4e0;border-radius:8px;overflow-x:auto"><div style="min-width:820px">
+<div class="row h"><div>ID</div><div>Subject</div><div>Requester</div><div>Source</div><div>Assignee / Queue</div><div>Priority</div><div>SLA</div></div>
+<div class="row"><div>#4821</div><div><b>Switch port flapping, 2nd floor</b><div style="color:#46524e;font-size:12px">2 attachments</div></div><div>R. Alvarez</div><div><span class="chip n">Email</span></div><div>Unassigned<br><span style="font-size:12px;color:#46524e">Network</span></div><div><span class="chip r">High</span></div><div><span class="chip r">0h 42m</span></div></div>
+<div class="row"><div>#4820</div><div><b>Cannot print to Front Desk MFP</b><div style="color:#46524e;font-size:12px">1 attachment</div></div><div>T. Nguyen</div><div><span class="chip g">Portal</span></div><div>J. Park<br><span style="font-size:12px;color:#46524e">Desktop</span></div><div><span class="chip a">Medium</span></div><div><span class="chip a">3h 10m</span></div></div>
+<div class="row"><div>#4819</div><div><b>New hire account setup</b><div style="color:#46524e;font-size:12px">Approval pending</div></div><div>HR Dept</div><div><span class="chip g">Portal</span></div><div>M. Osei<br><span style="font-size:12px;color:#46524e">Identity</span></div><div><span class="chip a">Medium</span></div><div><span class="chip g">1d 4h</span></div></div>
+<div class="row"><div>#4818</div><div><b>Password reset request</b><div style="color:#46524e;font-size:12px">Auto-routed by keyword</div></div><div>K. Brooks</div><div><span class="chip n">Email</span></div><div>Unassigned<br><span style="font-size:12px;color:#46524e">Service desk</span></div><div><span class="chip n">Low</span></div><div><span class="chip g">6h 00m</span></div></div>
+<div class="row"><div>#4817</div><div><b>Wi-Fi drops in conference room B</b><div style="color:#46524e;font-size:12px">0 attachments</div></div><div>L. Fischer</div><div><span class="chip g">Portal</span></div><div>D. Cole<br><span style="font-size:12px;color:#46524e">Network</span></div><div><span class="chip a">Medium</span></div><div><span class="chip a">2h 15m</span></div></div>
+</div></div>
+<p style="color:#46524e;margin:14px 0 0">Routing rules assign queue and priority on arrival. Email and portal tickets land in the same queue.</p>
+</main></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
