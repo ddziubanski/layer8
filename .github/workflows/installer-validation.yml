@@ -1,0 +1,18 @@
+name: Installer validation
+on:
+  pull_request:
+    paths:
+      - 'install/**'
+      - '.github/workflows/installer-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wizard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell syntax
+        run: sh -n install/wizard.sh
+      - name: Exercise wizard flows without provisioning
+        run: python3 -m unittest discover -s install/tests -v
