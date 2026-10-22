@@ -522,3 +522,17 @@ label.inline input { width: auto; min-height: 0; }
 @media (prefers-reduced-motion: reduce) {
   .shell .side > a, .shell .trow.body, .shell .queue-page .views button { transition: none; }
 }
+
+
+/* Queue workspace hierarchy: the existing filters, counts and ticket data are unchanged. */
+.queue-title { display: flex; flex-direction: column; gap: 3px; min-width: 210px; }
+.queue-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--brand); }
+.queue-subtitle { font-size: 12px; color: var(--muted); }
+.queue-page .page-head { gap: 16px; flex-wrap: wrap; align-items: center; }
+.queue-page .page-head .btn { box-shadow: 0 3px 9px rgba(15, 107, 92, .16); }
+.queue-page .trow.head { background: var(--head-bg); }
+.queue-page .trow.body .subject a { font-weight: 600; }
+@media (max-width: 700px) {
+  .queue-title { width: 100%; }
+  .console-topbar-user { display: none; }
+}
