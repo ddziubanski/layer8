@@ -133,6 +133,17 @@ def _tagged_or_referenced(session: Session, msg: InboundMessage) -> tuple[Ticket
     return (session.get(Ticket, ticket_id) if ticket_id else None), False
 
 
+def _may_reply(session: Session, ticket: Ticket, sender: User) -> bool:
+    """Whether a message from sender may join this ticket: its requester, staff who can see its
+    queue, or someone the desk has emailed about it (a CC, a manager's notice). Anyone else
+    quoting the number starts a ticket of their own."""
+    if sender.id == ticket.requester_id or (sender.role in services.AGENT_ROLES and ticket.queue.can_view(sender)):
+        return True
+    return session.scalar(
+        select(OutboundEmail.id).where(OutboundEmail.ticket_id == ticket.id, func.lower(OutboundEmail.to_address) == sender.email.lower()).limit(1)
+    ) is not None
+
+
 def _report_commands(session: Session, ticket: Ticket, sender: User, msg: InboundMessage, result: "commands.Result") -> None:
     """Note what the email did on the ticket; tell the technician what couldn't be done."""
     if result.done:
@@ -202,6 +213,8 @@ def process_message(session: Session, msg: InboundMessage, cfg: IntakeConfig) ->
         return reject(sender)
 
     ticket, staff_reply = _thread_ticket(session, msg)
+    if ticket is not None and not _may_reply(session, ticket, sender):
+        ticket, staff_reply = None, False
     comment = None
     is_staff = sender.role in services.AGENT_ROLES
     if ticket is not None and ticket.status != TicketStatus.closed:
@@ -240,7 +253,14 @@ def process_message(session: Session, msg: InboundMessage, cfg: IntakeConfig) ->
             # Sent to a queue's alias (hr@...): like choosing that queue in the portal.
             requested_queue=_queue_for_addresses(session, msg.to_addresses),
         )
-        if parsed.commands:
+        if parsed.commands and not ticket.queue.can_view(sender):
+            # Routing put it in a queue this technician can't see: no commands there.
+            # Not tied to the ticket, so it doesn't make the sender someone who may reply to it.
+            session.add(OutboundEmail(
+                to_address=sender.email, ticket_id=None, is_staff_notice=True, subject=f"Not done: {msg.subject[:200]}",
+                body="The commands in your email weren't run: the request went to a queue you can't see. It was logged as a ticket there.",
+            ))
+        elif parsed.commands:
             result = commands.apply(session, ticket, sender, parsed.commands)
             if requester is sender and any(n == "requester" for n, _ in parsed.commands):
                 result.errors.append("#requester: no one with that address here; you're the requester")

@@ -400,3 +400,37 @@ def test_an_alias_belongs_to_one_queue(client, admin, hr_alias):
     assert r.status_code == 422 and "already files into Human Resources" in r.json()["detail"]
     ok = client.patch(f"/api/queues/{hr_alias['id']}", json={"email_addresses": ["hr@corp.com"]}, headers=as_user(admin))
     assert ok.status_code == 200 and ok.json()["email_addresses"] == ["hr@corp.com"]
+
+
+def test_a_ticket_number_alone_doesnt_let_strangers_post(setup, db, mailbox, run):
+    mailbox.deliver(from_address="a@corp.local", subject="Payroll question")
+    run()
+    [mine] = tickets(db)
+    # Someone else at the company quotes the number: a ticket of their own, nothing on a@'s.
+    mailbox.deliver(from_address="mallory@corp.local", subject=f"Re: [#{mine.id}] Payroll question", body_text="Click here")
+    run()
+    mine_again, theirs = tickets(db)
+    assert theirs.requester.email == "mallory@corp.local" and "Click here" in theirs.description
+    db.expire_all()
+    assert all("Click here" not in c.body for c in db.scalars(select(Comment).where(Comment.ticket_id == mine.id)))
+    # Someone the desk emailed about it (a CC) may reply.
+    db.add(OutboundEmail(to_address="boss@corp.local", ticket_id=mine.id, subject="x", body="x"))
+    db.commit()
+    mailbox.deliver(from_address="boss@corp.local", subject=f"Re: [#{mine.id}] Payroll question", body_text="Approved")
+    run()
+    db.expire_all()
+    assert len(tickets(db)) == 2 and any(c.body == "Approved" for c in db.scalars(select(Comment).where(Comment.ticket_id == mine.id)))
+
+
+def test_commands_dont_run_on_a_new_ticket_in_a_queue_the_technician_cant_see(setup, db, mailbox, run, hr_alias, agent, monkeypatch):
+    monkeypatch.setattr(settings, "email_commands", True)
+    from app.models import Queue
+
+    db.get(Queue, hr_alias["id"]).restricted = True
+    db.commit()
+    mailbox.deliver(from_address=agent.email, subject="About someone", to_addresses=["hr@corp.com"], body_text="#priority critical\nPlease look")
+    run()
+    [t] = tickets(db)
+    assert t.queue.name == "Human Resources" and t.priority.value != "critical"
+    notice = [m for m in outbound(db) if m.to_address == agent.email and m.subject.startswith("Not done")]
+    assert notice and notice[0].ticket_id is None
