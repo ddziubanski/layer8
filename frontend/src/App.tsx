@@ -89,20 +89,20 @@ function Shell({ me }: { me: Me }) {
           <Brand b={brand} className="" />
         </div>
         <NavLink to="/" end>
-          Tickets
+          <span className="nav-symbol" aria-hidden="true">▦</span><span>Tickets</span>
         </NavLink>
-        <NavLink to="/devices">Devices</NavLink>
-        <NavLink to="/changes">Changes</NavLink>
-        <NavLink to="/purchase-orders">Purchase orders</NavLink>
-        <NavLink to="/vendors">Vendors</NavLink>
-        <NavLink to="/ipam">IP addresses</NavLink>
-        <NavLink to="/kb">Knowledge base</NavLink>
-        <NavLink to="/scripts">Scripts</NavLink>
-        <NavLink to="/reports">Reports</NavLink>
-        <NavLink to="/settings">Settings</NavLink>
-        <NavLink to="/portal">Self-service portal</NavLink>
+        <NavLink to="/devices"><span className="nav-symbol" aria-hidden="true">▣</span><span>Devices</span></NavLink>
+        <NavLink to="/changes"><span className="nav-symbol" aria-hidden="true">⇄</span><span>Changes</span></NavLink>
+        <NavLink to="/purchase-orders"><span className="nav-symbol" aria-hidden="true">▤</span><span>Purchase orders</span></NavLink>
+        <NavLink to="/vendors"><span className="nav-symbol" aria-hidden="true">◈</span><span>Vendors</span></NavLink>
+        <NavLink to="/ipam"><span className="nav-symbol" aria-hidden="true">⌗</span><span>IP addresses</span></NavLink>
+        <NavLink to="/kb"><span className="nav-symbol" aria-hidden="true">▧</span><span>Knowledge base</span></NavLink>
+        <NavLink to="/scripts"><span className="nav-symbol" aria-hidden="true">⌘</span><span>Scripts</span></NavLink>
+        <NavLink to="/reports"><span className="nav-symbol" aria-hidden="true">◫</span><span>Reports</span></NavLink>
+        <NavLink to="/settings"><span className="nav-symbol" aria-hidden="true">⚙</span><span>Settings</span></NavLink>
+        <NavLink to="/portal"><span className="nav-symbol" aria-hidden="true">↗</span><span>Self-service portal</span></NavLink>
         <div className="me">
-          <div>{me.display_name}</div>
+          <div className="me-identity"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><span>{me.display_name}</span></div>
           <NavLink to="/preferences">My preferences</NavLink>
           <button type="button" onClick={() => logout.mutate()}>
             Sign out
@@ -110,6 +110,7 @@ function Shell({ me }: { me: Me }) {
         </div>
       </nav>
       <main className="main" style={backgroundStyle(brand, "console")}>
+        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
