@@ -21,4 +21,4 @@ The appliance has a recovery account, `layer8`. Log in with it on the machine's 
 
 ## Passwords
 
-The setup wizard asks for `layer8`'s password. Without one (an unattended install that doesn't set `install.recovery.password`), it's `layer8` and must be changed at the first login. Change it later as `sdadmin` with `sudo passwd layer8`.
+The setup wizard asks for `layer8`'s password. Without one (an unattended install that doesn't set `install.recovery.password`), the account stays locked: there's no default password. Change it later as `sdadmin` with `sudo passwd layer8`.

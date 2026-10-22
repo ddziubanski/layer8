@@ -120,6 +120,19 @@ def test_empty_directory_result_deactivates_nobody(db, ad, org):
     assert user(db, "jpark@corp.local").is_active
 
 
+def test_the_last_admin_is_never_deactivated_by_sync(db, ad, org):
+    run_sync(db, ad)
+    park, cole = user(db, "jpark@corp.local"), user(db, "dcole@corp.local")
+    park.role, cole.role = UserRole.admin, UserRole.admin
+    db.commit()
+    del ad.users_by_guid[org["cole"].guid]
+    del ad.users_by_guid[org["park"].guid]
+    run = run_sync(db, ad)
+    # One goes; the other is kept as the only admin left, and the run says so.
+    active = [u.email for u in (user(db, "jpark@corp.local"), user(db, "dcole@corp.local")) if u.is_active]
+    assert len(active) == 1 and any(d["kind"] == "kept" for d in run.details)
+
+
 def test_links_email_intake_requesters_keeping_their_tickets(client, db, ad, org, agent, service_desk):
     # Created by email intake from an alias before AD sync existed: no password.
     early = make_user(db, "frontdesk@corp.local", name="frontdesk")

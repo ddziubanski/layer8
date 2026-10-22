@@ -20,7 +20,8 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
    - **Install type**: real install, offline demo, or an existing answers file.
    - **Time zone**: backup times, scheduled reports and business hours follow it.
    - **Address**: the service desk's DNS name, e.g. `helpdesk.corp.example`. Create the DNS record pointing to the VM's address. The console shows the address, or use `ip addr`.
-   - **HTTPS**: a certificate and key from your CA (copy them onto the VM first, e.g. with `scp` as `sdadmin`), or a self-signed certificate for now.
+   - **OS administrator**: a password for `sdadmin`. It's set at once, so you can copy files in with `scp` as `sdadmin` from here on. Until then the account has no password and can't be logged into.
+   - **HTTPS**: a certificate and key from your CA (the wizard waits while you `scp` them in as `sdadmin`), or a self-signed certificate for now.
    - **First admin**: a local account that always works, even when AD is down. Keep it as the break-glass account.
    - **Ticket numbers**: the first number and the label, e.g. `HD-{n}` or `INC{n:06}`.
    - **Microsoft Entra / Exchange Online** (optional): tenant ID, application (client) ID, client secret, the service desk mailbox and the email domains to accept. See [email-setup.md](email-setup.md) for the app registration. The wizard tests the connection when it finishes.
@@ -29,9 +30,9 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
    - **Backups** (optional): an SMB or NFS share (mounted at `/mnt/helpdesk-backup`), the daily time and the backup passphrase. Keep a copy of the passphrase away from the server.
 4. Open `https://<name>/` and sign in as the admin.
 
-**The OS accounts.** `layer8` is the recovery console: log in on the screen or over SSH for a menu of recovery tasks (network, DNS, break-glass admin passwords, services, certificate, backups, power) with no shell. The wizard asks for its password; without one it's `layer8`, changed at the first login. See [recovery-console.md](recovery-console.md). `sdadmin` is the OS administrator for anything the menu doesn't cover: its password is `helpdesk` and **must be changed at the first login**. Root login is off; use `sudo`.
+**The OS accounts.** `layer8` is the recovery console: log in on the screen or over SSH for a menu of recovery tasks (network, DNS, break-glass admin passwords, services, certificate, backups, power) with no shell. The wizard asks for its password; without one the account stays locked. See [recovery-console.md](recovery-console.md). `sdadmin` is the OS administrator for anything the menu doesn't cover. There's no default password: the wizard asks for one (or `install.os_password` in an answers file), and until then the account is locked. Root login is off; use `sudo`.
 
-**Unattended ISO.** `iso/build.sh --answers answers.json` builds an ISO that installs with those answers and no wizard, for repeat installs or a lab. The answers file holds passwords, so keep that ISO private.
+**Unattended ISO.** `iso/build.sh --answers answers.json` builds an ISO that installs with those answers and no wizard, for repeat installs or a lab. The answers file holds passwords, so keep that ISO private. The copy on the installed machine is deleted once setup has used it.
 
 ## 2. Installer on an existing Debian 13 server
 
@@ -80,6 +81,8 @@ The wizard writes it, and you can write one yourself for unattended installs. Se
     "hostname": "helpdesk.corp.example",
     "tls": {"cert": "/root/helpdesk.pem", "key": "/root/helpdesk.key"},
     "admin": {"email": "it@example.com", "name": "IT Admin", "password": "use-a-long-one"},
+    "os_password": "for sdadmin, the OS administrator",
+    "recovery": {"password": "for layer8, the recovery console"},
     "backup": {"kind": "smb", "share": "//fs1/backups/helpdesk", "user": "CORP\\svc-backup", "password": "..."},
     "demo": false
   },

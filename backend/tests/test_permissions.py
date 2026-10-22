@@ -188,3 +188,11 @@ def test_only_admins_decide_who_runs_a_script(client, db, admin, agent):
     assert r.status_code == 403 and "Only admins" in r.json()["detail"]
     assert client.put(f"/api/scripts/{made['id']}", json={**body, "body": "Restart-Computer -Force", "agents_can_run": False, "high_risk": True}, headers=as_user(agent)).status_code == 200
     assert client.put(f"/api/scripts/{made['id']}", json=body, headers=as_user(admin)).json()["agents_can_run"] is True
+
+
+def test_the_last_active_admin_stays(client, db, admin):
+    other = make_user(db, "it@corp.local", UserRole.admin)
+    db.commit()
+    assert client.patch(f"/api/users/{other.id}", json={"is_active": False}, headers=as_user(admin)).status_code == 200
+    r = client.patch(f"/api/users/{admin.id}", json={"role": "agent"}, headers=as_user(admin))
+    assert r.status_code == 409 and "at least one active admin" in r.json()["detail"]

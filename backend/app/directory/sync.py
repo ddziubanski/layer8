@@ -256,6 +256,13 @@ def full_sync(session: Session, directory: Directory, now: datetime | None = Non
             raise SyncAborted("The directory returned no users; refusing to deactivate everyone. Check ldap_base_dn and ldap_user_filter.")
         for user in known:
             if user.directory_id not in seen and user.is_active:
+                if user.role == UserRole.admin and not session.scalar(
+                    select(func.count()).select_from(User).where(User.role == UserRole.admin, User.is_active, User.id != user.id)
+                ):
+                    # Never leave the service desk without an admin (a narrowed search base, the last
+                    # admin offboarded): kept, and said so, until someone else is an admin.
+                    _note(run, "kept", user.email, "no longer in the directory scope, but the only active admin; kept active")
+                    continue
                 user.is_active = False
                 _end_sessions(session, user)
                 run.deactivated += 1

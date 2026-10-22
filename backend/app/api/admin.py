@@ -125,6 +125,10 @@ def update_user(user_id: int, body: UserUpdate, _: Admin, session: SessionDep):
         user.role_source = "manual"
     for field, value in changes.items():
         setattr(user, field, value)
+    session.flush()
+    if not session.scalar(select(func.count()).select_from(User).where(User.role == UserRole.admin, User.is_active)):
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "Keep at least one active admin: make someone else an admin first")
     if changes.get("is_active") is False:
         auth.end_sessions(session, user)
     session.commit()

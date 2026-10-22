@@ -198,3 +198,12 @@ def test_first_run_admin_can_sign_in_again_before_changing(client, db):
     client.post("/api/auth/logout", headers=CSRF)
     r = client.post("/api/auth/login", json={"email": "ADMIN", "password": "admin"})
     assert r.status_code == 200 and r.json()["must_change_password"] is True
+
+
+
+def test_losing_every_admin_doesnt_reopen_admin_admin(client, db):
+    boss = make_user(db, "boss@corp.local", UserRole.admin)
+    boss.is_active = False
+    db.commit()
+    # An admin has existed: even with none active now, admin/admin stays shut.
+    assert client.post("/api/auth/login", json={"email": "admin", "password": "admin"}).status_code == 401

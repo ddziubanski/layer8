@@ -49,15 +49,21 @@ class AuthError(Exception):
     pass
 
 
-# First run: with no active admin at all, "admin" / "admin" signs in as a local admin who must
-# change the password before doing anything else. Gone once any admin exists.
+# First run: before any admin has ever existed, "admin" / "admin" signs in as a local admin who
+# must change the password before doing anything else. Gone for good once a real admin exists,
+# even if every admin is later disabled (then: python -m app.cli set-password, or the recovery
+# console), so losing the admins never reopens the door.
 FIRST_RUN_LOGIN = FIRST_RUN_PASSWORD = "admin"
 FIRST_RUN_EMAIL = "admin@localhost"
 
 
 def _first_run_admin(session: Session) -> User | None:
-    """The first-run admin, created on the spot, if there's no active admin yet."""
-    if session.scalar(select(func.count()).select_from(User).where(User.role == UserRole.admin, User.is_active)):
+    """The first-run admin, created on the spot, if no real admin has ever existed (the first-run
+    admin itself counts only once its password has been changed)."""
+    real = select(func.count()).select_from(User).where(
+        User.role == UserRole.admin, ~((func.lower(User.email) == FIRST_RUN_EMAIL) & User.must_change_password.is_(True))
+    )
+    if session.scalar(real):
         return None
     user = session.scalar(select(User).where(func.lower(User.email) == FIRST_RUN_EMAIL))
     if user is None:

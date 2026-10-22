@@ -53,14 +53,26 @@ if [ "$MODE" = file ]; then
   exec "$HERE/install.sh" --answers "$path"
 fi
 
+# --- 1b. The OS administrator (set now, so files such as a certificate can be copied in over SSH)
+
+note "The OS administrator (sdadmin): a full shell on this machine, on its screen or over SSH. It has no password until you choose one here, so nobody can log in before you."
+while :; do
+  opw=$(secret "Password for the OS administrator (sdadmin), 12 characters or more:" twice)
+  [ "${#opw}" -ge 12 ] && break
+  note "That's ${#opw} characters; use at least 12."
+done
+printf 'sdadmin:%s\n' "$opw" | chpasswd
+put install.os_password "$opw"
+
 # --- 2. Address and HTTPS
 
 HOST=$(ask "The service desk's DNS name. People open https://<this name>, and Windows sign-in needs it.\n\nExample: helpdesk.corp.example" "$(hostname -f 2>/dev/null || hostname)")
 put install.hostname "$HOST"
 put general.portal_url "https://$HOST"
 if yesno "HTTPS certificate:\n\nYes: I have a certificate and key file (PEM) for $HOST from our CA.\nNo: make a self-signed one for now (browsers will warn until it's replaced)."; then
-  put install.tls.cert "$(ask "Path to the certificate file (PEM, with any intermediate certificates):" "/root/cert.pem")"
-  put install.tls.key "$(ask "Path to its private key file (PEM):" "/root/key.pem")"
+  note "Copy the files onto this machine now if they aren't here yet, e.g. from your PC:\n\n  scp cert.pem key.pem sdadmin@<this machine's address>:\n\n(this machine's address: $(hostname -I 2>/dev/null | cut -d' ' -f1))"
+  put install.tls.cert "$(ask "Path to the certificate file (PEM, with any intermediate certificates):" "/home/sdadmin/cert.pem")"
+  put install.tls.key "$(ask "Path to its private key file (PEM):" "/home/sdadmin/key.pem")"
 else
   put install.tls self-signed
 fi
@@ -92,6 +104,7 @@ while :; do
   note "That's ${#rpw} characters; use at least 12."
 done
 put install.recovery.password "$rpw"
+
 
 # --- 4. Ticket numbers
 

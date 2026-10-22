@@ -65,6 +65,11 @@ for k in sys.argv[2].split("."):
 print("" if v is None else (v if isinstance(v, str) else json.dumps(v)))' "$ANSWERS" "$1"; }
 HOST=$(ans hostname); HOST=${HOST:-$(hostname -f 2>/dev/null || hostname)}
 TLS=$(ans tls); TLS=${TLS:-self-signed}
+# A real install names its first admin: a service desk with no admin would let whoever reaches it
+# first become one (admin / admin). Only the offline demo, which has its own admin, goes without.
+if [ "$(ans demo)" != true ] && [ -z "$(ans admin.password)" ]; then
+  die "the answers file needs install.admin (email, name and password) for the first admin"
+fi
 
 # --- Time zone (backup times and scheduled reports follow it)
 
@@ -237,10 +242,18 @@ RECOVERY_PW=$(ans recovery.password)
 if [ -n "$RECOVERY_PW" ]; then
   printf 'layer8:%s\n' "$RECOVERY_PW" | chpasswd
 elif ! passwd -S layer8 | grep -q ' P '; then
-  # No password chosen: "layer8", to be changed at the first login.
-  printf 'layer8:layer8\n' | chpasswd
-  chage -d 0 layer8
-  echo "Recovery console: log in as layer8 / layer8 (a new password is asked for at once)."
+  # No password chosen: locked, never a default (anyone on the network could log in first).
+  passwd -l layer8 >/dev/null
+  echo "Recovery console: no password given (install.recovery.password), so the layer8 account stays locked."
+fi
+# The OS administrator (sdadmin, made locked by the ISO): its password, if one was chosen.
+OS_PW=$(ans os_password)
+if id sdadmin >/dev/null 2>&1; then
+  if [ -n "$OS_PW" ]; then
+    printf 'sdadmin:%s\n' "$OS_PW" | chpasswd
+  elif ! passwd -S sdadmin | grep -q ' P '; then
+    echo "OS administrator: no password given (install.os_password), so sdadmin stays locked."
+  fi
 fi
 # Only the helper's fixed commands, nothing else, with no password (the login was the check).
 install -m 440 "$BUNDLE/install/files/sudoers-layer8" /etc/sudoers.d/layer8-recovery
@@ -255,6 +268,10 @@ else
 fi
 
 touch "$DATA/.installed"
+# The answers file holds every password given at install: gone once they're applied.
+case "$ANSWERS" in
+  /opt/helpdesk-setup/*) shred -u "$ANSWERS" 2>/dev/null || rm -f "$ANSWERS" ;;
+esac
 # Flush everything to disk: a VM switched off right after setup must still boot into a working app.
 sync
 
@@ -262,6 +279,4 @@ say "Done"
 echo "Open https://$HOST/"
 if [ "$(ans demo)" = true ]; then
   echo "Offline demo: sign in as admin@demo.local with the password on the sign-in page."
-elif [ -z "$(ans admin)" ]; then
-  echo "First sign-in: admin / admin, then choose a new password."
 fi
