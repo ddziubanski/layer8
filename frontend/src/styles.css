@@ -258,6 +258,7 @@ a.btn { color: var(--on-brand); }
 .notice-warning { border-color: var(--note-line); background: var(--note-bg); }
 .notice-message { color: var(--muted); }
 .brand-logo { height: 28px; max-width: 120px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
+.brand-logo-default { width: 42px; height: 42px; padding: 3px; box-sizing: border-box; background: #fff; border-radius: 7px; }
 h1 .brand-logo { height: 36px; }
 .login-card { box-shadow: 0 10px 40px var(--shadow); }
 .sign-in-message { margin: 0; text-align: center; }
