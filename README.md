@@ -50,6 +50,13 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
 - Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It!.
 
+**Dark mode** (Settings > Branding: off, always, or following each person's device):
+
+<p>
+  <img src="screenshots/dark/02-queue.png" width="49%" alt="The queue in dark mode">
+  <img src="screenshots/dark/05k-ipam-subnet.png" width="49%" alt="A subnet in dark mode">
+</p>
+
 More screenshots: [screenshots/](screenshots/README.md). The full requirements and decisions: [SPEC.md](SPEC.md).
 
 <p>

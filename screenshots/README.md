@@ -217,3 +217,43 @@ From the dev app, 2026-10-21. Regenerate with `backend/.venv/bin/python dev/scre
 ## Satisfaction survey: one click in the email answers; a comment can follow (no sign-in needed)
 
 ![Satisfaction survey: one click in the email answers; a comment can follow (no sign-in needed)](16-survey.png)
+
+# Dark mode
+
+Settings > Branding > Dark mode: off, always, or following each person's device setting.
+
+## Sign-in page with branding (product name, message) (dark)
+
+![Sign-in page with branding (product name, message), dark](dark/01-sign-in.png)
+
+## Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls (dark)
+
+![Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls, dark](dark/02-queue.png)
+
+## Ticket: conversation, attachments, assignment, requester, devices, status (dark)
+
+![Ticket: conversation, attachments, assignment, requester, devices, status, dark](dark/03-ticket.png)
+
+## A device: details, patching from Action1, IP addresses, notes and linked tickets (dark)
+
+![A device: details, patching from Action1, IP addresses, notes and linked tickets, dark](dark/05-device.png)
+
+## Knowledge base: search, drafts and published articles; who can read each one (dark)
+
+![Knowledge base: search, drafts and published articles; who can read each one, dark](dark/05f-kb.png)
+
+## IP addresses: a subnet's map of static, reserved, leased, do-not-use and free addresses, the DHCP pool and gateway (dark)
+
+![IP addresses: a subnet's map of static, reserved, leased, do-not-use and free addresses, the DHCP pool and gateway, dark](dark/05k-ipam-subnet.png)
+
+## IP addresses > Network gear: a switch found by SNMP discovery, its LLDP neighbours, and what's plugged into each port (MAC, VLAN, documented address and device) (dark)
+
+![IP addresses > Network gear: a switch found by SNMP discovery, its LLDP neighbours, and what's plugged into each port (MAC, VLAN, documented address and device), dark](dark/05o-network-gear.png)
+
+## Reports: ready-made, saved and custom reports; PDF/CSV, email and schedules (dark)
+
+![Reports: ready-made, saved and custom reports; PDF/CSV, email and schedules, dark](dark/06-reports.png)
+
+## Self-service portal: welcome text and the guided request form (dark)
+
+![Self-service portal: welcome text and the guided request form, dark](dark/13-portal.png)

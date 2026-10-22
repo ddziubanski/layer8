@@ -18,7 +18,7 @@ export function PatchStatus({ deviceId, compact = false }: { deviceId: number; c
   if (compact)
     return (
       <div className="small" aria-label="Patching">
-        <span className={`chip ${tone}`}>{summary}</span>
+        <span className={`chip ${tone}`} style={{ whiteSpace: "normal" }}>{summary}</span>
         {p.ticket_id && (
           <>
             {" "}

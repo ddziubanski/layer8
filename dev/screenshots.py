@@ -32,6 +32,8 @@ from app.models import Device, Ticket, User, UserRole, UserSession  # noqa: E402
 
 BASE = "http://127.0.0.1:8000"
 OUT = ROOT / "screenshots"
+# Also taken with dark mode on (Settings > Branding), into screenshots/dark/.
+DARK = ["01-sign-in", "02-queue", "03-ticket", "05-device", "05f-kb", "05k-ipam-subnet", "05o-network-gear", "06-reports", "13-portal"]
 PORT = 9333
 WIDTH, HEIGHT = 1440, 900
 
@@ -198,7 +200,7 @@ class Tab:
             self.events.append(msg)
 
 
-async def capture(tokens: dict[str, str], plan) -> list[tuple[str, str]]:
+async def capture(tokens: dict[str, str], plan, out: Path = OUT) -> list[tuple[str, str]]:
     chrome = shutil.which("chromium") or shutil.which("google-chrome") or shutil.which("chromium-browser")
     if not chrome:
         raise SystemExit("Needs Chromium or Chrome")
@@ -250,7 +252,7 @@ async def capture(tokens: dict[str, str], plan) -> list[tuple[str, str]]:
                 await asyncio.sleep(0.5)
                 shot = await tab.call("Page.captureScreenshot", format="png")
                 await tab.call("Emulation.setDeviceMetricsOverride", width=WIDTH, height=HEIGHT, deviceScaleFactor=1, mobile=False)
-                (OUT / f"{name}.png").write_bytes(base64.b64decode(shot["data"]))
+                (out / f"{name}.png").write_bytes(base64.b64decode(shot["data"]))
                 done.append((name, caption))
                 print(f"  {name}.png  {caption}")
     finally:
@@ -258,6 +260,15 @@ async def capture(tokens: dict[str, str], plan) -> list[tuple[str, str]]:
         proc.wait(timeout=10)
         shutil.rmtree(profile, ignore_errors=True)
     return done
+
+
+def dark_mode(token: str, value: str | None = None) -> str:
+    """Read Settings > Branding's dark mode, or set it (returns what it was)."""
+    client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
+    was = next(f["value"] for f in client.get("/api/settings/theme").raise_for_status().json()["fields"] if f["name"] == "dark_mode")
+    if value is not None:
+        client.put("/api/settings/theme", json={"values": {"dark_mode": value}}).raise_for_status()
+    return was
 
 
 def main() -> None:
@@ -273,7 +284,14 @@ def main() -> None:
         ad_ticket = session.scalar(select(Ticket.id).join(User, Ticket.requester_id == User.id).where(User.directory_dn.is_not(None), Ticket.parent_id.is_(None)).order_by(Ticket.id.desc()))
         tokens = make_sessions(session)
     try:
-        done = asyncio.run(capture(tokens, shots(ticket_id, device_id, ad_ticket)))
+        plan = shots(ticket_id, device_id, ad_ticket)
+        done = asyncio.run(capture(tokens, plan))
+        was = dark_mode(tokens["admin"], "on")
+        try:
+            (OUT / "dark").mkdir(exist_ok=True)
+            dark = asyncio.run(capture(tokens, [p for p in plan if p[0] in DARK], OUT / "dark"))
+        finally:
+            dark_mode(tokens["admin"], was)
     finally:
         with SessionLocal() as session:
             session.execute(delete(UserSession).where(UserSession.token_hash.in_([_hash_token(t) for t in tokens.values()])))
@@ -281,6 +299,9 @@ def main() -> None:
     lines = ["# Screenshots", "", f"From the dev app, {datetime.now():%Y-%m-%d}. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.", ""]
     for name, caption in done:
         lines += [f"## {caption}", "", f"![{caption}]({name}.png)", ""]
+    lines += ["# Dark mode", "", "Settings > Branding > Dark mode: off, always, or following each person's device setting.", ""]
+    for name, caption in dark:
+        lines += [f"## {caption} (dark)", "", f"![{caption}, dark](dark/{name}.png)", ""]
     (OUT / "README.md").write_text("\n".join(lines))
     print(f"{len(done)} screenshots in {OUT}")
 
