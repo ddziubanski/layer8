@@ -31,7 +31,10 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libkrb5-dev postgresql-client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libkrb5-dev postgresql-client-18
+          echo '/usr/lib/postgresql/18/bin' >> "$GITHUB_PATH"
       - name: Install backend
         run: python -m pip install -e './backend[dev]'
       - name: Create restricted test login
