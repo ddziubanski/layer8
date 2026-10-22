@@ -55,3 +55,6 @@ def test_runner_scope_is_admin_only_and_round_trips(client, admin, agent):
     made = dedicated(client, admin)
     assert made["runner"]["builtins_only"] is True
     assert client.get("/api/runners", headers=as_user(admin)).json()[0]["builtins_only"] is True
+    # An older API client omitting the new field must not broaden the runner's scope.
+    updated = client.put(f"/api/runners/{made['runner']['id']}", json={"name": "Renamed", "languages": ["powershell"]}, headers=as_user(admin))
+    assert updated.status_code == 200 and updated.json()["builtins_only"] is True

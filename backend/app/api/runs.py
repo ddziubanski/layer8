@@ -78,7 +78,8 @@ def update_runner(runner_id: int, body: RunnerIn, admin: Admin, session: Session
     name = body.name.strip()
     _name_free(session, name, runner.id)
     runner.name, runner.description, runner.languages, runner.is_active = name, body.description, sorted(set(body.languages)), body.is_active
-    runner.builtins_only = body.builtins_only
+    if "builtins_only" in body.model_fields_set:
+        runner.builtins_only = body.builtins_only
     session.commit()
     return runner
 
