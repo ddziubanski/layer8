@@ -77,3 +77,17 @@ def test_claim_rechecks_requester_and_skips_revoked_run(client, db, admin, agent
     assert client.post("/api/runner/claim", json={}, headers=bearer(token)).json()["run_id"] == valid
     db.expire_all()
     assert db.get(ScriptRun, stale).status == "cancelled"
+
+
+def test_scheduled_discovery_service_identity_can_still_run(client, db, admin):
+    from app import ipamscan
+    from app.models import Subnet
+    subnet = Subnet(network="10.7.0.0/24", name="Scheduled discovery", scan_every_hours=12)
+    db.add(subnet)
+    db.commit()
+    assert ipamscan.run_due(db) == 1
+    db.commit()
+    token = runner(client, admin, languages=("python",))
+    job = client.post("/api/runner/claim", json={}, headers=bearer(token))
+    assert job.status_code == 200, job.text
+    assert job.json()["values"]["network"] == "10.7.0.0/24"
