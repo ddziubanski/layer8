@@ -38,7 +38,7 @@ def validate_url(value: str) -> None:
 
 
 def counts(session: Session) -> dict[str, int]:
-    base = select(Ticket.id).join(Queue).where(Queue.restricted.is_(False))
+    base = select(Ticket.id).join(Queue, Ticket.queue_id == Queue.id).where(Queue.restricted.is_(False))
     opened = Ticket.status.not_in(sla.CLOSED_STATUSES)
     filters = {
         "Open tickets": opened,
