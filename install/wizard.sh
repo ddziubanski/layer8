@@ -28,7 +28,7 @@ secret() { # secret "Question" -> stdout (asked twice when $2 = twice)
     whiptail --title "$TITLE" --msgbox "They didn't match. Try again." 8 50
   done
 }
-yesno() { whiptail --title "$TITLE" --yesno "$1" 12 76; }
+yesno() { whiptail --title "$TITLE" ${2:+"$2"} --yesno "$1" 16 76; }  # yesno "Question" [--defaultno]
 note() { whiptail --title "$TITLE" --msgbox "$1" 14 76; }
 
 # Answers are kept as KEY=VALUE lines, then turned into JSON by Python (proper escaping).
@@ -149,6 +149,12 @@ if yesno "Do you use Action1 for patching?\n\nIf so, Layer 8 reads it (read-only
   put action1.action1_client_secret "$(secret "Action1 API client secret:")"
 fi
 
+# --- 6c. SQL (rules, reports, queries)
+
+if yesno "Allow SQL in ticket rules, reports and the script library?\n\nSQL reads the database directly. It can see every ticket, including those in restricted queues (such as HR) and internal notes, whoever runs it. Anyone allowed to write or run SQL can read that.\n\nMost sites don't need it: the rule and report builders cover the usual cases. Say no unless that's acceptable. You can change it later in Settings > General." --defaultno; then
+  put general.sql_enabled "true"
+fi
+
 # --- 7. Windows sign-in for the portal
 
 if yesno "Windows sign-in for the portal (people on domain PCs are signed in as themselves)?\n\nYou need the keytab for HTTP/$HOST (docs/windows-sign-in.md). Also possible later in Settings > Windows sign-in."; then
@@ -192,7 +198,7 @@ for line in open(values):
         value = int(value)
     elif key == "email.mail_allowed_domains":
         value = [d.strip() for d in value.split(",") if d.strip()]
-    elif key == "general.action1_enabled":
+    elif key in ("general.action1_enabled", "general.sql_enabled"):
         value = value == "true"
     elif key == "directory.ad_group_lists":
         # One "Label: OU=...,DC=..." line: the DN's commas aren't separators.

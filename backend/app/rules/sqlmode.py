@@ -41,7 +41,13 @@ def _engine(url: str, timeout_ms: int) -> Engine:
     return create_engine(url, pool_pre_ping=True, connect_args={"options": f"-c statement_timeout={timeout_ms}"})
 
 
+SQL_OFF = "SQL is turned off. An admin can allow it in Settings > General > Allow SQL, after reading what it means there."
+
+
 def engine() -> Engine:
+    # Every SQL feature (rules, reports, library queries) comes through here.
+    if not settings.sql_enabled:
+        raise SqlRuleError(SQL_OFF)
     if not settings.rules_database_url:
         raise SqlRuleError("SQL rules need HELPDESK_RULES_DATABASE_URL (the restricted rules login)")
     return _engine(settings.rules_database_url, settings.rules_statement_timeout_ms)

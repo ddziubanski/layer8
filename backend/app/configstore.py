@@ -238,6 +238,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("po_label_format", "Purchase order label", "How PO numbers are shown, like the ticket label: e.g. PO-{n:05}, {yyyy}-PO{n}.", check=_label_format),
         Field("ticket_label_format", "Ticket label", "How ticket numbers are shown and put in email subjects: {n} is the number, {n:06} pads it to six digits, {yyyy}/{yy} the year it was opened. E.g. #{n}, HD-{n}, INC{n:06}, {yyyy}-{n}.", check=_label_format),
         Field("action1_enabled", "Use Action1 (patching)", "Shows Settings > Action1, patch status on devices and tickets, and Action1 patch nights on the change calendar, and reads Action1 on a schedule. Off: all of that is hidden and nothing is read."),
+        Field("sql_enabled", "Allow SQL (rules, reports, queries)", "SQL rules, SQL reports and SQL library queries read the database directly. They can see every ticket, including those in restricted queues (such as HR) and internal notes, whoever runs them. Anyone allowed to write or run them can read that. Turn on only if that's acceptable."),
     ],
     "directory": [
         Field("ldap_url", "Domain controllers", "One or more, comma-separated, tried in order: ldaps://dc1.corp.example,ldaps://dc2.corp.example. Empty: no directory, local accounts only.", check=_ldap_urls),

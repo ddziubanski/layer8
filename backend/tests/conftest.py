@@ -54,6 +54,8 @@ def isolated_settings(monkeypatch, tmp_path):
 
     auth_api._failures.clear()  # every test signs in from the same address
     monkeypatch.setattr(settings, "mailbox", "")
+    # SQL features are opt-in (Settings > General); most tests exercise them.
+    monkeypatch.setattr(settings, "sql_enabled", True)
     monkeypatch.setattr(settings, "portal_url", "")
     monkeypatch.setattr(settings, "storage_dir", tmp_path / "storage")
     monkeypatch.setattr(settings, "secrets_dir", tmp_path / "secrets")

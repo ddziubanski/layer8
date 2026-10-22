@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # Whether Action1 is in use at all (asked at install): off hides Settings > Action1 and patch
     # status everywhere, and nothing is read.
     action1_enabled: bool = False
+    # SQL rules, reports and library queries (read the database directly, past restricted queues): off
+    # until an admin accepts that (asked at install).
+    sql_enabled: bool = False
     # Every machine in these organizations is read (e.g. one for servers, one for workstations).
     action1_org_ids: list[str] = []
     action1_sync_minutes: int = 60

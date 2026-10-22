@@ -161,5 +161,7 @@ def install(session: Session) -> list[str]:
     )
     if session.scalar(select(ServiceNotice).where(ServiceNotice.title == "This is a demo")) is None:
         session.add(ServiceNotice(title="This is a demo", message="Sample data only. Nothing here reaches email, AD or anyone outside this machine.", severity="info", audience="everyone", starts_at=now, created_by_id=admin.id))
+    # The demo's sample queries are SQL; it's sample data, so nothing restricted to protect.
+    configstore.update(session, "general", {"sql_enabled": True}, None)
     done.append("Demo branding and notice")
     return done

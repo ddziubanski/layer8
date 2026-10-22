@@ -392,3 +392,9 @@ def test_rule_starts_a_checklist_once_and_never_from_its_own_steps(client, db, a
     assert [i["due_on"] for i in got["items"]] == ["2026-11-02", "2026-11-09"]
     assert ticket(db, steps[1]).resolution_due_at.astimezone().date() == date(2026, 11, 9)
     assert any("Start date for \"New starter\"" in x.body for x in comments(db, tid))
+
+
+def test_sql_is_refused_while_turned_off(client, admin, monkeypatch):
+    monkeypatch.setattr(settings, "sql_enabled", False)
+    r = rule(client, admin, trigger="schedule", schedule_minutes=5, mode="sql", select_sql="SELECT id FROM tickets", actions=[{"type": "add_note", "body": "x"}])
+    assert r.status_code == 422 and "Settings > General > Allow SQL" in r.json()["detail"]

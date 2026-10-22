@@ -1,6 +1,7 @@
 {
   "general": {
-    "portal_url": "http://localhost:8000"
+    "portal_url": "http://localhost:8000",
+    "sql_enabled": true
   },
   "directory": {
     "ldap_url": "ldaps://localhost:1636",
