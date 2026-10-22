@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     graph_tenant_id: str = ""
     graph_client_id: str = ""
     graph_client_secret: str = ""
+    # Optional Teams digest. Configstore keeps the webhook as a write-only secret.
+    teams_enabled: bool = False
+    teams_webhook_url: str = ""
+    teams_summary_minutes: int = 60
     # Action1 (patching, read-only): API credentials from Action1 > API credentials, the organization
     # to read, and the region its console is in.
     action1_region: str = "NorthAmerica"

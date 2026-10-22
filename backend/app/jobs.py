@@ -29,6 +29,7 @@ RESTART_EXIT = 75
 
 
 LABELS = {
+    "teams": "Teams: queue summary",
     "email": "Email: check the mailbox and send",
     "directory": "Directory sync",
     "rules": "Scheduled ticket rules",
@@ -194,7 +195,14 @@ def build_jobs(session_factory, mail) -> list[Job]:
             session.commit()
         return (f"Opened ticket #{ticket.id}: {ticket.subject}" if ticket else "Nothing stale or unknown"), ticket is not None
 
+    def teams_summary(forced: bool):
+        from app import teams
+
+        with session_factory() as session:
+            return teams.run(session)
+
     return [
+        Job("teams", "worker", lambda: timedelta(minutes=max(15, settings.teams_summary_minutes)), teams_summary),
         Job("email", "email", lambda: timedelta(seconds=settings.mail_poll_seconds), email),
         # It decides itself whether a sync is due (every ldap_sync_minutes); checked each minute.
         Job("directory", "directory", _every(60), directory_sync),
