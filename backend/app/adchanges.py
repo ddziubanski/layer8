@@ -86,7 +86,7 @@ def ensure_script(session: Session) -> Script:
             name=SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.powershell, agents_can_run=True, current_version=1,
             description="Built in: used by the AD account card on tickets and by onboarding templates. Mark it high risk to require approval.",
         )
-        script.versions.append(ScriptVersion(number=1, body=SCRIPT_BODY, parameters=PARAMETERS, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=SCRIPT_BODY, parameters=PARAMETERS, note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -358,7 +358,7 @@ def create_script(session: Session) -> Script:
             name=CREATE_SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.powershell, agents_can_run=True, current_version=1,
             description="Built in: used by New account on a ticket's AD account card. Mark it high risk to require approval.",
         )
-        script.versions.append(ScriptVersion(number=1, body=CREATE_BODY, parameters=CREATE_PARAMETERS, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=CREATE_BODY, parameters=CREATE_PARAMETERS, note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -390,7 +390,7 @@ def enable_script(session: Session) -> Script:
             name=ENABLE_SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.powershell, agents_can_run=True, current_version=1,
             description="Built in: enables a new account on its start date (New account on a ticket, with a start date).",
         )
-        script.versions.append(ScriptVersion(number=1, body=ENABLE_BODY, parameters=[{**_T, "name": "sam", "label": "Account name", "required": True}], note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=ENABLE_BODY, parameters=[{**_T, "name": "sam", "label": "Account name", "required": True}], note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -413,7 +413,7 @@ def disable_script(session: Session) -> Script:
             description="Built in: disables a leaver's AD account on the day (offboarding checklists). Mark it high risk to require approval.",
         )
         params = [{**_T, "name": "user_guid", "label": "User (objectGUID)", "required": True}]
-        script.versions.append(ScriptVersion(number=1, body=DISABLE_BODY, parameters=params, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=DISABLE_BODY, parameters=params, note="Built in"))
         session.add(script)
         session.flush()
     return script

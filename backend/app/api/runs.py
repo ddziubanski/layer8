@@ -105,7 +105,7 @@ def delete_runner(runner_id: int, admin: Admin, session: SessionDep):
 
 def _run_out(run: ScriptRun, user: User, cls=RunOut, **extra):
     return cls(
-        id=run.id, script_id=run.script_id, script_name=run.script.name, version=run.version.number, language=run.script.language,
+        id=run.id, script_id=run.script_id, script_name=run.script.name, version=run.version.number, language=run.version.language or run.script.language,
         device_id=run.device_id, target=run.target, values=run.values, ticket_id=run.ticket_id, status=run.status,
         requested_by=UserRef.model_validate(run.requested_by) if run.requested_by else None,
         decided_by=UserRef.model_validate(run.decided_by) if run.decided_by else None,
@@ -269,7 +269,7 @@ def runner_claim(body: RunnerClaimIn, session: SessionDep, authorization: str | 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     log.info("Runner %r started run #%s (%r on %s)", runner.name, run.id, run.script.name, run.target or "itself", extra={"source": "scripts"})
     return RunnerJobOut(
-        run_id=run.id, language=run.script.language, body=run.version.body, values=run.values, target=run.target,
+        run_id=run.id, language=run.version.language or run.script.language, body=run.version.body, values=run.values, target=run.target,
         target_os=run.device.os if run.device else None, time_limit_seconds=runs.TIME_LIMIT_SECONDS, secret_values=secret,
     )
 
