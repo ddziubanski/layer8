@@ -313,7 +313,7 @@ def test_failed_ad_sign_ins_are_throttled(client, db, ad, org, real_login):
     for _ in range(auth.MAX_FAILED_LOGINS):
         login(client, "jpark", "wrong-password")
     r = login(client, "jpark")
-    assert r.status_code == 401 and "Too many" in r.json()["detail"]
+    assert r.status_code == 401 and r.json()["detail"] == "Wrong email or password"
 
 
 def test_directory_down_says_so_without_leaking(client, db, ad, org, real_login):

@@ -73,3 +73,15 @@ def test_technician_logs_a_ticket_for_someone(setup, db, mailbox, run, agent, mo
     run()
     db.expire_all()
     assert db.get(Ticket, t.id).assignee_id == agent.id
+
+
+def test_forged_mail_cant_use_commands(setup, db, mailbox, run, agent, requester):
+    mailbox.deliver(from_address=requester.email, subject="Printer jammed", body_text="Again.")
+    run()
+    [t] = tickets(db)
+    # From: a technician, but Exchange didn't vouch for it (it came from outside, spoofed).
+    mailbox.deliver(from_address=agent.email, subject=f"RE: [#{t.id}] Printer jammed", body_text="#close\nDone.", headers={"x-ms-exchange-organization-authas": "Anonymous"})
+    run()
+    db.expire_all()
+    [t] = tickets(db)
+    assert t.status.value != "closed"

@@ -135,7 +135,8 @@ def authenticate(session: Session, login: str, password: str, now: datetime) -> 
             return first
     user = _find_login(session, login)
     if user is not None and user.locked_until and user.locked_until > now:
-        raise AuthError("Too many failed attempts. Try again later.")
+        # The same answer as a wrong password: a lockout mustn't show which accounts exist.
+        raise generic
 
     if user is not None and user.auth_source == AuthSource.local and user.password_hash is not None:
         try:

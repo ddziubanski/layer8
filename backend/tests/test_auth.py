@@ -64,7 +64,8 @@ def test_lockout_after_repeated_failures(client, db, local_agent):
     for _ in range(auth.MAX_FAILED_LOGINS):
         login(client, password="wrong password!!")
     r = login(client)
-    assert r.status_code == 401 and "Too many" in r.json()["detail"]
+    # Locked: even the right password is refused, with the same answer as a wrong one (no account enumeration).
+    assert r.status_code == 401 and r.json()["detail"] == "Wrong email or password"
     db.execute(update(User).values(locked_until=auth.sla.utcnow() - timedelta(seconds=1)))
     db.commit()
     assert login(client).status_code == 200
@@ -207,3 +208,22 @@ def test_losing_every_admin_doesnt_reopen_admin_admin(client, db):
     db.commit()
     # An admin has existed: even with none active now, admin/admin stays shut.
     assert client.post("/api/auth/login", json={"email": "admin", "password": "admin"}).status_code == 401
+
+
+def test_failed_sign_ins_from_one_address_are_slowed(client, db, monkeypatch):
+    from app.api import auth as auth_api
+
+    monkeypatch.setattr(auth_api, "MAX_FAILURES", 3)
+    auth_api._failures.clear()
+    for i in range(3):
+        assert login(client, email=f"nobody{i}@corp.local", password="wrong password!!").status_code == 401
+    r = login(client, email="other@corp.local", password="wrong password!!")
+    assert r.status_code == 429 and "Too many failed sign-ins" in r.json()["detail"]
+    auth_api._failures.clear()
+
+
+def test_storage_keys_stay_in_the_storage_folder():
+    from app import storage
+
+    with pytest.raises(ValueError):
+        storage.path("../../secrets/graph_client_secret")

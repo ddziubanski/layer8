@@ -98,6 +98,9 @@ class Settings(BaseSettings):
     ticket_label_format: str = "#{n}"
     # Tickets Anywhere: technicians' #commands in email act on tickets.
     email_commands: bool = True
+    # Only run them when Exchange Online vouches the mail came from inside the organization
+    # (X-MS-Exchange-Organization-AuthAs: Internal), so a forged From can't use them.
+    email_commands_internal_only: bool = True
     # Purchase order numbers, the same way.
     po_first_number: int = 1
     po_label_format: str = "PO-{n:05}"

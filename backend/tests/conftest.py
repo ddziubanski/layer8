@@ -50,6 +50,9 @@ def engine():
 @pytest.fixture(autouse=True)
 def isolated_settings(monkeypatch, tmp_path):
     # Never pick up a developer's real mailbox from .env; files go to a temp dir.
+    from app.api import auth as auth_api
+
+    auth_api._failures.clear()  # every test signs in from the same address
     monkeypatch.setattr(settings, "mailbox", "")
     monkeypatch.setattr(settings, "portal_url", "")
     monkeypatch.setattr(settings, "storage_dir", tmp_path / "storage")

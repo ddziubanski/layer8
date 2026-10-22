@@ -273,6 +273,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("mail_allowed_domains", "Accept email from", "One domain per line, e.g. example.com. Senders from these domains become requesters automatically; others are rejected unless they're already users.", check=_domains),
         Field("mail_poll_seconds", "Check the mailbox every (seconds)", check=_between(10, 3600)),
         Field("email_commands", "Technicians can work tickets by email", "Lines like #close, #assign me, #priority high or #internal in a technician's email act on the ticket (Tickets Anywhere). Only staff who can see the ticket's queue."),
+        Field("email_commands_internal_only", "Only from mail Exchange confirms is internal", "Email commands run only when Exchange Online marks the message as sent by an authenticated sender in your organization (X-MS-Exchange-Organization-AuthAs: Internal), so someone forging a technician's address can't close or reassign tickets. Turn off only if your mail doesn't arrive through Exchange Online."),
     ],
     "branding": [
         Field("product_name", "Product name", "Shown in the header, on the sign-in page and in the browser tab.", check=_length(1, 60)),

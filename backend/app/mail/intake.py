@@ -133,6 +133,13 @@ def _tagged_or_referenced(session: Session, msg: InboundMessage) -> tuple[Ticket
     return (session.get(Ticket, ticket_id) if ticket_id else None), False
 
 
+def _commands_allowed(msg: InboundMessage) -> bool:
+    """Email commands are on and, unless that check is off, Exchange vouches the sender is internal."""
+    if not settings.email_commands:
+        return False
+    return not settings.email_commands_internal_only or msg.headers.get("x-ms-exchange-organization-authas", "").strip().lower() == "internal"
+
+
 def _may_reply(session: Session, ticket: Ticket, sender: User) -> bool:
     """Whether a message from sender may join this ticket: its requester, staff who can see its
     queue, or someone the desk has emailed about it (a CC, a manager's notice). Anyone else
@@ -223,7 +230,7 @@ def process_message(session: Session, msg: InboundMessage, cfg: IntakeConfig) ->
         staff = is_staff and ticket.queue.can_view(sender)
         # A manager answering an escalation notice is talking to staff, not the requester.
         internal = staff_reply and staff
-        parsed = commands.parse(body) if staff and settings.email_commands else commands.Parsed(body)
+        parsed = commands.parse(body) if staff and _commands_allowed(msg) else commands.Parsed(body)
         result = commands.apply(session, ticket, sender, parsed.commands) if parsed.commands else None
         if result is not None and result.internal:
             internal = True
@@ -236,7 +243,7 @@ def process_message(session: Session, msg: InboundMessage, cfg: IntakeConfig) ->
         if ticket is not None:
             # Closed tickets stay closed; a reply opens a new one that points back.
             description = f"Follow-up to closed ticket #{ticket.id}.\n\n{strip_quoted(msg.body_text)}"
-        parsed = commands.parse(description) if is_staff and settings.email_commands else commands.Parsed(description)
+        parsed = commands.parse(description) if is_staff and _commands_allowed(msg) else commands.Parsed(description)
         requester = sender
         for name, arg in parsed.commands:
             if name == "requester":

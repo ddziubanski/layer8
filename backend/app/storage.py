@@ -22,7 +22,12 @@ class StoredFile:
 
 
 def _path(key: str) -> Path:
-    return settings.storage_dir / key
+    # Keys are made here, but one could come from an imported export: never outside the folder.
+    root = settings.storage_dir.resolve()
+    path = (root / key).resolve()
+    if not path.is_relative_to(root):
+        raise ValueError(f"Storage key outside the storage folder: {key!r}")
+    return path
 
 
 def save(data: bytes) -> StoredFile:

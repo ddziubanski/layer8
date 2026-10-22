@@ -55,7 +55,7 @@ def test_runner_hands_secrets_to_python_on_stdin(client, db, admin):
     db.commit()
     api = ClientApi(client, token)
     status, job = api.post("/api/runner/claim", {"host": "t", "version": mod.VERSION})
-    assert status == 200 and mod.VERSION == "1.2"
+    assert status == 200 and mod.VERSION >= "1.2"
     mod.handle(api, job, type("A", (), {"powershell": None})())
     db.expire_all()
     assert db.get(ScriptRun, run.id).output == "s3cret False\n"

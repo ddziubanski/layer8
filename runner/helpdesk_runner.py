@@ -37,7 +37,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-VERSION = "1.2"
+VERSION = "1.3"
 POST_EVERY = 2.0  # seconds between output updates while a script runs
 
 
@@ -77,7 +77,8 @@ def log(msg: str) -> None:
 
 
 def env_for(job: dict) -> dict:
-    env = dict(os.environ)
+    # Never the runner's own settings (its token): a script could act as the runner with it.
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("HELPDESK_")}
     for k, v in (job.get("values") or {}).items():
         env[f"HD_{k.upper()}"] = "" if v is None else ("true" if v is True else "false" if v is False else str(v))
     env["HD_TARGET"] = job.get("target") or ""
@@ -105,13 +106,16 @@ def powershell_files(job: dict, work: Path) -> Path:
         + "\n",
         encoding="utf-8-sig",
     )
-    # Secret values (a new account's password) only reach the script as variables, never the environment.
-    data = json.dumps({"target": job.get("target"), "values": {**(job.get("values") or {}), **(job.get("secret_values") or {})}})
+    # Secret values (a new account's password) only reach the script as variables: they come on
+    # standard input, never in the environment or a file on disk.
+    data = json.dumps({"target": job.get("target"), "values": job.get("values") or {}})
     outer = work / "launch.ps1"
     outer.write_text(
         "$ErrorActionPreference = 'Stop'\n"
         f"$HD = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{base64.b64encode(data.encode()).decode()}')) | ConvertFrom-Json\n"
         f"$inner = '{inner}'\n"
+        "$secret = [Console]::In.ReadToEnd()\n"
+        "if ($secret) { foreach ($p in ($secret | ConvertFrom-Json).PSObject.Properties) { $HD.values | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force } }\n"
         "if ($HD.target) { Invoke-Command -ComputerName $HD.target -FilePath $inner -ArgumentList (,$HD.values) }\n"
         "else { & $inner $HD.values }\n"
         "if ($LASTEXITCODE) { exit $LASTEXITCODE }\n",
@@ -238,8 +242,8 @@ def handle(api: Api, job: dict, args) -> None:
         else:
             with tempfile.TemporaryDirectory(prefix="hd-run-") as tmp:
                 work = Path(tmp)
-                # PowerShell gets secret values as variables (see powershell_files); the others on stdin.
-                secrets = job.get("secret_values") if job["language"] != "powershell" else None
+                # Secret values on stdin: PowerShell's launcher turns them into variables (see powershell_files).
+                secrets = job.get("secret_values")
                 stdin = json.dumps(secrets).encode() if secrets else None
                 exit_code = run_process(command_for(job, work, args), env_for(job), work, int(job["time_limit_seconds"]), send, stdin)
     except TimeLimit as exc:
@@ -262,10 +266,15 @@ def main() -> None:
     p.add_argument("--eos-password-file", help="File with that user's password")
     p.add_argument("--eos-ca-file", help="CA certificate for the switches' eAPI certificates")
     p.add_argument("--eos-insecure", action="store_true", help="Don't check switch certificates (lab use only)")
+    p.add_argument("--allow-http", action="store_true", help="Talk to the service desk over plain http (development only: the token would cross the network in the clear)")
     args = p.parse_args()
     token = Path(args.token_file).read_text().strip() if args.token_file else os.environ.get("HELPDESK_RUNNER_TOKEN", "")
+    os.environ.pop("HELPDESK_RUNNER_TOKEN", None)
     if not token:
         raise SystemExit("Give the runner's token with --token-file or HELPDESK_RUNNER_TOKEN")
+    host_part = args.url.split("://", 1)[-1].split("/", 1)[0].rsplit(":", 1)[0].strip("[]")
+    if not args.url.lower().startswith("https://") and host_part not in ("localhost", "127.0.0.1", "::1") and not args.allow_http:
+        raise SystemExit("Use the service desk's https:// address (or --allow-http for development)")
     api = Api(args.url, token, args.ca_file)
     host = socket.getfqdn()
     log(f"helpdesk runner {VERSION} on {host}, polling {api.url}")

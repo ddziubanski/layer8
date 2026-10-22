@@ -1,5 +1,7 @@
 import base64
 import logging
+import time
+from collections import defaultdict, deque
 from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
@@ -26,12 +28,25 @@ def sign_in_options(session: SessionDep):
     return SignInOptionsOut(windows_sign_in=config is not None, windows_sign_in_silent=config is not None and config.silent)
 
 
+# Failed sign-ins per client address: password spraying across accounts is slowed down too, not
+# only guesses at one account (which locks it).
+MAX_FAILURES = 30
+WINDOW = 15 * 60
+_failures: dict[str, deque] = defaultdict(deque)
+
+
 @router.post("/login", response_model=MeOut)
-def login(body: LoginIn, response: Response, session: SessionDep):
+def login(body: LoginIn, request: Request, response: Response, session: SessionDep):
     now = sla.utcnow()
+    recent = _failures[request.client.host if request.client else "?"]
+    while recent and recent[0] < time.monotonic() - WINDOW:
+        recent.popleft()
+    if len(recent) >= MAX_FAILURES:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed sign-ins from here. Wait a few minutes and try again")
     try:
         user = auth.authenticate(session, body.email, body.password, now)
     except auth.AuthError as exc:
+        recent.append(time.monotonic())
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from None
     auth.start_session(session, user, response, now)
     session.commit()

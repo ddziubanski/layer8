@@ -50,6 +50,8 @@ class FakeMailbox:
         kw.setdefault("internet_message_id", f"<msg{n}@corp.local>")
         kw.setdefault("from_name", "")
         kw.setdefault("body_text", "")
+        # As Exchange Online stamps mail from inside the organization.
+        kw.setdefault("headers", {"x-ms-exchange-organization-authas": "Internal"})
         msg = InboundMessage(mailbox_id=f"graph-{n}", **kw)
         self.inbox.append(msg)
         return msg

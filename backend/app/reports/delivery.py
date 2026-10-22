@@ -15,7 +15,7 @@ from datetime import date, datetime, time, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import sla, storage
+from app import services, sla, storage
 from app.config import settings
 from app.models import OutboundEmail, ReportSchedule, SavedReport, ScriptSchedule, User
 from app.reports import engine, pdf, presets
@@ -86,8 +86,9 @@ def csv_bytes(result: engine.ReportResult) -> bytes:
     writer = csv.writer(buf)
     writer.writerow([c.label for c in result.columns])
     for row in result.rows:
-        # Never let a cell start a spreadsheet formula (names come from users and AD).
-        writer.writerow(["'" + v if isinstance(v, str) and v[:1] in ("=", "+", "-", "@") else ("" if v is None else v) for v in row])
+        # Never let a cell start a spreadsheet formula (names come from users and AD); some
+        # spreadsheets skip a leading tab or carriage return first.
+        writer.writerow(["'" + v if isinstance(v, str) and v[:1] in ("=", "+", "-", "@", "\t", "\r") else ("" if v is None else v) for v in row])
     return ("﻿" + buf.getvalue()).encode()  # BOM, so Excel reads UTF-8
 
 
@@ -194,6 +195,8 @@ def run_schedule(session: Session, s: ReportSchedule, now: datetime) -> int:
     owner = s.owner
     if owner is None or not owner.is_active:
         raise DeliveryError("Its owner is no longer an active user")
+    if owner.role not in services.AGENT_ROLES:
+        raise DeliveryError("Its owner is no longer a technician")
     title, description, spec = report_for(session, s.preset_key, s.saved_report_id)
     date_from, date_to = period_range(s.period, now.astimezone().date())
     spec = spec.model_copy(update={"date_from": date_from, "date_to": date_to})
