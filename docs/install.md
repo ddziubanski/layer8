@@ -15,7 +15,7 @@ Every option the setup asks for can be changed later in the app (Settings), exce
 The ISO is Debian 13 plus the service desk and everything it needs, so the OS and every dependency are the versions it was tested with.
 
 1. **Create the VM**: 2 vCPU, 4 GB RAM, 40 GB disk, one network card. On Hyper-V use a Generation 2 VM; disable Secure Boot, or set its template to "Microsoft UEFI Certificate Authority". BIOS and UEFI both work.
-2. **Boot the ISO.** The first menu entry, *Install Layer 8 (erases the disk)*, starts after 5 seconds. It installs Debian without asking anything and **erases the first disk**. Pick another entry to install Debian by hand.
+2. **Boot the ISO.** It has one entry, *Install Layer 8 (erases the disk)*, which starts after 5 seconds. It installs a minimal Debian server (no desktop) and Layer 8 without asking anything, and **erases the first disk**. There are no other install options: for a hand-made Debian, use Debian's own ISO and `install/install.sh`.
 3. **First boot**: the setup wizard opens on the console. It asks for the following, and anything marked *optional* can be skipped and done later in Settings:
    - **Install type**: real install, offline demo, or an existing answers file.
    - **Time zone**: backup times, scheduled reports and business hours follow it.
