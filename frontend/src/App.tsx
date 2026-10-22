@@ -32,6 +32,7 @@ function reloadOnce(error: unknown): never {
   }
   throw error;
 }
+const DashboardPage = named(() => import("./pages/DashboardPage"), "DashboardPage");
 const ReportsPage = named(() => import("./pages/ReportsPage"), "ReportsPage");
 const PreferencesPage = named(() => import("./pages/me/PreferencesPage"), "PreferencesPage");
 const ScriptsPage = named(() => import("./pages/scripts/ScriptsPage"), "ScriptsPage");
@@ -94,6 +95,7 @@ function Shell({ me }: { me: Me }) {
         <NavLink to="/" end>
           <span className="nav-symbol" aria-hidden="true">▦</span><span>Tickets</span>
         </NavLink>
+        <NavLink to="/dashboard"><span className="nav-symbol" aria-hidden="true">◫</span><span>Dashboard</span></NavLink>
         <NavLink to="/devices"><span className="nav-symbol" aria-hidden="true">▣</span><span>Devices</span></NavLink>
         <NavLink to="/changes"><span className="nav-symbol" aria-hidden="true">⇄</span><span>Changes</span></NavLink>
         <NavLink to="/purchase-orders"><span className="nav-symbol" aria-hidden="true">▤</span><span>Purchase orders</span></NavLink>
@@ -251,6 +253,7 @@ const router = (me: Me) =>
       element: <Shell me={me} />,
       children: [
         { index: true, element: <QueuePage me={me} /> },
+        { path: "dashboard", element: <DashboardPage /> },
         { path: "tickets/:ticketId", element: <TicketPage me={me} /> },
         { path: "devices", element: <DevicesPage me={me} /> },
         { path: "devices/:deviceId", element: <DevicePage me={me} /> },
