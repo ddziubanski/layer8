@@ -1,0 +1,41 @@
+name: Backend validation
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'runner/**'
+      - '.github/workflows/backend-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: helpdesk
+          POSTGRES_PASSWORD: helpdesk
+          POSTGRES_DB: helpdesk_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U helpdesk -d helpdesk_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      HELPDESK_TEST_DATABASE_URL: postgresql+psycopg://helpdesk:helpdesk@localhost:5432/helpdesk_test
+      PGPASSWORD: helpdesk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libkrb5-dev postgresql-client
+      - name: Install backend
+        run: python -m pip install -e './backend[dev]'
+      - name: Create restricted test login
+        run: psql -h localhost -U helpdesk -d helpdesk_test -c "CREATE ROLE helpdesk_rules LOGIN PASSWORD 'helpdesk_rules'"
+      - name: Backend regression tests
+        working-directory: backend
+        run: python -m pytest -q
