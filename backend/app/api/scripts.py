@@ -65,7 +65,15 @@ def _checked(body: ScriptIn) -> list[dict]:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
 
 
+def _not_builtin(script: Script, user: User) -> None:
+    """Built-in scripts are kept by the app: only admins may change them."""
+    if scripts.is_builtin(script.name) and user.role != UserRole.admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Built-in scripts can only be changed by admins")
+
+
 def _name_free(session, name: str, script_id: int | None = None) -> None:
+    if scripts.is_builtin(name):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"Names starting with {scripts.BUILTIN_PREFIX!r} are kept for built-in scripts")
     other = session.scalar(select(Script).where(Script.name == name))
     if other is not None and other.id != script_id:
         raise HTTPException(status.HTTP_409_CONFLICT, f"There's already a script called {name!r}")
@@ -85,9 +93,12 @@ def create_script(body: ScriptIn, admin: ScriptsManager, session: SessionDep):
     params = _checked(body)
     name = body.name.strip()
     _name_free(session, name)
+    # Who may run it and whether it needs approval are admins' calls: other writers' scripts start
+    # as admin-only and high risk until an admin says otherwise.
+    admin_ok = admin.role == UserRole.admin
     script = Script(
-        name=name, description=body.description, kind=body.kind, language=body.language, high_risk=body.high_risk,
-        agents_can_run=body.agents_can_run, is_active=body.is_active, current_version=1,
+        name=name, description=body.description, kind=body.kind, language=body.language, high_risk=body.high_risk if admin_ok else True,
+        agents_can_run=body.agents_can_run if admin_ok else False, is_active=body.is_active, current_version=1,
     )
     script.versions.append(ScriptVersion(number=1, body=body.body, parameters=params, note=body.note or "First version", author_id=admin.id))
     session.add(script)
@@ -105,14 +116,20 @@ def get_script(script_id: int, user: Agent, session: SessionDep):
 def update_script(script_id: int, body: ScriptIn, admin: ScriptsManager, session: SessionDep):
     """Save. A changed body or parameters becomes a new version; the rest is just updated."""
     script = _script(session, script_id, admin)
+    _not_builtin(script, admin)
     if body.kind != script.kind:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "A script can't change between query and action: make a new one")
     params = _checked(body)
     name = body.name.strip()
-    _name_free(session, name, script.id)
+    if not (scripts.is_builtin(script.name) and name == script.name):
+        _name_free(session, name, script.id)
     current = _current(script)
     script.name, script.description, script.language = name, body.description, body.language
-    script.high_risk, script.agents_can_run, script.is_active = body.high_risk, body.agents_can_run, body.is_active
+    if admin.role == UserRole.admin:
+        script.high_risk, script.agents_can_run = body.high_risk, body.agents_can_run
+    elif (body.high_risk, body.agents_can_run) != (script.high_risk, script.agents_can_run):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can change who may run a script or whether it's high risk")
+    script.is_active = body.is_active
     if body.body != current.body or params != current.parameters:
         number = max(v.number for v in script.versions) + 1
         script.versions.append(ScriptVersion(number=number, body=body.body, parameters=params, note=body.note, author_id=admin.id))
@@ -125,6 +142,7 @@ def update_script(script_id: int, body: ScriptIn, admin: ScriptsManager, session
 @router.delete("/{script_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_script(script_id: int, admin: ScriptsManager, session: SessionDep):
     script = _script(session, script_id, admin)
+    _not_builtin(script, admin)
     session.delete(script)
     session.commit()
     log.info("Script %r deleted by %s", script.name, admin.display_name, extra={"source": "settings"})
@@ -158,6 +176,7 @@ def get_version(script_id: int, number: int, user: Agent, session: SessionDep):
 def restore_version(script_id: int, number: int, admin: ScriptsManager, session: SessionDep):
     """Make an old version current again, as a new version (history is never rewritten)."""
     script = _script(session, script_id, admin)
+    _not_builtin(script, admin)
     old = next((v for v in script.versions if v.number == number), None)
     if old is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such version")

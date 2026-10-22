@@ -5,7 +5,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from app import scriptschedules, sla
+from app import scripts, scriptschedules, sla
 from app.api.runs import _run_out
 from app.auth import Agent, SessionDep
 from app.models import Device, Script, ScriptRun, ScriptSchedule, User, UserRole
@@ -41,6 +41,8 @@ def _apply(session, s: ScriptSchedule, body: ScriptScheduleIn) -> None:
     script = session.get(Script, body.script_id)
     if script is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "No such script")
+    if scripts.is_builtin(script.name):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Built-in scripts run from their own place in Layer 8 (e.g. a subnet's scan schedule), not on a script schedule")
     for field, value in body.model_dump().items():
         setattr(s, field, value)
     s.script = script

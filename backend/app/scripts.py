@@ -22,6 +22,15 @@ LANGUAGES = {
 }
 
 
+# Built-in scripts (IP scans, AD changes...) are made by the app under names starting with this.
+# They run only from their own feature, with its checks; nobody may name a script like them.
+BUILTIN_PREFIX = "Layer 8:"
+
+
+def is_builtin(name: str) -> bool:
+    return name.strip().lower().startswith(BUILTIN_PREFIX.lower())
+
+
 class ScriptError(ValueError):
     """The message is safe to show."""
 

@@ -123,6 +123,10 @@ def _action(session, script_id: int, user: User) -> Script:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Script not found")
     if script.kind != ScriptKind.action:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Only actions run on devices")
+    if scripts.is_builtin(script.name):
+        # They run from their own feature (IP addresses, a ticket's AD account card), which checks
+        # what they may touch; here nothing would.
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Built-in scripts run from their own place in Layer 8 (IP addresses, a ticket's AD account card), not from here")
     return script
 
 

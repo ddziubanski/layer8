@@ -318,6 +318,9 @@ def test_sql_update_cap_changes_nothing(client, db, admin, requester, desk):
         ("SELECT user_id AS id FROM user_sessions", None, "permission denied"),
         ("SELECT id, password_hash FROM users", None, "permission denied"),
         ("SELECT 1 AS id; DELETE FROM tickets", None, "SQL error"),
+        # Closing the wrapper's bracket to slip in more statements: refused (one prepared statement only).
+        ("SELECT 1 AS id) AS rule_select; COMMIT; UPDATE tickets SET status = 'closed'; SELECT * FROM (SELECT 1 AS id", None, "multiple commands"),
+        ("SELECT id FROM tickets", "UPDATE tickets SET priority = 'low') SELECT 1; COMMIT; UPDATE tickets SET status = 'closed'; WITH x AS (SELECT 1", "SQL error"),
         ("DELETE FROM tickets", None, "Must start with SELECT"),
         ("SELECT set_config('role', 'helpdesk', false) AS id", None, "SQL error"),
         ("SELECT id FROM tickets", "UPDATE users SET role = 'admin'", "permission denied"),
@@ -334,6 +337,7 @@ def test_sql_rules_cannot_escape_their_login(client, db, admin, requester, desk,
     # Nothing leaked into the app's data.
     db.expire_all()
     assert db.scalar(select(func.count()).select_from(Ticket)) == 1
+    assert db.scalar(select(func.count()).select_from(Ticket).where(Ticket.status == "closed")) == 0
 
 
 def test_sql_rules_disabled_without_their_login(client, admin, monkeypatch):

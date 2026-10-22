@@ -50,8 +50,8 @@ def run(sql: str, date_from: date | None, date_to: date | None, limit: int, extr
     except sqlmode.SqlRuleError as exc:
         raise ReportError(str(exc).replace("SQL rules need", "SQL reports need")) from None
     # Untyped parameters: cast them, so they compare with timestamps in any expression.
-    wrapped = f"SELECT * FROM ({PARAMS.sub(lambda m: f'CAST(:{m[1]} AS timestamptz)', body)}) AS report LIMIT {limit + 1}"
-    params = {**(extra or {}), "start": _bound(date_from, "-infinity"), "end": _bound(date_to, "infinity", 1)}
+    wrapped = f"SELECT * FROM ({PARAMS.sub(lambda m: f'CAST(:{m[1]} AS timestamptz)', body)}) AS report WHERE {sqlmode.GUARD} LIMIT {limit + 1}"
+    params = {**(extra or {}), **sqlmode.GUARD_PARAMS, "start": _bound(date_from, "-infinity"), "end": _bound(date_to, "infinity", 1)}
     with conn_engine.connect() as conn:
         try:
             conn.execute(text("SET TRANSACTION READ ONLY"))

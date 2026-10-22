@@ -148,3 +148,43 @@ def test_queues_handed_to_a_group(client, db, admin, agent, desk):
     assert client.patch(f"/api/queues/{q.json()['id']}", json={"description": "Buildings"}, headers=as_user(agent)).status_code == 200
     r = client.patch(f"/api/queues/{q.json()['id']}", json={"restricted": True}, headers=as_user(agent))
     assert r.status_code == 403 and r.json()["detail"].startswith("Changing is_default, is_active or restricted: Queues")
+
+
+def test_builtin_scripts_only_run_from_their_feature(client, db, admin, agent):
+    from app import adchanges, ipamscan
+
+    ad = adchanges.ensure_script(db)
+    scan = ipamscan.ensure_script(db)
+    db.commit()
+    for s in (ad, scan):
+        r = client.post(f"/api/scripts/{s.id}/runs", json={"on_runner": True, "values": {}}, headers=as_user(admin))
+        assert r.status_code == 422 and "Built-in scripts run from their own place" in r.json()["detail"]
+    sched = {"name": "x", "script_id": ad.id, "on_runner": True, "frequency": "daily", "time": "02:00", "start_date": "2026-10-22"}
+    assert "Built-in scripts" in client.post("/api/script-schedules", json=sched, headers=as_user(admin)).json()["detail"]
+    # Nobody can make a lookalike, and writers who aren't admins can't change built-ins.
+    body = {"name": "Layer 8: change an AD account", "kind": "action", "language": "powershell", "body": "evil", "parameters": []}
+    assert client.post("/api/scripts", json=body, headers=as_user(admin)).status_code == 422
+    assert client.post("/api/scripts", json={**body, "name": " layer 8: IP scan"}, headers=as_user(admin)).status_code == 422
+    writers = Group(name="Writers", members=[db.merge(agent)])
+    db.add(writers)
+    db.commit()
+    permissions.save(db, {"scripts_manage": {"who": "groups", "group_ids": [writers.id]}})
+    db.commit()
+    upd = {"name": ad.name, "kind": "action", "language": "powershell", "body": "evil", "parameters": [], "agents_can_run": True, "high_risk": False}
+    assert client.put(f"/api/scripts/{ad.id}", json=upd, headers=as_user(agent)).status_code == 403
+    assert client.delete(f"/api/scripts/{ad.id}", headers=as_user(agent)).status_code == 403
+
+
+def test_only_admins_decide_who_runs_a_script(client, db, admin, agent):
+    writers = Group(name="Writers", members=[db.merge(agent)])
+    db.add(writers)
+    db.commit()
+    permissions.save(db, {"scripts_manage": {"who": "groups", "group_ids": [writers.id]}})
+    db.commit()
+    body = {"name": "Reboot", "kind": "action", "language": "powershell", "body": "Restart-Computer", "parameters": [], "agents_can_run": True, "high_risk": False}
+    made = client.post("/api/scripts", json=body, headers=as_user(agent)).json()
+    assert (made["agents_can_run"], made["high_risk"]) == (False, True)
+    r = client.put(f"/api/scripts/{made['id']}", json={**body, "agents_can_run": True, "high_risk": True}, headers=as_user(agent))
+    assert r.status_code == 403 and "Only admins" in r.json()["detail"]
+    assert client.put(f"/api/scripts/{made['id']}", json={**body, "body": "Restart-Computer -Force", "agents_can_run": False, "high_risk": True}, headers=as_user(agent)).status_code == 200
+    assert client.put(f"/api/scripts/{made['id']}", json=body, headers=as_user(admin)).json()["agents_can_run"] is True

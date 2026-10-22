@@ -220,6 +220,7 @@ def test_sql_report_is_read_only_one_select_and_limited(client, admin, data):
         ("UPDATE tickets SET priority = 'low'", "Must start with SELECT or WITH"),
         ("WITH x AS (UPDATE tickets SET priority = 'low' RETURNING id) SELECT * FROM x", "SQL error"),
         ("SELECT 1; DELETE FROM tickets", "SQL error"),
+        ("SELECT 1) AS report; COMMIT; UPDATE tickets SET priority = 'low'; SELECT * FROM (SELECT 1", "multiple commands"),
         ("SELECT * FROM sessions", "SQL error"),
         ("SELECT nextval('tickets_id_seq')", "SQL error"),
     ]:

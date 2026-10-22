@@ -47,6 +47,12 @@ def engine() -> Engine:
     return _engine(settings.rules_database_url, settings.rules_statement_timeout_ms)
 
 
+# Bound into every wrapped query so the driver prepares it (the extended protocol): a prepared
+# statement is exactly one statement, so "...; COMMIT; UPDATE ..." can't ride along.
+GUARD = "CAST(:l8_one_statement AS int) IS NULL"
+GUARD_PARAMS = {"l8_one_statement": None}
+
+
 def _clean(sql: str, first_words: tuple[str, ...]) -> str:
     body = sql.strip().rstrip(";").strip()
     # Ignore leading comments when checking what kind of statement it is.
@@ -70,10 +76,10 @@ def _db_error(exc: DBAPIError) -> SqlRuleError:
 
 def select_ids(select_sql: str, ticket_ids: list[int]) -> list[int]:
     body = _clean(select_sql, ("SELECT", "WITH"))
-    wrapped = f"SELECT DISTINCT rule_select.id FROM ({body}) AS rule_select ORDER BY 1"
+    wrapped = f"SELECT DISTINCT rule_select.id FROM ({body}) AS rule_select WHERE {GUARD} ORDER BY 1"
     with engine().connect() as conn:
         try:
-            rows = conn.execute(_params(ticket_ids, wrapped), {"ticket_ids": ticket_ids} if ":ticket_ids" in wrapped else {})
+            rows = conn.execute(_params(ticket_ids, wrapped), {**GUARD_PARAMS, **({"ticket_ids": ticket_ids} if ":ticket_ids" in wrapped else {})})
             return [int(r[0]) for r in rows if r[0] is not None]
         except DBAPIError as exc:
             raise _db_error(exc) from None
@@ -86,11 +92,11 @@ def propose_update(update_sql: str, ticket_ids: list[int], cap: int) -> dict[int
     body = _clean(update_sql, ("UPDATE",))
     if re.search(r"\bRETURNING\b", body, re.I):
         raise SqlRuleError("Leave out RETURNING; the app reads the changes itself")
-    wrapped = f"WITH rule_update AS ({body} RETURNING 1) SELECT count(*) FROM rule_update"
+    wrapped = f"WITH rule_update AS ({body} RETURNING 1) SELECT count(*) FROM rule_update WHERE {GUARD}"
     cols = ", ".join(["id", *UPDATABLE])
     with engine().connect() as conn:
         try:
-            count = conn.execute(_params(ticket_ids, wrapped), {"ticket_ids": ticket_ids} if ":ticket_ids" in wrapped else {}).scalar()
+            count = conn.execute(_params(ticket_ids, wrapped), {**GUARD_PARAMS, **({"ticket_ids": ticket_ids} if ":ticket_ids" in wrapped else {})}).scalar()
             if count > cap:
                 raise SqlRuleError(f"The update would change {count} tickets, more than this rule's limit of {cap}; nothing was changed")
             rows = conn.execute(
