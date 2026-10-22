@@ -22,7 +22,7 @@ from app import runs
 from app.config import settings
 from app.directory.sync import get_directory
 from app.directory.types import DirectoryError
-from app.models import OnboardingTemplate, Script, ScriptKind, ScriptLanguage, ScriptVersion, Ticket, User
+from app.models import OnboardingTemplate, Runner, Script, ScriptKind, ScriptLanguage, ScriptVersion, Ticket, User
 
 SCRIPT_NAME = "Layer 8: change an AD account"
 NESTED_WARNING = "Nested group: Entra ID won't apply it through nesting (licensing, app assignment, Conditional Access). Add people directly."
@@ -220,6 +220,16 @@ def plan(
     return p
 
 
+def runner_id(session: Session) -> int | None:
+    name = settings.ad_runner_name.strip()
+    if not name:
+        return None
+    runner = session.scalar(select(Runner).where(Runner.name == name, Runner.is_active))
+    if runner is None or "powershell" not in runner.languages:
+        raise runs.RunError(f"No active PowerShell runner called {name!r} (Settings > Directory)")
+    return runner.id
+
+
 def request(session: Session, ticket: Ticket, actor: User, p: Plan, template_name: str | None = None):
     """Queue the change on a PowerShell runner; it's logged on the ticket like any script run."""
     if p.empty:
@@ -235,7 +245,7 @@ def request(session: Session, ticket: Ticket, actor: User, p: Plan, template_nam
         "title": p.title or "",
     }
     try:
-        made = runs.request(session, script, actor, device_ids=[], on_runner=True, values=values, ticket=ticket)
+        made = runs.request(session, script, actor, device_ids=[], on_runner=True, values=values, ticket=ticket, only_runner_id=runner_id(session))
     except runs.RunError as exc:
         raise ADChangeError(str(exc)) from None
     what = []
@@ -564,12 +574,12 @@ def create(session: Session, ticket: Ticket, actor: User, a: NewAccount, templat
     try:
         made = runs.request(
             session, script, actor, device_ids=[], on_runner=True, values=values, ticket=ticket, sealed={"password": password},
-            on_success=_manager_email(ticket, actor, a) if a.email_manager else None,
+            on_success=_manager_email(ticket, actor, a) if a.email_manager else None, only_runner_id=runner_id(session),
         )
         if a.start_date is not None and not a.enabled:
             # From the start of that day, server time.
             at = datetime.combine(a.start_date, time.min).astimezone()
-            made += runs.request(session, enable_script(session), actor, device_ids=[], on_runner=True, values={"sam": a.sam}, ticket=ticket, not_before=at)
+            made += runs.request(session, enable_script(session), actor, device_ids=[], on_runner=True, values={"sam": a.sam}, ticket=ticket, not_before=at, only_runner_id=runner_id(session))
     except runs.RunError as exc:
         raise ADChangeError(str(exc)) from None
     from app import services

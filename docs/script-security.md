@@ -34,6 +34,11 @@ jobs cannot land there. Explicitly select the runner in the relevant integration
 an empty "any runner" selection will not use a dedicated host. Keep general scripts on a
 separate service account and machine with only the rights those scripts need.
 
+For AD, set **Settings > Directory > Runner for AD account changes**. This pins group/OU
+changes, new accounts, deferred account enabling and offboarding jobs to that host. The
+same setting is importable as `directory.ad_runner_name` in installer answers. A missing,
+disabled or non-PowerShell selected runner causes an error; there is no silent fallback.
+
 Existing runners retain general mode for compatibility. Enabling this setting prevents
 future claims; it cannot stop work already running. Removing a runner cancels pending jobs
 pinned to it and clears their secrets, rather than letting another host inherit them.
