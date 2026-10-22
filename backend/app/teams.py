@@ -1,5 +1,6 @@
 """Optional Teams Workflows digest. Only aggregate, non-restricted ticket counts leave the app."""
 
+import logging
 import re
 from urllib.parse import urlsplit
 
@@ -14,6 +15,19 @@ from app.models import Queue, Ticket, TicketStatus
 
 class TeamsError(RuntimeError):
     """Messages are safe for the system log: never include the signed webhook URL."""
+
+
+class _HideWorkflowURL(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        # HTTPX's normal INFO request log includes the full signed URL. Apply this
+        # on its logger before any handler (stderr/journal or custom handlers) sees it.
+        if re.search(r"https://[^\s\"']+\.(?:logic\.azure\.com|environment\.api\.powerplatform\.com)(?=[:/])", message, re.I):
+            record.msg, record.args = "Teams Workflows HTTP request (signed URL omitted)", ()
+        return True
+
+
+logging.getLogger("httpx").addFilter(_HideWorkflowURL())
 
 
 def validate_url(value: str) -> None:

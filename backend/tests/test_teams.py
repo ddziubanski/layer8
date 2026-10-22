@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import timedelta
 
 import httpx
@@ -23,7 +24,8 @@ def test_rejects_other_destinations(url):
         teams.validate_url(url)
 
 
-def test_delivery_payload_and_safe_http_errors(monkeypatch):
+def test_delivery_payload_and_safe_http_errors(monkeypatch, caplog):
+    caplog.set_level(logging.INFO, logger="httpx")
     monkeypatch.setattr(settings, "teams_webhook_url", URL)
     original = httpx.Client
     requests = []
@@ -40,6 +42,8 @@ def test_delivery_payload_and_safe_http_errors(monkeypatch):
     with pytest.raises(teams.TeamsError, match="HTTP 302") as exc:
         teams.send(teams.card({"Open tickets": 3}))
     assert "sig=" not in str(exc.value) and len(requests) == 1
+    assert "test-only-secret" not in caplog.text and "sig=" not in caplog.text
+    assert "signed URL omitted" in caplog.text
     payload = json.loads(requests[0].content)
     assert payload["attachments"][0]["content"]["body"][1]["facts"] == [{"title": "Open tickets", "value": "3"}]
 
