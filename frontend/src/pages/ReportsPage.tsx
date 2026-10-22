@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -104,7 +105,7 @@ export function ReportsPage() {
   return (
     <>
       <div className="page-head">
-        <h1>Reports</h1>
+        <WorkspaceTitle title="Reports" area="SERVICE INSIGHTS" description="Explore service data, save reports and schedule delivery." />
       </div>
       {presets.error && <p className="error">{presets.error.message}</p>}
       <div className="admin">

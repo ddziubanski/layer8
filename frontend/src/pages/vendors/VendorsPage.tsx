@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
@@ -37,7 +38,7 @@ export function VendorsPage({ me }: { me: Me }) {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Vendors and systems</h1>
+        <WorkspaceTitle title="Vendors and systems" area="SERVICE DIRECTORY" description="Keep suppliers, contacts and business systems connected." />
         <button className="btn" type="button" onClick={() => setPane({ kind, id: "new" })}>
           {tab === "vendors" ? "Add a vendor" : "Add a system"}
         </button>

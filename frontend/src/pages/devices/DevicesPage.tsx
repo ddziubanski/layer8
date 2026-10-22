@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
@@ -34,7 +35,7 @@ export function DevicesPage({ me }: { me: Me }) {
     return (
       <>
         <div className="page-head row-gap">
-          <h1 className="spacer">Devices</h1>
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" description="Inventory, ownership, lifecycle and device health." />
         </div>
         {tabs}
         <LifecycleView />
@@ -44,7 +45,7 @@ export function DevicesPage({ me }: { me: Me }) {
     return (
       <>
         <div className="page-head row-gap">
-          <h1 className="spacer">Devices</h1>
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" description="Inventory, ownership, lifecycle and device health." />
         </div>
         {tabs}
         <Sweeps view={view} action1={uses(me, "action1")} />
@@ -72,7 +73,7 @@ function AllDevices({ me, tabs }: { me: Me; tabs: ReactNode }) {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Devices</h1>
+        <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" description="Inventory, ownership, lifecycle and device health." />
         {can(me, "devices_add") && (
           <button className="btn2" type="button" aria-expanded={adding} onClick={() => setAdding(!adding)}>
             Add a device

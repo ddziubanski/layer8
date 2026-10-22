@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
@@ -15,7 +16,7 @@ export function HelpList() {
   const list = useQuery({ queryKey: ["kb", "portal", search], queryFn: () => api.kb.list({ q: search || undefined, limit: 50 }) });
   return (
     <div className="stack" style={{ maxWidth: 760 }}>
-      <h1 style={{ margin: 0 }}>Help articles</h1>
+      <WorkspaceTitle title="Help articles" area="FIND AN ANSWER" description="Search practical guidance from your service team." />
       <input type="search" aria-label="Search help articles" placeholder="What do you need help with?" value={q} onChange={(e) => setQ(e.target.value)} />
       <nav className="kb-list" aria-label="Help articles">
         {list.data?.length === 0 && (

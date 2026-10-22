@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -31,7 +32,7 @@ export function ScriptsPage({ me }: { me: Me }) {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Scripts</h1>
+        <WorkspaceTitle title="Scripts" area="AUTOMATION" description="Browse queries and actions, review runs and manage schedules." />
         {writes && (
           <>
             <button className="btn2" type="button" disabled={examples.isPending} onClick={() => examples.mutate()}>

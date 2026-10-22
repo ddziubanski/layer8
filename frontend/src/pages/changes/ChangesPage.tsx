@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
@@ -34,7 +35,7 @@ export function ChangesPage() {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Changes</h1>
+        <WorkspaceTitle title="Changes" area="CHANGE CONTROL" description="Plan work, review approvals and track delivery." />
         <Link className="btn" to="/changes/new">
           New change
         </Link>

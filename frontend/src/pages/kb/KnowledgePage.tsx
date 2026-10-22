@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -27,7 +28,7 @@ export function KnowledgePage({ me }: { me: Me }) {
   return (
     <>
       <div className="row-gap" style={{ marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Knowledge base</h1>
+        <WorkspaceTitle title="Knowledge base" area="KNOWLEDGE" description="Find answers, maintain articles and share useful guidance." />
         <span className="spacer" />
         <Link className="btn" to="/kb/new">
           New article

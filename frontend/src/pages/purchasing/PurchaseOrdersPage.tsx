@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
@@ -51,7 +52,7 @@ export function PurchaseOrdersPage() {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Purchase orders</h1>
+        <WorkspaceTitle title="Purchase orders" area="PROCUREMENT" description="Track purchasing, approvals and incoming deliveries." />
         <button className="btn" type="button" onClick={() => navigate("/purchase-orders/new")}>
           New purchase order
         </button>

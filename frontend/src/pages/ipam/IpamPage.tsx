@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
@@ -28,7 +29,7 @@ export function IpamPage({ me }: { me: Me }) {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">IP addresses</h1>
+        <WorkspaceTitle title="IP addresses" area="NETWORK OPERATIONS" description="Document subnets and addresses, then review discovery findings." />
       </div>
       <div className="tabs" role="tablist" style={{ marginBottom: 12 }}>
         {[
