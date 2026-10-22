@@ -61,4 +61,4 @@ def test_runner_scope_is_admin_only_and_round_trips(client, admin, agent):
     saved = client.put("/api/settings/directory", json={"values": {"ad_runner_name": "Renamed"}}, headers=as_user(admin))
     assert saved.status_code == 200, saved.text
     fields = client.get("/api/settings/directory", headers=as_user(admin)).json()["fields"]
-    assert any(field["key"] == "ad_runner_name" for field in fields)
+    assert any(field["name"] == "ad_runner_name" and field["value"] == "Renamed" for field in fields)
