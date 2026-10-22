@@ -89,6 +89,15 @@ describe("ticket", () => {
     return { t, calls };
   }
 
+  test("links the parent ticket in the breadcrumb without making the current ticket a link", async () => {
+    setup({ parent: { id: 4700, label: "#4700", subject: "Network outage" } });
+    const breadcrumb = await screen.findByRole("navigation", { name: "Ticket breadcrumb" });
+    expect(within(breadcrumb).getByRole("link", { name: "#4700" })).toHaveAttribute("href", "/tickets/4700");
+    expect(within(breadcrumb).getByRole("link", { name: "#4700" })).toHaveAttribute("title", "Network outage");
+    expect(within(breadcrumb).getByText("#4821")).toHaveAttribute("aria-current", "page");
+    expect(within(breadcrumb).queryByRole("link", { name: "#4821" })).not.toBeInTheDocument();
+  });
+
   test("shows conversation, files, notes, routing and SLA", async () => {
     setup();
     expect(await screen.findByRole("heading", { name: "Switch port flapping, 2nd floor" })).toBeInTheDocument();

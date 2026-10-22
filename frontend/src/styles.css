@@ -543,7 +543,7 @@ label.inline input { width: auto; min-height: 0; }
 .ticket-breadcrumb { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 18px; }
 .ticket-breadcrumb a { text-decoration: none; font-weight: 600; }
 .ticket-breadcrumb [aria-current="page"] { color: var(--muted); }
-.ticket-workspace-kicker { font-size: 10px; letter-spacing: .13em; font-weight: 700; color: var(--brand); margin-bottom: 7px; }
+.ticket-workspace-kicker { font-size: 10px; letter-spacing: .13em; font-weight: 700; color: var(--link); margin-bottom: 7px; }
 .ticket-workspace-title { gap: 10px; margin-bottom: 12px; }
 .ticket-workspace-title h1 { font-size: clamp(21px, 2.1vw, 29px); letter-spacing: -.035em; overflow-wrap: anywhere; min-width: 200px; }
 .ticket-workspace-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line-soft); padding-top: 12px; }
