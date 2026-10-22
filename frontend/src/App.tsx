@@ -47,6 +47,7 @@ const BrandingAdmin = named(() => import("./pages/admin/BrandingAdmin"), "Brandi
 const DirectoryAdmin = named(() => import("./pages/admin/DirectoryAdmin"), "DirectoryAdmin");
 const EmailAdmin = named(() => import("./pages/admin/EmailAdmin"), "EmailAdmin");
 const Action1Admin = named(() => import("./pages/admin/Action1Admin"), "Action1Admin");
+const ApiKeysAdmin = named(() => import("./pages/admin/ApiKeysAdmin"), "ApiKeysAdmin");
 const SurveysAdmin = named(() => import("./pages/admin/SurveysAdmin"), "SurveysAdmin");
 const PermissionsAdmin = named(() => import("./pages/admin/PermissionsAdmin"), "PermissionsAdmin");
 const ChecklistsAdmin = named(() => import("./pages/admin/ChecklistsAdmin"), "ChecklistsAdmin");
@@ -154,6 +155,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "notices", label: "Notices", adminOnly: true, permission: "notices_manage", page: (me) => <NoticesAdmin me={me} /> },
   { path: "runners", label: "Runners", adminOnly: true, page: (me) => <RunnersAdmin me={me} /> },
   { path: "action1", label: "Action1", adminOnly: true, feature: "action1", page: (me) => <Action1Admin me={me} /> },
+  { path: "api-keys", label: "API keys", adminOnly: true, page: (me) => <ApiKeysAdmin me={me} /> },
   {
     path: "sweeps",
     label: "Device sweeps",

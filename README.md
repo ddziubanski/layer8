@@ -86,6 +86,7 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Dell and Lenovo warranty lookups | [docs/warranty.md](docs/warranty.md) |
 | Moving from Track-It! | [docs/trackit-import.md](docs/trackit-import.md) |
 | Recovery console | [docs/recovery-console.md](docs/recovery-console.md) |
+| Other apps (API keys: look up tickets, add notes) | [docs/integrations.md](docs/integrations.md) |
 
 ## Built with
 

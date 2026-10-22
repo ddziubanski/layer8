@@ -93,6 +93,8 @@ export type ScanRunner = S["ScanRunnerOut"];
 export type DeviceIp = S["DeviceIpOut"];
 export type SwitchPort = S["SwitchPortOut"];
 export type DeviceWarranty = S["DeviceWarrantyOut"];
+export type ApiKey = S["ApiKeyOut"];
+export type ApiKeyMade = S["ApiKeyMadeOut"];
 export type NetworkDevice = S["NetworkDeviceOut"];
 export type NetworkDeviceDetail = S["NetworkDeviceDetailOut"];
 export type DevicePatch = S["DevicePatchOut"];
@@ -543,6 +545,12 @@ export const api = {
     findings: (p: { subnet_id?: number; status?: string } = {}) => request<IpFinding[]>("GET", `/api/ipam/findings${query(p)}`),
     applyFinding: (id: number) => request<IpFinding>("POST", `/api/ipam/findings/${id}/apply`),
     dismissFinding: (id: number) => request<IpFinding>("POST", `/api/ipam/findings/${id}/dismiss`),
+  },
+
+  apiKeys: {
+    list: () => request<ApiKey[]>("GET", "/api/api-keys"),
+    create: (name: string) => request<ApiKeyMade>("POST", "/api/api-keys", { name }),
+    revoke: (id: number) => request<ApiKey>("DELETE", `/api/api-keys/${id}`),
   },
 
   network: {

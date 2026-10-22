@@ -1065,6 +1065,28 @@ class ImportRef(Base):
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class ApiKey(Base):
+    """A key another application (e.g. a server-room sign-in app) uses for the integration API
+    (/api/integrations). It acts as its own technician account, which is inactive so it can never
+    sign in or be assigned work; notes it adds are signed with that account's name."""
+
+    __tablename__ = "api_keys"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    # The first characters, to tell keys apart in lists (the rest is never stored).
+    prefix: Mapped[str] = mapped_column(String(12))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    created_by: Mapped["User | None"] = relationship(foreign_keys=[created_by_id])
+
+
 class DeviceWarranty(Base):
     """What the maker says about a device's warranty (Dell TechDirect, Lenovo's warranty API), as of
     the last lookup. Kept apart from the device's own dates: those are filled when empty, and a

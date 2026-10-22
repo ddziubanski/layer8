@@ -75,6 +75,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Notices",
     "Runners",
     "Action1",
+    "API keys",
     "Device sweeps",
     "Warranty lookups",
     "Purchasing",
@@ -437,4 +438,20 @@ test("Action1's tab shows only while Action1 is in use", async () => {
   const tabs = [...screen.getByRole("navigation", { name: "Settings" }).querySelectorAll("a")].map((a) => a.textContent);
   expect(tabs).not.toContain("Action1");
   expect(tabs).toContain("Device sweeps");
+});
+
+
+test("API keys: a new key is shown once", async () => {
+  const KEY = { id: 1, name: "MER server room", prefix: "l8k_AbCd", is_active: true, created_at: "2026-10-22T00:00:00Z", last_used_at: null, created_by: "Admin" };
+  const calls = mockApi({
+    "GET /api/auth/me": ADMIN,
+    "GET /api/api-keys": [],
+    "POST /api/api-keys": { ...KEY, token: "l8k_AbCdSecretSecret" },
+  });
+  mountApp("/settings/api-keys");
+  await userEvent.type(await screen.findByLabelText("Key name"), "MER server room");
+  await userEvent.click(screen.getByRole("button", { name: "Make a key" }));
+  const card = await screen.findByRole("region", { name: "New API key" });
+  expect(card).toHaveTextContent("l8k_AbCdSecretSecret");
+  expect(calls.find((c) => c.method === "POST")!.body).toEqual({ name: "MER server room" });
 });
