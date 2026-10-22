@@ -163,8 +163,7 @@ def decide(session: Session, run: ScriptRun, admin: User, approve: bool) -> None
     if approve and run.version.author_id == admin.id:
         raise RunError("Someone else has to approve code you authored")
     if approve and (not run.script.is_active or run.version.number != run.script.current_version
-                    or run.requested_by is None or not run.requested_by.is_active
-                    or (run.requested_by.role != UserRole.admin and not run.script.agents_can_run)):
+                    or not _requester_authorized(session, run)):
         raise RunError("Execution authorization changed; request a new run")
     run.status = RunStatus.queued if approve else RunStatus.rejected
     run.decided_by_id, run.decided_at = admin.id, sla.utcnow()
@@ -203,11 +202,24 @@ def cancel_pending(session: Session, script: Script, reason: str) -> None:
         ipamscan.on_finished(session, run)
 
 
-def _claimable(run: ScriptRun) -> bool:
+def _requester_authorized(session: Session, run: ScriptRun) -> bool:
     user = run.requested_by
-    if not run.script.is_active or user is None or not user.is_active:
+    if user is None:
         return False
-    if user.role != UserRole.admin and not run.script.agents_can_run:
+    if user.is_active:
+        return user.role == UserRole.admin or (user.role == UserRole.agent and run.script.agents_can_run)
+    # Scheduled discovery deliberately uses a non-login service identity. Preserve that
+    # narrow worker path, not arbitrary inactive users or generic scripts using its name.
+    if user.email == services.AUTOMATION_EMAIL and user.role == UserRole.agent and run.script.agents_can_run:
+        from app import ipamscan
+        from app.models import IpScan
+        names = {definition[0] for definition in ipamscan.SCRIPTS.values()}
+        return run.script.name in names and session.scalar(select(IpScan.id).where(IpScan.run_id == run.id, IpScan.scheduled)) is not None
+    return False
+
+
+def _claimable(session: Session, run: ScriptRun) -> bool:
+    if not run.script.is_active or not _requester_authorized(session, run):
         return False
     if run.version.number != run.script.current_version:
         return False
@@ -248,7 +260,7 @@ def claim(session: Session, runner: Runner, host: str, version: str) -> tuple[Sc
         run = session.scalar(stmt)
         if run is None:
             return None, {}
-        if _claimable(run):
+        if _claimable(session, run):
             break
         run.status, run.sealed, run.finished_at = RunStatus.cancelled, None, sla.utcnow()
         run.error = "Execution authorization changed; request a new run"

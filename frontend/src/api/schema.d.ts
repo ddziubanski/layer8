@@ -8486,6 +8486,10 @@ export interface components {
         };
         /** ScriptVersionDetailOut */
         ScriptVersionDetailOut: {
+            language?: components["schemas"]["ScriptLanguage"] | null;
+            reviewed_by?: components["schemas"]["UserRef"] | null;
+            /** First administrator review, ISO date-time; unknown for legacy versions. */
+            reviewed_at?: string | null;
             /** Number */
             number: number;
             /** Note */
