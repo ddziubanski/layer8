@@ -10,7 +10,7 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app import runseal, scripts, services, sla
@@ -239,6 +239,11 @@ def claim(session: Session, runner: Runner, host: str, version: str) -> tuple[Sc
         .limit(1)
         .with_for_update(of=ScriptRun, skip_locked=True)
     )
+    if runner.builtins_only:
+        stmt = stmt.where(
+            ScriptRun.only_runner_id == runner.id,
+            func.lower(func.trim(Script.name)).startswith(scripts.BUILTIN_PREFIX.lower()),
+        )
     while True:
         run = session.scalar(stmt)
         if run is None:

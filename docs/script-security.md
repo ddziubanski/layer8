@@ -24,3 +24,18 @@ versions because older interpreter changes were never recorded. Check older code
 restoring it. It does not invent review records for existing versions. All queued and
 awaiting-approval runs are cancelled during this migration; request them again after
 review. Running and completed runs are retained. Take the normal backup before upgrading.
+
+## Privileged runners
+
+In Settings > Runners, enable **Dedicated integration runner** for a host with AD write,
+DHCP/DNS, SNMP or other privileged credentials. It accepts only built-in jobs explicitly
+assigned to that runner. General scripts, even admin-authored ones, and unpinned integration
+jobs cannot land there. Explicitly select the runner in the relevant integration settings;
+an empty "any runner" selection will not use a dedicated host. Keep general scripts on a
+separate service account and machine with only the rights those scripts need.
+
+Existing runners retain general mode for compatibility. Enabling this setting prevents
+future claims; it cannot stop work already running. Removing a runner cancels pending jobs
+pinned to it and clears their secrets, rather than letting another host inherit them.
+This is a dispatch boundary, not an OS sandbox: a compromised runner token or administrator
+remains privileged within its configured role. Restrict OS credentials and protect tokens.

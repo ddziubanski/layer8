@@ -65,7 +65,7 @@ def create_runner(body: RunnerIn, admin: Admin, session: SessionDep):
     name = body.name.strip()
     _name_free(session, name)
     token, token_hash = runs.new_token()
-    runner = Runner(name=name, description=body.description, languages=sorted(set(body.languages)), is_active=body.is_active, token_hash=token_hash)
+    runner = Runner(name=name, description=body.description, languages=sorted(set(body.languages)), is_active=body.is_active, builtins_only=body.builtins_only, token_hash=token_hash)
     session.add(runner)
     session.commit()
     log.info("Runner %r added by %s", runner.name, admin.display_name, extra={"source": "settings"})
@@ -78,6 +78,7 @@ def update_runner(runner_id: int, body: RunnerIn, admin: Admin, session: Session
     name = body.name.strip()
     _name_free(session, name, runner.id)
     runner.name, runner.description, runner.languages, runner.is_active = name, body.description, sorted(set(body.languages)), body.is_active
+    runner.builtins_only = body.builtins_only
     session.commit()
     return runner
 
@@ -95,6 +96,14 @@ def new_runner_token(runner_id: int, admin: Admin, session: SessionDep):
 @router.delete("/api/runners/{runner_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_runner(runner_id: int, admin: Admin, session: SessionDep):
     runner = _runner(session, runner_id)
+    # SET NULL on the FK must never turn a pinned privileged job into general work.
+    for run in session.scalars(select(ScriptRun).where(
+        ScriptRun.only_runner_id == runner.id,
+        ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
+    ).with_for_update()):
+        runs.cancel(session, run, admin)
+        run.error = "Selected runner removed; request a new run on an appropriate runner"
+        runs._log_finished(session, run)
     session.delete(runner)
     session.commit()
     log.info("Runner %r removed by %s", runner.name, admin.display_name, extra={"source": "settings"})
@@ -158,7 +167,7 @@ def preview_run(script_id: int, body: RunRequestIn, user: Agent, session: Sessio
         targets.append(RunTargetOut(device_id=d.id, name=d.name, target=runs.target_name(d)))
     if body.on_runner:
         targets.append(RunTargetOut(device_id=None, name="On the runner itself", target=None))
-    able = [r for r in session.scalars(select(Runner).where(Runner.is_active)) if script.language in (r.languages or [])]
+    able = [r for r in session.scalars(select(Runner).where(Runner.is_active, Runner.builtins_only.is_(False))) if script.language in (r.languages or [])]
     online = any(r.last_seen_at and sla.utcnow() - r.last_seen_at < ONLINE for r in able)
     return RunPreviewOut(
         targets=targets, values={k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in values.items()},
