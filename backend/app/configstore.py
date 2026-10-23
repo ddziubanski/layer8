@@ -228,7 +228,21 @@ class Field:
         return parsed
 
 
+def _teams_url(v: str) -> None:
+    from app.teams import TeamsError, validate_url
+
+    try:
+        validate_url(v)
+    except TeamsError as exc:
+        raise SettingsError(str(exc)) from None
+
+
 SECTIONS: dict[str, list[Field]] = {
+    "teams": [
+        Field("teams_enabled", "Send Teams queue summaries", "Off by default. Shares aggregate counts from non-restricted queues only; no ticket subjects, people or notes."),
+        Field("teams_webhook_url", "Workflows webhook URL", "A signed Teams Workflows URL. Kept as a secret and never shown back. See docs/teams.md for setup.", secret=True, check=_teams_url),
+        Field("teams_summary_minutes", "Summary interval (minutes)", "Sends a periodic snapshot, including zero counts. Settings > Status can pause or run it now.", check=_between(15, 1440)),
+    ],
     "general": [
         Field("portal_url", "Portal address", "The address people open, e.g. https://helpdesk.corp.example. Used in ticket links in emails.", check=_http_url),
         Field("session_hours", "Sign-in lasts (hours)", "People are signed out after this long without using the app.", check=_between(1, 720)),
@@ -251,6 +265,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("ldap_computer_base_dn", "Computer search base", "Where to look for computers, which become devices (AD only), e.g. OU=Workstations,DC=corp,DC=example. Empty: the search base."),
         Field("ad_change_group_bases", "Groups technicians may change", "AD changes from tickets: one OU per line (DN); only groups (security groups and distribution lists) under these can be added to or removed from a requester, e.g. OU=Access Groups,DC=corp,DC=example. Empty: no group changes. The change runs on a PowerShell runner whose account has those rights in AD."),
         Field("ad_change_ou_bases", "OUs accounts may be moved into", "One OU per line (DN); a requester's account can be moved into these or any OU below them. Empty: no OU moves."),
+        Field("ad_runner_name", "Runner for AD account changes", "The runner's name for AD changes, account creation, deferred enabling and offboarding. Select a dedicated integration runner for privileged AD credentials. Empty: any general runner that accepts PowerShell; dedicated hosts require an explicit selection.", check=_length(0, 100)),
         Field("ad_group_lists", "Group lists to tick from", "One per line: a label, a colon, then either an OU (Distribution lists: OU=Distribution Lists,DC=corp,DC=example: every group in it, and technicians may change those groups) or the start of the groups' names (Distribution lists: [EMAIL]: groups under the OUs above whose name starts with it). Each list is offered as tick boxes when adding someone to groups (on a ticket, a new account, a template).", check=_group_lists),
         Field("ad_new_user_ou", "New accounts go in", "Onboarding: the OU new AD accounts are created in, unless the onboarding template names one, e.g. OU=Staff,DC=corp,DC=example. Must be within the OUs above. Empty: technicians can't create accounts."),
         Field("ad_new_user_domain", "New accounts' email and UPN domain", "e.g. example.com: the account jsmith gets jsmith@example.com as its UPN, and that is suggested as the email address (the technician can change it).", check=_domain),

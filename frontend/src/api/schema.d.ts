@@ -8080,6 +8080,8 @@ export interface components {
         };
         /** RunnerIn */
         RunnerIn: {
+            /** Builtins Only; defaults to false for existing callers. */
+            builtins_only?: boolean;
             /** Name */
             name: string;
             /**
@@ -8123,6 +8125,8 @@ export interface components {
         };
         /** RunnerOut */
         RunnerOut: {
+            /** Builtins Only */
+            builtins_only?: boolean;
             /** Id */
             id: number;
             /** Name */
@@ -8482,6 +8486,10 @@ export interface components {
         };
         /** ScriptVersionDetailOut */
         ScriptVersionDetailOut: {
+            language?: components["schemas"]["ScriptLanguage"] | null;
+            reviewed_by?: components["schemas"]["UserRef"] | null;
+            /** First administrator review, ISO date-time; unknown for legacy versions. */
+            reviewed_at?: string | null;
             /** Number */
             number: number;
             /** Note */

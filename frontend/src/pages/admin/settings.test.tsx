@@ -70,6 +70,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Checklists",
     "Changes",
     "Email",
+    "Teams",
     "Windows sign-in",
     "Surveys",
     "Notices",
@@ -418,10 +419,11 @@ test("runners: add one and see its token once", async () => {
   const form = screen.getByRole("form", { name: "Add a runner" });
   await userEvent.type(within(form).getByLabelText("Name"), "RUNNER01");
   await userEvent.click(within(form).getByLabelText("Arista EOS"));
+  await userEvent.click(within(form).getByLabelText("Dedicated integration runner"));
   await userEvent.click(within(form).getByRole("button", { name: "Add runner" }));
   const card = await screen.findByRole("region", { name: "Runner token" });
   expect(within(card).getByText("hdr_secret-token")).toBeInTheDocument();
-  expect(calls.find((c) => c.method === "POST")!.body).toMatchObject({ name: "RUNNER01", languages: ["powershell", "eos"] });
+  expect(calls.find((c) => c.method === "POST")!.body).toMatchObject({ name: "RUNNER01", languages: ["powershell", "eos"], builtins_only: true });
 });
 
 test("a technician who was handed areas sees their tabs", async () => {

@@ -22,7 +22,7 @@ from app import runs
 from app.config import settings
 from app.directory.sync import get_directory
 from app.directory.types import DirectoryError
-from app.models import OnboardingTemplate, Script, ScriptKind, ScriptLanguage, ScriptVersion, Ticket, User
+from app.models import OnboardingTemplate, RunStatus, Runner, Script, ScriptKind, ScriptLanguage, ScriptRun, ScriptVersion, Ticket, User
 
 SCRIPT_NAME = "Layer 8: change an AD account"
 NESTED_WARNING = "Nested group: Entra ID won't apply it through nesting (licensing, app assignment, Conditional Access). Add people directly."
@@ -86,7 +86,7 @@ def ensure_script(session: Session) -> Script:
             name=SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.powershell, agents_can_run=True, current_version=1,
             description="Built in: used by the AD account card on tickets and by onboarding templates. Mark it high risk to require approval.",
         )
-        script.versions.append(ScriptVersion(number=1, body=SCRIPT_BODY, parameters=PARAMETERS, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=SCRIPT_BODY, parameters=PARAMETERS, note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -220,6 +220,33 @@ def plan(
     return p
 
 
+def runner_id(session: Session) -> int | None:
+    name = settings.ad_runner_name.strip()
+    if not name:
+        return None
+    runner = session.scalar(select(Runner).where(Runner.name == name, Runner.is_active))
+    if runner is None or "powershell" not in runner.languages:
+        raise runs.RunError(f"No active PowerShell runner called {name!r} (Settings > Directory)")
+    return runner.id
+
+
+def repin_pending(session: Session) -> int:
+    """After Settings > Directory names a new AD runner: move AD jobs that haven't started (dated
+    disables and enables among them) to it, so none wait for a host that won't take them."""
+    rid = runner_id(session)
+    if rid is None:
+        return 0
+    names = (SCRIPT_NAME, CREATE_SCRIPT_NAME, ENABLE_SCRIPT_NAME, DISABLE_SCRIPT_NAME)
+    moved = 0
+    for run in session.scalars(select(ScriptRun).join(Script, Script.id == ScriptRun.script_id).where(
+        Script.name.in_(names), ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
+    ).with_for_update(of=ScriptRun)):
+        if run.only_runner_id != rid:
+            run.only_runner_id = rid
+            moved += 1
+    return moved
+
+
 def request(session: Session, ticket: Ticket, actor: User, p: Plan, template_name: str | None = None):
     """Queue the change on a PowerShell runner; it's logged on the ticket like any script run."""
     if p.empty:
@@ -235,7 +262,7 @@ def request(session: Session, ticket: Ticket, actor: User, p: Plan, template_nam
         "title": p.title or "",
     }
     try:
-        made = runs.request(session, script, actor, device_ids=[], on_runner=True, values=values, ticket=ticket)
+        made = runs.request(session, script, actor, device_ids=[], on_runner=True, values=values, ticket=ticket, only_runner_id=runner_id(session))
     except runs.RunError as exc:
         raise ADChangeError(str(exc)) from None
     what = []
@@ -358,7 +385,7 @@ def create_script(session: Session) -> Script:
             name=CREATE_SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.powershell, agents_can_run=True, current_version=1,
             description="Built in: used by New account on a ticket's AD account card. Mark it high risk to require approval.",
         )
-        script.versions.append(ScriptVersion(number=1, body=CREATE_BODY, parameters=CREATE_PARAMETERS, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=CREATE_BODY, parameters=CREATE_PARAMETERS, note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -390,7 +417,7 @@ def enable_script(session: Session) -> Script:
             name=ENABLE_SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.powershell, agents_can_run=True, current_version=1,
             description="Built in: enables a new account on its start date (New account on a ticket, with a start date).",
         )
-        script.versions.append(ScriptVersion(number=1, body=ENABLE_BODY, parameters=[{**_T, "name": "sam", "label": "Account name", "required": True}], note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=ENABLE_BODY, parameters=[{**_T, "name": "sam", "label": "Account name", "required": True}], note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -413,7 +440,7 @@ def disable_script(session: Session) -> Script:
             description="Built in: disables a leaver's AD account on the day (offboarding checklists). Mark it high risk to require approval.",
         )
         params = [{**_T, "name": "user_guid", "label": "User (objectGUID)", "required": True}]
-        script.versions.append(ScriptVersion(number=1, body=DISABLE_BODY, parameters=params, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=DISABLE_BODY, parameters=params, note="Built in"))
         session.add(script)
         session.flush()
     return script
@@ -564,12 +591,12 @@ def create(session: Session, ticket: Ticket, actor: User, a: NewAccount, templat
     try:
         made = runs.request(
             session, script, actor, device_ids=[], on_runner=True, values=values, ticket=ticket, sealed={"password": password},
-            on_success=_manager_email(ticket, actor, a) if a.email_manager else None,
+            on_success=_manager_email(ticket, actor, a) if a.email_manager else None, only_runner_id=runner_id(session),
         )
         if a.start_date is not None and not a.enabled:
             # From the start of that day, server time.
             at = datetime.combine(a.start_date, time.min).astimezone()
-            made += runs.request(session, enable_script(session), actor, device_ids=[], on_runner=True, values={"sam": a.sam}, ticket=ticket, not_before=at)
+            made += runs.request(session, enable_script(session), actor, device_ids=[], on_runner=True, values={"sam": a.sam}, ticket=ticket, not_before=at, only_runner_id=runner_id(session))
     except runs.RunError as exc:
         raise ADChangeError(str(exc)) from None
     from app import services

@@ -65,7 +65,7 @@ def create_runner(body: RunnerIn, admin: Admin, session: SessionDep):
     name = body.name.strip()
     _name_free(session, name)
     token, token_hash = runs.new_token()
-    runner = Runner(name=name, description=body.description, languages=sorted(set(body.languages)), is_active=body.is_active, token_hash=token_hash)
+    runner = Runner(name=name, description=body.description, languages=sorted(set(body.languages)), is_active=body.is_active, builtins_only=body.builtins_only, token_hash=token_hash)
     session.add(runner)
     session.commit()
     log.info("Runner %r added by %s", runner.name, admin.display_name, extra={"source": "settings"})
@@ -78,6 +78,8 @@ def update_runner(runner_id: int, body: RunnerIn, admin: Admin, session: Session
     name = body.name.strip()
     _name_free(session, name, runner.id)
     runner.name, runner.description, runner.languages, runner.is_active = name, body.description, sorted(set(body.languages)), body.is_active
+    if "builtins_only" in body.model_fields_set:
+        runner.builtins_only = body.builtins_only
     session.commit()
     return runner
 
@@ -95,6 +97,13 @@ def new_runner_token(runner_id: int, admin: Admin, session: SessionDep):
 @router.delete("/api/runners/{runner_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_runner(runner_id: int, admin: Admin, session: SessionDep):
     runner = _runner(session, runner_id)
+    # SET NULL on the FK must never turn a pinned privileged job into general work.
+    for run in session.scalars(select(ScriptRun).where(
+        ScriptRun.only_runner_id == runner.id,
+        ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
+    ).with_for_update()):
+        # Cancelled without taking over decided_by: whoever approved it stays on record.
+        runs._revoke(session, run, "Selected runner removed; request a new run on an appropriate runner")
     session.delete(runner)
     session.commit()
     log.info("Runner %r removed by %s", runner.name, admin.display_name, extra={"source": "settings"})
@@ -105,7 +114,7 @@ def delete_runner(runner_id: int, admin: Admin, session: SessionDep):
 
 def _run_out(run: ScriptRun, user: User, cls=RunOut, **extra):
     return cls(
-        id=run.id, script_id=run.script_id, script_name=run.script.name, version=run.version.number, language=run.script.language,
+        id=run.id, script_id=run.script_id, script_name=run.script.name, version=run.version.number, language=run.version.language or run.script.language,
         device_id=run.device_id, target=run.target, values=run.values, ticket_id=run.ticket_id, status=run.status,
         requested_by=UserRef.model_validate(run.requested_by) if run.requested_by else None,
         decided_by=UserRef.model_validate(run.decided_by) if run.decided_by else None,
@@ -158,7 +167,7 @@ def preview_run(script_id: int, body: RunRequestIn, user: Agent, session: Sessio
         targets.append(RunTargetOut(device_id=d.id, name=d.name, target=runs.target_name(d)))
     if body.on_runner:
         targets.append(RunTargetOut(device_id=None, name="On the runner itself", target=None))
-    able = [r for r in session.scalars(select(Runner).where(Runner.is_active)) if script.language in (r.languages or [])]
+    able = [r for r in session.scalars(select(Runner).where(Runner.is_active, Runner.builtins_only.is_(False))) if script.language in (r.languages or [])]
     online = any(r.last_seen_at and sla.utcnow() - r.last_seen_at < ONLINE for r in able)
     return RunPreviewOut(
         targets=targets, values={k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in values.items()},
@@ -269,7 +278,7 @@ def runner_claim(body: RunnerClaimIn, session: SessionDep, authorization: str | 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     log.info("Runner %r started run #%s (%r on %s)", runner.name, run.id, run.script.name, run.target or "itself", extra={"source": "scripts"})
     return RunnerJobOut(
-        run_id=run.id, language=run.script.language, body=run.version.body, values=run.values, target=run.target,
+        run_id=run.id, language=run.version.language or run.script.language, body=run.version.body, values=run.values, target=run.target,
         target_os=run.device.os if run.device else None, time_limit_seconds=runs.TIME_LIMIT_SECONDS, secret_values=secret,
     )
 

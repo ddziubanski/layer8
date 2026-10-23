@@ -467,18 +467,16 @@ label.inline input { width: auto; min-height: 0; }
 
 
 /* Layer8 Hybrid Command Center — console-only visual layer.
-   Existing theme tokens, customer branding and portal styling remain intact. */
+   Colours come from the theme tokens Settings > Branding sets (--side, --side-on, --side-ink,
+   --accent, --brand), so a site's sidebar colour and its contrast check apply here too. */
 :root {
   --console-radius: 12px;
   --console-shadow: 0 4px 18px rgba(19, 35, 54, .045);
-  --console-side: #12243a;
-  --console-side-active: #203c57;
-  --console-accent: #2dd4bf;
 }
 .shell { grid-template-columns: 226px minmax(0, 1fr); }
 .shell .side {
-  background: var(--console-side);
-  color: #c8d9e8;
+  background: var(--side);
+  color: var(--side-ink);
   padding: 20px 10px 12px;
   gap: 3px;
   border-right: 1px solid rgba(255,255,255,.06);
@@ -490,25 +488,25 @@ label.inline input { width: auto; min-height: 0; }
   gap: 12px;
   padding: 11px 13px;
   border-radius: 9px;
-  color: #c8d9e8;
+  color: var(--side-ink);
   font-weight: 500;
   border: 0;
   transition: background .15s ease, color .15s ease;
 }
 .shell .side > a:hover { background: rgba(255,255,255,.075); color: #fff; }
 .shell .side > a.active {
-  background: var(--console-side-active);
+  background: var(--side-on);
   color: #fff;
   border: 0;
   padding: 11px 13px;
-  box-shadow: inset 3px 0 0 var(--console-accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
-.nav-symbol { display: inline-flex; width: 20px; justify-content: center; font-size: 17px; color: #90b3c8; }
-.shell .side > a.active .nav-symbol { color: var(--console-accent); }
+.nav-symbol { display: inline-flex; width: 20px; justify-content: center; font-size: 17px; color: var(--side-ink); opacity: .8; }
+.shell .side > a.active .nav-symbol { color: var(--accent); opacity: 1; }
 .shell .side .me { border-top: 1px solid rgba(255,255,255,.12); padding: 15px 12px 4px; margin-top: auto; }
 .me-identity { display: flex; align-items: center; gap: 10px; min-width: 0; overflow-wrap: anywhere; }
-.me-avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; background: #087f85; color: white; font-weight: 700; }
-.shell .side .me a { color: #c8d9e8; padding: 10px 0; }
+.me-avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--brand); color: var(--on-brand); font-weight: 700; }
+.shell .side .me a { color: var(--side-ink); padding: 10px 0; }
 .shell .side .me button { width: 100%; text-align: left; border-color: rgba(255,255,255,.25); }
 .shell .main { padding: 0 30px 30px; }
 .console-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -30px 24px; padding: 17px 30px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -521,7 +519,8 @@ label.inline input { width: auto; min-height: 0; }
 .shell .trow.body { transition: background .14s ease; }
 .shell .trow.body:hover { background: var(--row-hover); }
 .shell .queue-page .views button { transition: background .15s ease, border-color .15s ease; }
-@media (max-width: 900px) {
+/* Narrow desktop only: at 800px and below the sidebar becomes a top bar (see above). */
+@media (min-width: 801px) and (max-width: 900px) {
   .shell { grid-template-columns: 185px minmax(0, 1fr); }
   .shell .main { padding: 0 16px 20px; }
   .console-topbar { margin: 0 -16px 20px; padding: 14px 16px; }

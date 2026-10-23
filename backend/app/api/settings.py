@@ -143,6 +143,15 @@ def update_section(section: str, body: SettingsUpdateIn, admin: Admin, session: 
         session.rollback()
         configstore.refresh(session, force=True)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
+    if section == "directory" and "ad_runner_name" in body.values:
+        from app import adchanges, runs
+
+        try:
+            adchanges.repin_pending(session)
+        except runs.RunError as exc:
+            session.rollback()
+            configstore.refresh(session, force=True)
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
     if section == "backup":
         # A new time applies from the next backup on.
         row = session.get(WorkerJob, "backup")

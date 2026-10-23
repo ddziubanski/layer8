@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     graph_tenant_id: str = ""
     graph_client_id: str = ""
     graph_client_secret: str = ""
+    # Optional Teams digest. Configstore keeps the webhook as a write-only secret.
+    teams_enabled: bool = False
+    teams_webhook_url: str = ""
+    teams_summary_minutes: int = 60
     # Action1 (patching, read-only): API credentials from Action1 > API credentials, the organization
     # to read, and the region its console is in.
     action1_region: str = "NorthAmerica"
@@ -77,6 +81,7 @@ class Settings(BaseSettings):
     # only groups under these OUs, and moves only into OUs under these.
     ad_change_group_bases: list[str] = []
     ad_change_ou_bases: list[str] = []
+    ad_runner_name: str = ""
     # Lists of groups offered as tick boxes, "Label: name prefix" per line (e.g. "Distribution lists: [EMAIL]").
     ad_group_lists: list[str] = []
     # New AD accounts from tickets (onboarding): where they go, how they're named, first password.
