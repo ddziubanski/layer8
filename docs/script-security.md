@@ -12,18 +12,29 @@ policy changes do not replace the first-review record. Admin-authored code is re
 that admin at save time; high-risk runs still require another active administrator, who
 must be neither the requester nor the code author.
 
-Executable changes, restores, deactivation, and stricter execution policy cancel unclaimed
-work and clear sealed values. Claiming rechecks current version, requester activity and
-execution rights, and any required approver's active admin status. Already-running work
-cannot be recalled by the API; the runner's time limit still applies.
+Executable changes, restores and deactivation cancel unclaimed work and clear sealed values.
+A stricter policy without new code (marking a script high risk, or limiting it to admins)
+rechecks unclaimed work instead: runs that may still go ahead with an admin's say-so wait for
+approval, and the rest are cancelled. Claiming rechecks the same things: current version,
+requester activity and execution rights, and any required approver's active admin status.
+Already-running work cannot be recalled by the API; the runner's time limit still applies.
+
+Built-in jobs booked for a date (an offboarding checklist's "disable on the day", a new
+account's start-date enable) are never dropped because their requester has left or lost run
+rights since booking: they wait for an admin's approval, with a note on the ticket.
+
+**One admin only.** A high-risk run needs an active admin who is neither the requester nor
+the author of the code. A site with a single admin can't approve high-risk scripts that admin
+wrote or asks to run: make a second admin (a break-glass local admin works), or leave such
+scripts not high risk.
 
 ## Upgrade behavior
 
 The version-interpreter migration uses each script's current interpreter for historical
 versions because older interpreter changes were never recorded. Check older code before
-restoring it. It does not invent review records for existing versions. All queued and
-awaiting-approval runs are cancelled during this migration; request them again after
-review. Running and completed runs are retained. Take the normal backup before upgrading.
+restoring it. It does not invent review records for existing versions. Queued and
+awaiting-approval runs of your own scripts are cancelled during this migration (request them
+again after review); built-in Layer 8 jobs, such as dated account disables, are kept. Running and completed runs are retained. Take the normal backup before upgrading.
 
 ## Privileged runners
 
