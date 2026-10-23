@@ -163,7 +163,13 @@ fi
 as_app() { su helpdesk -s /bin/sh -c "set -a; . $ENV; set +a; cd $APP/app && $*"; }
 
 say "Database schema"
-as_app "$APP/venv/bin/alembic upgrade head" 2>&1 | grep -v "^INFO  \[alembic.runtime.migration\] \(Context impl\|Will assume\)" || true
+# sh has no pipefail: keep alembic's own exit status, so a failed migration (or two migration
+# heads) stops the install instead of carrying on with an unmigrated database.
+MIGRATE_LOG=$(mktemp)
+if as_app "$APP/venv/bin/alembic upgrade head" >"$MIGRATE_LOG" 2>&1; then migrated=0; else migrated=$?; fi
+grep -v "^INFO  \[alembic.runtime.migration\] \(Context impl\|Will assume\)" "$MIGRATE_LOG" || true
+rm -f "$MIGRATE_LOG"
+[ "$migrated" -eq 0 ] || die "the database schema update failed (alembic exit $migrated); nothing after it was changed. See the output above."
 
 # --- Backup share (optional): mounted at /mnt/helpdesk-backup for Settings > Backup
 
