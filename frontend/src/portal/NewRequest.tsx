@@ -1,4 +1,5 @@
 import { WorkspaceTitle } from "../components/WorkspaceTitle";
+import { TeamsAndHours } from "./QueueStatus";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -55,6 +56,7 @@ export function NewRequest() {
   const queueId = params.get("queue") ? Number(params.get("queue")) : null;
   const queue = queues.data?.find((q) => q.id === queueId) ?? null;
   const noQueues = queues.data !== undefined && queues.data.length === 0;
+  const desk = useQuery({ queryKey: ["portal", "hours"], queryFn: api.portal.hours, enabled: noQueues });
 
   const [choice, setChoice] = useState("");
   const [impact, setImpact] = useState<ImpactV | "">("");
@@ -142,6 +144,8 @@ export function NewRequest() {
         </p>
       </div>
 
+      <TeamsAndHours queues={queues.data} desk={desk.data} />
+
       {!noQueues && (
         <div className="step">
           <div className="step-q">
@@ -170,6 +174,11 @@ export function NewRequest() {
             ))}
           </select>
           {queue?.description && <p className="muted small step-hint">{queue.description}</p>}
+          {queue && !queue.hours.open_now && queue.hours.message && (
+            <p className="card note small hours-message" role="status" style={{ margin: "8px 0 0" }}>
+              {queue.hours.message} You can still send your request now.
+            </p>
+          )}
         </div>
       )}
 

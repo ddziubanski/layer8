@@ -92,6 +92,7 @@ function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queu
         portal_name: form.portal_name || null,
         portal_description: form.portal_description || null,
         portal_position: Number(form.portal_position) || 100,
+        hours: form.hours.trim() || null,
         categories,
         category_routes,
         ...(isAdmin ? { is_active: form.is_active, is_default: form.is_default || undefined, restricted } : {}),
@@ -175,6 +176,11 @@ function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queu
         <label className="field">
           Description for requesters
           <input value={form.portal_description} onChange={set("portal_description")} placeholder="e.g. Computers, phones, accounts, Wi-Fi" />
+        </label>
+        <label className="field">
+          Opening hours <span className="muted small">(blank: the desk hours in Settings &gt; Desk hours)</span>
+          <textarea rows={2} value={form.hours} onChange={set("hours")} placeholder={"Mon-Fri 08:00-17:00\nSat 09:00-12:00"} />
+          <span className="muted small">The portal shows whether this queue is open, and its after-hours message when it isn&apos;t.</span>
         </label>
         <div>
           <div className="lbl">Problem options ("What is the issue with?")</div>
@@ -279,6 +285,7 @@ function formFrom(q: Queue) {
     portal_name: q.portal_name ?? "",
     portal_description: q.portal_description ?? "",
     portal_position: String(q.portal_position),
+    hours: q.hours ?? "",
   };
 }
 

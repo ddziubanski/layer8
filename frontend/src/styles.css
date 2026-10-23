@@ -798,3 +798,19 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 @media(max-width:1000px) { .portal-detail-grid { grid-template-columns:minmax(0,1fr); } }
 .portal-topbar-context { color:var(--side-ink); font-size:13px; }
 .portal-main > .card[aria-label="Survey"], .portal-detail-workspace > .card[aria-label="How did we do?"] { border-radius:12px; padding:22px; }
+
+/* Portal: each queue's hours, open/closed state and technicians' Teams status (status only). */
+.hours-card { gap: 12px; }
+.hours-row { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.hours-row:first-of-type { border-top: 0; padding-top: 0; }
+.open-state { font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.open-state.open { background: var(--chip-g-bg, #e3f5ea); color: var(--chip-g, #1a7f45); }
+.open-state.closed { background: var(--tint); color: var(--muted); }
+.hours-message { margin: 0; }
+.team-status { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; }
+.team-status li { display: inline-flex; align-items: center; gap: 6px; }
+.presence-dot { width: 10px; height: 10px; border-radius: 50%; background: #9aa5a2; flex: none; }
+.presence-dot.available { background: #2e9e5b; }
+.presence-dot.busy { background: #c93c3c; }
+.presence-dot.away { background: #d99a1e; }
+.presence-dot.offline { background: transparent; border: 2px solid #9aa5a2; box-sizing: border-box; }

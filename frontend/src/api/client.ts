@@ -25,6 +25,7 @@ export type QueueUpdate = S["QueueUpdate"];
 export type QueueCreate = S["QueueCreate"];
 export type Group = S["GroupOut"];
 export type PortalQueue = S["PortalQueueOut"];
+export type PortalHours = S["PortalHoursOut"];
 export type PortalTicket = S["PortalTicketOut"];
 export type PortalTicketPage = S["PortalTicketPage"];
 export type PortalTicketCreate = S["PortalTicketCreate"];
@@ -632,6 +633,7 @@ export const api = {
 
   portal: {
     queues: () => request<PortalQueue[]>("GET", "/api/portal/queues"),
+    hours: () => request<PortalHours>("GET", "/api/portal/hours"),
     devices: () => request<PortalDevice[]>("GET", "/api/portal/devices"),
     create: (body: PortalTicketCreate) => request<PortalTicket>("POST", "/api/portal/tickets", body),
     tickets: (closed: boolean) => request<PortalTicketPage>("GET", `/api/portal/tickets${query({ closed: String(closed), limit: 200 })}`),

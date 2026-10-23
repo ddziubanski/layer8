@@ -18,6 +18,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - "Tickets Anywhere": technicians act on tickets by replying to email (`#close`, `#assign`, `#priority`).
 - Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
 - A wallboard for a big screen in the IT office: live counts, alerts (SLA breaches, unassigned tickets) and the tickets that need someone, opened by a secret link.
+- Desk hours per queue on the portal, with an after-hours message saying when someone is next in, and technicians' Teams status (status only).
 
 **People and access**
 - Local accounts that need nothing else, or AD/LDAP sign-in with roles from AD groups.
@@ -89,6 +90,7 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Recovery console | [docs/recovery-console.md](docs/recovery-console.md) |
 | Other apps (API keys: look up tickets, add notes) | [docs/integrations.md](docs/integrations.md) |
 | Wallboards (live board for a big screen, secret link) | [docs/wallboard.md](docs/wallboard.md) |
+| Desk hours and technicians' Teams status on the portal | [docs/desk-hours.md](docs/desk-hours.md) |
 
 ## Built with
 
