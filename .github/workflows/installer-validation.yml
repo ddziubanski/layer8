@@ -21,6 +21,15 @@ jobs:
         run: python3 -m unittest discover -s install/tests -v
       - name: Check boot media contracts
         run: python3 -m unittest discover -s iso/tests -v
+      - name: Render real terminal dialogs at 80x24
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y whiptail python3-pexpect python3-pyte python3-pil fonts-dejavu-core
+          python3 iso/tests/dialog_preview.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: layer8-setup-previews
+          path: iso/build/previews/*.png
   iso:
     runs-on: ubuntu-latest
     timeout-minutes: 35
