@@ -102,9 +102,8 @@ def delete_runner(runner_id: int, admin: Admin, session: SessionDep):
         ScriptRun.only_runner_id == runner.id,
         ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
     ).with_for_update()):
-        runs.cancel(session, run, admin)
-        run.error = "Selected runner removed; request a new run on an appropriate runner"
-        runs._log_finished(session, run)
+        # Cancelled without taking over decided_by: whoever approved it stays on record.
+        runs._revoke(session, run, "Selected runner removed; request a new run on an appropriate runner")
     session.delete(runner)
     session.commit()
     log.info("Runner %r removed by %s", runner.name, admin.display_name, extra={"source": "settings"})

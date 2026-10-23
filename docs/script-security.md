@@ -49,6 +49,8 @@ For AD, set **Settings > Directory > Runner for AD account changes**. This pins 
 changes, new accounts, deferred account enabling and offboarding jobs to that host. The
 same setting is importable as `directory.ad_runner_name` in installer answers. A missing,
 disabled or non-PowerShell selected runner causes an error; there is no silent fallback.
+Saving the setting moves AD jobs that haven't started yet (dated disables and enables
+included) to the selected runner, so none are left waiting for a host that won't take them.
 
 Existing runners retain general mode for compatibility. Enabling this setting prevents
 future claims; it cannot stop work already running. Removing a runner cancels pending jobs

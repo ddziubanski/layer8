@@ -22,7 +22,7 @@ from app import runs
 from app.config import settings
 from app.directory.sync import get_directory
 from app.directory.types import DirectoryError
-from app.models import OnboardingTemplate, Runner, Script, ScriptKind, ScriptLanguage, ScriptVersion, Ticket, User
+from app.models import OnboardingTemplate, RunStatus, Runner, Script, ScriptKind, ScriptLanguage, ScriptRun, ScriptVersion, Ticket, User
 
 SCRIPT_NAME = "Layer 8: change an AD account"
 NESTED_WARNING = "Nested group: Entra ID won't apply it through nesting (licensing, app assignment, Conditional Access). Add people directly."
@@ -228,6 +228,23 @@ def runner_id(session: Session) -> int | None:
     if runner is None or "powershell" not in runner.languages:
         raise runs.RunError(f"No active PowerShell runner called {name!r} (Settings > Directory)")
     return runner.id
+
+
+def repin_pending(session: Session) -> int:
+    """After Settings > Directory names a new AD runner: move AD jobs that haven't started (dated
+    disables and enables among them) to it, so none wait for a host that won't take them."""
+    rid = runner_id(session)
+    if rid is None:
+        return 0
+    names = (SCRIPT_NAME, CREATE_SCRIPT_NAME, ENABLE_SCRIPT_NAME, DISABLE_SCRIPT_NAME)
+    moved = 0
+    for run in session.scalars(select(ScriptRun).join(Script, Script.id == ScriptRun.script_id).where(
+        Script.name.in_(names), ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
+    ).with_for_update(of=ScriptRun)):
+        if run.only_runner_id != rid:
+            run.only_runner_id = rid
+            moved += 1
+    return moved
 
 
 def request(session: Session, ticket: Ticket, actor: User, p: Plan, template_name: str | None = None):
