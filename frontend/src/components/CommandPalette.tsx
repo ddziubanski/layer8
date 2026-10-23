@@ -47,6 +47,10 @@ export function CommandPalette({ me }: { me: Me }) {
   const choose = (command: Command) => { close(); navigate(command.to); };
 
   useEffect(() => {
+    if (open) document.getElementById(`${id}-result-${selected}`)?.scrollIntoView?.({ block: "nearest" });
+  }, [open, selected, query, id]);
+
+  useEffect(() => {
     if (!open) return;
     input.current?.focus();
     return () => { if (returnTo.current?.isConnected) returnTo.current.focus(); };

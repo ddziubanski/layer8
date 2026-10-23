@@ -41,6 +41,38 @@ test("a new purchase order with a line, totalled as you type", async () => {
   );
 });
 
+test("order summary preserves approval restrictions and existing status actions", async () => {
+  let current = { ...PO, status: "requested", approver: { ...ME }, can_approve: false, vendor: { ...PO.vendor, name: "Example supplier" } };
+  const calls = mockApi({
+    "GET /api/purchase-orders/12": () => current,
+    "GET /api/vendors": [current.vendor], "GET /api/field-options": [], "GET /api/users": [],
+    "POST /api/purchase-orders/12/status": ({ body }: Call) => (current = { ...current, ...(body as object) }),
+  });
+  renderAt("/purchase-orders/12", [{ path: "/purchase-orders/:poId", element: <PurchaseOrderPage me={ME} /> }]);
+  const summary = await screen.findByLabelText("Order summary");
+  expect(summary).toHaveTextContent("Example supplier");
+  expect(summary).toHaveTextContent("Lines fully received0 / 1");
+  const actions = screen.getByRole("group", { name: "Order actions" });
+  expect(within(actions).queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+  expect(within(actions).queryByRole("button", { name: "Mark ordered" })).not.toBeInTheDocument();
+  await userEvent.click(within(actions).getByRole("button", { name: "Cancel PO" }));
+  await waitFor(() => expect(calls.find(c => c.path.endsWith("/status"))?.body).toEqual({ status: "cancelled", note: "" }));
+  expect(await within(actions).findByRole("button", { name: "Reopen as draft" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Receiving sheet" })).toHaveAttribute("href", "/purchase-orders/12/receiving");
+});
+
+test("receiving lookup still submits the order number and uppercased code", async () => {
+  const calls = mockApi({ "GET /api/branding": {}, "POST /api/public/receiving/lookup": { label: "PO-00012", title: "Example delivery", vendor: "Example supplier", status: "Ordered", expected_date: null, lines: [] } });
+  renderAt("/receive", [{ path: "/receive", element: <ReceivePage /> }]);
+  const lookup = screen.getByRole("form", { name: "Find a delivery" });
+  await userEvent.type(within(lookup).getByLabelText("PO number"), "PO-00012");
+  await userEvent.type(within(lookup).getByLabelText(/Code/), "k7m4px");
+  await userEvent.click(within(lookup).getByRole("button", { name: "Find it" }));
+  expect(await screen.findByRole("heading", { name: /Example delivery/ })).toBeInTheDocument();
+  expect(calls.find(c => c.method === "POST")?.body).toEqual({ po: "PO-00012", code: "K7M4PX" });
+  expect(screen.getByRole("button", { name: "Mark received" })).toBeDisabled();
+});
+
 test("the receiving sheet writes out the address, PO number and code (no scanner needed)", async () => {
   mockApi({ "GET /api/purchase-orders/12": PO, "GET /api/branding": { product_name: "Layer 8" } });
   renderAt("/purchase-orders/12/receiving", [{ path: "/purchase-orders/:poId/receiving", element: <ReceivingSheet /> }]);

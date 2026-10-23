@@ -93,6 +93,7 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
   return (
     <div className="login" style={backgroundStyle(brand, "sign-in")}>
       <form className="card login-card" onSubmit={submit}>
+        <p className="workspace-area">SERVICE DESK ACCESS</p>
         <h1>{forConsole ? "Sign in to the console" : <Brand b={brand} className="" />}</h1>
         {forConsole && <p className="muted">The agent console needs your password, not just your Windows sign-in.</p>}
         {windows && (
@@ -171,6 +172,7 @@ export function ChangePasswordFirst({ me }: { me: Me }) {
           change.mutate();
         }}
       >
+        <p className="workspace-area">ACCOUNT SETUP</p>
         <h1>Choose a new password</h1>
         <p className="muted" style={{ margin: 0 }}>
           You signed in as {me.display_name} with the first-run password. Choose your own before going on: at least 12 characters.

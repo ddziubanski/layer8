@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
@@ -15,7 +16,7 @@ export function HelpList() {
   const list = useQuery({ queryKey: ["kb", "portal", search], queryFn: () => api.kb.list({ q: search || undefined, limit: 50 }) });
   return (
     <div className="stack" style={{ maxWidth: 760 }}>
-      <h1 style={{ margin: 0 }}>Help articles</h1>
+      <WorkspaceTitle title="Help articles" area="FIND AN ANSWER" />
       <input type="search" aria-label="Search help articles" placeholder="What do you need help with?" value={q} onChange={(e) => setQ(e.target.value)} />
       <nav className="kb-list" aria-label="Help articles">
         {list.data?.length === 0 && (
@@ -44,13 +45,13 @@ export function HelpArticle() {
   const a = article.data;
   if (!a) return null;
   return (
-    <article className="card stack" style={{ maxWidth: 760, gap: 12 }} aria-label={a.title}>
-      <div>
+    <article className="card stack portal-help-article" style={{ maxWidth: 760, gap: 12 }} aria-label={a.title}>
+      <header className="module-form-head"><p className="workspace-area">HELP ARTICLE</p>
         <Link className="small" to={p("/help")}>
           ← Help articles
         </Link>
         <h1 style={{ margin: "6px 0 0" }}>{a.title}</h1>
-      </div>
+      </header>
       <Markdown text={a.body} />
       <div className="kb-suggest" role="group" aria-label="Was this helpful?">
         {feedback.isSuccess ? (

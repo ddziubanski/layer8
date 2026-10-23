@@ -1,3 +1,4 @@
+import { ModuleWorkspace } from "./components/ModuleWorkspace";
 import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
@@ -121,7 +122,7 @@ function Shell({ me }: { me: Me }) {
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
-          <Outlet />
+          <ModuleWorkspace><Outlet /></ModuleWorkspace>
         </Suspense>
       </main>
     </div>
@@ -219,16 +220,18 @@ const settingsTabs = (me: Me) =>
 
 function SettingsLayout({ me }: { me: Me }) {
   return (
-    <>
-      <nav className="tabs" aria-label="Settings">
+    <section className="settings-workspace">
+      <div className="settings-grid">
+      <nav className="tabs settings-navigation" aria-label="Settings">
         {settingsTabs(me).map((s) => (
           <NavLink key={s.path} to={`/settings/${s.path}`}>
             {s.label}
           </NavLink>
         ))}
       </nav>
-      <Outlet />
-    </>
+      <div className="settings-content"><Outlet /></div>
+      </div>
+    </section>
   );
 }
 

@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -27,7 +28,7 @@ export function KnowledgePage({ me }: { me: Me }) {
   return (
     <>
       <div className="row-gap" style={{ marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Knowledge base</h1>
+        <WorkspaceTitle title="Knowledge base" area="KNOWLEDGE" />
         <span className="spacer" />
         <Link className="btn" to="/kb/new">
           New article
@@ -93,7 +94,7 @@ function ArticleView({ id, me }: { id: number; me: Me }) {
   const a = article.data;
   if (!a) return null;
   return (
-    <article className="card stack" style={{ gap: 12 }} aria-label={a.title}>
+    <article className="card stack knowledge-detail" style={{ gap: 12 }} aria-label={a.title}>
       <div className="row-gap" style={{ alignItems: "flex-start" }}>
         <div className="spacer">
           <h2 style={{ margin: 0 }}>{a.title}</h2>
@@ -258,6 +259,7 @@ function Editor({ initial, canPublish }: { initial?: KbArticle; canPublish: bool
         save.mutate(f.status);
       }}
     >
+      <header className="module-form-head"><p className="workspace-area">KNOWLEDGE EDITOR</p><h2>{initial ? "Edit article" : "New article"}</h2></header>
       <label className="field">
         Title
         <input required maxLength={300} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="What people would type, e.g. Outlook keeps asking for my password" />

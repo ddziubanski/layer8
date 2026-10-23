@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -14,7 +15,7 @@ export function MyTickets() {
 
   return (
     <section>
-      <h1 className="page-intro">My tickets</h1>
+      <WorkspaceTitle title="My tickets" area="YOUR REQUESTS" />
       <div className="views" role="group" aria-label="Show">
         <button type="button" aria-pressed={!closed} onClick={() => setClosed(false)}>
           Open

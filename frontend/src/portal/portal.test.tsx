@@ -37,6 +37,21 @@ const routes = [
 
 afterEach(() => vi.unstubAllGlobals());
 
+test("request conversation failures remain visible without exposing reply controls on closed requests", async () => {
+  mockApi({
+    "GET /api/portal/tickets/1005": { ...PT, status: "closed" },
+    "GET /api/tickets/1005/comments": new Response('{"detail":"temporarily unavailable"}', { status: 503 }),
+    "GET /api/tickets/1005/attachments": [],
+    "GET /api/portal/tickets/1005/survey": new Response('{}', { status: 404 }),
+  });
+  renderAt("/tickets/1005", routes);
+  const conversation = await screen.findByRole("region", { name: "Conversation" });
+  expect(await within(conversation).findByRole("alert")).toHaveTextContent("Replies could not be loaded");
+  expect(screen.getByRole("complementary", { name: "Request documents" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Send reply" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Make a new request" })).toHaveAttribute("href", "/");
+});
+
 test("guided request: team, then that team's options, then details", async () => {
   const calls = mockApi({
     "GET /api/portal/queues": QUEUES,

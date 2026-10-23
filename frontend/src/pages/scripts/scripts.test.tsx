@@ -14,6 +14,15 @@ const STALE = {
   updated_at: "2026-10-19T00:00:00Z", updated_by: { id: 1, email: "admin@corp.local", display_name: "Dev Admin" }, can_run: true, can_edit: true,
 };
 
+test("script workspace displays risk and retains run/edit permission gates", async () => {
+  mockApi({ "GET /api/scripts": [{ ...STALE, high_risk: true, can_run: false, can_edit: false, agents_can_run: false }] });
+  renderAt("/", [{ path: "/", element: <ScriptsPage me={{ ...ME, permissions: [] }} /> }]);
+  const pane = await screen.findByRole("region", { name: STALE.name });
+  expect(within(pane).getByLabelText("Script state")).toHaveTextContent("High risk");
+  expect(within(pane).getByRole("button", { name: /^Run$/ })).toBeDisabled();
+  expect(within(pane).queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+});
+
 test("run a query with its parameters, see the result; look at what a version changed", async () => {
   const calls = mockApi({
     "GET /api/scripts": [STALE],

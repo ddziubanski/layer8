@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
@@ -148,15 +149,16 @@ export function ReceivePage() {
   const error = lookup.error ?? receive.error;
 
   return (
-    <div className="portal">
+    <div className="portal receiving-screen">
       <header className="topbar">
         <Brand b={brand} />
-        <span className="muted">Receiving</span>
+        <span className="receiving-topbar-label">Delivery receiving</span>
       </header>
-      <main className="portal-main stack" style={{ maxWidth: 720 }}>
-        <h1>Mark a delivery received</h1>
+      <main className="portal-main stack receiving-main">
+        <WorkspaceTitle title="Mark a delivery received" area="DELIVERY DESK" description="Find the order using its number and receiving code, then record only what arrived." />
         <form
-          className="card row-gap"
+          className="card row-gap receiving-lookup"
+          aria-label="Find a delivery"
           style={{ margin: 0, alignItems: "flex-end" }}
           onSubmit={(e) => {
             e.preventDefault();
@@ -195,18 +197,17 @@ export function ReceivePage() {
               receive.mutate();
             }}
           >
-            <div>
-              <strong>
-                {po.label} · {po.title}
-              </strong>
+            <header className="receiving-order-head">
+              <p className="workspace-area">RECORD THIS DELIVERY</p>
+              <h2>{po.label} · {po.title}</h2>
               <div className="muted small">
                 {[po.vendor, po.expected_date && `expected ${new Date(`${po.expected_date}T00:00`).toLocaleDateString()}`, po.status].filter(Boolean).join(" · ")}
               </div>
-            </div>
+            </header>
             {po.lines.map((l) => {
               const due = Math.max(0, l.quantity - l.received_quantity);
               return (
-                <div key={l.id} className="row-gap">
+                <div key={l.id} className="row-gap receiving-line">
                   <span className="spacer">
                     {l.item} {l.part_number && <span className="muted small">({l.part_number})</span>}
                     <div className="muted small">

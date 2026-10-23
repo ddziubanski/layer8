@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
@@ -34,7 +35,7 @@ export function DevicesPage({ me }: { me: Me }) {
     return (
       <>
         <div className="page-head row-gap">
-          <h1 className="spacer">Devices</h1>
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
         </div>
         {tabs}
         <LifecycleView />
@@ -44,7 +45,7 @@ export function DevicesPage({ me }: { me: Me }) {
     return (
       <>
         <div className="page-head row-gap">
-          <h1 className="spacer">Devices</h1>
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
         </div>
         {tabs}
         <Sweeps view={view} action1={uses(me, "action1")} />
@@ -72,7 +73,7 @@ function AllDevices({ me, tabs }: { me: Me; tabs: ReactNode }) {
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Devices</h1>
+        <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
         {can(me, "devices_add") && (
           <button className="btn2" type="button" aria-expanded={adding} onClick={() => setAdding(!adding)}>
             Add a device
@@ -174,6 +175,9 @@ function LifecycleView() {
         Devices are due for replacement {l.life_years} years after purchase unless they have their own date (Settings &gt; Device sweeps). Set the dates on each device&apos;s page.
         {l.unknown > 0 && ` ${l.unknown} device(s) have no purchase or replace-by date yet.`}
       </p>
+      <dl className="device-lifecycle-summary" aria-label="Lifecycle summary">
+        {[["Warranty ending soon", l.warranty_soon.length], ["Warranty ended", l.warranty_ended.length], ["Replacement overdue", l.overdue], ["Missing purchase / replacement dates", l.unknown]].map(([label, count]) => <div key={label}><dt>{label}</dt><dd>{count}</dd></div>)}
+      </dl>
       <div className="two-col">
         <section className="card stack" style={{ margin: 0, gap: 6 }} aria-label="Warranty ending">
           <div className="lbl" style={{ margin: 0 }}>
@@ -559,85 +563,100 @@ export function DevicePage({ me }: { me: Me }) {
   ];
   return (
     <>
-      <div className="page-head row-gap">
-        <h1 className="spacer">{d.name}</h1>
-        <Link to="/devices">All devices</Link>
-      </div>
-      <div className="stack" style={{ maxWidth: 900 }}>
-        <section className="card" aria-label="Details">
-          <dl className="facts">
-            {facts
-              .filter(([, v]) => v)
-              .map(([k, v]) => (
-                <div key={k}>
-                  <dt className="muted small">{k}</dt>
-                  <dd style={{ margin: "0 0 8px" }}>{v}</dd>
-                </div>
-              ))}
-          </dl>
-        </section>
-        <LifecycleCard key={`${d.warranty_ends}-${d.purchased_on}-${d.model}`} device={d} onSaved={() => queryClient.invalidateQueries({ queryKey: ["device", id] })} />
-        <MakerWarranty device={d} onChanged={() => queryClient.invalidateQueries({ queryKey: ["device", id] })} />
-        {uses(me, "action1") && (
-          <section className="card stack" aria-label="Patching" style={{ gap: 8 }}>
-            <div className="lbl" style={{ margin: 0 }}>
-              Patching (Action1)
-            </div>
-            <PatchStatus deviceId={d.id} />
-          </section>
-        )}
-        <section className="card stack" aria-label="IP addresses" style={{ gap: 8 }}>
-          <div className="lbl" style={{ margin: 0 }}>
-            IP addresses
+      <header className="device-workspace-head">
+        <div className="spacer">
+          <Link className="small" to="/devices">All devices</Link>
+          <p className="workspace-area">ASSET WORKSPACE</p>
+          <h1>{d.name}</h1>
+          <p className="muted">{[d.manufacturer, d.model, d.dns_hostname].filter(Boolean).join(" · ") || "Device inventory and service history"}</p>
+          <div className="row-gap device-state" aria-label="Device state">
+            <span className="chip n">{d.source === "directory" ? "Directory managed" : "Manually added"}</span>
+            <span className={`chip ${d.is_active ? "g" : "a"}`}>{d.is_active ? "Active inventory" : "Inactive inventory"}</span>
+            {!d.enabled && <span className="chip a">Disabled</span>}
           </div>
-          <DeviceIps deviceId={d.id} />
-        </section>
-        <section className="card stack" aria-label="Notes" style={{ gap: 8 }}>
-          <label className="field">
-            Notes <span className="muted small">(for the service desk)</span>
-            <textarea rows={3} value={notes ?? d.notes} onChange={(e) => setNotes(e.target.value)} />
-          </label>
-          {notes !== null && notes !== d.notes && (
-            <div className="row-gap">
-              <button className="btn" type="button" disabled={save.isPending} onClick={() => save.mutate()}>
-                Save notes
+        </div>
+        <a className="btn2" href="#device-notes">Go to notes</a>
+      </header>
+      <div className="device-workspace-grid">
+        <div className="stack device-workspace-primary">
+          <section className="card device-facts" aria-label="Details">
+            <h2>Identity and ownership</h2>
+            <dl className="facts">
+              {facts
+                .filter(([, v]) => v)
+                .map(([k, v]) => (
+                  <div key={k}>
+                    <dt className="muted small">{k}</dt>
+                    <dd style={{ margin: "0 0 8px" }}>{v}</dd>
+                  </div>
+                ))}
+            </dl>
+          </section>
+          <LifecycleCard key={`${d.warranty_ends}-${d.purchased_on}-${d.model}`} device={d} onSaved={() => queryClient.invalidateQueries({ queryKey: ["device", id] })} />
+          <MakerWarranty device={d} onChanged={() => queryClient.invalidateQueries({ queryKey: ["device", id] })} />
+          <section id="device-notes" tabIndex={-1} className="card stack" aria-label="Notes" style={{ gap: 8 }}>
+            <label className="field">
+              Notes <span className="muted small">(for the service desk)</span>
+              <textarea rows={3} value={notes ?? d.notes} onChange={(e) => setNotes(e.target.value)} />
+            </label>
+            {notes !== null && notes !== d.notes && (
+              <div className="row-gap">
+                <button className="btn" type="button" disabled={save.isPending} onClick={() => save.mutate()}>
+                  Save notes
+                </button>
+                <button className="btn2" type="button" onClick={() => setNotes(null)}>
+                  Undo
+                </button>
+              </div>
+            )}
+            {save.error && <p className="error">{save.error.message}</p>}
+          </section>
+          {can(me, "devices_delete") && d.source === "manual" && (
+            <div>
+              <button
+                className="linkish small"
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Remove ${d.name}? Its links to tickets go too.`)) remove.mutate();
+                }}
+              >
+                Remove this device
               </button>
-              <button className="btn2" type="button" onClick={() => setNotes(null)}>
-                Undo
-              </button>
+              {remove.error && <p className="error">{remove.error.message}</p>}
             </div>
           )}
-          {save.error && <p className="error">{save.error.message}</p>}
-        </section>
-        <section className="card stack" aria-label="Tickets" style={{ gap: 8 }}>
-          <div className="lbl" style={{ margin: 0 }}>
-            Tickets
-          </div>
-          {d.tickets.length === 0 && <span className="muted">Not linked to any ticket you can see.</span>}
-          {d.tickets.map((t) => (
-            <div key={t.id} className="row-gap">
-              <Link className="spacer" to={`/tickets/${t.id}`}>
-                {t.label} {t.subject}
-              </Link>
-              <StatusChip status={t.status} />
-              <span className="muted small">{when(t.created_at)}</span>
+        </div>
+        <aside className="stack device-workspace-context" aria-label="Device service context">
+          {uses(me, "action1") && (
+            <section className="card stack" aria-label="Patching" style={{ gap: 8 }}>
+              <div className="lbl" style={{ margin: 0 }}>
+                Patching (Action1)
+              </div>
+              <PatchStatus deviceId={d.id} />
+            </section>
+          )}
+          <section className="card stack" aria-label="IP addresses" style={{ gap: 8 }}>
+            <div className="lbl" style={{ margin: 0 }}>
+              IP addresses
             </div>
-          ))}
-        </section>
-        {can(me, "devices_delete") && d.source === "manual" && (
-          <div>
-            <button
-              className="linkish small"
-              type="button"
-              onClick={() => {
-                if (window.confirm(`Remove ${d.name}? Its links to tickets go too.`)) remove.mutate();
-              }}
-            >
-              Remove this device
-            </button>
-            {remove.error && <p className="error">{remove.error.message}</p>}
-          </div>
-        )}
+            <DeviceIps deviceId={d.id} />
+          </section>
+          <section className="card stack" aria-label="Tickets" style={{ gap: 8 }}>
+            <div className="lbl" style={{ margin: 0 }}>
+              Tickets
+            </div>
+            {d.tickets.length === 0 && <span className="muted">Not linked to any ticket you can see.</span>}
+            {d.tickets.map((t) => (
+              <div key={t.id} className="row-gap">
+                <Link className="spacer" to={`/tickets/${t.id}`}>
+                  {t.label} {t.subject}
+                </Link>
+                <StatusChip status={t.status} />
+                <span className="muted small">{when(t.created_at)}</span>
+              </div>
+            ))}
+          </section>
+        </aside>
       </div>
     </>
   );

@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { TeamsConnection } from "../../components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -51,7 +52,7 @@ export function PreferencesPage({ me }: { me: Me }) {
   return (
     <>
       <div className="page-head">
-        <h1>My preferences</h1>
+        <WorkspaceTitle title="My preferences" area="YOUR WORKSPACE" />
       </div>
       <div className="stack" style={{ maxWidth: 900 }}>
         {isStaff && <TeamsConnection />}
