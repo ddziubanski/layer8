@@ -23,7 +23,21 @@ qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 $FIRMWARE \
   -drive file="$DISK",if=virtio,format=qcow2 -cdrom "$ISO" -boot once=d \
   -netdev user,id=n0,hostfwd=tcp:127.0.0.1:8443-:443,hostfwd=tcp:127.0.0.1:2222-:22 -device virtio-net-pci,netdev=n0 \
   -display none -serial file:"$LOG" -monitor unix:"$DIR/vm-$FW.mon",server,nowait -daemonize -pidfile "$DIR/vm.pid"
-echo "VM started (pid $(cat "$DIR/vm.pid")); installing. Serial log: $LOG"
+echo "VM started (pid $(cat "$DIR/vm.pid")); waiting at the disk-choice menu. Serial log: $LOG"
+echo "This test VM owns only its disposable 40 GB image: $DISK"
+echo "Press Enter to select ERASE in this test VM, or Ctrl+C to leave it waiting."
+read -r confirmation
+# The real ISO never counts down. Only this disposable-VM test selects the erase entry.
+python3 - "$DIR/vm-$FW.mon" <<'PYVM'
+import socket, sys, time
+with socket.socket(socket.AF_UNIX) as monitor:
+    monitor.connect(sys.argv[1])
+    time.sleep(.3)
+    monitor.recv(4096)
+    monitor.sendall(b'sendkey down\n')
+    time.sleep(.5)
+    monitor.sendall(b'sendkey ret\n')
+PYVM
 up() {  # wait until the app answers; $1: what we're waiting for
   start=$(date +%s)
   while :; do

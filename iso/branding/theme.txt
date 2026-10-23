@@ -1,0 +1,15 @@
+desktop-image: "background.png"
+title-text: ""
+message-color: "#d1deeb"
+terminal-font: "Unifont Regular 16"
++ boot_menu {
+    left = 8%
+    top = 43%
+    width = 84%
+    height = 22%
+    item_height = 42
+    item_padding = 8
+    item_spacing = 8
+    item_color = "#d1deeb"
+    selected_item_color = "#32d4c8"
+}

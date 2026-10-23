@@ -10,26 +10,30 @@ set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 ANSWERS=/root/helpdesk-answers.json
-TITLE="Layer 8 setup"
+TITLE="Layer 8 | 1 of 8 | Welcome"
+export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan checkbox=black,lightgray actcheckbox=black,cyan entry=black,white label=black,lightgray listbox=black,lightgray actlistbox=black,cyan textbox=black,lightgray'
+# Backtitle remains visible across every dialog, including optional integrations.
+dialog() { whiptail --backtitle "Layer 8 | Appliance setup | Tab: move  Space: select  Enter: continue" --title "$TITLE" "$@"; }
+step() { TITLE="Layer 8 | $1 of 8 | $2"; }
 [ "$(id -u)" = 0 ] || { echo "Run as root (sudo)." >&2; exit 1; }
 command -v whiptail >/dev/null || apt-get install -y -q whiptail >/dev/null
 
 # --- Small helpers around whiptail (answers come back on stderr)
 
 ask() { # ask "Question" "default" -> stdout
-  whiptail --title "$TITLE" --inputbox "$1" 12 76 "${2:-}" 3>&1 1>&2 2>&3
+  dialog --inputbox "$1" 12 76 "${2:-}" 3>&1 1>&2 2>&3
 }
 secret() { # secret "Question" -> stdout (asked twice when $2 = twice)
   while :; do
-    a=$(whiptail --title "$TITLE" --passwordbox "$1" 10 76 3>&1 1>&2 2>&3)
+    a=$(dialog --passwordbox "$1" 10 76 3>&1 1>&2 2>&3)
     [ "${2:-}" = twice ] || { printf '%s' "$a"; return; }
-    b=$(whiptail --title "$TITLE" --passwordbox "Once more, to check:" 10 76 3>&1 1>&2 2>&3)
+    b=$(dialog --passwordbox "Once more, to check:" 10 76 3>&1 1>&2 2>&3)
     [ "$a" = "$b" ] && { printf '%s' "$a"; return; }
-    whiptail --title "$TITLE" --msgbox "They didn't match. Try again." 8 50
+    dialog --msgbox "They didn't match. Try again." 8 50
   done
 }
-yesno() { whiptail --title "$TITLE" ${2:+"$2"} --yesno "$1" 16 76; }  # yesno "Question" [--defaultno]
-note() { whiptail --title "$TITLE" --msgbox "$1" 14 76; }
+yesno() { dialog ${2:+"$2"} --scrolltext --yesno "$1" 20 76; }  # yesno "Question" [--defaultno]
+note() { dialog --scrolltext --msgbox "$1" 18 76; }
 
 # Answers are kept as KEY=VALUE lines, then turned into JSON by Python (proper escaping).
 VALUES=$(mktemp)
@@ -39,7 +43,7 @@ put() { printf '%s\t%s\n' "$1" "$(printf '%s' "$2" | base64 -w0)" >> "$VALUES"; 
 
 # --- 1. What kind of install
 
-MODE=$(whiptail --title "$TITLE" --menu "Welcome to Layer 8, the service desk for the layer every network has: its people.\n\nStart locally, or configure optional integrations now. Both can be changed later in Settings." 17 76 4 \
+MODE=$(dialog --menu "Welcome to Layer 8, the service desk for the layer every network has: its people.\n\nStart locally, or configure optional integrations now. Both can be changed later in Settings." 17 76 4 \
   install "Local helpdesk (recommended): integrations later" \
   integrated "Helpdesk with integrations: configure them now" \
   demo "Offline demo: sample data, nothing leaves this machine" \
@@ -54,6 +58,8 @@ if [ "$MODE" = file ]; then
   exec "$HERE/install.sh" --answers "$path"
 fi
 
+step 2 "Server access"
+
 # --- 1b. The OS administrator (set now, so files such as a certificate can be copied in over SSH)
 
 note "The OS administrator (sdadmin): a full shell on this machine, on its screen or over SSH. It has no password until you choose one here, so nobody can log in before you."
@@ -64,6 +70,8 @@ while :; do
 done
 printf 'sdadmin:%s\n' "$opw" | chpasswd
 put install.os_password "$opw"
+
+step 3 "Address and HTTPS"
 
 # --- 2. Address and HTTPS
 
@@ -86,6 +94,8 @@ while :; do
 done
 put install.timezone "$tz"
 
+step 4 "Administrator accounts"
+
 # --- 3. First admin
 
 note "Next: the first admin, a local account that always works, even when AD is down (keep it as a break-glass account)."
@@ -107,10 +117,14 @@ done
 put install.recovery.password "$rpw"
 
 
+step 5 "Ticket numbers"
+
 # --- 4. Ticket numbers
 
 put general.ticket_first_number "$(ask "First ticket number:" "1000")"
 put general.ticket_label_format "$(ask "How ticket numbers are shown and put in email subjects.\n{n} is the number, {n:06} pads it to six digits, {yyyy} is the year.\n\nExamples: #{n}   HD-{n}   INC{n:06}   {yyyy}-{n}" "#{n}")"
+
+step 6 "Optional integrations"
 
 # --- 5. Optional integrations (the local path skips these questions)
 
@@ -147,7 +161,7 @@ fi
 
 if yesno "Do you use Action1 for patching?\n\nIf so, Layer 8 reads it (read-only): each device's patch status on devices and tickets, tickets for overdue patching, and patch nights on the change calendar. You need API credentials from Action1 > Configuration > API credentials (docs/action1.md).\n\nIf not, everything Action1 stays hidden. You can switch it on later in Settings > General."; then
   put general.action1_enabled "true"
-  region=$(whiptail --title "$TITLE" --menu "Where is your Action1 console?" 14 70 5 \
+  region=$(dialog --menu "Where is your Action1 console?" 14 70 5 \
     NorthAmerica "North America (app.action1.com)" NorthAmerica-2 "North America 2 (app.na-2.action1.com)" \
     Europe "Europe (app.eu.action1.com)" UnitedKingdom "United Kingdom (app.uk.action1.com)" Australia "Australia (app.au.action1.com)" 3>&1 1>&2 2>&3) || region=NorthAmerica
   put action1.action1_region "$region"
@@ -170,10 +184,12 @@ else
   note "Local helpdesk\n\nYour local admin account works without AD or Microsoft Entra. Configure email in Settings > Email, AD in Settings > Directory, and portal Windows sign-in in Settings > Windows sign-in whenever you are ready.\n\nNext: optional encrypted backups."
 fi
 
+step 7 "Encrypted backups"
+
 # --- 8. Backups
 
 if yesno "Nightly encrypted backups to a network share?\n\nThe share is mounted on this server at /mnt/helpdesk-backup. Also possible later in Settings > Backup (with the share mounted by hand)."; then
-  kind=$(whiptail --title "$TITLE" --menu "Share type:" 12 60 2 smb "Windows / SMB share" nfs "NFS export" 3>&1 1>&2 2>&3)
+  kind=$(dialog --menu "Share type:" 12 60 2 smb "Windows / SMB share" nfs "NFS export" 3>&1 1>&2 2>&3)
   put install.backup.kind "$kind"
   if [ "$kind" = smb ]; then
     put install.backup.share "$(ask "Share, e.g. //fileserver/backups/helpdesk:")"
@@ -191,6 +207,8 @@ if yesno "Nightly encrypted backups to a network share?\n\nThe share is mounted 
   done
   put backup.backup_passphrase "$bp"
 fi
+
+step 8 "Review your setup"
 
 # --- Summary, then install
 
@@ -232,6 +250,8 @@ grep -q '"backup"' "$ANSWERS" && SUMMARY="$SUMMARY\nBackups: nightly to a networ
 grep -q '"action1_enabled": true' "$ANSWERS" && SUMMARY="$SUMMARY\nPatching: Action1"
 yesno "$SUMMARY\n\nThe answers (including passwords) are in $ANSWERS, readable by root only, until the install finishes.\n\nInstall now?" || { echo "Not installed. Answers kept in $ANSWERS."; exit 1; }
 
+TITLE="Layer 8 | Installing"
+printf '\nLayer 8 | Installing the service desk\nProgress and any errors follow below. Please keep this console open.\n\n'
 "$HERE/install.sh" --answers "$ANSWERS"
 
 # --- Checks with what was saved
@@ -244,4 +264,5 @@ if [ -n "${CHECK_AD:-}" ]; then
   checks="$checks\n$(su helpdesk -s /bin/sh -c 'set -a; . /etc/helpdesk/helpdesk.env; set +a; cd /opt/helpdesk/app && /opt/helpdesk/venv/bin/python -m app.cli check directory' 2>&1 | tail -1)"
 fi
 rm -f "$ANSWERS"
+TITLE="Layer 8 | Setup complete"
 note "Installed. Open https://$HOST/ and sign in as the admin.\n$checks\n\nAnything that didn't connect can be fixed in Settings (Email, Directory), which have the same test buttons."

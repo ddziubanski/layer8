@@ -15,7 +15,10 @@ Every option the setup asks for can be changed later in the app (Settings), exce
 The ISO is Debian 13 plus the service desk and everything it needs, so the OS and every dependency are the versions it was tested with.
 
 1. **Create the VM**: 2 vCPU, 4 GB RAM, 40 GB disk, one network card. On Hyper-V use a Generation 2 VM; disable Secure Boot, or set its template to "Microsoft UEFI Certificate Authority". BIOS and UEFI both work.
-2. **Boot the ISO.** It has one entry, *Install Layer 8 (erases the disk)*, which starts after 5 seconds. It installs a minimal Debian server (no desktop) and Layer 8 without asking anything, and **erases the first disk**. There are no other install options: for a hand-made Debian, use Debian's own ISO and `install/install.sh`.
+2. **Boot the ISO.** The navy/teal menu waits for your choice on BIOS and UEFI; there is no automatic countdown.
+   - **Install Layer 8 - choose disk and partitioning** (default): Debian offers its guided and manual partitioning choices. Select the disk/layout and review the proposed changes before confirming writes. This still installs the complete offline appliance and first-boot wizard. Existing partitions are not guaranteed safe: review Debian's changes carefully.
+   - **Install Layer 8 - ERASE entire first disk**: the explicit dedicated-appliance option. It automatically replaces partitions/data on the first disk with an LVM layout. Use a disposable VM disk or dedicated machine; disconnect disks you do not intend to erase.
+   - The disk contains Debian, PostgreSQL, attachments, logs and future growth as well as the application. A 40 GB virtual disk remains the recommended starting allocation; manual partitioning permits a different layout.
 3. **First boot**: the setup wizard opens on the console. It asks for the following, and anything marked *optional* can be skipped and done later in Settings:
    - **Install type**: local helpdesk (recommended), helpdesk with integrations, offline demo, or an existing answers file. Both real-install paths create the same working local helpdesk. The local path skips integration questions; the integrations path offers the existing optional setup questions. Both offer encrypted backups.
    - **Time zone**: backup times, scheduled reports and business hours follow it.
@@ -34,7 +37,7 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
 
 **The OS accounts.** `layer8` is the recovery console: log in on the screen or over SSH for a menu of recovery tasks (network, DNS, break-glass admin passwords, services, certificate, backups, power) with no shell. The wizard asks for its password; without one the account stays locked. See [recovery-console.md](recovery-console.md). `sdadmin` is the OS administrator for anything the menu doesn't cover. There's no default password: the wizard asks for one (or `install.os_password` in an answers file), and until then the account is locked. Root login is off; use `sudo`.
 
-**Unattended ISO.** `iso/build.sh --answers answers.json` builds an ISO that installs with those answers and no wizard, for repeat installs or a lab. The answers file holds passwords, so keep that ISO private. The copy on the installed machine is deleted once setup has used it.
+**Answers-file ISO.** `iso/build.sh --answers answers.json` builds an ISO that uses those answers on first boot without the setup wizard, for repeat installs or a lab. The boot menu still requires a disk/partitioning choice; supplying answers never enables a timed disk erase. The answers file holds passwords, so keep that ISO private. The copy on the installed machine is deleted once setup has used it.
 
 ## 2. Installer on an existing Debian 13 server
 
@@ -140,3 +143,18 @@ iso/build.sh --answers a.json
 ```
 
 It downloads Debian's current 13.x netinst ISO (checking its SHA-256), builds the web UI, and builds the offline bundle in a Debian 13 container. The bundle holds Python wheels for Debian's Python (with `gssapi` compiled) and every Debian package the installer adds. It then repacks the ISO with the bundle and the automated install entry, keeping Debian's BIOS and UEFI boot. Output: `iso/build/layer8-<version>.iso`.
+
+
+### Boot artwork and validation
+
+The boot artwork is original, code-generated artwork in `iso/branding/background.png`.
+Regenerate with Pillow and DejaVu Sans: `python3 iso/branding/render.py`.
+`LAYER8_ARTWORK_FONT` can point to a DejaVu Sans font file on another host.
+The committed PNG is used directly by the ISO; Pillow is not an appliance dependency.
+Text menus remain available when graphical firmware output is unavailable.
+
+Installer validation builds a complete offline ISO and boots it without a hard disk
+under BIOS and UEFI. Its artifact contains the ISO and actual boot screenshots.
+The menu test verifies that waiting does not start installation. It does not certify
+partitioning, an installed appliance, networking or first-boot provisioning; those
+need a disposable-disk installation test before release.
