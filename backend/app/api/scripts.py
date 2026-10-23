@@ -124,13 +124,19 @@ def update_script(script_id: int, body: ScriptIn, admin: ScriptsManager, session
     if not (scripts.is_builtin(script.name) and name == script.name):
         _name_free(session, name, script.id)
     current = _current(script)
+    language_changed = body.language != script.language
     script.name, script.description, script.language = name, body.description, body.language
     if admin.role == UserRole.admin:
         script.high_risk, script.agents_can_run = body.high_risk, body.agents_can_run
     elif (body.high_risk, body.agents_can_run) != (script.high_risk, script.agents_can_run):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can change who may run a script or whether it's high risk")
     script.is_active = body.is_active
-    if body.body != current.body or params != current.parameters:
+    if body.body != current.body or params != current.parameters or language_changed:
+        # Script writers cannot inherit execution authorization from older code.
+        # An administrator must review and explicitly re-enable technician access.
+        if admin.role != UserRole.admin:
+            script.high_risk = True
+            script.agents_can_run = False
         number = max(v.number for v in script.versions) + 1
         script.versions.append(ScriptVersion(number=number, body=body.body, parameters=params, note=body.note, author_id=admin.id))
         script.current_version = number
@@ -183,6 +189,10 @@ def restore_version(script_id: int, number: int, admin: ScriptsManager, session:
     new = max(v.number for v in script.versions) + 1
     script.versions.append(ScriptVersion(number=new, body=old.body, parameters=old.parameters, note=f"Back to version {number}", author_id=admin.id))
     script.current_version = new
+    # Restoring old code also creates a new executable version.
+    if admin.role != UserRole.admin:
+        script.high_risk = True
+        script.agents_can_run = False
     session.commit()
     return _out(script, admin)
 

@@ -6,6 +6,8 @@ import { ApiError, api, type Me } from "./api/client";
 import { Brand, backgroundStyle, useBranding } from "./branding";
 import { NoticeBanner, NoticeDialog } from "./components/Notices";
 import { ME_KEY } from "./queryClient";
+import { RouteFocus } from "./components/RouteFocus";
+import { CommandPalette } from "./components/CommandPalette";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
 import { QueuePage } from "./pages/QueuePage";
 import { TicketPage } from "./pages/TicketPage";
@@ -30,6 +32,7 @@ function reloadOnce(error: unknown): never {
   }
   throw error;
 }
+const DashboardPage = named(() => import("./pages/DashboardPage"), "DashboardPage");
 const ReportsPage = named(() => import("./pages/ReportsPage"), "ReportsPage");
 const PreferencesPage = named(() => import("./pages/me/PreferencesPage"), "PreferencesPage");
 const ScriptsPage = named(() => import("./pages/scripts/ScriptsPage"), "ScriptsPage");
@@ -84,6 +87,7 @@ function Shell({ me }: { me: Me }) {
   });
   return (
     <div className="shell">
+      <a className="skip-link" href="#console-main">Skip to workspace</a>
       <nav className="side" aria-label="Main">
         <div className="brand">
           <Brand b={brand} className="" />
@@ -91,6 +95,7 @@ function Shell({ me }: { me: Me }) {
         <NavLink to="/" end>
           <span className="nav-symbol" aria-hidden="true">▦</span><span>Tickets</span>
         </NavLink>
+        <NavLink to="/dashboard"><span className="nav-symbol" aria-hidden="true">◫</span><span>Dashboard</span></NavLink>
         <NavLink to="/devices"><span className="nav-symbol" aria-hidden="true">▣</span><span>Devices</span></NavLink>
         <NavLink to="/changes"><span className="nav-symbol" aria-hidden="true">⇄</span><span>Changes</span></NavLink>
         <NavLink to="/purchase-orders"><span className="nav-symbol" aria-hidden="true">▤</span><span>Purchase orders</span></NavLink>
@@ -109,8 +114,9 @@ function Shell({ me }: { me: Me }) {
           </button>
         </div>
       </nav>
-      <main className="main" style={backgroundStyle(brand, "console")}>
-        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><span className="console-topbar-user">{me.display_name}</span></div>
+      <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
+        <RouteFocus mainId="console-main" />
+        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={me} /><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
@@ -151,6 +157,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "checklists", label: "Checklists", adminOnly: true, permission: "templates_manage", page: (me) => <ChecklistsAdmin me={me} /> },
   { path: "changes", label: "Changes", adminOnly: true, permission: "templates_manage", page: (me) => <ChangesAdmin me={me} /> },
   { path: "email", label: "Email", adminOnly: true, page: (me) => <EmailAdmin me={me} /> },
+  { path: "teams", label: "Teams", adminOnly: true, page: (me) => <SettingsForm me={me} section="teams" title="Teams" intro="Optional periodic queue counts through a Teams Workflows webhook. Only non-restricted queues contribute. No ticket details or people are sent. Configure a workflow and enable summaries when ready; use Settings > Status to run or pause delivery." /> },
   { path: "windows-sign-in", label: "Windows sign-in", adminOnly: true, page: (me) => <WindowsSignInAdmin me={me} /> },
   { path: "surveys", label: "Surveys", adminOnly: true, page: (me) => <SurveysAdmin me={me} /> },
   { path: "notices", label: "Notices", adminOnly: true, permission: "notices_manage", page: (me) => <NoticesAdmin me={me} /> },
@@ -247,6 +254,7 @@ const router = (me: Me) =>
       element: <Shell me={me} />,
       children: [
         { index: true, element: <QueuePage me={me} /> },
+        { path: "dashboard", element: <DashboardPage /> },
         { path: "tickets/:ticketId", element: <TicketPage me={me} /> },
         { path: "devices", element: <DevicesPage me={me} /> },
         { path: "devices/:deviceId", element: <DevicePage me={me} /> },

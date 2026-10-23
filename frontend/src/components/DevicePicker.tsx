@@ -15,7 +15,8 @@ export function DevicePicker({ label, onPick, exclude = [] }: { label: string; o
     return () => clearTimeout(t);
   }, [text]);
   const results = useQuery({ queryKey: ["device-search", debounced], queryFn: () => api.devices.list({ q: debounced, limit: 10 }), enabled: debounced.length >= 2 });
-  const hits = debounced.length >= 2 ? (results.data?.items ?? []).filter((d) => !exclude.includes(d.id)) : [];
+  const hits = debounced.length >= 2 && text.trim() === debounced ? (results.data?.items ?? []).filter((d) => !exclude.includes(d.id)) : [];
+  const selected = Math.min(active, Math.max(0, hits.length - 1));
 
   function pick(d: Device) {
     onPick(d);
@@ -31,6 +32,7 @@ export function DevicePicker({ label, onPick, exclude = [] }: { label: string; o
         aria-expanded={open && hits.length > 0}
         aria-controls={`${id}-list`}
         aria-autocomplete="list"
+        aria-activedescendant={open && hits.length ? `${id}-option-${selected}` : undefined}
         placeholder="Type a device name, OS or person"
         value={text}
         onChange={(e) => {
@@ -40,16 +42,20 @@ export function DevicePicker({ label, onPick, exclude = [] }: { label: string; o
         }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing) return;
+          if (e.key === "Escape") { e.preventDefault(); setOpen(false); return; }
           if (!hits.length) return;
           if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActive((a) => Math.min(a + 1, hits.length - 1));
+            setOpen(true);
+            setActive(open ? Math.min(selected + 1, hits.length - 1) : 0);
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
-            setActive((a) => Math.max(a - 1, 0));
-          } else if (e.key === "Enter") {
+            setOpen(true);
+            setActive(open ? Math.max(selected - 1, 0) : hits.length - 1);
+          } else if (e.key === "Enter" && open) {
             e.preventDefault();
-            pick(hits[active]);
+            pick(hits[selected]);
           }
         }}
       />
@@ -58,8 +64,9 @@ export function DevicePicker({ label, onPick, exclude = [] }: { label: string; o
           {hits.map((d, i) => (
             <li
               key={d.id}
+              id={`${id}-option-${i}`}
               role="option"
-              aria-selected={i === active}
+              aria-selected={i === selected}
               onMouseDown={(e) => {
                 e.preventDefault();
                 pick(d);
