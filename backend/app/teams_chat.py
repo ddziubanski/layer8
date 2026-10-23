@@ -179,7 +179,7 @@ def matches(chat, requester, oid):
     return (chat.get("chatType") == "oneOnOne" and len(members) == 2
             and not chat.get("members@odata.nextLink")
             and sum(m.get("userId") == oid for m in members) == 1
-            and any(m.get("userId") != oid and m.get("email", "").casefold() in addresses for m in members))
+            and any(m.get("userId") != oid and (m.get("email") or "").casefold() in addresses for m in members))
 
 
 def chats(token, requester, oid):

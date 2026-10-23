@@ -122,6 +122,7 @@ def send(ticket_id: int, body: SendIn, user: Agent, session: SessionDep):
         "sender": record["account"],
     })
     session.add(event)
+    services._event(session, ticket, EventType.updated, user, **{**event.data, "teams_status": "started"})
     session.commit()  # Durable intent before the external side effect: never silently resend.
     lock(session, user)
     try:

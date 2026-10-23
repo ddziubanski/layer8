@@ -120,6 +120,7 @@ def test_chat_matching_excludes_groups_and_other_people():
     assert not teams.matches({**chat, "chatType": "group"}, requester, OID)
     assert not teams.matches(chat, SimpleNamespace(email="private@example.com", upn=None), OID)
     assert not teams.matches(chat, requester, "wrong-sender")
+    assert not teams.matches({**chat, "members": [{"userId": OID}, {"userId": "other", "email": None}]}, requester, OID)
 
 
 def test_chat_pagination_rejects_external_urls(monkeypatch):
@@ -234,3 +235,29 @@ def test_settings_are_admin_only_and_secret_is_write_only(client, admin, agent):
     assert saved.status_code == 200, saved.text
     assert "synthetic-client-secret" not in saved.text
     assert "synthetic-client-secret" not in client.get("/api/settings/teams", headers=as_user(admin)).text
+
+
+def test_real_session_requires_csrf_and_callback_stays_bound(client, db, agent, configured, oauth, monkeypatch):
+    from app import auth
+    monkeypatch.setattr(settings, "dev_auth", False)
+    auth.set_password(db, agent, "Synthetic-password-123"); db.commit()
+    assert client.post("/api/auth/login", json={"email": agent.email, "password": "Synthetic-password-123"}).status_code == 200
+    assert client.post("/api/teams/connect").status_code == 403
+    assert client.post("/api/teams/connect", headers={auth.CSRF_HEADER: "1"}).status_code == 200
+    flow = json.loads((settings.secrets_dir / f"teams-pending-{agent.id}.json").read_text())
+    # A new login to the same Layer 8 user replaces the browser session binding.
+    client.post("/api/auth/login", json={"email": agent.email, "password": "Synthetic-password-123"})
+    result = client.post("/api/teams/callback", json={"state": flow["state"], "code": "synthetic-code"}, headers={auth.CSRF_HEADER: "1"})
+    assert result.status_code == 409
+    assert not teams.path(agent.id).exists()
+
+
+def test_portal_only_session_cannot_connect(client, db, agent, configured):
+    from fastapi import Response
+    from app import auth, sla
+    response = Response()
+    auth.start_session(db, agent, response, sla.utcnow(), portal_only=True); db.commit()
+    token = response.headers["set-cookie"].split(";", 1)[0].split("=", 1)[1]
+    client.cookies.set(auth.COOKIE, token)
+    assert client.get("/api/teams/connection").status_code == 403
+    assert client.post("/api/teams/connect", headers={auth.CSRF_HEADER: "1"}).status_code == 403
