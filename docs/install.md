@@ -17,18 +17,20 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
 1. **Create the VM**: 2 vCPU, 4 GB RAM, 40 GB disk, one network card. On Hyper-V use a Generation 2 VM; disable Secure Boot, or set its template to "Microsoft UEFI Certificate Authority". BIOS and UEFI both work.
 2. **Boot the ISO.** It has one entry, *Install Layer 8 (erases the disk)*, which starts after 5 seconds. It installs a minimal Debian server (no desktop) and Layer 8 without asking anything, and **erases the first disk**. There are no other install options: for a hand-made Debian, use Debian's own ISO and `install/install.sh`.
 3. **First boot**: the setup wizard opens on the console. It asks for the following, and anything marked *optional* can be skipped and done later in Settings:
-   - **Install type**: real install, offline demo, or an existing answers file.
+   - **Install type**: local helpdesk (recommended), helpdesk with integrations, offline demo, or an existing answers file. Both real-install paths create the same working local helpdesk. The local path skips integration questions; the integrations path offers the existing optional setup questions. Both offer encrypted backups.
    - **Time zone**: backup times, scheduled reports and business hours follow it.
    - **Address**: the service desk's DNS name, e.g. `helpdesk.corp.example`. Create the DNS record pointing to the VM's address. The console shows the address, or use `ip addr`.
    - **OS administrator**: a password for `sdadmin`. It's set at once, so you can copy files in with `scp` as `sdadmin` from here on. Until then the account has no password and can't be logged into.
    - **HTTPS**: a certificate and key from your CA (the wizard waits while you `scp` them in as `sdadmin`), or a self-signed certificate for now.
    - **First admin**: a local account that always works, even when AD is down. Keep it as the break-glass account.
    - **Ticket numbers**: the first number and the label, e.g. `HD-{n}` or `INC{n:06}`.
-   - **Microsoft Entra / Exchange Online** (optional): tenant ID, application (client) ID, client secret, the service desk mailbox and the email domains to accept. See [email-setup.md](email-setup.md) for the app registration. The wizard tests the connection when it finishes.
+   - **Microsoft Entra / Exchange Online** (integrations path, optional): tenant ID, application (client) ID, client secret, the service desk mailbox and the email domains to accept. This configures email through Microsoft Graph, not Entra user sign-in. See [email-setup.md](email-setup.md) for the app registration. The wizard tests the connection when it finishes.
    - **Active Directory** (optional): domain controllers (LDAPS), a read-only service account, the search base and the CA certificate. The connection is tested too.
    - **Windows sign-in for the portal** (optional): the keytab for `HTTP/<name>`. See [windows-sign-in.md](windows-sign-in.md).
    - **Backups** (optional): an SMB or NFS share (mounted at `/mnt/helpdesk-backup`), the daily time and the backup passphrase. Keep a copy of the passphrase away from the server.
 4. Open `https://<name>/` and sign in as the admin.
+
+**Start locally, connect later.** With the recommended local path, no AD or Microsoft credentials are needed. After signing in, configure Exchange Online in Settings > Email, directory sync and AD password sign-in in Settings > Directory, and Kerberos portal sign-in in Settings > Windows sign-in. Action1 is optional under Settings > General. Skipping integration setup does not clear existing settings when updating an existing installation. Teams notifications are not implemented by this wizard.
 
 **The OS accounts.** `layer8` is the recovery console: log in on the screen or over SSH for a menu of recovery tasks (network, DNS, break-glass admin passwords, services, certificate, backups, power) with no shell. The wizard asks for its password; without one the account stays locked. See [recovery-console.md](recovery-console.md). `sdadmin` is the OS administrator for anything the menu doesn't cover. There's no default password: the wizard asks for one (or `install.os_password` in an answers file), and until then the account is locked. Root login is off; use `sudo`.
 
