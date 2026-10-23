@@ -11,6 +11,8 @@ the ticket's text, sent as additional context.
 """
 
 import os
+import hashlib
+import json
 from urllib.parse import quote
 
 import httpx
@@ -33,11 +35,12 @@ def time_zone() -> str:
     return real.split("zoneinfo/", 1)[1] if "zoneinfo/" in real else "UTC"
 
 
-def ticket_context(ticket, comments) -> list[str]:
+def ticket_context(ticket, comments, *, include_internal: bool = False) -> list[str]:
     """The ticket's subject, description and latest comments as plain text, capped."""
     parts = [f"Help desk ticket {ticket.id}: {ticket.subject}\nStatus: {ticket.status.value}. Priority: {ticket.priority.value}. "
              f"Requester: {ticket.requester.display_name}.\n\n{(ticket.description or '').strip()}"]
-    for c in comments[-LAST_COMMENTS:]:
+    visible = [c for c in comments if include_internal or not c.is_internal]
+    for c in visible[-LAST_COMMENTS:]:
         kind = "Internal note" if c.is_internal else "Reply"
         parts.append(f"{kind} by {c.author.display_name}, {c.created_at:%Y-%m-%d %H:%M}:\n{c.body.strip()}")
     out, size = [], 0
@@ -48,6 +51,21 @@ def ticket_context(ticket, comments) -> list[str]:
         out.append(part)
         size += len(part)
     return out
+
+
+def context_digest(context: list[str]) -> str:
+    return hashlib.sha256(json.dumps(context, ensure_ascii=False).encode()).hexdigest()
+
+
+def account_key(record: dict) -> str:
+    """Bind a conversation to the delegated account and app registration, not its email label."""
+    try:
+        parts = [record["config"]["tenant"], record["config"]["client"], record["oid"]]
+        if not all(isinstance(part, str) and part for part in parts):
+            raise KeyError
+    except (KeyError, TypeError):
+        raise CopilotError("Reconnect your Microsoft account before starting a Copilot conversation") from None
+    return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
 
 
 def _post(http: httpx.Client, token: str, path: str, body: dict) -> dict:
@@ -62,7 +80,10 @@ def _post(http: httpx.Client, token: str, path: str, body: dict) -> dict:
     if r.status_code not in (200, 201):
         raise CopilotError(f"Copilot returned HTTP {r.status_code}")
     try:
-        return r.json()
+        result = r.json()
+        if not isinstance(result, dict):
+            raise ValueError
+        return result
     except ValueError:
         raise CopilotError("Copilot sent an answer that couldn't be read") from None
 
@@ -70,11 +91,11 @@ def _post(http: httpx.Client, token: str, path: str, body: dict) -> dict:
 def ask(token: str, question: str, context: list[str], conversation_id: str | None = None, *, http: httpx.Client | None = None) -> dict:
     """One question, in a new conversation or a running one. Returns {conversation_id, answer, citations}."""
     own = http is None
-    http = http or httpx.Client(timeout=90, follow_redirects=False)
+    http = http or httpx.Client(timeout=90, follow_redirects=False, trust_env=False)
     try:
         if not conversation_id:
             conversation_id = _post(http, token, "/copilot/conversations", {}).get("id")
-            if not conversation_id:
+            if not isinstance(conversation_id, str) or not conversation_id or len(conversation_id) > 200:
                 raise CopilotError("Copilot didn't start a conversation")
         body = {"message": {"text": question}, "locationHint": {"timeZone": time_zone()}}
         if context:
@@ -84,11 +105,15 @@ def ask(token: str, question: str, context: list[str], conversation_id: str | No
         if own:
             http.close()
     messages = reply.get("messages") or []
-    if not messages:
+    if not isinstance(messages, list) or not messages or not isinstance(messages[-1], dict):
         raise CopilotError("Copilot sent no answer")
     last = messages[-1]
+    if not isinstance(last.get("text"), str) or not last["text"].strip():
+        raise CopilotError("Copilot sent no answer")
     citations, seen = [], set()
     for a in last.get("attributions") or []:
+        if not isinstance(a, dict):
+            continue
         url = a.get("seeMoreWebUrl") or ""
         if a.get("attributionType") == "citation" and url.startswith("https://") and url not in seen:
             seen.add(url)
