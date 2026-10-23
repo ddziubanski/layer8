@@ -6,6 +6,18 @@ import { ReportsPage } from "./ReportsPage";
 
 afterEach(() => vi.unstubAllGlobals());
 
+test("empty report library retains schedules and distinguishes a saved-report failure", async () => {
+  mockApi({ "GET /api/reports/presets": [], "GET /api/reports/saved": [] });
+  const view = renderAt("/", [{ path: "/", element: <ReportsPage /> }]);
+  expect(await screen.findByText(/No reports are available yet/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Scheduled reports" })).toBeInTheDocument();
+  view.unmount();
+  mockApi({ "GET /api/reports/presets": [], "GET /api/reports/saved": new Response('{"detail":"unavailable"}', { status: 503 }) });
+  renderAt("/", [{ path: "/", element: <ReportsPage /> }]);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Saved reports could not be loaded");
+  expect(screen.queryByText(/No reports are available yet/)).not.toBeInTheDocument();
+});
+
 const PRESETS = [
   { key: "total-by-status", title: "Total tickets by status", description: "How many…", group: "Tickets", spec: { dataset: "tickets", group_by: ["status"], measures: ["count"], filters: {}, sort: "measure", limit: 200 } },
   {

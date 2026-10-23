@@ -30,7 +30,7 @@ export function ScriptsPage({ me }: { me: Me }) {
   ];
 
   return (
-    <>
+    <section className="analysis-workspace script-workspace">
       <div className="page-head row-gap">
         <WorkspaceTitle title="Scripts" area="AUTOMATION" description="Browse queries and actions, review runs and manage schedules." />
         {writes && (
@@ -46,7 +46,7 @@ export function ScriptsPage({ me }: { me: Me }) {
       </div>
       {examples.data && <p className="muted small">{examples.data.length ? `Added: ${examples.data.join(", ")}.` : "The examples are all here already."}</p>}
       {list.error && <p className="error">{list.error.message}</p>}
-      <div className="admin">
+      <div className="admin analysis-layout">
         <nav className="admin-list report-list" aria-label="Scripts">
           <ul>
             <li>
@@ -97,8 +97,9 @@ export function ScriptsPage({ me }: { me: Me }) {
           </section>
         )}
         {pane?.kind !== "new" && pane?.kind !== "runs" && current && (
-          <section className="card stack" style={{ margin: 0 }} aria-label={current.name}>
-            <div>
+          <section className="card stack analysis-detail" style={{ margin: 0 }} aria-label={current.name}>
+            <header className="analysis-detail-head">
+              <p className="workspace-area">{current.kind === "query" ? "QUERY WORKSPACE" : "ACTION WORKSPACE"}</p>
               <h2 style={{ margin: 0 }}>{current.name}</h2>
               <p className="muted small" style={{ margin: "4px 0 0" }}>
                 {current.kind === "query" ? "Query" : "Action"} in {LANGUAGE_LABEL[current.language]} · version {current.current_version}
@@ -106,7 +107,12 @@ export function ScriptsPage({ me }: { me: Me }) {
                 {current.agents_can_run ? " · agents can run it" : " · admins only"}
               </p>
               {current.description && <p style={{ margin: "8px 0 0" }}>{current.description}</p>}
-            </div>
+              <div className="row-gap analysis-badges" aria-label="Script state">
+                <span className={`chip ${current.can_run ? "g" : "n"}`}>{current.can_run ? "Run permitted" : "Run unavailable"}</span>
+                {current.high_risk && <span className="chip a">High risk</span>}
+                {!current.is_active && <span className="chip n">Inactive</span>}
+              </div>
+            </header>
             <div className="views" role="group" aria-label="Show">
               <button type="button" aria-pressed={tab === "run"} onClick={() => setPane({ kind: "script", id: current.id, tab: "run" })}>
                 Details
@@ -155,7 +161,7 @@ export function ScriptsPage({ me }: { me: Me }) {
           </section>
         )}
       </div>
-    </>
+    </section>
   );
 }
 
@@ -237,7 +243,7 @@ function RunPane({ script, onStarted }: { script: Script; onStarted: () => void 
           {(run.error ?? csv.error)!.message}
         </p>
       )}
-      {run.data && <ResultTable result={run.data} />}
+      {run.data && <section className="analysis-results" aria-label="Query results"><header><h3>Results</h3><span className="muted small" role="status">{run.data.rows.length} displayed row(s)</span></header><ResultTable result={run.data} /></section>}
       {run.data?.truncated && <p className="muted small">Showing the first {run.data.rows.length} rows.</p>}
     </form>
   );
@@ -270,7 +276,7 @@ function Editor({
 
   return (
     <form
-      className={`stack settings-form${embedded ? "" : " card"}`}
+      className={`stack settings-form script-editor${embedded ? "" : " card"}`}
       style={{ margin: 0 }}
       aria-label={scriptId ? "Edit script" : "New script"}
       onSubmit={(e) => {

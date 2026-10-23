@@ -103,12 +103,15 @@ export function ReportsPage() {
   const showingSchedules = current?.kind === "schedules";
 
   return (
-    <>
+    <section className="analysis-workspace report-workspace">
       <div className="page-head">
         <WorkspaceTitle title="Reports" area="SERVICE INSIGHTS" description="Explore service data, save reports and schedule delivery." />
       </div>
-      {presets.error && <p className="error">{presets.error.message}</p>}
-      <div className="admin">
+      {presets.error && <p className="error" role="alert">{presets.error.message}</p>}
+      {saved.error && <p className="error" role="alert">Saved reports could not be loaded: {saved.error.message}</p>}
+      {presets.isPending && <p className="muted" role="status">Loading report library…</p>}
+      {presets.isSuccess && saved.isSuccess && !presets.data.length && !saved.data.length && <p className="card muted" role="status">No reports are available yet. Scheduled reports remain accessible from the library.</p>}
+      <div className="admin analysis-layout">
         <nav className="admin-list report-list" aria-label="Reports">
           <ul>
             <li>
@@ -149,8 +152,9 @@ export function ReportsPage() {
         </nav>
         {showingSchedules && <SchedulesView />}
         {!showingSchedules && base && spec && (
-          <section className="card stack" style={{ margin: 0 }} aria-label={title}>
-            <div>
+          <section className="card stack analysis-detail" style={{ margin: 0 }} aria-label={title}>
+            <header className="analysis-detail-head">
+              <p className="workspace-area">{savedReport ? "SAVED REPORT" : "REPORT WORKSPACE"}</p>
               <h2 style={{ margin: 0 }}>
                 {title}
                 {draft && <span className="muted small"> (changed)</span>}
@@ -166,8 +170,8 @@ export function ReportsPage() {
                   {savedReport.shared ? ", shared with everyone" : ""}
                 </p>
               )}
-            </div>
-            <div className="row-gap">
+            </header>
+            <div className="row-gap report-controls" role="group" aria-label="Report controls">
               <label className="inline small">
                 {dataset.data?.label ?? "Tickets"}
                 <select value={effectiveDate} onChange={(e) => setDateField(e.target.value)} aria-label="Which date">
@@ -291,12 +295,12 @@ export function ReportsPage() {
               </form>
             )}
             {error && <p className="error">{error.message}</p>}
-            {result.isFetching && !result.data && <p className="muted">Running…</p>}
-            {result.data && <ResultTable result={result.data} />}
+            {result.isFetching && !result.data && <p className="muted" role="status">Running…</p>}
+            {result.data && <section className="analysis-results" aria-label="Report results"><header><h3>Results</h3><span className="muted small" role="status">{result.data.rows.length} displayed row(s)</span></header><ResultTable result={result.data} /></section>}
             {result.data?.truncated && <p className="muted small">Showing the first {result.data.rows.length} rows. Narrow the period or raise the row limit (Customize) to see more.</p>}
           </section>
         )}
       </div>
-    </>
+    </section>
   );
 }

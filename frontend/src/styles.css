@@ -634,3 +634,24 @@ label.inline input { width: auto; min-height: 0; }
 .receiving-line .spacer { min-width:180px; overflow-wrap:anywhere; }
 @media(max-width:1000px) { .purchase-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .purchase-summary { grid-template-columns:1fr; } .purchase-workspace-head { padding:18px; } .receiving-screen .receiving-lookup label { flex-basis:100% !important; } }
+
+/* Script and report detail panes share a library / working-area hierarchy. */
+.analysis-workspace { max-width:1600px; margin:0 auto; }
+.analysis-layout { grid-template-columns:250px minmax(0,1fr); gap:20px; }
+.analysis-layout > * { min-width:0; }
+.analysis-workspace .analysis-detail { padding:22px; border-radius:12px; gap:18px; }
+.analysis-detail-head { border-bottom:1px solid var(--line); padding-bottom:18px; }
+.analysis-detail-head h2, .analysis-workspace .report-list button { overflow-wrap:anywhere; }
+.analysis-badges { margin-top:12px; }
+.analysis-workspace .views { margin:0; }
+.report-controls { padding:14px; border:1px solid var(--line); border-radius:10px; background:var(--bg); align-items:end; }
+.report-controls label select { max-width:240px; }
+.analysis-results { min-width:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.analysis-results > header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; background:var(--head-bg); }
+.analysis-results h3 { margin:0; font-size:14px; }
+.analysis-results .table-wrap { max-width:100%; margin:0; overflow:auto; }
+.analysis-results table { margin:0; }
+.analysis-workspace .script-editor { max-width:none; }
+.analysis-workspace .script-editor textarea { min-height:200px; font-family:ui-monospace,Consolas,monospace; line-height:1.55; tab-size:2; }
+.analysis-workspace .builder { border-radius:10px; padding:18px; }
+@media(max-width:1000px) { .analysis-layout { grid-template-columns:minmax(0,1fr); } .analysis-workspace .analysis-detail { padding:18px; } }
