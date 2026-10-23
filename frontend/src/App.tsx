@@ -218,16 +218,19 @@ const settingsTabs = (me: Me) =>
 
 function SettingsLayout({ me }: { me: Me }) {
   return (
-    <>
-      <nav className="tabs" aria-label="Settings">
+    <section className="settings-workspace">
+      <header className="settings-intro"><p className="workspace-area">CONFIGURATION</p><p className="muted">Manage service desk settings and integrations. Choose an area to review its configuration.</p></header>
+      <div className="settings-grid">
+      <nav className="tabs settings-navigation" aria-label="Settings">
         {settingsTabs(me).map((s) => (
           <NavLink key={s.path} to={`/settings/${s.path}`}>
             {s.label}
           </NavLink>
         ))}
       </nav>
-      <Outlet />
-    </>
+      <div className="settings-content"><Outlet /></div>
+      </div>
+    </section>
   );
 }
 

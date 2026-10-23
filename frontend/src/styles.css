@@ -676,3 +676,20 @@ label.inline input { width: auto; min-height: 0; }
 .module-kb textarea { line-height:1.6; }
 .module-ipam .ip-map { padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
 @media(max-width:1000px) { .module-workspace .admin { grid-template-columns:minmax(0,1fr); } }
+
+/* All Settings sections share navigation and a readable configuration canvas. */
+.settings-intro { padding:18px 22px; border:1px solid var(--line); border-radius:12px; background:var(--surface); margin-bottom:20px; }
+.settings-intro p:last-child { margin:0; line-height:1.5; }
+.settings-grid { display:grid; grid-template-columns:220px minmax(0,1fr); gap:22px; align-items:start; }
+.main .settings-navigation { display:flex; flex-direction:column; flex-wrap:nowrap; gap:3px; margin:0; padding:10px; position:sticky; top:16px; max-height:calc(100vh - 48px); overflow:auto; }
+.main .settings-navigation a { padding:10px 12px; border-radius:7px; line-height:1.4; }
+.main .settings-navigation a.active { box-shadow:inset 3px 0 var(--link); }
+.settings-content { min-width:0; }
+.settings-content > .stack, .settings-content > .card, .settings-content > form { max-width:1100px; }
+.settings-content .settings-form { width:100%; max-width:960px; box-sizing:border-box; }
+.settings-content .card { padding:20px; }
+.settings-content .page-head { padding-bottom:16px; border-bottom:1px solid var(--line); }
+.settings-content .form-grid { gap:14px; }
+.settings-content :is(input,select,textarea) { min-width:0; }
+.settings-content .table-wrap { overflow:auto; max-width:100%; }
+@media(max-width:1100px) { .settings-grid { grid-template-columns:minmax(0,1fr); } .main .settings-navigation { flex-direction:row; flex-wrap:wrap; position:static; max-height:none; } }
