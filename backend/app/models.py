@@ -1755,6 +1755,29 @@ class SystemEvent(Base):
     process: Mapped[str] = mapped_column(String(20))
 
 
+class Wallboard(Base):
+    """A read-only wall display (Settings > Wallboards): live counts, alerts and ticket lists for a
+    big screen. Its secret link is the key; only a hash of it is kept."""
+
+    __tablename__ = "wallboards"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    # The first characters, to tell links apart in lists (the rest is never stored).
+    prefix: Mapped[str] = mapped_column(String(12))
+    # The queues it shows; empty: every active queue that isn't restricted.
+    queue_ids: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list, server_default=text("'{}'"))
+    # Unassigned longer than this raises an alert on the board.
+    unassigned_alert_minutes: Mapped[int] = mapped_column(Integer, default=30, server_default=text("30"))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    created_by: Mapped["User | None"] = relationship()
+
+
 class ServiceHeartbeat(Base):
     """A background service saying it's alive, and what its last pass did."""
 

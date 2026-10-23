@@ -77,6 +77,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Runners",
     "Action1",
     "API keys",
+    "Wallboards",
     "Device sweeps",
     "Warranty lookups",
     "Purchasing",

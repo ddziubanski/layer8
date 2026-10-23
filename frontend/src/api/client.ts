@@ -95,6 +95,10 @@ export type SwitchPort = S["SwitchPortOut"];
 export type DeviceWarranty = S["DeviceWarrantyOut"];
 export type ApiKey = S["ApiKeyOut"];
 export type ApiKeyMade = S["ApiKeyMadeOut"];
+export type Wallboard = S["WallboardOut"];
+export type WallboardMade = S["WallboardMadeOut"];
+export type WallboardIn = S["WallboardIn"];
+export type WallboardData = S["BoardData"];
 export type NetworkDevice = S["NetworkDeviceOut"];
 export type NetworkDeviceDetail = S["NetworkDeviceDetailOut"];
 export type DevicePatch = S["DevicePatchOut"];
@@ -559,6 +563,14 @@ export const api = {
     list: () => request<ApiKey[]>("GET", "/api/api-keys"),
     create: (name: string) => request<ApiKeyMade>("POST", "/api/api-keys", { name }),
     revoke: (id: number) => request<ApiKey>("DELETE", `/api/api-keys/${id}`),
+  },
+
+  wallboards: {
+    list: () => request<Wallboard[]>("GET", "/api/wallboards"),
+    create: (body: WallboardIn) => request<WallboardMade>("POST", "/api/wallboards", body),
+    update: (id: number, body: WallboardIn) => request<Wallboard>("PUT", `/api/wallboards/${id}`, body),
+    newLink: (id: number) => request<WallboardMade>("POST", `/api/wallboards/${id}/link`),
+    revoke: (id: number) => request<Wallboard>("DELETE", `/api/wallboards/${id}`),
   },
 
   network: {

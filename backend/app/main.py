@@ -16,6 +16,7 @@ from app.api import runs as runs_api
 from app.api import script_schedules as script_schedules_api
 from app.api import scripts as scripts_api
 from app.api import teams_chat as teams_chat_api
+from app.api import wallboards as wallboards_api
 from app.api import settings as settings_api
 from app import syslog
 from app.config import settings
@@ -62,6 +63,7 @@ app.include_router(vendors.router)
 app.include_router(ipam.router)
 app.include_router(network.router)
 app.include_router(integrations.router)
+app.include_router(wallboards_api.router)
 app.include_router(action1.router)
 app.include_router(checklists.router)
 app.include_router(changes.router)
