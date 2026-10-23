@@ -68,6 +68,20 @@ def test_change_goes_to_a_runner_and_is_noted(client, db, agent, ad):
     assert "add to VPN-Users" in note and "remove from Finance-Share" in note and "move to OU=Sales" in note
 
 
+def test_ad_changes_pin_the_selected_dedicated_runner(client, db, admin, agent, ad, monkeypatch):
+    made = client.post("/api/runners", json={"name": "AD worker", "languages": ["powershell"], "builtins_only": True}, headers=as_user(admin)).json()
+    monkeypatch.setattr(settings, "ad_runner_name", "AD worker")
+    response = client.post(f"/api/tickets/{ad['ticket'].id}/ad-changes", json={"add": [ad["vpn"].dn]}, headers=as_user(agent))
+    assert response.status_code == 201, response.text
+    run = db.get(ScriptRun, response.json()[0]["id"])
+    assert run.only_runner_id == made["runner"]["id"]
+    job = client.post("/api/runner/claim", json={}, headers={"Authorization": f"Bearer {made['token']}"})
+    assert job.status_code == 200 and job.json()["run_id"] == run.id
+    monkeypatch.setattr(settings, "ad_runner_name", "Missing runner")
+    failed = client.post(f"/api/tickets/{ad['ticket'].id}/ad-changes", json={"add": [ad["vpn"].dn]}, headers=as_user(agent))
+    assert failed.status_code == 422 and "No active PowerShell runner" in failed.json()["detail"]
+
+
 def test_allow_lists_are_enforced(client, agent, ad):
     t = ad["ticket"]
     for body, why in [

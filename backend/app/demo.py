@@ -145,7 +145,7 @@ def install(session: Session) -> list[str]:
     for ex in scripts.EXAMPLES:
         if session.scalar(select(Script).where(Script.name == ex["name"])) is None:
             s = Script(name=ex["name"], description=ex["description"], kind=ScriptKind.query, language=ScriptLanguage.sql, agents_can_run=True, current_version=1)
-            s.versions.append(ScriptVersion(number=1, body=ex["body"], parameters=scripts.check_definition(ScriptKind.query, ScriptLanguage.sql, ex["parameters"]), note="Example", author_id=admin.id))
+            s.versions.append(ScriptVersion(number=1, language=s.language, body=ex["body"], parameters=scripts.check_definition(ScriptKind.query, ScriptLanguage.sql, ex["parameters"]), note="Example", author_id=admin.id))
             session.add(s)
     done.append("Example queries in the script library")
 

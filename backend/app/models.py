@@ -617,6 +617,10 @@ class ScriptVersion(Base):
     script_id: Mapped[int] = mapped_column(ForeignKey("scripts.id", ondelete="CASCADE"), index=True)
     number: Mapped[int] = mapped_column(Integer)
     body: Mapped[str] = mapped_column(Text)
+    # The interpreter is part of the saved executable, not a later mutable setting.
+    language: Mapped[ScriptLanguage | None] = mapped_column(str_enum(ScriptLanguage))
+    reviewed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # [{name, label, type: text|int|bool|date|choice, required, default, choices}]
     parameters: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
     note: Mapped[str] = mapped_column(Text, default="", server_default="")
@@ -624,7 +628,8 @@ class ScriptVersion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     script: Mapped[Script] = relationship(back_populates="versions")
-    author: Mapped[User | None] = relationship()
+    author: Mapped[User | None] = relationship(foreign_keys=[author_id])
+    reviewed_by: Mapped[User | None] = relationship(foreign_keys=[reviewed_by_id])
 
 
 class Runner(Base):
@@ -640,6 +645,8 @@ class Runner(Base):
     languages: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    # Privileged hosts may be reserved for explicitly targeted built-in integrations.
+    builtins_only: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_host: Mapped[str | None] = mapped_column(String(255))
     last_version: Mapped[str | None] = mapped_column(String(50))

@@ -85,6 +85,7 @@ class Settings(BaseSettings):
     # only groups under these OUs, and moves only into OUs under these.
     ad_change_group_bases: list[str] = []
     ad_change_ou_bases: list[str] = []
+    ad_runner_name: str = ""
     # Lists of groups offered as tick boxes, "Label: name prefix" per line (e.g. "Distribution lists: [EMAIL]").
     ad_group_lists: list[str] = []
     # New AD accounts from tickets (onboarding): where they go, how they're named, first password.
