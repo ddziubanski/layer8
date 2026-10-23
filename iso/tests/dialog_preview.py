@@ -20,6 +20,9 @@ def capture(script, output, label):
         fake_id = root / "id"
         fake_id.write_text("#!/bin/sh\necho 0\n")
         fake_id.chmod(0o755)
+        fake_hostname = root / "hostname"
+        fake_hostname.write_text("#!/bin/sh\necho helpdesk.corp.example\n")
+        fake_hostname.chmod(0o755)
         env = {**os.environ, "PATH": f"{root}:{os.environ['PATH']}", "TERM": "xterm"}
         child = pexpect.spawn("sh", [str(script)], env=env, dimensions=(24, 80), encoding="utf-8")
         terminal = pyte.Screen(80, 24)
@@ -33,7 +36,7 @@ def capture(script, output, label):
                     if label in "\n".join(terminal.display):
                         break
             else:
-                raise RuntimeError(f"Dialog did not render: {label}")
+                raise RuntimeError(f"Dialog did not render: {label}\n" + "\n".join(terminal.display))
             output.parent.mkdir(parents=True, exist_ok=True)
             font = ImageFont.truetype("DejaVuSansMono.ttf", 16)
             image = Image.new("RGB", (800, 480), "#12243a")

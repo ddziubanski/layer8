@@ -5,6 +5,7 @@ Requires QEMU, OVMF and Pillow. This checks menus, not an installed appliance.
 import json
 from pathlib import Path
 import socket
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,7 +22,10 @@ def run(iso, output, firmware):
                 "-nic", "none", "-cdrom", str(iso), "-boot", "d",
                 "-qmp", f"unix:{monitor},server=on,wait=off"]
         if firmware == "uefi":
-            args += ["-bios", "/usr/share/OVMF/OVMF_CODE_4M.fd"]
+            variables = root / "OVMF_VARS.fd"
+            shutil.copyfile("/usr/share/OVMF/OVMF_VARS_4M.fd", variables)
+            args += ["-drive", "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd",
+                     "-drive", f"if=pflash,format=raw,file={variables}"]
         process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         try:
             deadline = time.monotonic() + 20
