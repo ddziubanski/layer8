@@ -1,14 +1,14 @@
 """Teams delivery intents, separate from append-only ticket history.
 
 Revision ID: a36d82c9e114
-Revises: 8cbdccc1f8f8
+Revises: a18d2040b002
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "a36d82c9e114"
-down_revision = "8cbdccc1f8f8"
+down_revision = "a18d2040b002"
 branch_labels = None
 depends_on = None
 
