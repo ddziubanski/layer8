@@ -4801,6 +4801,12 @@ export interface components {
             background_in_console: boolean;
             /** Portal Welcome */
             portal_welcome: string;
+            /**
+             * Theme Preset
+             * @default custom
+             * @enum {string}
+             */
+            theme_preset: "custom" | "midnight";
             /** Theme Brand */
             theme_brand: string;
             /** Theme Sidebar */

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
 import { api, type Branding, type User } from "../../api/client";
-import { contrast, themeTokens, useBranding } from "../../branding";
+import { contrast, MIDNIGHT, themeTokens, useBranding } from "../../branding";
 import { useDropFiles } from "../../components/useDropFiles";
 import { SettingsForm } from "./SettingsForm";
 
@@ -73,10 +73,15 @@ const isColour = (v: unknown): v is string => typeof v === "string" && /^#[0-9a-
 
 /** How the console looks with these colours, light and (if it's on) dark, before saving. */
 function ThemePreview({ values, name, logo }: { values: Record<string, unknown>; name: string; logo: string | null }) {
+  const midnight = values.theme_preset === "midnight";
   const brand = isColour(values.theme_brand) ? values.theme_brand : "#0f6b5c";
   const sidebar = isColour(values.theme_sidebar) ? values.theme_sidebar : "#14211e";
-  const modes = values.dark_mode === "on" ? ["dark"] : values.dark_mode === "auto" ? ["light", "dark"] : ["light"];
-  const checks = [
+  const modes = midnight || values.dark_mode === "on" ? ["dark"] : values.dark_mode === "auto" ? ["light", "dark"] : ["light"];
+  const checks = midnight ? [
+    { label: "Cyan button", ratio: contrast(MIDNIGHT.brand, MIDNIGHT.onBrand) },
+    { label: "Panel text", ratio: contrast(MIDNIGHT.ink, MIDNIGHT.surface) },
+    { label: "Secondary text", ratio: contrast(MIDNIGHT.muted, MIDNIGHT.surface) },
+  ] : [
     { label: "Main colour", ratio: contrast(brand, "#ffffff") },
     { label: "Sidebar colour", ratio: contrast(sidebar, "#ffffff") },
   ];
@@ -87,7 +92,7 @@ function ThemePreview({ values, name, logo }: { values: Record<string, unknown>;
       </div>
       <div className="theme-previews">
         {modes.map((mode) => (
-          <div key={mode} className="theme-preview" data-theme={mode} style={themeTokens(brand, sidebar)} aria-label={`${mode === "dark" ? "Dark" : "Light"} preview`} role="img">
+          <div key={mode} className="theme-preview" data-theme={mode} data-preset={midnight ? "midnight" : "custom"} style={themeTokens(brand, sidebar, midnight ? "midnight" : "custom")} aria-label={`${mode === "dark" ? "Dark" : "Light"} preview`} role="img">
             <div className="side">
               <span className="brand">
                 {logo && <img className="brand-logo" src={logo} alt="" />}
@@ -111,10 +116,11 @@ function ThemePreview({ values, name, logo }: { values: Record<string, unknown>;
           </div>
         ))}
       </div>
+      {midnight && <p className="small muted">Midnight pairs dark navy panels with cyan highlights. Your custom colours and dark-mode preference are kept for when you switch back.</p>}
       <div className="contrast-note">
         {checks.map((c) => (
           <div key={c.label} className={c.ratio < 4.5 ? "error" : "muted"}>
-            {c.label}: white text contrast {c.ratio.toFixed(1)}:1 {c.ratio < 4.5 ? "(too light; needs 4.5:1)" : "(readable)"}
+            {c.label}: {midnight ? "text contrast" : "white text contrast"} {c.ratio.toFixed(1)}:1 {c.ratio < 4.5 ? "(too light; needs 4.5:1)" : "(readable)"}
           </div>
         ))}
       </div>
