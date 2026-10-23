@@ -89,6 +89,8 @@ export function WallboardPage() {
   }
 
   const clock = new Date(now);
+  const busy = data.queues.filter((q) => q.open > 0);
+  const quiet = data.queues.length - busy.length;
   const stale = error !== null;
   return (
     <main className="wallboard" aria-label={data.name}>
@@ -177,9 +179,11 @@ export function WallboardPage() {
       <div className="wb-lists">
         <section className="wb-panel" aria-label="Queues">
           <h2>Queues <span>open · unassigned · breached</span></h2>
+          {/* Busy queues only, so the panel fits however many queues there are. */}
+          {busy.length === 0 && <p className="wb-empty">Nothing open.</p>}
           <ul className="wb-bars">
-            {data.queues.map((q) => {
-              const top = Math.max(1, ...data.queues.map((x) => x.open));
+            {busy.map((q) => {
+              const top = Math.max(1, ...busy.map((x) => x.open));
               return (
                 <li key={q.name}>
                   <span className="wb-bar-name">{q.name}</span>
@@ -193,6 +197,7 @@ export function WallboardPage() {
               );
             })}
           </ul>
+          {quiet > 0 && busy.length > 0 && <p className="wb-quiet">{quiet} more {quiet === 1 ? "queue" : "queues"} with nothing open</p>}
         </section>
         <section className="wb-panel" aria-label="Technicians">
           <h2>Technicians <span>open · needing attention</span></h2>

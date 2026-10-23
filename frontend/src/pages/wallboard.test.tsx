@@ -24,7 +24,7 @@ const BOARD = {
   ],
   unassigned: [{ id: 4821, label: "#4821", subject: "VPN down for sales", priority: "critical", queue: "Network", requester: "R. Alvarez", assignee: null, created_at: minutesAgo(95), due_at: null, breached: false }],
   sla: [{ id: 4790, label: "#4790", subject: "Laptop won't boot", priority: "high", queue: "Desktop", requester: "M. Osei", assignee: "J. Park", created_at: minutesAgo(600), due_at: minutesAgo(20), breached: true }],
-  queues: [{ name: "Network", open: 8, unassigned: 2, breached: 1 }],
+  queues: [{ name: "Network", open: 8, unassigned: 2, breached: 1 }, { name: "Printing", open: 0, unassigned: 0, breached: 0 }],
   people: [{ name: "J. Park", open: 5, needs_attention: 2 }],
 };
 
@@ -48,6 +48,9 @@ test("the board shows counts, alerts and the tickets that need someone, using th
   expect(screen.getByText("Network · R. Alvarez")).toBeInTheDocument();
   expect(screen.getByText("J. Park · M. Osei")).toBeInTheDocument();
   expect(screen.getByText(/20 min over/)).toBeInTheDocument();
+  // Quiet queues are counted, not listed, so the panel fits.
+  expect(screen.queryByText("Printing")).not.toBeInTheDocument();
+  expect(screen.getByText("1 more queue with nothing open")).toBeInTheDocument();
   // The token never goes into a URL.
   expect(calls.every((c) => !c.path.includes("l8w_"))).toBe(true);
 });

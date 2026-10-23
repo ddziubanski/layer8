@@ -641,6 +641,7 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .wb-prio.p-high { background: var(--wb-warn-bg); color: var(--wb-warn); }
 .wb-prio.p-critical { background: var(--wb-alarm-bg); color: var(--wb-alarm); }
 .wb-empty { color: var(--wb-ok); font-weight: 600; margin: .4em 0; }
+.wb-quiet { color: var(--wb-muted); margin: .7em 0 0; font-size: .9em; }
 .wb-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .45em; }
 .wb-bars li { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr) 7em; gap: .8em; align-items: center; }
 .wb-bar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
