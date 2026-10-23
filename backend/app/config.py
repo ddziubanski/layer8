@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     graph_client_id: str = ""
     graph_client_secret: str = ""
     # Optional Teams digest. Configstore keeps the webhook as a write-only secret.
+    teams_chat_enabled: bool = False
+    teams_tenant_id: str = ""
+    teams_client_id: str = ""
+    teams_client_secret: str = ""
     teams_enabled: bool = False
     teams_webhook_url: str = ""
     teams_summary_minutes: int = 60

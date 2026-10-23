@@ -1,3 +1,4 @@
+import { TeamsReply } from "./ticket/TeamsReply";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
@@ -134,7 +135,7 @@ export function TicketPage({ me }: { me: User }) {
                 {comments.data?.map((c) => (
                   <div key={c.id} className={`card ticket-message${c.is_internal ? " note ticket-message-internal" : ""}`}>
                     <div className="lbl">
-                      {c.is_internal ? "Internal note · " : c.author.id !== t.requester.id ? (c.emailed ? "Reply, emailed · " : "Reply, portal only · ") : ""}
+                      {c.is_internal ? "Internal note · " : c.author.id !== t.requester.id ? (events.data?.some(e => e.data.teams_comment_id === c.id) ? "Reply, sent via Teams · " : c.emailed ? "Reply, emailed · " : "Reply, portal only · ") : ""}
                       {c.author.display_name}, via {SOURCE_LABEL[c.source].toLowerCase()}, {when(c.created_at)}
                     </div>
                     <p className="body-text">{c.body}</p>
@@ -142,6 +143,7 @@ export function TicketPage({ me }: { me: User }) {
                   </div>
                 ))}
                 <Composer ticketId={t.id} onDone={refresh} />
+                <TeamsReply key={t.id} ticketId={t.id} onDone={refresh} />
               </div>
             ),
           },

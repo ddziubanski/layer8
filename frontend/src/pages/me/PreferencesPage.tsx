@@ -1,4 +1,5 @@
 import { WorkspaceTitle } from "../../components/WorkspaceTitle";
+import { TeamsConnection } from "../../components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -54,6 +55,7 @@ export function PreferencesPage({ me }: { me: Me }) {
         <WorkspaceTitle title="My preferences" area="YOUR WORKSPACE" />
       </div>
       <div className="stack" style={{ maxWidth: 900 }}>
+        {isStaff && <TeamsConnection />}
         {isStaff && (
           <section className="card stack" aria-label="My colour">
             <div className="lbl" style={{ margin: 0 }}>
