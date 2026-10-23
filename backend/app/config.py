@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     presence_on_portal: bool = False
     # Action1 (patching, read-only): API credentials from Action1 > API credentials, the organization
     # to read, and the region its console is in.
+    meraki_enabled: bool = False
+    meraki_api_key: str = ""
+    meraki_network_ids: list[str] = []
+    meraki_sync_minutes: int = 60
+
     action1_region: str = "NorthAmerica"
     action1_client_id: str = ""
     action1_client_secret: str = ""

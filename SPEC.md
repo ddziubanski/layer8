@@ -110,3 +110,7 @@ A robust, self-hosted service desk that takes the best of ManageEngine (process 
 - Attachment size limit and retention period? - we can do 3M not sure withat 365 exchange limits are atm
 - How many agents and tickets per month (sizing)?
 - Where will it be hosted (Linux VM, Docker)? - response: it will be a self contained bootable iso - installation
+
+### Meraki client observations (issue #38)
+
+Optional read-only Dashboard discovery, configured in Settings > Meraki or installer section `meraki`. A dedicated read-only API key and explicit network IDs are required; an empty selection reads nothing. The worker reads a complete 24-hour client snapshot and replaces its separate observation cache atomically. IP addresses > Meraki clients lists and searches the observations; exact, unique MAC matches enrich documented addresses, device IP cards and ticket computer/device cards. Hostnames and IP addresses alone never establish identity. Ambiguous MACs do not enrich records; observed IPs and stale timestamps stay visible without editing documented IPAM fields. No Meraki configuration writes or automatic ticket creation. OAuth, diagnostic actions and webhook alerts are future slices.

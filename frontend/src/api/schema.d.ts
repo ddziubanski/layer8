@@ -3292,6 +3292,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meraki/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_meraki_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test */
+        post: operations["test_api_meraki_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clients */
+        get: operations["clients_api_meraki_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/checklist-templates": {
         parameters: {
             query?: never;
@@ -6144,6 +6195,7 @@ export interface components {
             updated_at: string;
             subnet?: components["schemas"]["SubnetRef"] | null;
             switch_port?: components["schemas"]["SwitchPortOut"] | null;
+            meraki?: components["schemas"]["MerakiClientOut"] | null;
         };
         /** IpCell */
         IpCell: {
@@ -6645,6 +6697,68 @@ export interface components {
         MembersIn: {
             /** User Ids */
             user_ids: number[];
+        };
+        /** MerakiClientOut */
+        MerakiClientOut: {
+            /** Network Id */
+            network_id: string;
+            /** Network Name */
+            network_name: string;
+            /** Client Id */
+            client_id: string;
+            /** Mac */
+            mac: string;
+            /** Address */
+            address: string;
+            /** Description */
+            description: string;
+            /** Status */
+            status: string;
+            /** Vlan */
+            vlan: string;
+            /** Switch Name */
+            switch_name: string;
+            /** Switch Serial */
+            switch_serial: string;
+            /** Port */
+            port: string;
+            /** Connection */
+            connection: string;
+            /** Ssid */
+            ssid: string;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Stale */
+            stale: boolean;
+        };
+        /** MerakiStatusOut */
+        MerakiStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Clients */
+            clients: number;
+            /** Networks */
+            networks: string[];
+            /** Last Sync At */
+            last_sync_at: string | null;
+            /** Last Sync Ok */
+            last_sync_ok: boolean | null;
+            /** Last Sync Error */
+            last_sync_error: string | null;
+            /** Last Sync Summary */
+            last_sync_summary: string | null;
+        };
+        /** MerakiTestOut */
+        MerakiTestOut: {
+            /** Networks */
+            networks: string[];
         };
         /** MergeIn */
         MergeIn: {
@@ -18133,6 +18247,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Action1TestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_meraki_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_api_meraki_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiTestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clients_api_meraki_clients_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiClientOut"][];
                 };
             };
             /** @description Validation Error */

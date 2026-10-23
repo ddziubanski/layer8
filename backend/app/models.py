@@ -875,6 +875,27 @@ class TicketSystem(Base):
     system: Mapped[System] = relationship()
 
 
+class MerakiClient(Base):
+    """Replaceable observations, separate from authoritative IPAM records."""
+
+    __tablename__ = "meraki_clients"
+    network_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    mac: Mapped[str] = mapped_column(String(17), primary_key=True, index=True)
+    network_name: Mapped[str] = mapped_column(String(255))
+    client_id: Mapped[str] = mapped_column(String(100))
+    address: Mapped[str] = mapped_column(String(45))
+    description: Mapped[str] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(32))
+    vlan: Mapped[str] = mapped_column(String(32))
+    switch_name: Mapped[str] = mapped_column(String(255))
+    switch_serial: Mapped[str] = mapped_column(String(100))
+    port: Mapped[str] = mapped_column(String(100))
+    connection: Mapped[str] = mapped_column(String(32))
+    ssid: Mapped[str] = mapped_column(String(100))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class DevicePatch(Base):
     """A machine as Action1 (patching, read-only) reports it: its patch state, matched to a device by
     name. Kept current by the "action1" worker job; overdue patching can open a ticket."""

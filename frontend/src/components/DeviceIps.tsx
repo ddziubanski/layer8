@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { api } from "../api/client";
 import { when } from "../format";
+import { MerakiContext } from "./MerakiContext";
 import { SwitchPortLabel } from "./SwitchPortLabel";
 
 /** A device's IP addresses (IPAM): subnet, VLAN, last seen; addresses whose host name matches it can be linked in one click. */
@@ -32,6 +33,7 @@ export function DeviceIps({ deviceId, compact = false }: { deviceId: number; com
               </>
             )}
           </span>
+          {a.meraki && <MerakiContext observation={a.meraki} />}
           {!linked && (
             <>
               {" "}

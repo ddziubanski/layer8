@@ -2184,6 +2184,40 @@ class SwitchPortOut(BaseModel):
     shared: bool
 
 
+class MerakiClientOut(BaseModel):
+    network_id: str
+    network_name: str
+    client_id: str
+    mac: str
+    address: str
+    description: str
+    status: str
+    vlan: str
+    switch_name: str
+    switch_serial: str
+    port: str
+    connection: str
+    ssid: str
+    last_seen_at: datetime | None
+    observed_at: datetime
+    stale: bool
+
+
+class MerakiStatusOut(BaseModel):
+    enabled: bool
+    configured: bool
+    clients: int
+    networks: list[str]
+    last_sync_at: datetime | None
+    last_sync_ok: bool | None
+    last_sync_error: str | None
+    last_sync_summary: str | None
+
+
+class MerakiTestOut(BaseModel):
+    networks: list[str]
+
+
 class IpAddressOut(ORM):
     id: int
     address: IpText
@@ -2200,6 +2234,7 @@ class IpAddressOut(ORM):
     # The most specific subnet it's in.
     subnet: SubnetRef | None = None
     switch_port: SwitchPortOut | None = None
+    meraki: MerakiClientOut | None = None
 
 
 class IpCell(BaseModel):

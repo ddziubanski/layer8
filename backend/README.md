@@ -107,3 +107,19 @@ Tests run against the `helpdesk_test` database and wipe it. They build the schem
 ```
 
 Review the generated file. If it adds enum columns, run `.venv/bin/python scripts/fix_enum_checks.py <file>`: autogenerate emits each CHECK constraint twice with a clashing name.
+
+### Meraki discovery (optional, read only)
+
+In **Settings > Meraki**, save a Dashboard API key for a dedicated administrator with read-only access to the intended networks. Enter explicit network IDs (one per line, at most 20), test the selected networks, then enable discovery and choose **Read Meraki now**. The worker must be running; Settings > Status shows its result. API requests use only `GET https://api.meraki.com/api/v1/networks/{id}` and `/networks/{id}/clients`. Redirects are refused. Other Dashboard regional API hosts are not supported in this first slice.
+
+Settings are importable through `python -m app.cli settings import answers.json` using section `meraki` with `meraki_enabled`, `meraki_api_key`, `meraki_network_ids`, and `meraki_sync_minutes`. The key is kept in a write-only secret file, never returned by the API. OAuth authorization is a follow-up; this slice does not accept OAuth access tokens or refresh tokens.
+
+Observations cover the previous 24 hours and are cached separately from documented IPAM data. A failed or malformed response keeps the previous complete snapshot. Discovery is limited to 100 pages per network and 40,000 clients per snapshot; exceeded limits fail visibly rather than save a partial result. Reads retry HTTP 429 at most twice with waits capped at five seconds. A PostgreSQL transaction lock prevents concurrent snapshots.
+
+Technicians can search **IP addresses > Meraki clients**. Document an address with its MAC to show context on that IPAM record and its device/ticket cards. Matching requires one selected-network observation and one documented record for that MAC; duplicate or overlapping-network identities are suppressed. Hostnames and IPs do not auto-link devices. The last reported switch/AP, switch port, VLAN and SSID are evidence from Meraki, not a live connectivity guarantee. Observations become stale after two sync intervals (at least 30 minutes), or when the last client sighting is missing/over a day old. Removed networks and a disabled integration are hidden immediately after settings refresh; successful discovery replaces the old snapshot. Turning discovery off retains the cache in the database for backup/export until the next successful snapshot.
+
+Public API: `GET /api/meraki/status` and `POST /api/meraki/test` require an admin; `GET /api/meraki/clients?q=...&limit=200` requires a console technician (limit 1–1000). The latter lists cached observations and makes no external call. `POST /api/system/jobs/meraki/run` uses the existing admin worker control. No new ticket actions or outbound notifications are introduced.
+
+Schema migration `a86d20f49c71` adds only `meraki_clients`. Reconcile its parent revision when rebasing after other pending migration PRs.
+
+Contracts: [Get network](https://developer.cisco.com/meraki/api-v1/get-network/), [Get network clients](https://developer.cisco.com/meraki/api-v1/get-network-clients/), [OAuth follow-up reference](https://developer.cisco.com/meraki/api-v1/oauth-overview/).

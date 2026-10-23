@@ -7,6 +7,8 @@ import { api, type IpAddress, type IpAddressIn, type IpFinding, type IpScan, typ
 import { DevicePicker } from "../../components/DevicePicker";
 import { SwitchPortLabel } from "../../components/SwitchPortLabel";
 import { can } from "../../permissions";
+import { MerakiClients } from "./MerakiClients";
+import { MerakiContext } from "../../components/MerakiContext";
 import { NetworkGear } from "./NetworkGear";
 
 type Kind = IpAddressIn["kind"] & string;
@@ -37,13 +39,14 @@ export function IpamPage({ me }: { me: Me }) {
           ["addresses", "Find an address", "/ipam/addresses"],
           ["vlans", "VLANs", "/ipam/vlans"],
           ["gear", "Network gear", "/ipam/gear"],
+          ...(me.features?.includes("meraki") ? [["meraki", "Meraki clients", "/ipam/meraki"]] : []),
         ].map(([key, label, to]) => (
           <Link key={key} to={to} className={tab === key ? "active" : undefined} role="tab" aria-selected={tab === key}>
             {label}
           </Link>
         ))}
       </div>
-      {tab === "addresses" ? <AddressSearch /> : tab === "vlans" ? <Vlans me={me} /> : tab === "gear" ? <NetworkGear me={me} /> : <Subnets me={me} />}
+      {tab === "meraki" ? <MerakiClients /> : tab === "addresses" ? <AddressSearch /> : tab === "vlans" ? <Vlans me={me} /> : tab === "gear" ? <NetworkGear me={me} /> : <Subnets me={me} />}
     </>
   );
 }
@@ -548,6 +551,7 @@ function AddressTable({ rows, onPick, empty }: { rows: IpAddress[]; onPick: (a: 
             <td>{a.hostname}</td>
             <td className="mono small">
               {a.mac}
+              {a.meraki && <MerakiContext observation={a.meraki} />}
               {a.switch_port && (
                 <div className="muted">
                   <SwitchPortLabel port={a.switch_port} />
@@ -676,6 +680,7 @@ function AddressForm({ address, onDone }: { address: IpAddress | IpAddressIn; on
       {existing?.last_seen_at && (
         <p className="small muted" style={{ margin: 0 }}>
           Seen by scans {new Date(existing.first_seen_at!).toLocaleString()} – {new Date(existing.last_seen_at).toLocaleString()}
+          {existing.meraki && <MerakiContext observation={existing.meraki} />}
           {existing.switch_port && (
             <>
               {" "}

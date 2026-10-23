@@ -814,3 +814,7 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .presence-dot.busy { background: #c93c3c; }
 .presence-dot.away { background: #d99a1e; }
 .presence-dot.offline { background: transparent; border: 2px solid #9aa5a2; box-sizing: border-box; }
+
+.meraki-context { border-left: 3px solid var(--teal, #0f766e); padding: 6px 10px; margin-top: 6px; overflow-wrap: anywhere; }
+.meraki-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.meraki-client { border: 1px solid var(--border, #dbe3e8); border-radius: 8px; padding: 14px; }
