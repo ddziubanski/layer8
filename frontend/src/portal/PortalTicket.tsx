@@ -54,14 +54,15 @@ export function PortalTicket({ me }: { me: User }) {
       </p>
     );
   }
-  if (!ticket.data) return null;
+  if (!ticket.data) return <p className="muted" role="status">Loading request…</p>;
   const t = ticket.data;
   const done = t.status === "resolved" || t.status === "closed";
   const filesFor = (commentId: number | null) => (files.data ?? []).filter((f) => f.comment_id === commentId);
 
   return (
-    <section className="stack" style={{ maxWidth: 820 }}>
-      <div>
+    <section className="stack portal-detail-workspace">
+      <header className="portal-request-head">
+        <p className="workspace-area">YOUR REQUEST</p>
         <Link to={p("/tickets")}>My tickets</Link> / {t.label}
         <div className="row-gap" style={{ marginTop: 8 }}>
           <h1 className="spacer">{t.subject}</h1>
@@ -72,9 +73,15 @@ export function PortalTicket({ me }: { me: User }) {
           {t.category ? ` · ${t.category}` : ""} · opened {when(t.created_at)}
           {t.assignee_name ? ` · ${t.assignee_name} is on it` : ""}
         </p>
-      </div>
+      </header>
 
       {done && <TicketSurvey ticketId={id} />}
+      <div className="portal-detail-grid">
+      <div className="stack portal-detail-primary">
+      <section className="stack portal-conversation" aria-label="Conversation">
+      <h2>Conversation</h2>
+      {comments.isPending && <p className="muted" role="status">Loading replies…</p>}
+      {comments.error && <p className="error" role="alert">Replies could not be loaded: {comments.error.message}</p>}
 
       <div className="card">
         <div className="lbl">You wrote, {when(t.created_at)}</div>
@@ -91,12 +98,7 @@ export function PortalTicket({ me }: { me: User }) {
         </div>
       ))}
 
-      <AttachmentsSection
-        files={files.data ?? []}
-        comments={comments.data ?? []}
-        describeAuthor={(uid, fallback) => (uid === me.id ? "you" : (fallback ?? "Service desk"))}
-        onDropFiles={t.status === "closed" ? undefined : (list) => dropped.mutate(list)}
-      />
+      </section>
 
       {t.status === "closed" ? (
         <div className="card">
@@ -151,6 +153,17 @@ export function PortalTicket({ me }: { me: User }) {
           </div>
         </div>
       )}
+      </div>
+      <aside className="stack portal-detail-context" aria-label="Request documents">
+      {files.error && <p className="error" role="alert">Documents could not be loaded: {files.error.message}</p>}
+      <AttachmentsSection
+        files={files.data ?? []}
+        comments={comments.data ?? []}
+        describeAuthor={(uid, fallback) => (uid === me.id ? "you" : (fallback ?? "Service desk"))}
+        onDropFiles={t.status === "closed" ? undefined : (list) => dropped.mutate(list)}
+      />
+      </aside>
+      </div>
     </section>
   );
 }

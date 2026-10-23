@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -135,7 +136,7 @@ export function NewRequest() {
   return (
     <form className="stack guided" style={{ maxWidth: 720 }} onSubmit={onSubmit}>
       <div className="page-intro">
-        <h1>How can we help?</h1>
+        <WorkspaceTitle title="How can we help?" area="SELF SERVICE" />
         <p className="muted" style={{ margin: 0 }}>
           A few quick questions get your request to the right people.
         </p>
