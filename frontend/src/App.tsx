@@ -7,6 +7,7 @@ import { Brand, backgroundStyle, useBranding } from "./branding";
 import { NoticeBanner, NoticeDialog } from "./components/Notices";
 import { ME_KEY } from "./queryClient";
 import { RouteFocus } from "./components/RouteFocus";
+import { CommandPalette } from "./components/CommandPalette";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
 import { QueuePage } from "./pages/QueuePage";
 import { TicketPage } from "./pages/TicketPage";
@@ -113,7 +114,7 @@ function Shell({ me }: { me: Me }) {
       </nav>
       <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
         <RouteFocus mainId="console-main" />
-        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><span className="console-topbar-user">{me.display_name}</span></div>
+        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={me} /><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
