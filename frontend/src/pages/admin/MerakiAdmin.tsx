@@ -1,10 +1,12 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api, type Me } from "../../api/client";
+import { ME_KEY } from "../../queryClient";
 import { when } from "../../format";
 import { SettingsForm } from "./SettingsForm";
 
 export function MerakiAdmin({ me }: { me: Me }) {
+  const queryClient = useQueryClient();
   const status = useQuery({ queryKey: ["meraki-status"], queryFn: api.meraki.status, refetchInterval: 10000, enabled: me.role === "admin" });
   const test = useMutation({ mutationFn: api.meraki.test });
   const sync = useMutation({ mutationFn: () => api.system.runJob("meraki") });
@@ -27,6 +29,6 @@ export function MerakiAdmin({ me }: { me: Me }) {
       {sync.isSuccess && <p role="status">Discovery requested. Follow progress in <Link to="/settings/status">worker status</Link>.</p>}
       {(test.error || sync.error) && <p role="alert" className="error">{(test.error || sync.error)?.message}</p>}
     </section>
-    <SettingsForm me={me} section="meraki" title="Connection and discovery" embedded onSaved={() => { test.reset(); sync.reset(); void status.refetch(); }} intro="Save a dedicated read-only Dashboard API key and explicit network IDs. OAuth authorization is planned as a separate connection option." />
+    <SettingsForm me={me} section="meraki" title="Connection and discovery" embedded onSaved={() => { test.reset(); sync.reset(); void status.refetch(); void queryClient.invalidateQueries({ queryKey: ME_KEY }); }} intro="Save a dedicated read-only Dashboard API key and explicit network IDs. OAuth authorization is planned as a separate connection option." />
   </div>;
 }

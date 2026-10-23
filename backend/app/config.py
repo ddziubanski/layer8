@@ -42,13 +42,13 @@ class Settings(BaseSettings):
     after_hours_message: str = "No one is in right now. A technician is next expected {next}."
     # Technicians' Teams status (status only) on the portal, read through the Email tab's app registration.
     presence_on_portal: bool = False
-    # Action1 (patching, read-only): API credentials from Action1 > API credentials, the organization
-    # to read, and the region its console is in.
+    # Optional read-only Meraki Dashboard client observations.
     meraki_enabled: bool = False
     meraki_api_key: str = ""
     meraki_network_ids: list[str] = []
     meraki_sync_minutes: int = 60
 
+    # Action1 API credentials and console region (patch state is read only).
     action1_region: str = "NorthAmerica"
     action1_client_id: str = ""
     action1_client_secret: str = ""

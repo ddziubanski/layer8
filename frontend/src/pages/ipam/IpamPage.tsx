@@ -9,6 +9,7 @@ import { SwitchPortLabel } from "../../components/SwitchPortLabel";
 import { can } from "../../permissions";
 import { MerakiClients } from "./MerakiClients";
 import { MerakiContext } from "../../components/MerakiContext";
+import { ME_KEY } from "../../queryClient";
 import { NetworkGear } from "./NetworkGear";
 
 type Kind = IpAddressIn["kind"] & string;
@@ -28,6 +29,8 @@ const blankAddress = (address = ""): IpAddressIn => ({ address, hostname: "", ma
 /** Light IPAM: subnets (with a used/free map), VLANs, and documented addresses. */
 export function IpamPage({ me }: { me: Me }) {
   const tab = useParams().tab ?? "subnets";
+  const liveMe = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false });
+  const showMeraki = (liveMe.data ?? me).features?.includes("meraki");
   return (
     <>
       <div className="page-head row-gap">
@@ -39,7 +42,7 @@ export function IpamPage({ me }: { me: Me }) {
           ["addresses", "Find an address", "/ipam/addresses"],
           ["vlans", "VLANs", "/ipam/vlans"],
           ["gear", "Network gear", "/ipam/gear"],
-          ...(me.features?.includes("meraki") ? [["meraki", "Meraki clients", "/ipam/meraki"]] : []),
+          ...(showMeraki ? [["meraki", "Meraki clients", "/ipam/meraki"]] : []),
         ].map(([key, label, to]) => (
           <Link key={key} to={to} className={tab === key ? "active" : undefined} role="tab" aria-selected={tab === key}>
             {label}

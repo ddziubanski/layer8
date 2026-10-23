@@ -39,8 +39,8 @@ LABELS = {
     "housekeeping": "Housekeeping",
     "backup": "Backup",
     "ipam": "IP address scans (scheduled)",
-    "action1": "Action1: read patch status",
     "meraki": "Meraki: read client observations",
+    "action1": "Action1: read patch status",
     "sweeps": "Device sweep (weekly ticket)",
     "warranty": "Warranty lookups (Dell, Lenovo)",
 }
