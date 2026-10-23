@@ -545,6 +545,29 @@ label.inline input { width: auto; min-height: 0; }
   .console-topbar-user { display: none; }
 }
 
+
+/* Hybrid Command Center: ticket detail workspace. Keeps arranged panels intact. */
+.ticket-workspace-head { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; box-shadow: var(--console-shadow); min-width: 0; }
+.ticket-breadcrumb { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+.ticket-breadcrumb a { text-decoration: none; font-weight: 600; }
+.ticket-breadcrumb [aria-current="page"] { color: var(--muted); }
+.ticket-workspace-kicker { font-size: 10px; letter-spacing: .13em; font-weight: 700; color: var(--link); margin-bottom: 7px; }
+.ticket-workspace-title { gap: 10px; margin-bottom: 12px; }
+.ticket-workspace-title h1 { font-size: clamp(21px, 2.1vw, 29px); letter-spacing: -.035em; overflow-wrap: anywhere; min-width: 200px; }
+.ticket-workspace-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.ticket-workspace-meta strong { color: var(--ink); }
+.ticket-conversation { gap: 12px; }
+.ticket-conversation .ticket-message { border-radius: 11px; border-left: 3px solid var(--line); padding: 18px; }
+.ticket-conversation .ticket-message-original { border-left-color: var(--brand); }
+.ticket-conversation .ticket-message-internal { border-left-color: var(--chip-a); }
+.ticket-conversation .ticket-message .lbl { line-height: 1.5; margin-bottom: 10px; }
+.ticket-conversation .ticket-message .body-text { line-height: 1.6; }
+@media (max-width: 700px) {
+  .ticket-workspace-head { padding: 16px; }
+  .ticket-workspace-title h1 { width: 100%; }
+  .ticket-workspace-meta { gap: 6px 12px; }
+}
+
 /* Workload overview shares the ticket workspace's access and filters. */
 .operations-dashboard { max-width: 1400px; margin: 0 auto; }
 .dashboard-heading, .dashboard-attention > header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }

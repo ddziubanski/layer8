@@ -89,9 +89,25 @@ describe("ticket", () => {
     return { t, calls };
   }
 
+  test("links the parent ticket in the breadcrumb without making the current ticket a link", async () => {
+    setup({ parent: { id: 4700, label: "#4700", subject: "Network outage" } });
+    const breadcrumb = await screen.findByRole("navigation", { name: "Ticket breadcrumb" });
+    expect(within(breadcrumb).getByRole("link", { name: "#4700" })).toHaveAttribute("href", "/tickets/4700");
+    expect(within(breadcrumb).getByRole("link", { name: "#4700" })).toHaveAttribute("title", "Network outage");
+    expect(within(breadcrumb).getByText("#4821")).toHaveAttribute("aria-current", "page");
+    expect(within(breadcrumb).queryByRole("link", { name: "#4821" })).not.toBeInTheDocument();
+  });
+
   test("shows conversation, files, notes, routing and SLA", async () => {
     setup();
     expect(await screen.findByRole("heading", { name: "Switch port flapping, 2nd floor" })).toBeInTheDocument();
+    const breadcrumb = screen.getByRole("navigation", { name: "Ticket breadcrumb" });
+    expect(within(breadcrumb).getByRole("link", { name: "Tickets" })).toHaveAttribute("href", "/");
+    expect(within(breadcrumb).getByText("#4821")).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("SERVICE DESK / TICKET DETAILS")).toBeInTheDocument();
+    expect(screen.getByText("Requested by")).toHaveTextContent("R. Alvarez");
+    expect(screen.getByText("Switch port flapping, 2nd floor").closest(".ticket-workspace-head")).toBeInTheDocument();
+
     expect(screen.getByText(/R\. Alvarez, via email/)).toBeInTheDocument();
     // Files are listed in the Attachments section; messages just mention them.
     expect(screen.getByText("Attached: ping-log.txt")).toBeInTheDocument();
@@ -101,7 +117,8 @@ describe("ticket", () => {
     expect(screen.getByText(/900 B · you · .* · internal note/)).toBeInTheDocument();
     // HTML is download-only: no View button.
     expect(screen.queryByRole("button", { name: "View switch.cfg.html" })).toBeNull();
-    expect(screen.getByText("Checked the switch logs").closest(".card")).toHaveClass("note");
+    expect(screen.getByText("Checked the switch logs").closest(".card")).toHaveClass("note", "ticket-message", "ticket-message-internal");
+    expect(screen.getByText(/R\. Alvarez, via email/).closest(".card")).toHaveClass("ticket-message-original");
     expect(screen.getByText('Routed by rule: subject contains "switch"')).toBeInTheDocument();
     expect(screen.getByText("SLA breach in 0h 42m")).toBeInTheDocument();
     expect(await screen.findByText('Routed to Network by rule "switch"')).toBeInTheDocument();
