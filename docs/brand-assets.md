@@ -4,7 +4,9 @@ The person at a desk sits above a seven-port network switch: the unofficial eigh
 OSI layer is the person using the technology. The default mark uses navy and teal.
 
 `frontend/public/layer8-mark.png` is the transparent generated illustration used by
-default branding. A small white tile keeps its navy details legible on dark sidebars.
+default branding, at 128 px (it is shown at 42 px, so this covers 3x screens). The full-size
+original is `docs/brand/layer8-mark-source.png`; regenerate the served copy with
+`magick docs/brand/layer8-mark-source.png -filter Lanczos -resize 128x128 -strip frontend/public/layer8-mark.png`. A small white tile keeps its navy details legible on dark sidebars.
 `frontend/public/layer8.svg` is a separate, simplified vector for favicons. Uploaded
 customer logos keep their existing appearance and are not placed on the default tile.
 
