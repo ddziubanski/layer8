@@ -693,3 +693,25 @@ label.inline input { width: auto; min-height: 0; }
 .settings-content :is(input,select,textarea) { min-width:0; }
 .settings-content .table-wrap { overflow:auto; max-width:100%; }
 @media(max-width:1100px) { .settings-grid { grid-template-columns:minmax(0,1fr); } .main .settings-navigation { flex-direction:row; flex-wrap:wrap; position:static; max-height:none; } }
+
+/* Requesters keep the same conversation, document and account workflows. */
+.portal-detail-workspace { max-width:1160px; }
+.portal-request-head { padding:22px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+.portal-request-head h1 { margin:0; line-height:1.3; overflow-wrap:anywhere; }
+.portal-request-head .chip { white-space:normal; }
+.portal-detail-grid { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(260px,1fr); gap:20px; align-items:start; }
+.portal-detail-grid > * { min-width:0; }
+.portal-conversation > h2 { font-size:16px; margin:0; }
+.portal-conversation > .card { padding:20px; border-radius:12px; border-left:3px solid var(--line); }
+.portal-detail-primary .composer { padding:20px; border-radius:12px; }
+.portal-detail-primary .composer textarea { margin-top:10px; line-height:1.6; }
+.portal-detail-context .card { border-radius:12px; }
+.portal-detail-context a, .portal-help-article :is(h1,p,li,pre) { overflow-wrap:anywhere; }
+.portal-help-article { padding:26px; border-radius:14px; line-height:1.65; }
+.portal-help-article img { max-width:100%; height:auto; }
+.login .login-card { border-top:4px solid var(--link); gap:16px; }
+.login .login-card > h1 { margin:0; line-height:1.3; }
+.login .login-card > .workspace-area { margin:0; }
+@media(max-width:1000px) { .portal-detail-grid { grid-template-columns:minmax(0,1fr); } }
+.portal-topbar-context { color:var(--side-ink); font-size:13px; }
+.portal-main > .card[aria-label="Survey"], .portal-detail-workspace > .card[aria-label="How did we do?"] { border-radius:12px; padding:22px; }

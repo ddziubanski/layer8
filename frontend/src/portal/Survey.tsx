@@ -1,3 +1,4 @@
+import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -85,9 +86,10 @@ export function SurveyPage() {
     <div className="portal">
       <header className="topbar">
         <Brand b={brand} />
-        <span className="muted">How did we do?</span>
+        <span className="portal-topbar-context">Service feedback</span>
       </header>
       <main className="portal-main stack" style={{ maxWidth: 720 }}>
+        <WorkspaceTitle title="How did we do?" area="SERVICE FEEDBACK" description="Tell the service team about your experience with this request." />
         {survey.error && <p className="error">{survey.error instanceof ApiError && survey.error.status === 404 ? "That survey link isn't valid." : survey.error.message}</p>}
         {survey.data && (
           <div className="card stack" style={{ margin: 0 }} aria-label="Survey" role="region">

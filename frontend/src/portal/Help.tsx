@@ -45,13 +45,13 @@ export function HelpArticle() {
   const a = article.data;
   if (!a) return null;
   return (
-    <article className="card stack" style={{ maxWidth: 760, gap: 12 }} aria-label={a.title}>
-      <div>
+    <article className="card stack portal-help-article" style={{ maxWidth: 760, gap: 12 }} aria-label={a.title}>
+      <header className="module-form-head"><p className="workspace-area">HELP ARTICLE</p>
         <Link className="small" to={p("/help")}>
           ← Help articles
         </Link>
         <h1 style={{ margin: "6px 0 0" }}>{a.title}</h1>
-      </div>
+      </header>
       <Markdown text={a.body} />
       <div className="kb-suggest" role="group" aria-label="Was this helpful?">
         {feedback.isSuccess ? (
