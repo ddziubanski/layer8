@@ -844,6 +844,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Desk Hours
+         * @description The desk's own hours, for a portal without queues to choose from.
+         */
+        get: operations["desk_hours_api_portal_hours_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/portal/devices": {
         parameters: {
             query?: never;
@@ -7353,6 +7373,31 @@ export interface components {
             /** Os */
             os: string | null;
         };
+        /** PortalHoursOut */
+        PortalHoursOut: {
+            /** Lines */
+            lines: string[];
+            /** Open Now */
+            open_now: boolean;
+            /** Closes At */
+            closes_at: string | null;
+            /** Next Open At */
+            next_open_at: string | null;
+            /** Closed For */
+            closed_for: string | null;
+            /** Message */
+            message: string | null;
+        };
+        /**
+         * PortalPersonOut
+         * @description A technician and their Teams status: available, busy, away, offline or unknown. Status only.
+         */
+        PortalPersonOut: {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+        };
         /** PortalQueueOut */
         PortalQueueOut: {
             /** Id */
@@ -7363,6 +7408,9 @@ export interface components {
             description: string | null;
             /** Categories */
             categories: string[];
+            hours: components["schemas"]["PortalHoursOut"];
+            /** Technicians */
+            technicians?: components["schemas"]["PortalPersonOut"][] | null;
         };
         /** PortalTicketCreate */
         PortalTicketCreate: {
@@ -7563,6 +7611,8 @@ export interface components {
             category_routes: {
                 [key: string]: number;
             };
+            /** Hours */
+            hours?: string | null;
         };
         /** QueueOut */
         QueueOut: {
@@ -7594,6 +7644,8 @@ export interface components {
             };
             /** Restricted */
             restricted: boolean;
+            /** Hours */
+            hours: string | null;
             /** Email Addresses */
             email_addresses: string[];
             /** Owner Users */
@@ -7662,6 +7714,8 @@ export interface components {
             category_routes?: {
                 [key: string]: number;
             } | null;
+            /** Hours */
+            hours?: string | null;
         };
         /** RemoteLaunchOut */
         RemoteLaunchOut: {
@@ -12140,6 +12194,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalQueueOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    desk_hours_api_portal_hours_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalHoursOut"];
                 };
             };
             /** @description Validation Error */

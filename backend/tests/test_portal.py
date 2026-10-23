@@ -31,6 +31,8 @@ def agent_view(client, agent, tid):
 
 def test_portal_lists_only_visible_active_queues_in_order(client, requester, queues):
     r = client.get("/api/portal/queues", headers=as_user(requester)).json()
+    # Hours and Teams status are covered in test_hours.py.
+    assert all("open_now" in q.pop("hours") and q.pop("technicians") is None for q in r)
     assert r == [
         {"id": queues["network"].id, "name": "Network", "description": None, "categories": []},
         {"id": queues["printing"].id, "name": "Printers & scanners", "description": "Jams, toner, scan-to-email", "categories": ["Jam", "Toner"]},

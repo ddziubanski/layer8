@@ -6,7 +6,7 @@ from enum import StrEnum
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints, computed_field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints, computed_field, field_validator, model_validator
 
 from app.models import AuthSource, DeviceSource, EventType, ScriptKind, ScriptLanguage, FieldList, Impact, Priority, RuleMode, RuleTrigger, TicketSource, TicketStatus, Urgency, UserRole
 from app import numbering, sla
@@ -482,6 +482,21 @@ class QueueCreate(BaseModel):
     portal_position: int = 100
     categories: list[str] = []
     category_routes: dict[str, int] = {}
+    # Opening hours (app.hours lines); empty: the desk hours.
+    hours: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("hours")
+    @classmethod
+    def valid_hours(cls, v: str | None) -> str | None:
+        from app.hours import HoursError, check_week
+
+        if v is None or not v.strip():
+            return None
+        try:
+            check_week(v)
+        except HoursError as exc:
+            raise ValueError(str(exc)) from None
+        return v.strip()
 
     @model_validator(mode="after")
     def tidy_categories(self):
@@ -523,6 +538,21 @@ class QueueUpdate(BaseModel):
     portal_position: int | None = None
     categories: list[str] | None = None
     category_routes: dict[str, int] | None = None
+    # Opening hours (app.hours lines); empty: the desk hours.
+    hours: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("hours")
+    @classmethod
+    def valid_hours(cls, v: str | None) -> str | None:
+        from app.hours import HoursError, check_week
+
+        if v is None or not v.strip():
+            return None
+        try:
+            check_week(v)
+        except HoursError as exc:
+            raise ValueError(str(exc)) from None
+        return v.strip()
 
     @model_validator(mode="after")
     def tidy_categories(self):
@@ -594,6 +624,7 @@ class QueueOut(ORM):
     categories: list[str]
     category_routes: dict[str, int]
     restricted: bool
+    hours: str | None
     email_addresses: list[str]
     owner_users: list[UserRef]
     owner_groups: list[GroupRef]
@@ -913,11 +944,32 @@ class EventOut(ORM):
 # Self-service portal. Requesters see a slimmer ticket: no routing, SLA internals or history.
 
 
+class PortalPersonOut(BaseModel):
+    """A technician and their Teams status: available, busy, away, offline or unknown. Status only."""
+
+    name: str
+    status: str
+
+
+class PortalHoursOut(BaseModel):
+    lines: list[str]
+    open_now: bool
+    closes_at: datetime | None
+    next_open_at: datetime | None
+    # Closed today for a named closed day, e.g. "Christmas Day".
+    closed_for: str | None
+    # The after-hours message, filled in, when closed.
+    message: str | None
+
+
 class PortalQueueOut(BaseModel):
     id: int
     name: str
     description: str | None
     categories: list[str]
+    hours: PortalHoursOut
+    # None when Teams status isn't shown (Settings > Desk hours).
+    technicians: list[PortalPersonOut] | None = None
 
 
 class PortalTicketCreate(BaseModel):

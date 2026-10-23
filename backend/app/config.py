@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     teams_enabled: bool = False
     teams_webhook_url: str = ""
     teams_summary_minutes: int = 60
+    # Opening hours (app.hours): the desk's, unless a queue has its own; shown on the portal.
+    desk_hours: str = "Mon-Fri 08:00-17:00"
+    desk_closed_days: str = ""
+    after_hours_message: str = "No one is in right now. A technician is next expected {next}."
+    # Technicians' Teams status (status only) on the portal, read through the Email tab's app registration.
+    presence_on_portal: bool = False
     # Action1 (patching, read-only): API credentials from Action1 > API credentials, the organization
     # to read, and the region its console is in.
     action1_region: str = "NorthAmerica"

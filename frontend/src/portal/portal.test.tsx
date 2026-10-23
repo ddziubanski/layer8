@@ -8,9 +8,10 @@ import { NewRequest } from "./NewRequest";
 import { PortalTicket } from "./PortalTicket";
 
 const REQUESTER = { ...ME, id: 7, email: "ralvarez@corp.local", display_name: "R. Alvarez", role: "requester" as const };
+const OPEN = { lines: ["Mon-Fri 08:00-17:00"], open_now: true, closes_at: null, next_open_at: null, closed_for: null, message: null };
 const QUEUES = [
-  { id: 2, name: "Network", description: "Wi-Fi, wired, VPN", categories: [] },
-  { id: 3, name: "Printers & scanners", description: null, categories: ["Jam", "Toner"] },
+  { id: 2, name: "Network", description: "Wi-Fi, wired, VPN", categories: [], hours: OPEN, technicians: null },
+  { id: 3, name: "Printers & scanners", description: null, categories: ["Jam", "Toner"], hours: OPEN, technicians: null },
 ];
 const PT = {
   id: 1005,
@@ -141,7 +142,7 @@ test("agents use the portal under /portal, as themselves", async () => {
 
 test("a long option list uses a dropdown instead of tiles", async () => {
   const many = Array.from({ length: 15 }, (_, i) => `Option ${i + 1}`);
-  mockApi({ "GET /api/portal/queues": [{ id: 5, name: "Maintenance", description: null, categories: many }] });
+  mockApi({ "GET /api/portal/queues": [{ id: 5, name: "Maintenance", description: null, categories: many, hours: OPEN, technicians: null }] });
   renderAt("/new?queue=5", routes);
   const select = await screen.findByLabelText("What is the issue with?");
   expect(select.tagName).toBe("SELECT");
@@ -163,4 +164,23 @@ test("which computer: offered from the requester's own, one picked for them", as
   await userEvent.type(screen.getByLabelText("Subject"), "Wi-Fi drops");
   await userEvent.click(screen.getByRole("button", { name: "Send request" }));
   await waitFor(() => expect(calls.find((c) => c.path === "/api/portal/tickets")?.body).toMatchObject({ computer_id: 8 }));
+});
+
+
+test("each queue shows its hours, whether it's open, and its technicians' Teams status (no chat links)", async () => {
+  const closed = { lines: ["Mon-Fri 08:00-17:00"], open_now: false, closes_at: null, next_open_at: null, closed_for: null, message: "No one is in right now. A technician is next expected on Monday at 08:00." };
+  mockApi({
+    "GET /api/portal/queues": [
+      { id: 2, name: "Network", description: null, categories: [], hours: OPEN, technicians: [{ name: "Jordan Park", status: "available" }, { name: "Dana Cole", status: "busy" }] },
+      { id: 4, name: "Facilities", description: null, categories: [], hours: closed, technicians: [] },
+    ],
+  });
+  renderAt("/", [{ path: "/", element: <NewRequest /> }]);
+  const card = await screen.findByRole("region", { name: "Teams and hours" });
+  expect(within(card).getByText("Open")).toBeInTheDocument();
+  expect(within(card).getByText("Jordan Park")).toBeInTheDocument();
+  expect(within(card).getByText("· Busy")).toBeInTheDocument();
+  expect(within(card).queryAllByRole("link")).toHaveLength(0);
+  await userEvent.selectOptions(screen.getByLabelText("Which team can help?"), "4");
+  expect(await screen.findByText(/A technician is next expected on Monday at 08:00/)).toBeInTheDocument();
 });

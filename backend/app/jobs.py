@@ -30,6 +30,7 @@ RESTART_EXIT = 75
 
 LABELS = {
     "teams": "Teams: queue summary",
+    "presence": "Teams: technicians' status for the portal",
     "email": "Email: check the mailbox and send",
     "directory": "Directory sync",
     "rules": "Scheduled ticket rules",
@@ -201,8 +202,17 @@ def build_jobs(session_factory, mail) -> list[Job]:
         with session_factory() as session:
             return teams.run(session)
 
+    def presence_refresh(forced: bool):
+        from app import presence
+
+        with session_factory() as session:
+            result = presence.refresh(session)
+            session.commit()
+            return result
+
     return [
         Job("teams", "worker", lambda: timedelta(minutes=max(15, settings.teams_summary_minutes)), teams_summary),
+        Job("presence", "worker", _every(60), presence_refresh),
         Job("email", "email", lambda: timedelta(seconds=settings.mail_poll_seconds), email),
         # It decides itself whether a sync is due (every ldap_sync_minutes); checked each minute.
         Job("directory", "directory", _every(60), directory_sync),

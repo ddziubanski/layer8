@@ -237,7 +237,31 @@ def _teams_url(v: str) -> None:
         raise SettingsError(str(exc)) from None
 
 
+def _hours(v: str) -> None:
+    from app.hours import HoursError, check_week
+
+    try:
+        check_week(v)
+    except HoursError as exc:
+        raise SettingsError(str(exc)) from None
+
+
+def _closed_days(v: str) -> None:
+    from app.hours import HoursError, check_closed
+
+    try:
+        check_closed(v)
+    except HoursError as exc:
+        raise SettingsError(str(exc)) from None
+
+
 SECTIONS: dict[str, list[Field]] = {
+    "hours": [
+        Field("desk_hours", "Desk hours", "When technicians are in, one line per set of days, e.g. Mon-Fri 08:00-17:00 or Tue 08:00-12:00, 13:00-17:00 (24-hour clock, the server's time zone). Days not listed are closed, and a later line replaces earlier hours for its days. A queue can have its own hours in Settings > Queues.", multiline=True, check=_hours),
+        Field("desk_closed_days", "Closed days", "One per line: a date and an optional name, e.g. 2026-12-25 Christmas Day. Every queue is closed on these days.", multiline=True, check=_closed_days),
+        Field("after_hours_message", "After-hours message", "Shown on the portal for a queue that is closed. {next} becomes when someone is next expected (e.g. \"on Monday at 08:00\"), {queue} the queue's name.", multiline=True, check=_length(0, 1000)),
+        Field("presence_on_portal", "Show technicians' Teams status on the portal", "Each queue's owners with their Teams status (available, busy, away, offline), status only: no chat or call links. Needs the Email tab's app registration with the application permissions Presence.Read.All and User.ReadBasic.All (admin consent); checked every minute."),
+    ],
     "teams": [
         Field("teams_chat_enabled", "Allow technician Teams connections", "Optional delegated Microsoft sign-in. Technicians connect their own account under My preferences."),
         Field("teams_tenant_id", "Teams directory (tenant) ID", "Single-tenant Entra application; separate from the mailbox integration.", check=_guid),

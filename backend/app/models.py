@@ -157,6 +157,11 @@ class User(Base):
     color_rules: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
     # Their own screen layouts (app.layouts), page -> layout; missing: the admins' default.
     layouts: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
+    # Microsoft Entra object ID (looked up by UPN or email for Teams presence) and the last Teams
+    # status read: available / busy / away / offline; None when unknown.
+    entra_id: Mapped[str | None] = mapped_column(String(36))
+    presence: Mapped[str | None] = mapped_column(String(16))
+    presence_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     upn: Mapped[str | None] = mapped_column(String(320))
     sam_account_name: Mapped[str | None] = mapped_column(String(256))
     department: Mapped[str | None] = mapped_column(String(200))
@@ -279,6 +284,8 @@ class Queue(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     # Restricted: only owners, managers, viewers and admins see its tickets (e.g. Human Resources).
     restricted: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # Opening hours (app.hours lines); empty: the desk hours (Settings > Desk hours).
+    hours: Mapped[str | None] = mapped_column(Text)
 
     # Self-service portal: whether requesters can pick this queue, and how it's shown to them.
     show_in_portal: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
