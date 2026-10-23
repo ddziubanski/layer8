@@ -76,17 +76,20 @@ export function TicketPage({ me }: { me: User }) {
 
   return (
     <div className="ticket">
-      <div className="head">
-        <Link to="/">Tickets</Link> / {t.parent && (
-          <>
-            <Link to={`/tickets/${t.parent.id}`} title={t.parent.subject}>
-              {t.parent.label}
-            </Link>{" "}
-            /{" "}
-          </>
-        )}
-        {t.label}
-        <div className="row-gap" style={{ marginTop: 8 }}>
+      <div className="head ticket-workspace-head">
+        <nav className="ticket-breadcrumb" aria-label="Ticket breadcrumb">
+          <Link to="/">Tickets</Link>
+          <span aria-hidden="true">/</span>
+          {t.parent && (
+            <>
+              <Link to={`/tickets/${t.parent.id}`} title={t.parent.subject}>{t.parent.label}</Link>
+              <span aria-hidden="true">/</span>
+            </>
+          )}
+          <span aria-current="page">{t.label}</span>
+        </nav>
+        <div className="ticket-workspace-kicker">SERVICE DESK / TICKET DETAILS</div>
+        <div className="row-gap ticket-workspace-title">
           <h1 className="spacer">{t.subject}</h1>
           <PriorityChip priority={t.priority} />
           <SourceChip source={t.source} />
@@ -96,6 +99,10 @@ export function TicketPage({ me }: { me: User }) {
               Arrange this page
             </button>
           )}
+        </div>
+        <div className="ticket-workspace-meta">
+          <span>Requested by <strong>{t.requester.display_name}</strong></span>
+          <span>Created {when(t.created_at)}</span>
         </div>
       </div>
 
@@ -111,13 +118,13 @@ export function TicketPage({ me }: { me: User }) {
           conversation: {
             label: "Conversation",
             node: (
-              <div className="stack">
+              <div className="stack ticket-conversation">
                 {t.merged_into && (
                   <div className="card note" role="status">
                     Merged into <Link to={`/tickets/${t.merged_into.id}`}>{t.merged_into.label} {t.merged_into.subject}</Link>. Its replies and files are there now.
                   </div>
                 )}
-                <div className="card">
+                <div className="card ticket-message ticket-message-original">
                   <div className="lbl">
                     {t.requester.display_name}, via {SOURCE_LABEL[t.source].toLowerCase()}, {when(t.created_at)}
                   </div>
@@ -125,7 +132,7 @@ export function TicketPage({ me }: { me: User }) {
                   <AttachedLine files={filesFor(null)} />
                 </div>
                 {comments.data?.map((c) => (
-                  <div key={c.id} className={`card${c.is_internal ? " note" : ""}`}>
+                  <div key={c.id} className={`card ticket-message${c.is_internal ? " note ticket-message-internal" : ""}`}>
                     <div className="lbl">
                       {c.is_internal ? "Internal note · " : c.author.id !== t.requester.id ? (c.emailed ? "Reply, emailed · " : "Reply, portal only · ") : ""}
                       {c.author.display_name}, via {SOURCE_LABEL[c.source].toLowerCase()}, {when(c.created_at)}
