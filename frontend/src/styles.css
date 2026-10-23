@@ -819,7 +819,7 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 :root[data-preset="midnight"], .theme-preview[data-preset="midnight"] {
   --ink: #e6f0fa; --muted: #acc2d5;
   --bg: #070f18; --surface: #101f2d;
-  --line: #243b4e; --line-soft: #1c3041; --input-line: #426076;
+  --line: #243b4e; --line-soft: #1c3041; --input-line: #55758e;
   --note-bg: #272a28; --note-line: #75623b; --error: #ff9da6;
   --head-bg: #142738; --row-hover: #1c3449; --tint: #123248; --code-bg: #0a1723;
   --chip-g-bg: #134d41; --chip-g: #a0f4d2;
@@ -861,3 +861,6 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 :root[data-preset="midnight"] :focus-visible { outline-color: #55dbf3; }
 
 :root[data-preset="midnight"] .shell .card.note { background: var(--note-bg); }
+
+:root[data-preset="midnight"] input::placeholder,
+:root[data-preset="midnight"] textarea::placeholder { color: #9ab1c7; opacity: 1; }
