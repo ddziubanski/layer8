@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     teams_tenant_id: str = ""
     teams_client_id: str = ""
     teams_client_secret: str = ""
+    # Microsoft 365 Copilot for technicians on tickets (Graph beta Copilot Chat API), through their own connection.
+    copilot_enabled: bool = False
     teams_enabled: bool = False
     teams_webhook_url: str = ""
     teams_summary_minutes: int = 60

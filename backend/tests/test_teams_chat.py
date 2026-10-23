@@ -64,7 +64,7 @@ def test_configuration_is_opt_in_and_uses_fixed_tenant(configured, monkeypatch):
     monkeypatch.setattr(settings, "teams_chat_enabled", False)
     with pytest.raises(teams.ConnectionError):
         teams.configuration()
-    assert teams.status(7) == {"configured": False, "connected": False, "account": None}
+    assert teams.status(7) == {"configured": False, "connected": False, "account": None, "copilot": False}
 
 
 @pytest.mark.parametrize("portal", ["http://helpdesk.corp.example", "https://helpdesk.corp.example/path", "https://user:pass@helpdesk.corp.example", "https://helpdesk.corp.example#x"])
@@ -79,7 +79,7 @@ def test_connection_binds_session_consumes_state_and_hides_tokens(configured, oa
     assert flow["session"] != "browser-session"
     teams.finish(PERSON, "browser-session", {"state": flow["state"], "code": "synthetic-code"})
     assert not filename.exists()
-    assert teams.status(PERSON.id) == {"configured": True, "connected": True, "account": PERSON.email}
+    assert teams.status(PERSON.id) == {"configured": True, "connected": True, "account": PERSON.email, "copilot": False}
     assert "synthetic-access" not in json.dumps(teams.status(PERSON.id))
     with pytest.raises(teams.ConnectionError):
         teams.finish(PERSON, "browser-session", {"state": flow["state"], "code": "synthetic-code"})
@@ -175,7 +175,7 @@ def ticket(db, requester, service_desk):
 
 
 def mock_send(monkeypatch, ticket):
-    monkeypatch.setattr(teams, "access", lambda _: ("synthetic-access", {"oid": OID, "account": "agent@example.com"}))
+    monkeypatch.setattr(teams, "access", lambda _, wanted=None: ("synthetic-access", {"oid": OID, "account": "agent@example.com"}))
     monkeypatch.setattr(teams, "chats", lambda *a: [{"id": "one-to-one", "recipient": ticket.requester.email}])
     return {"delivery_id": str(uuid4()), "chat_id": "one-to-one", "body": "Try reconnecting your VPN."}
 

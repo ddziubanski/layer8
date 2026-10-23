@@ -17,7 +17,7 @@ from app.models import AppSetting, User
 PANELS: dict[str, dict[str, list[str]]] = {
     "ticket": {
         "main": ["conversation", "attachments", "children", "checklists", "expenses", "ad_account", "scripts", "history"],
-        "side": ["assignment", "requester", "computer", "devices", "systems", "changes", "knowledge", "status", "actions"],
+        "side": ["assignment", "requester", "computer", "devices", "systems", "changes", "knowledge", "copilot", "status", "actions"],
     },
     # A purchase order: the order itself (its fields, lines and links), and what happens to it.
     "po": {

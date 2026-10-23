@@ -15,6 +15,12 @@ from app import configstore
 from app.config import settings
 
 SCOPES = ["User.Read", "Chat.ReadBasic", "ChatMessage.Send"]
+# Microsoft 365 Copilot Chat API (beta): all seven are required; asked for only when Copilot is on.
+COPILOT_SCOPES = ["Sites.Read.All", "Mail.Read", "People.Read.All", "OnlineMeetingTranscript.Read.All", "Chat.Read", "ChannelMessage.Read.All", "ExternalItem.Read.All"]
+
+
+def scopes():
+    return SCOPES + (COPILOT_SCOPES if settings.copilot_enabled else [])
 GRAPH = "https://graph.microsoft.com/v1.0"
 
 
@@ -69,12 +75,12 @@ def status(user_id):
     try:
         config = configuration()
     except ConnectionError:
-        return {"configured": False, "connected": False, "account": None}
+        return {"configured": False, "connected": False, "account": None, "copilot": False}
     try:
         record = read(user_id)
     except ConnectionError:
-        return {"configured": True, "connected": False, "account": None}
-    return {"configured": bool(config), "connected": True, "account": record["account"]}
+        return {"configured": True, "connected": False, "account": None, "copilot": False}
+    return {"configured": bool(config), "connected": True, "account": record["account"], "copilot": bool(record.get("copilot"))}
 
 
 def binding(cookie):
@@ -91,7 +97,7 @@ def begin(user, cookie):
     try:
         with oauth_client(cache) as client:
             flow = client.initiate_auth_code_flow(
-                SCOPES, redirect_uri=config["redirect"], state=state,
+                scopes(), redirect_uri=config["redirect"], state=state,
                 response_mode="fragment", login_hint=user.upn or user.email,
                 prompt="select_account",
             )
@@ -145,8 +151,10 @@ def finish(user, cookie, response):
             raise ConnectionError("Choose the Microsoft work account matching your Layer 8 email or directory UPN")
     except (httpx.HTTPError, ValueError, KeyError):
         raise ConnectionError("Microsoft account verification failed; use the work account matching your Layer 8 email or UPN") from None
+    granted = {s.casefold() for s in str(result.get("scope", "")).split()}
     write(path(user.id), {"config": configuration(), "oid": identity["id"],
-                         "account": identity["userPrincipalName"], "cache": cache.serialize()})
+                         "account": identity["userPrincipalName"], "cache": cache.serialize(),
+                         "copilot": all(s.casefold() in granted for s in COPILOT_SCOPES)})
 
 
 def disconnect(user_id):
@@ -154,14 +162,15 @@ def disconnect(user_id):
     (settings.secrets_dir / f"teams-pending-{user_id}.json").unlink(missing_ok=True)
 
 
-def access(user_id):
+def access(user_id, wanted=None):
+    """A delegated token for `wanted` scopes (default: the Teams ones), with the stored record."""
     record = read(user_id)
     cache = msal.SerializableTokenCache()
     try:
         cache.deserialize(record["cache"])
         with oauth_client(cache) as client:
             accounts = client.get_accounts()
-            result = client.acquire_token_silent(SCOPES, account=accounts[0]) if len(accounts) == 1 else None
+            result = client.acquire_token_silent(wanted or SCOPES, account=accounts[0]) if len(accounts) == 1 else None
         # Persist rotated refresh tokens before any downstream request, including failures.
         if cache.has_state_changed:
             record["cache"] = cache.serialize()
