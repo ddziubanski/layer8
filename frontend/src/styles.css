@@ -590,3 +590,23 @@ label.inline input { width: auto; min-height: 0; }
 .portal-main .ticket-list > li, .portal-main .choice { border-radius:12px; }
 .login .login-card { border-radius:16px; padding:28px; }
 @media(max-width:800px) { .main .page-head:has(.workspace-title), .main .row-gap:has(> .workspace-title) { padding:16px; } .workspace-title { flex-basis:100%; } .portal .topbar { padding:14px 20px; } .portal-main { padding:22px 20px; } }
+
+/* Device detail keeps editable inventory apart from service context. */
+.device-workspace-head { display:flex; flex-wrap:wrap; gap:20px; align-items:center; padding:24px; background:var(--surface); border:1px solid var(--line); border-radius:14px; margin-bottom:20px; }
+.device-workspace-head .workspace-area { margin:16px 0 8px; }
+.device-workspace-head h1 { margin:0; overflow-wrap:anywhere; }
+.device-workspace-head p.muted { margin:8px 0 14px; overflow-wrap:anywhere; }
+.device-workspace-grid { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); align-items:start; gap:20px; max-width:1500px; }
+.device-workspace-grid > * { min-width:0; }
+.device-workspace-grid .card { border-radius:12px; padding:20px; }
+.device-facts h2 { margin-bottom:16px; }
+.device-facts .facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:0; }
+.device-facts dd, .device-workspace-context a { overflow-wrap:anywhere; }
+.device-workspace-context .row-gap { align-items:start; }
+.device-workspace-context .chip { white-space:normal; }
+.device-lifecycle-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:4px 0; }
+.device-lifecycle-summary > div { padding:18px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.device-lifecycle-summary dt { color:var(--muted); font-size:13px; }
+.device-lifecycle-summary dd { font-size:28px; font-weight:600; margin:8px 0 0; }
+@media(max-width:1100px) { .device-workspace-grid { grid-template-columns:minmax(0,1fr); } .device-lifecycle-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .device-facts .facts { grid-template-columns:minmax(0,1fr); } .device-workspace-head { padding:18px; } }
