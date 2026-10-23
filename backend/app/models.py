@@ -645,6 +645,8 @@ class Runner(Base):
     languages: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    # Privileged hosts may be reserved for explicitly targeted built-in integrations.
+    builtins_only: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_host: Mapped[str | None] = mapped_column(String(255))
     last_version: Mapped[str | None] = mapped_column(String(50))

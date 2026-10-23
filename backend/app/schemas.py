@@ -1296,6 +1296,7 @@ class RunnerIn(BaseModel):
     description: str = ""
     languages: list[RUNNER_LANGUAGES] = Field(min_length=1)
     is_active: bool = True
+    builtins_only: bool = False
 
 
 class RunnerOut(ORM):
@@ -1304,6 +1305,7 @@ class RunnerOut(ORM):
     description: str
     languages: list[str]
     is_active: bool
+    builtins_only: bool = False
     last_seen_at: datetime | None
     last_host: str | None
     last_version: str | None

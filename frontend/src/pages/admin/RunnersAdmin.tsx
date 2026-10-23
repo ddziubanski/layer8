@@ -66,7 +66,7 @@ export function RunnersAdmin({ me }: { me: User }) {
                       <strong>{r.name}</strong> {!r.is_active && <span className="chip n">Off</span>}
                       {r.description && <div className="muted small">{r.description}</div>}
                     </td>
-                    <td>{r.languages.map((l) => LANGUAGES.find(([k]) => k === l)?.[1] ?? l).join(", ")}</td>
+                    <td>{r.languages.map((l) => LANGUAGES.find(([k]) => k === l)?.[1] ?? l).join(", ")}{r.builtins_only && <div className="muted small">Dedicated integrations</div>}</td>
                     <td>
                       {r.last_seen_at ? (
                         <>
@@ -122,7 +122,7 @@ export function RunnersAdmin({ me }: { me: User }) {
 }
 
 function RunnerForm({ runner, onDone }: { runner: Runner | null; onDone: (made?: RunnerToken) => void }) {
-  const [r, setR] = useState<RunnerIn>(runner ? { name: runner.name, description: runner.description, languages: runner.languages as RunnerIn["languages"], is_active: runner.is_active } : { name: "", description: "", languages: ["powershell"], is_active: true });
+  const [r, setR] = useState<RunnerIn>(runner ? { name: runner.name, description: runner.description, languages: runner.languages as RunnerIn["languages"], is_active: runner.is_active, builtins_only: runner.builtins_only ?? false } : { name: "", description: "", languages: ["powershell"], is_active: true, builtins_only: false });
   const save = useMutation({
     mutationFn: async () => (runner ? (await api.runners.update(runner.id, r), undefined) : api.runners.create(r)),
     onSuccess: (made) => onDone(made ?? undefined),
@@ -161,6 +161,10 @@ function RunnerForm({ runner, onDone }: { runner: Runner | null; onDone: (made?:
           ))}
         </div>
       </fieldset>
+      <label className="inline">
+        <input type="checkbox" checked={r.builtins_only ?? false} onChange={(e) => setR({ ...r, builtins_only: e.target.checked })} /> Dedicated integration runner
+      </label>
+      <p className="muted small">Only built-in integration jobs explicitly assigned to this runner can run here. Use for privileged AD or discovery hosts; run general scripts on a separate, less privileged runner.</p>
       <label className="inline">
         <input type="checkbox" checked={r.is_active ?? true} onChange={(e) => setR({ ...r, is_active: e.target.checked })} /> In use
       </label>

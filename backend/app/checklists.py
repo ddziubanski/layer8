@@ -71,7 +71,7 @@ def start(
             try:
                 (run,) = runs.request(
                     session, adchanges.disable_script(session), actor, device_ids=[], on_runner=True, values={"user_guid": for_user.directory_id},
-                    ticket=child, not_before=datetime.combine(due, time.min).astimezone(),
+                    ticket=child, not_before=datetime.combine(due, time.min).astimezone(), only_runner_id=adchanges.runner_id(session),
                 )
             except runs.RunError as exc:
                 raise ChecklistError(str(exc)) from None
