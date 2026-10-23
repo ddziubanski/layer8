@@ -217,6 +217,14 @@ function query(params: Record<string, string | number | undefined>): string {
 }
 
 export const api = {
+  teams: {
+    connection: () => request<S["ConnectionOut"]>("GET", "/api/teams/connection"),
+    connect: () => request<S["StartOut"]>("POST", "/api/teams/connect"),
+    complete: (body: S["CallbackIn"]) => request<S["ConnectionOut"]>("POST", "/api/teams/callback", body),
+    disconnect: () => request<void>("DELETE", "/api/teams/connection"),
+    chats: (id: number) => request<S["ChatOut"][]>("GET", `/api/tickets/${id}/teams/chats`),
+    send: (id: number, body: S["SendIn"]) => request<S["SentOut"]>("POST", `/api/tickets/${id}/teams/messages`, body),
+  },
   me: () => request<Me>("GET", "/api/auth/me"),
   branding: () => request<Branding>("GET", "/api/branding"),
   notices: {

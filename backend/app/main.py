@@ -15,6 +15,7 @@ from app.api import remote as remote_api
 from app.api import runs as runs_api
 from app.api import script_schedules as script_schedules_api
 from app.api import scripts as scripts_api
+from app.api import teams_chat as teams_chat_api
 from app.api import settings as settings_api
 from app import syslog
 from app.config import settings
@@ -40,6 +41,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Layer 8", version="0.1.0", lifespan=lifespan)
 app.include_router(auth.router)
+app.include_router(teams_chat_api.router)
 app.include_router(tickets.router)
 app.include_router(admin.router)
 app.include_router(attachments.router)

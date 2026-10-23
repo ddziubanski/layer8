@@ -1,3 +1,4 @@
+import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
 import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider, useParams } from "react-router";
@@ -264,6 +265,7 @@ const router = (me: Me) =>
         { path: "kb/:articleId", element: <KnowledgePage me={me} /> },
         { path: "kb/:articleId/:mode", element: <KnowledgePage me={me} /> },
         { path: "preferences", element: <PreferencesPage me={me} /> },
+        { path: "teams/callback", element: <TeamsCallback /> },
         { path: "reports", element: <ReportsPage /> },
         {
           path: "settings",

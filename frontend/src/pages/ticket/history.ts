@@ -42,6 +42,7 @@ export function describe(e: TicketEvent, names: Names): string {
     case "priority_changed":
       return `Priority ${label(PRIORITY_LABEL, d.before)} → ${label(PRIORITY_LABEL, d.after)}`;
     case "updated":
+      if (d.teams_delivery_id) return d.teams_status === "sent" ? `Sent a Teams message to ${d.recipient} as ${d.sender}` : `Teams delivery ${d.teams_status === "pending" ? "pending confirmation" : "not confirmed; check Teams"}`;
       return `Edited ${Object.keys((d.fields ?? {}) as Data).join(", ")}`;
     case "comment_added":
       return d.is_internal ? "Added an internal note" : "Replied";

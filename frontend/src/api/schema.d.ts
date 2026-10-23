@@ -132,6 +132,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/teams/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connection */
+        get: operations["connection_api_teams_connection_get"];
+        put?: never;
+        post?: never;
+        /** Disconnect */
+        delete: operations["disconnect_api_teams_connection_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/teams/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect */
+        post: operations["connect_api_teams_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/teams/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Callback */
+        post: operations["callback_api_teams_callback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/teams/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chats */
+        get: operations["chats_api_tickets__ticket_id__teams_chats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/teams/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send */
+        post: operations["send_api_tickets__ticket_id__teams_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets": {
         parameters: {
             query?: never;
@@ -4575,6 +4661,15 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** CallbackIn */
+        CallbackIn: {
+            /** State */
+            state: string;
+            /** Code */
+            code?: string | null;
+            /** Error */
+            error?: string | null;
+        };
         /** ChangeActionIn */
         ChangeActionIn: {
             /**
@@ -4912,6 +5007,13 @@ export interface components {
             /** Label */
             readonly label: string;
         };
+        /** ChatOut */
+        ChatOut: {
+            /** Id */
+            id: string;
+            /** Recipient */
+            recipient: string;
+        };
         /** ChecklistDateIn */
         ChecklistDateIn: {
             /**
@@ -5088,6 +5190,15 @@ export interface components {
             is_active: boolean;
             /** Assigned User Id */
             assigned_user_id: number | null;
+        };
+        /** ConnectionOut */
+        ConnectionOut: {
+            /** Configured */
+            configured: boolean;
+            /** Connected */
+            connected: boolean;
+            /** Account */
+            account?: string | null;
         };
         /** DeviceDetailOut */
         DeviceDetailOut: {
@@ -8516,6 +8627,23 @@ export interface components {
             /** Is Current */
             is_current: boolean;
         };
+        /** SendIn */
+        SendIn: {
+            /**
+             * Delivery Id
+             * Format: uuid
+             */
+            delivery_id: string;
+            /** Chat Id */
+            chat_id: string;
+            /** Body */
+            body: string;
+        };
+        /** SentOut */
+        SentOut: {
+            /** Comment Id */
+            comment_id: number;
+        };
         /** ServicesOut */
         ServicesOut: {
             api: components["schemas"]["ApiServiceOut"];
@@ -8663,6 +8791,11 @@ export interface components {
              * @default
              */
             for_name: string;
+        };
+        /** StartOut */
+        StartOut: {
+            /** Url */
+            url: string;
         };
         /** StatusItemOut */
         StatusItemOut: {
@@ -10044,6 +10177,202 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connection_api_teams_connection_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_teams_connection_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_api_teams_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    callback_api_teams_callback_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallbackIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chats_api_tickets__ticket_id__teams_chats_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_api_tickets__ticket_id__teams_messages_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SentOut"];
                 };
             };
             /** @description Validation Error */
