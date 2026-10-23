@@ -15,7 +15,7 @@ from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SignInO
 def me_out(session, user) -> MeOut:
     out = MeOut.model_validate(user)
     out.permissions = permissions.granted(session, user)
-    out.features = ["action1"] if settings.action1_enabled else []
+    out.features = [name for name, on in (("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
     return out
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])

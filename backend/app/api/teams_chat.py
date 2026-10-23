@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app import services, teams_chat
+from app.config import settings
 from app.api.tickets import staff_ticket
 from app.auth import Agent, COOKIE, SessionDep
 from app.models import EventType, TeamsDelivery, TicketSource, User
@@ -18,6 +19,8 @@ class ConnectionOut(BaseModel):
     configured: bool
     connected: bool
     account: str | None = None
+    # The connection includes the Copilot permissions (Settings > Teams > Copilot on tickets).
+    copilot: bool = False
 
 
 class StartOut(BaseModel):
@@ -140,3 +143,53 @@ def send(ticket_id: int, body: SendIn, user: Agent, session: SessionDep):
     services._event(session, ticket, EventType.updated, user, **event.data)
     session.commit()
     return {"comment_id": comment.id}
+
+
+# Microsoft 365 Copilot on a ticket (app.copilot)
+
+
+class CopilotIn(BaseModel):
+    question: str = Field(min_length=1, max_length=4000)
+    # Send the ticket's subject, description and latest comments as context.
+    include_ticket: bool = True
+    # Carry on a conversation started earlier on this page.
+    conversation_id: str | None = Field(default=None, max_length=200)
+
+
+class CitationOut(BaseModel):
+    title: str
+    url: str
+
+
+class CopilotOut(BaseModel):
+    conversation_id: str
+    answer: str
+    citations: list[CitationOut]
+
+
+@router.post("/api/tickets/{ticket_id}/copilot", response_model=CopilotOut)
+def ask_copilot(ticket_id: int, body: CopilotIn, user: Agent, session: SessionDep):
+    """Ask Microsoft 365 Copilot as yourself. The question (not the answer) is noted in the ticket's history."""
+    from app import copilot
+    from app.models import Comment
+
+    ticket = staff_ticket(session, ticket_id, user)
+    if not settings.copilot_enabled:
+        raise HTTPException(409, "Copilot on tickets is off (Settings > Teams)")
+    context = []
+    if body.include_ticket:
+        comments = list(session.scalars(select(Comment).where(Comment.ticket_id == ticket.id).order_by(Comment.created_at, Comment.id)))
+        context = copilot.ticket_context(ticket, comments)
+    lock(session, user)
+    try:
+        token, _record = teams_chat.access(user.id, teams_chat.COPILOT_SCOPES)
+    except teams_chat.ConnectionError:
+        raise HTTPException(409, "Reconnect your Microsoft account in My preferences to allow Copilot") from None
+    session.commit()  # release the lock before the (slow) call
+    try:
+        result = copilot.ask(token, body.question.strip(), context, body.conversation_id)
+    except copilot.CopilotError as exc:
+        raise HTTPException(502, str(exc)) from None
+    services._event(session, ticket, EventType.updated, user, copilot="asked", shared_ticket=body.include_ticket)
+    session.commit()
+    return result

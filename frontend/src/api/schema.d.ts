@@ -218,6 +218,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/copilot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask Copilot
+         * @description Ask Microsoft 365 Copilot as yourself. The question (not the answer) is noted in the ticket's history.
+         */
+        post: operations["ask_copilot_api_tickets__ticket_id__copilot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets": {
         parameters: {
             query?: never;
@@ -5281,6 +5301,13 @@ export interface components {
             /** Label */
             readonly label: string;
         };
+        /** CitationOut */
+        CitationOut: {
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        };
         /**
          * ColorRule
          * @description Tint my queue's rows: the first rule a ticket matches wins.
@@ -5357,6 +5384,32 @@ export interface components {
             connected: boolean;
             /** Account */
             account?: string | null;
+            /**
+             * Copilot
+             * @default false
+             */
+            copilot: boolean;
+        };
+        /** CopilotIn */
+        CopilotIn: {
+            /** Question */
+            question: string;
+            /**
+             * Include Ticket
+             * @default true
+             */
+            include_ticket: boolean;
+            /** Conversation Id */
+            conversation_id?: string | null;
+        };
+        /** CopilotOut */
+        CopilotOut: {
+            /** Conversation Id */
+            conversation_id: string;
+            /** Answer */
+            answer: string;
+            /** Citations */
+            citations: components["schemas"]["CitationOut"][];
         };
         /** DeviceDetailOut */
         DeviceDetailOut: {
@@ -10661,6 +10714,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_copilot_api_tickets__ticket_id__copilot_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotOut"];
                 };
             };
             /** @description Validation Error */

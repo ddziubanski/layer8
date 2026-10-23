@@ -18,6 +18,9 @@ import { ADAccountCard } from "./ticket/ADAccountCard";
 import { ArrangedColumns, useArrangement } from "../components/Arrange";
 import { SystemsCard } from "./ticket/SystemsCard";
 import { KnowledgeCard } from "./ticket/KnowledgeCard";
+import { CopilotCard } from "./ticket/CopilotCard";
+import { uses } from "../permissions";
+import { ME_KEY } from "../queryClient";
 import { ScriptsCard } from "./ticket/ScriptsCard";
 import { ActionsCard, AssignmentCard, RequesterCard, StatusCard } from "./ticket/SidePanels";
 
@@ -34,6 +37,8 @@ const USUAL_LAYOUT = {
 export function TicketPage({ me }: { me: User }) {
   const id = Number(useParams().ticketId);
   const queryClient = useQueryClient();
+  // The signed-in user with their features (the page's `me` is the plain user record).
+  const signedIn = useQuery({ queryKey: ME_KEY, queryFn: api.me });
   const arrangement = useArrangement("ticket");
   const key = ["ticket", id];
 
@@ -209,6 +214,7 @@ export function TicketPage({ me }: { me: User }) {
           systems: { label: "Systems", node: <SystemsCard ticket={t} onChanged={refresh} /> },
           changes: { label: "Changes", node: <ChangesCard ticket={t} /> },
           knowledge: { label: "Knowledge base", node: <KnowledgeCard ticket={t} /> },
+          copilot: { label: "Copilot", node: uses(signedIn.data ?? {}, "copilot") ? <CopilotCard ticket={t} onChanged={refresh} /> : null },
           status: { label: "Status", node: <StatusCard ticket={t} onChanged={refresh} /> },
           actions: { label: "Actions", node: <ActionsCard ticket={t} onChanged={refresh} /> },
         }}

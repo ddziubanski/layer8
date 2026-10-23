@@ -91,6 +91,7 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Other apps (API keys: look up tickets, add notes) | [docs/integrations.md](docs/integrations.md) |
 | Wallboards (live board for a big screen, secret link) | [docs/wallboard.md](docs/wallboard.md) |
 | Desk hours and technicians' Teams status on the portal | [docs/desk-hours.md](docs/desk-hours.md) |
+| **Microsoft 365, step by step** (email, Teams, technician connections, Copilot) | [docs/microsoft-365.md](docs/microsoft-365.md) |
 
 ## Built with
 
