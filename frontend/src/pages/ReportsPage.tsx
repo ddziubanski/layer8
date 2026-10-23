@@ -105,7 +105,7 @@ export function ReportsPage() {
   return (
     <section className="analysis-workspace report-workspace">
       <div className="page-head">
-        <WorkspaceTitle title="Reports" area="SERVICE INSIGHTS" description="Explore service data, save reports and schedule delivery." />
+        <WorkspaceTitle title="Reports" area="SERVICE INSIGHTS" />
       </div>
       {presets.error && <p className="error" role="alert">{presets.error.message}</p>}
       {saved.error && <p className="error" role="alert">Saved reports could not be loaded: {saved.error.message}</p>}

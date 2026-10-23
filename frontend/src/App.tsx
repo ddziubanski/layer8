@@ -220,7 +220,6 @@ const settingsTabs = (me: Me) =>
 function SettingsLayout({ me }: { me: Me }) {
   return (
     <section className="settings-workspace">
-      <header className="settings-intro"><p className="workspace-area">CONFIGURATION</p><p className="muted">Manage service desk settings and integrations. Choose an area to review its configuration.</p></header>
       <div className="settings-grid">
       <nav className="tabs settings-navigation" aria-label="Settings">
         {settingsTabs(me).map((s) => (

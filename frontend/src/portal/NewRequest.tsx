@@ -136,7 +136,7 @@ export function NewRequest() {
   return (
     <form className="stack guided" style={{ maxWidth: 720 }} onSubmit={onSubmit}>
       <div className="page-intro">
-        <WorkspaceTitle title="How can we help?" area="SELF SERVICE" description="Tell us what you need. We will guide your request to the right team." />
+        <WorkspaceTitle title="How can we help?" area="SELF SERVICE" />
         <p className="muted" style={{ margin: 0 }}>
           A few quick questions get your request to the right people.
         </p>

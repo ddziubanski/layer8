@@ -29,7 +29,7 @@ export function IpamPage({ me }: { me: Me }) {
   return (
     <>
       <div className="page-head row-gap">
-        <WorkspaceTitle title="IP addresses" area="NETWORK OPERATIONS" description="Document subnets and addresses, then review discovery findings." />
+        <WorkspaceTitle title="IP addresses" area="NETWORK OPERATIONS" />
       </div>
       <div className="tabs" role="tablist" style={{ marginBottom: 12 }}>
         {[

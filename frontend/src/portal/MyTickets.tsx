@@ -15,7 +15,7 @@ export function MyTickets() {
 
   return (
     <section>
-      <WorkspaceTitle title="My tickets" area="YOUR REQUESTS" description="Follow updates, reply to your service team and review past requests." />
+      <WorkspaceTitle title="My tickets" area="YOUR REQUESTS" />
       <div className="views" role="group" aria-label="Show">
         <button type="button" aria-pressed={!closed} onClick={() => setClosed(false)}>
           Open

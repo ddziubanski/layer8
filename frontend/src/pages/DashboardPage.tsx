@@ -23,7 +23,7 @@ export function DashboardPage() {
   const queueLink = (view: SavedView) => `/?${new URLSearchParams({ scope, queue: queueId ? String(queueId) : "", view })}`;
   const update = (key: string, value: string) => setParams({ scope, queue, [key]: value });
   return <section className="operations-dashboard">
-    <header className="dashboard-heading"><div><p className="eyebrow">SERVICE OPERATIONS</p><h1>Dashboard</h1><p className="muted">A live view of your workload and tickets needing attention.</p></div><Link className="button" to={queueLink("open")}>Open ticket workspace →</Link></header>
+    <header className="dashboard-heading"><div><p className="eyebrow">SERVICE OPERATIONS</p><h1>Dashboard</h1></div><Link className="button" to={queueLink("open")}>Open ticket workspace →</Link></header>
     <div className="dashboard-filters">
       <label>Workload <select value={scope} onChange={e => update("scope", e.target.value)}><option value="mine">My tickets</option><option value="groups">My groups</option><option value="all">All tickets</option></select></label>
       <label>Queue <select value={queueId ? String(queueId) : ""} onChange={e => update("queue", e.target.value)}><option value="">All accessible queues</option>{queues.data?.map(q => <option key={q.id} value={q.id}>{q.name}</option>)}</select></label>

@@ -35,7 +35,7 @@ export function ChangesPage() {
   return (
     <>
       <div className="page-head row-gap">
-        <WorkspaceTitle title="Changes" area="CHANGE CONTROL" description="Plan work, review approvals and track delivery." />
+        <WorkspaceTitle title="Changes" area="CHANGE CONTROL" />
         <Link className="btn" to="/changes/new">
           New change
         </Link>

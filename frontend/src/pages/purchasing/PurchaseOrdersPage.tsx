@@ -52,7 +52,7 @@ export function PurchaseOrdersPage() {
   return (
     <>
       <div className="page-head row-gap">
-        <WorkspaceTitle title="Purchase orders" area="PROCUREMENT" description="Track purchasing, approvals and incoming deliveries." />
+        <WorkspaceTitle title="Purchase orders" area="PROCUREMENT" />
         <button className="btn" type="button" onClick={() => navigate("/purchase-orders/new")}>
           New purchase order
         </button>

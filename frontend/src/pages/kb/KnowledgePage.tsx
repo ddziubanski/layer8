@@ -28,7 +28,7 @@ export function KnowledgePage({ me }: { me: Me }) {
   return (
     <>
       <div className="row-gap" style={{ marginBottom: 16 }}>
-        <WorkspaceTitle title="Knowledge base" area="KNOWLEDGE" description="Find answers, maintain articles and share useful guidance." />
+        <WorkspaceTitle title="Knowledge base" area="KNOWLEDGE" />
         <span className="spacer" />
         <Link className="btn" to="/kb/new">
           New article
@@ -259,7 +259,7 @@ function Editor({ initial, canPublish }: { initial?: KbArticle; canPublish: bool
         save.mutate(f.status);
       }}
     >
-      <header className="module-form-head"><p className="workspace-area">KNOWLEDGE EDITOR</p><h2>{initial ? "Edit article" : "New article"}</h2><p className="muted small">Keep the audience and publication state appropriate for this guidance.</p></header>
+      <header className="module-form-head"><p className="workspace-area">KNOWLEDGE EDITOR</p><h2>{initial ? "Edit article" : "New article"}</h2></header>
       <label className="field">
         Title
         <input required maxLength={300} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="What people would type, e.g. Outlook keeps asking for my password" />

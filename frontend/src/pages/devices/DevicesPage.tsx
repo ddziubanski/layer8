@@ -35,7 +35,7 @@ export function DevicesPage({ me }: { me: Me }) {
     return (
       <>
         <div className="page-head row-gap">
-          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" description="Inventory, ownership, lifecycle and device health." />
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
         </div>
         {tabs}
         <LifecycleView />
@@ -45,7 +45,7 @@ export function DevicesPage({ me }: { me: Me }) {
     return (
       <>
         <div className="page-head row-gap">
-          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" description="Inventory, ownership, lifecycle and device health." />
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
         </div>
         {tabs}
         <Sweeps view={view} action1={uses(me, "action1")} />
@@ -73,7 +73,7 @@ function AllDevices({ me, tabs }: { me: Me; tabs: ReactNode }) {
   return (
     <>
       <div className="page-head row-gap">
-        <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" description="Inventory, ownership, lifecycle and device health." />
+        <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
         {can(me, "devices_add") && (
           <button className="btn2" type="button" aria-expanded={adding} onClick={() => setAdding(!adding)}>
             Add a device

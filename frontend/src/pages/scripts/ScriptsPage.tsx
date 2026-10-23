@@ -32,7 +32,7 @@ export function ScriptsPage({ me }: { me: Me }) {
   return (
     <section className="analysis-workspace script-workspace">
       <div className="page-head row-gap">
-        <WorkspaceTitle title="Scripts" area="AUTOMATION" description="Browse queries and actions, review runs and manage schedules." />
+        <WorkspaceTitle title="Scripts" area="AUTOMATION" />
         {writes && (
           <>
             <button className="btn2" type="button" disabled={examples.isPending} onClick={() => examples.mutate()}>

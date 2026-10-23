@@ -51,7 +51,7 @@ export function PreferencesPage({ me }: { me: Me }) {
   return (
     <>
       <div className="page-head">
-        <WorkspaceTitle title="My preferences" area="YOUR WORKSPACE" description="Choose your ticket colour and personal highlighting rules." />
+        <WorkspaceTitle title="My preferences" area="YOUR WORKSPACE" />
       </div>
       <div className="stack" style={{ maxWidth: 900 }}>
         {isStaff && (
