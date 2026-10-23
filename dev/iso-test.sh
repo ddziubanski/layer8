@@ -4,7 +4,9 @@
 #
 #   dev/iso-test.sh iso/build/layer8-<version>.iso [bios|uefi]
 #
-# Build it with iso/build.sh --demo (or --answers) so first boot installs without the wizard.
+# Build it with iso/build.sh --demo --test (or --answers a.json --test): --test boots straight into
+# the ERASE entry after 5 seconds and adds the serial console; --demo/--answers skip the wizard.
+# Never give a --test ISO to anyone: it erases the first disk without a choice.
 # The installer's serial console goes to iso/build/vm-<firmware>.log.
 set -eu
 ISO=$1 FW=${2:-bios}

@@ -5,6 +5,7 @@
 #   iso/build.sh                        # -> iso/build/layer8-<version>.iso (wizard on first boot)
 #   iso/build.sh --answers a.json       # unattended: first boot installs with these answers
 #   iso/build.sh --demo                 # unattended offline demo
+#   iso/build.sh --demo --test          # disposable-VM tests only: serial console, ERASE after 5 s
 #
 # Needs docker and npm on the build machine, and the internet once (Debian ISO, packages, wheels).
 # The ISO then installs with no network at all.
@@ -12,13 +13,16 @@ set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=$ROOT/iso/build
 mkdir -p "$OUT"
-rm -f "$OUT/answers.json"
-case "${1:-}" in
-  --answers) cp "$2" "$OUT/answers.json"; chmod 600 "$OUT/answers.json" ;;
-  --demo) echo '{"install": {"hostname": "helpdesk", "tls": "self-signed", "demo": true}}' > "$OUT/answers.json" ;;
-  "") ;;
-  *) sed -n '2,12p' "$0"; exit 2 ;;
-esac
+rm -f "$OUT/answers.json" "$OUT/test-media"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --answers) cp "$2" "$OUT/answers.json"; chmod 600 "$OUT/answers.json"; shift ;;
+    --demo) echo '{"install": {"hostname": "helpdesk", "tls": "self-signed", "demo": true}}' > "$OUT/answers.json" ;;
+    --test) touch "$OUT/test-media" ;;
+    *) sed -n '2,13p' "$0"; exit 2 ;;
+  esac
+  shift
+done
 
 VERSION=$(git -C "$ROOT" describe --always --dirty 2>/dev/null || date +%Y%m%d)
 echo "$VERSION" > "$OUT/VERSION"

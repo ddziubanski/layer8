@@ -21,7 +21,7 @@ class WizardFlowTests(unittest.TestCase):
             source = Path(__file__).resolve().parents[1] / "wizard.sh"
             wizard = root / "wizard.sh"
             # Redirect only the wizard's root-owned answers path into the test sandbox.
-            wizard.write_text(source.read_text().replace(
+            wizard.write_text(source.read_text(encoding="utf-8").replace(
                 "ANSWERS=/root/helpdesk-answers.json", f'ANSWERS="{root}/answers.json"'))
 
             def executable(path, content):
@@ -59,6 +59,8 @@ elif '--yesno' in args:
 printf '%s\\n' "$@" > "$QA_CALL"
 if [ "$1" = --answers ]; then cp "$2" "$QA_RESULT"; fi
 ''')
+            if mode == "file":
+                (root / "answers.json").write_text('{"install": {"hostname": "helpdesk.corp.example"}}')
             env = {**os.environ, "PATH": f"{binaries}:{os.environ['PATH']}",
                    "QA_MODE": mode, "QA_CANCEL": str(int(cancel)),
                    "QA_LOG": str(root / "dialogs"), "QA_CALL": str(root / "call"),
@@ -98,6 +100,26 @@ if [ "$1" = --answers ]; then cp "$2" "$QA_RESULT"; fi
         result, _, call, _ = self.run_wizard("install", cancel=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIsNone(call)
+
+    def test_staged_titles_and_navigation_are_present(self):
+        result, dialogs, _, _ = self.run_wizard("install")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for title in ("1 of 8 | Welcome", "2 of 8 | Server access", "3 of 8 | Address and HTTPS",
+                      "4 of 8 | Administrator accounts", "5 of 8 | Ticket numbers",
+                      "6 of 8 | Optional integrations", "7 of 8 | Encrypted backups",
+                      "8 of 8 | Review your setup", "Setup complete"):
+            self.assertIn(title, dialogs)
+        self.assertIn("--backtitle", dialogs)
+        # Short boxes don't scroll: a --scrolltext box ignores Enter until Tab moves to the buttons.
+        backups = next(line for line in dialogs.splitlines() if "Nightly encrypted backups" in line)
+        self.assertNotIn("--scrolltext", backups)
+        self.assertNotIn("Synthetic-password-123", dialogs)
+
+    def test_answers_file_still_reaches_existing_installer(self):
+        result, _, call, answers = self.run_wizard("file")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--answers", call)
+        self.assertEqual(answers["install"]["hostname"], "helpdesk.corp.example")
 
     def test_demo_still_uses_existing_installer_mode(self):
         result, _, call, _ = self.run_wizard("demo")
