@@ -216,7 +216,7 @@ def ensure_script(session: Session, kind: ScanKind = ScanKind.network) -> Script
     script = session.scalar(select(Script).where(Script.name == name))
     if script is None:
         script = Script(name=name, kind=ScriptKind.action, language=language, agents_can_run=True, current_version=1, description=description)
-        script.versions.append(ScriptVersion(number=1, body=body, parameters=parameters, note="Built in"))
+        script.versions.append(ScriptVersion(number=1, language=script.language, body=body, parameters=parameters, note="Built in"))
         session.add(script)
         session.flush()
     return script

@@ -1270,6 +1270,9 @@ class ScriptVersionOut(BaseModel):
 
 
 class ScriptVersionDetailOut(ScriptVersionOut):
+    language: ScriptLanguage | None = None
+    reviewed_by: UserRef | None = None
+    reviewed_at: datetime | None = None
     body: str
     parameters: list[ScriptParam]
     # Unified diff against the version before it ("" for the first).
