@@ -6,6 +6,7 @@ import { ApiError, api, type Me } from "./api/client";
 import { Brand, backgroundStyle, useBranding } from "./branding";
 import { NoticeBanner, NoticeDialog } from "./components/Notices";
 import { ME_KEY } from "./queryClient";
+import { RouteFocus } from "./components/RouteFocus";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
 import { QueuePage } from "./pages/QueuePage";
 import { TicketPage } from "./pages/TicketPage";
@@ -84,6 +85,7 @@ function Shell({ me }: { me: Me }) {
   });
   return (
     <div className="shell">
+      <a className="skip-link" href="#console-main">Skip to workspace</a>
       <nav className="side" aria-label="Main">
         <div className="brand">
           <Brand b={brand} className="" />
@@ -109,7 +111,8 @@ function Shell({ me }: { me: Me }) {
           </button>
         </div>
       </nav>
-      <main className="main" style={backgroundStyle(brand, "console")}>
+      <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
+        <RouteFocus mainId="console-main" />
         <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
