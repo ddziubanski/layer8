@@ -94,7 +94,7 @@ function ArticleView({ id, me }: { id: number; me: Me }) {
   const a = article.data;
   if (!a) return null;
   return (
-    <article className="card stack" style={{ gap: 12 }} aria-label={a.title}>
+    <article className="card stack knowledge-detail" style={{ gap: 12 }} aria-label={a.title}>
       <div className="row-gap" style={{ alignItems: "flex-start" }}>
         <div className="spacer">
           <h2 style={{ margin: 0 }}>{a.title}</h2>
@@ -259,6 +259,7 @@ function Editor({ initial, canPublish }: { initial?: KbArticle; canPublish: bool
         save.mutate(f.status);
       }}
     >
+      <header className="module-form-head"><p className="workspace-area">KNOWLEDGE EDITOR</p><h2>{initial ? "Edit article" : "New article"}</h2><p className="muted small">Keep the audience and publication state appropriate for this guidance.</p></header>
       <label className="field">
         Title
         <input required maxLength={300} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="What people would type, e.g. Outlook keeps asking for my password" />

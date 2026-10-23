@@ -307,6 +307,7 @@ function SubnetView({ id, onEdit, onOpen }: { id: number; onEdit: () => void; on
             </>
           )}
         </dl>
+        <dl className="module-summary subnet-summary" aria-label="Subnet usage"><div><dt>Usable addresses</dt><dd>{u.hosts}</dd></div><div><dt>Free outside DHCP pool</dt><dd>{u.free ?? "—"}</dd></div><div><dt>Static addresses</dt><dd>{u.static}</dd></div><div><dt>DHCP reservations</dt><dd>{u.reserved}</dd></div></dl>
         <p className="small" style={{ margin: 0 }}>
           {u.hosts} usable · <b>{u.free ?? "—"} free</b> · {u.static} static · {u.reserved} DHCP reservations · {u.dhcp} leases · {u.do_not_use} do-not-use · {u.pool} in the DHCP pool
         </p>

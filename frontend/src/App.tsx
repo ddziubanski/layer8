@@ -1,3 +1,4 @@
+import { ModuleWorkspace } from "./components/ModuleWorkspace";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
 import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider, useParams } from "react-router";
@@ -120,7 +121,7 @@ function Shell({ me }: { me: Me }) {
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
-          <Outlet />
+          <ModuleWorkspace><Outlet /></ModuleWorkspace>
         </Suspense>
       </main>
     </div>

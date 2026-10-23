@@ -655,3 +655,24 @@ label.inline input { width: auto; min-height: 0; }
 .analysis-workspace .script-editor textarea { min-height:200px; font-family:ui-monospace,Consolas,monospace; line-height:1.55; tab-size:2; }
 .analysis-workspace .builder { border-radius:10px; padding:18px; }
 @media(max-width:1000px) { .analysis-layout { grid-template-columns:minmax(0,1fr); } .analysis-workspace .analysis-detail { padding:18px; } }
+
+/* Shared detail / editor treatment for every console module. */
+.module-workspace { max-width:1600px; margin:0 auto; min-width:0; }
+.module-workspace > .page-head, .module-workspace > :not(.analysis-workspace):not(.purchase-workspace) > .page-head { padding:22px; border:1px solid var(--line); border-radius:12px; background:var(--surface); flex-wrap:wrap; }
+.module-workspace :is(.card,.builder,.filter-box) { border-radius:12px; }
+.module-workspace :is(.admin,.po-layout,.two-col,.kb-layout) > * { min-width:0; }
+.module-workspace .table-wrap { max-width:100%; overflow:auto; }
+.module-workspace :is(h1,h2,h3,dd,.body-text) { overflow-wrap:anywhere; }
+.module-form-head { padding-bottom:14px; border-bottom:1px solid var(--line); }
+.module-form-head h2 { margin:0; }
+.module-form-head p:last-child { margin:8px 0 0; }
+.module-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:0 0 18px; }
+.module-summary > div { padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:10px; min-width:0; }
+.module-summary dt { color:var(--muted); font-size:12px; }
+.module-summary dd { margin:8px 0 0; font-weight:600; font-size:16px; }
+.subnet-summary { margin:8px 0 0; }
+.module-vendors .settings-form, .module-ipam .settings-form { max-width:none; }
+.module-kb .knowledge-detail > .row-gap:first-child { padding-bottom:16px; border-bottom:1px solid var(--line); }
+.module-kb textarea { line-height:1.6; }
+.module-ipam .ip-map { padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+@media(max-width:1000px) { .module-workspace .admin { grid-template-columns:minmax(0,1fr); } }

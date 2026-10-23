@@ -114,6 +114,7 @@ function VendorForm({ me, vendor, onDone }: { me: Me; vendor: Vendor | null; onD
         save.mutate();
       }}
     >
+      <header className="module-form-head"><p className="workspace-area">SUPPLIER RECORD</p><h2>{vendor ? vendor.name : "New vendor"}</h2><p className="muted small">Support details, account references and contacts.</p></header>
       <label className="field">
         Name
         <input required maxLength={200} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
@@ -214,6 +215,7 @@ function SystemForm({ me, system, onDone }: { me: Me; system: SystemItem | null;
         save.mutate();
       }}
     >
+      <header className="module-form-head"><p className="workspace-area">SYSTEM RECORD</p><h2>{system ? system.name : "New system"}</h2><p className="muted small">Ownership, supplier contacts, devices and addresses.</p></header>
       <label className="field">
         Name
         <input required maxLength={200} value={s.name} onChange={(e) => setS({ ...s, name: e.target.value })} placeholder="e.g. Phone system, Core switching, ERP" />

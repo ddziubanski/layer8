@@ -231,6 +231,7 @@ export function ChangePage({ me }: { me: Me }) {
           <div className="small">
             <Link to="/changes">Changes</Link>
           </div>
+          <p className="workspace-area">CHANGE WORKSPACE</p>
           <h1 style={{ marginTop: 4 }}>
             {c ? (
               <>
@@ -242,6 +243,7 @@ export function ChangePage({ me }: { me: Me }) {
           </h1>
         </div>
       </div>
+      {c && <dl className="module-summary" aria-label="Change summary"><div><dt>Planned window</dt><dd>{window_(c)}</dd></div><div><dt>Change type</dt><dd>{c.kind}</dd></div><div><dt>Approval</dt><dd>{c.needs_approval ? "Required" : "Not required"}</dd></div></dl>}
       {c && <ActionBar change={c} />}
       {c && c.conflicts.length > 0 && (
         <div className="card note stack" style={{ margin: "0 0 12px", gap: 4 }} role="region" aria-label="Overlapping changes">
