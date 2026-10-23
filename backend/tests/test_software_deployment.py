@@ -37,6 +37,8 @@ class Provider:
             self.posts.append(json.loads(request.content))
             if self.failure == "timeout":
                 raise httpx.ReadTimeout("synthetic timeout", request=request)
+            if self.failure == "malformed":
+                return httpx.Response(200, json=[])
             return httpx.Response(200, json={"id": "instance-1"})
         self.reads.append(str(request.url))
         if path == f"/endpoints/managed/{ORG}/endpoint-1":
@@ -133,9 +135,10 @@ def test_preview_then_one_explicit_submission_and_private_ticket_audit(client, d
     assert "already present" in done.json()["message"]
 
 
-def test_unknown_acceptance_is_durable_and_never_retried(client, db, admin, device, provider):
+@pytest.mark.parametrize("failure", ["timeout", "malformed"])
+def test_unknown_acceptance_is_durable_and_never_retried(failure, client, db, admin, device, provider):
     row = review(client, admin, device).json()
-    provider.failure = "timeout"
+    provider.failure = failure
     path = f"/api/action1/deployments/{row['id']}/submit"
     assert client.post(path, headers=as_user(admin)).json()["state"] == "unknown"
     assert client.post(path, headers=as_user(admin)).json()["state"] == "unknown"

@@ -178,6 +178,8 @@ def submit(session, row, user, api):
         response = api._http.post(f"{api.base}/automations/instances/{segment(snap['organization_id'])}",
                                   json=payload, headers={"Authorization": f"Bearer {token}"})
         result = response.json() if response.status_code < 300 else {}
+        if not isinstance(result, dict):
+            raise ValueError("unconfirmed")
         instance_id = result.get("id")
         if response.status_code >= 300 or not isinstance(instance_id, str) or not instance_id:
             raise ValueError("unconfirmed")
