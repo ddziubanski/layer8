@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     action1_region: str = "NorthAmerica"
     action1_client_id: str = ""
     action1_client_secret: str = ""
+    # Explicitly opt in with separate write-capable credentials and organisation allowlist.
+    action1_deploy_enabled: bool = False
+    action1_deploy_client_id: str = ""
+    action1_deploy_client_secret: str = ""
+    action1_deploy_org_ids: list[str] = []
     # Whether Action1 is in use at all (asked at install): off hides Settings > Action1 and patch
     # status everywhere, and nothing is read.
     action1_enabled: bool = False

@@ -3,6 +3,8 @@
 import type { components } from "./schema";
 
 type S = components["schemas"];
+export type SoftwareDeployment = S["DeploymentOut"];
+export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
 export type TicketPage = S["TicketPage"];
 export type Comment = S["CommentOut"];
@@ -531,6 +533,11 @@ export const api = {
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
   action1: {
+    software: (deviceId: number, q: string, offset = 0, ticket_id?: number) => request<S["SoftwareCatalogOut"]>("GET", `/api/action1/devices/${deviceId}/software${query({ q, offset, ticket_id })}`),
+    preview: (body: S["DeploymentPreviewIn"]) => request<SoftwareDeployment>("POST", "/api/action1/deployments/preview", body),
+    submit: (id: string) => request<SoftwareDeployment>("POST", `/api/action1/deployments/${id}/submit`, {}),
+    refreshDeployment: (id: string) => request<SoftwareDeployment>("POST", `/api/action1/deployments/${id}/refresh`, {}),
+    deployments: (deviceId: number, ticket_id?: number) => request<SoftwareDeployment[]>("GET", `/api/action1/devices/${deviceId}/deployments${query({ ticket_id })}`),
     status: () => request<Action1Status>("GET", "/api/action1/status"),
     machines: (problem?: string) => request<DevicePatch[]>("GET", `/api/action1/machines${query({ problem })}`),
     forDevice: (deviceId: number) => request<DevicePatch | null>("GET", `/api/action1/devices/${deviceId}`),
