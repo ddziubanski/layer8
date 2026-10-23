@@ -228,7 +228,21 @@ class Field:
         return parsed
 
 
+def _teams_url(v: str) -> None:
+    from app.teams import TeamsError, validate_url
+
+    try:
+        validate_url(v)
+    except TeamsError as exc:
+        raise SettingsError(str(exc)) from None
+
+
 SECTIONS: dict[str, list[Field]] = {
+    "teams": [
+        Field("teams_enabled", "Send Teams queue summaries", "Off by default. Shares aggregate counts from non-restricted queues only; no ticket subjects, people or notes."),
+        Field("teams_webhook_url", "Workflows webhook URL", "A signed Teams Workflows URL. Kept as a secret and never shown back. See docs/teams.md for setup.", secret=True, check=_teams_url),
+        Field("teams_summary_minutes", "Summary interval (minutes)", "Sends a periodic snapshot, including zero counts. Settings > Status can pause or run it now.", check=_between(15, 1440)),
+    ],
     "general": [
         Field("portal_url", "Portal address", "The address people open, e.g. https://helpdesk.corp.example. Used in ticket links in emails.", check=_http_url),
         Field("session_hours", "Sign-in lasts (hours)", "People are signed out after this long without using the app.", check=_between(1, 720)),

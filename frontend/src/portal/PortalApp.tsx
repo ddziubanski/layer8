@@ -3,6 +3,7 @@ import { createBrowserRouter, Link, NavLink, Outlet, type RouteObject } from "re
 
 import { api, type Me } from "../api/client";
 import { Brand, backgroundStyle, useBranding } from "../branding";
+import { RouteFocus } from "../components/RouteFocus";
 import { NoticeBanner, NoticeDialog } from "../components/Notices";
 import { skipSilentWindowsSignIn } from "../pages/Login";
 import { PortalBase, usePortalPath } from "./base";
@@ -27,6 +28,7 @@ function PortalShell({ me }: { me: Me }) {
   });
   return (
     <div className={`portal${brand.background_url ? " has-bg" : ""}`} style={backgroundStyle(brand, "portal")}>
+      <a className="skip-link" href="#portal-main">Skip to request workspace</a>
       <header className="topbar">
         <Brand b={brand} />
         <nav aria-label="Portal">
@@ -53,7 +55,8 @@ function PortalShell({ me }: { me: Me }) {
           Sign out
         </button>
       </header>
-      <main className="portal-main">
+      <main id="portal-main" tabIndex={-1} className="portal-main">
+        <RouteFocus mainId="portal-main" />
         <NoticeBanner />
         <NoticeDialog />
         <Outlet />

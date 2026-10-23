@@ -39,8 +39,9 @@ put() { printf '%s\t%s\n' "$1" "$(printf '%s' "$2" | base64 -w0)" >> "$VALUES"; 
 
 # --- 1. What kind of install
 
-MODE=$(whiptail --title "$TITLE" --menu "Welcome to Layer 8, the service desk for the layer every network has: its people.\n\nWhat would you like to set up?" 15 76 3 \
-  install "Layer 8, for real" \
+MODE=$(whiptail --title "$TITLE" --menu "Welcome to Layer 8, the service desk for the layer every network has: its people.\n\nStart locally, or configure optional integrations now. Both can be changed later in Settings." 17 76 4 \
+  install "Local helpdesk (recommended): integrations later" \
+  integrated "Helpdesk with integrations: configure them now" \
   demo "Offline demo: sample data, nothing leaves this machine" \
   file "From an answers file I already have" 3>&1 1>&2 2>&3) || exit 1
 
@@ -111,7 +112,12 @@ put install.recovery.password "$rpw"
 put general.ticket_first_number "$(ask "First ticket number:" "1000")"
 put general.ticket_label_format "$(ask "How ticket numbers are shown and put in email subjects.\n{n} is the number, {n:06} pads it to six digits, {yyyy} is the year.\n\nExamples: #{n}   HD-{n}   INC{n:06}   {yyyy}-{n}" "#{n}")"
 
-# --- 5. Microsoft Entra (email in and out)
+# --- 5. Optional integrations (the local path skips these questions)
+
+if [ "$MODE" = integrated ]; then
+note "Optional integrations\n\nOnly configure the services you have ready. Say no to any question to set it up later in Settings. Microsoft Entra below is for Exchange Online email; it does not enable Entra user sign-in."
+
+# Microsoft Entra (email in and out)
 
 if yesno "Microsoft Entra / Exchange Online: should tickets come in by email and notifications go out?\n\nYou need an app registration in Entra (tenant ID, client ID, client secret) with Mail.ReadWrite and Mail.Send limited to the service desk mailbox (docs/email-setup.md).\n\nYou can also do this later in Settings > Email."; then
   put email.graph_tenant_id "$(ask "Directory (tenant) ID, from the app registration in the Entra admin center:")"
@@ -159,6 +165,9 @@ fi
 
 if yesno "Windows sign-in for the portal (people on domain PCs are signed in as themselves)?\n\nYou need the keytab for HTTP/$HOST (docs/windows-sign-in.md). Also possible later in Settings > Windows sign-in."; then
   put windows.keytab_file "$(ask "Path to the keytab file:" "/root/http.keytab")"
+fi
+else
+  note "Local helpdesk\n\nYour local admin account works without AD or Microsoft Entra. Configure email in Settings > Email, AD in Settings > Directory, and portal Windows sign-in in Settings > Windows sign-in whenever you are ready.\n\nNext: optional encrypted backups."
 fi
 
 # --- 8. Backups
@@ -216,6 +225,7 @@ with os.fdopen(fd, "w") as f:
 PY
 
 SUMMARY="Ready to install.\n\nAddress: https://$HOST\nAdmin: $(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["install"]["admin"]["email"])' "$ANSWERS")"
+[ "$MODE" != install ] || SUMMARY="$SUMMARY\nIntegrations: deferred (local accounts; configure later in Settings)"
 grep -q '"email"' "$ANSWERS" && SUMMARY="$SUMMARY\nEmail: Microsoft Entra / Exchange Online"
 grep -q '"directory"' "$ANSWERS" && SUMMARY="$SUMMARY\nDirectory: Active Directory"
 grep -q '"backup"' "$ANSWERS" && SUMMARY="$SUMMARY\nBackups: nightly to a network share"
