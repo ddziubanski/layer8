@@ -545,3 +545,26 @@ label.inline input { width: auto; min-height: 0; }
   .queue-title { width: 100%; }
   .console-topbar-user { display: none; }
 }
+
+/* Workload overview shares the ticket workspace's access and filters. */
+.operations-dashboard { max-width: 1400px; margin: 0 auto; }
+.dashboard-heading, .dashboard-attention > header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.dashboard-heading h1 { margin-bottom:.3rem; }
+.dashboard-heading .eyebrow { color:var(--link); font-size:.75rem; font-weight:600; letter-spacing:.12em; }
+.dashboard-filters { display:flex; flex-wrap:wrap; align-items:end; gap:1rem; margin:1.5rem 0; }
+.dashboard-filters label { display:grid; gap:.35rem; }
+.dashboard-filters select { min-width:190px; }
+.dashboard-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.dashboard-metric { display:flex; flex-direction:column; gap:.65rem; padding:1.3rem; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); text-decoration:none; }
+.dashboard-metric:hover { border-color:var(--link); }
+.dashboard-metric strong { font-size:2.3rem; line-height:1.15; }
+.dashboard-metric.attention { border-top:3px solid var(--link); }
+.dashboard-attention { border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:1.3rem; }
+.dashboard-attention h2 { margin:0; }
+.dashboard-attention ul { padding:0; list-style:none; margin-bottom:0; }
+.dashboard-attention li { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 0; border-top:1px solid var(--line); }
+.dashboard-attention li p { margin:.4rem 0 0; }
+.dashboard-ticket-chips { display:flex; gap:.4rem; flex-wrap:wrap; justify-content:flex-end; }
+.dashboard-empty { padding:2rem 0; text-align:center; }
+@media(max-width:1000px) { .dashboard-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .dashboard-metrics { grid-template-columns:1fr; } .dashboard-heading, .dashboard-attention > header, .dashboard-attention li { align-items:start; flex-direction:column; } }

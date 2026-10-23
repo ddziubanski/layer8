@@ -9,6 +9,7 @@ export function commandsFor(me: Me): Command[] {
     { label: "Ticket queue", to: "/", keywords: "tickets service desk" },
     { label: "Unassigned tickets", to: "/?view=unassigned" },
     { label: "Tickets at SLA risk", to: "/?view=sla_at_risk" },
+    { label: "Dashboard", to: "/dashboard", keywords: "workload overview" },
     { label: "Devices", to: "/devices", keywords: "assets computers" },
     { label: "Changes", to: "/changes" },
     { label: "Purchase orders", to: "/purchase-orders" },
