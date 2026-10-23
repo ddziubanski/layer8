@@ -140,6 +140,7 @@ On a Linux machine with docker, npm and internet access:
 iso/build.sh                 # wizard on first boot
 iso/build.sh --demo          # unattended offline demo
 iso/build.sh --answers a.json
+iso/build.sh --demo --test   # disposable VMs only: ERASE after 5 s, serial console
 ```
 
 It downloads Debian's current 13.x netinst ISO (checking its SHA-256), builds the web UI, and builds the offline bundle in a Debian 13 container. The bundle holds Python wheels for Debian's Python (with `gssapi` compiled) and every Debian package the installer adds. It then repacks the ISO with the bundle and the automated install entry, keeping Debian's BIOS and UEFI boot. Output: `iso/build/layer8-<version>.iso`.
@@ -158,3 +159,7 @@ under BIOS and UEFI. Its artifact contains the ISO and actual boot screenshots.
 The menu test verifies that waiting does not start installation. It does not certify
 partitioning, an installed appliance, networking or first-boot provisioning; those
 need a disposable-disk installation test before release.
+For that, build with `--test` and run `dev/iso-test.sh <iso> bios|uefi`. A `--test` ISO erases
+the first disk without asking, so never use it outside a throwaway VM. Real ISOs send the
+installer to the monitor only: Debian's installer uses the last `console=` it is given, so a
+serial console there would leave the screen blank.

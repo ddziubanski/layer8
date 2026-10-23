@@ -110,7 +110,9 @@ if [ "$1" = --answers ]; then cp "$2" "$QA_RESULT"; fi
                       "8 of 8 | Review your setup", "Setup complete"):
             self.assertIn(title, dialogs)
         self.assertIn("--backtitle", dialogs)
-        self.assertIn("--scrolltext", dialogs)
+        # Short boxes don't scroll: a --scrolltext box ignores Enter until Tab moves to the buttons.
+        backups = next(line for line in dialogs.splitlines() if "Nightly encrypted backups" in line)
+        self.assertNotIn("--scrolltext", backups)
         self.assertNotIn("Synthetic-password-123", dialogs)
 
     def test_answers_file_still_reaches_existing_installer(self):

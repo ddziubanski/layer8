@@ -32,8 +32,11 @@ secret() { # secret "Question" -> stdout (asked twice when $2 = twice)
     dialog --msgbox "They didn't match. Try again." 8 50
   done
 }
-yesno() { dialog ${2:+"$2"} --scrolltext --yesno "$1" 20 76; }  # yesno "Question" [--defaultno]
-note() { dialog --scrolltext --msgbox "$1" 18 76; }
+# A --scrolltext box keeps Enter in the text (Tab first, then Enter), so only text too long for
+# the box gets one, as in the recovery console's box().
+scroll() { [ "$(printf '%b\n' "$1" | wc -l)" -gt "$2" ] && echo --scrolltext || true; }
+yesno() { dialog ${2:+"$2"} $(scroll "$1" 13) --yesno "$1" 20 76; }  # yesno "Question" [--defaultno]
+note() { dialog $(scroll "$1" 11) --msgbox "$1" 18 76; }
 
 # Answers are kept as KEY=VALUE lines, then turned into JSON by Python (proper escaping).
 VALUES=$(mktemp)
