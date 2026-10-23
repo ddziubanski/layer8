@@ -1507,6 +1507,17 @@ class ChecklistItem(Base):
     child_ticket: Mapped["Ticket | None"] = relationship(foreign_keys=[child_ticket_id])
 
 
+class TeamsDelivery(Base):
+    """Durable send intent; an uncertain external side effect must not be replayed."""
+
+    __tablename__ = "teams_deliveries"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    data: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class TicketEvent(Base):
     """Append-only history: routing, assignment, escalation, status and every action on the ticket."""
 

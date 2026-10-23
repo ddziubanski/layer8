@@ -239,6 +239,10 @@ def _teams_url(v: str) -> None:
 
 SECTIONS: dict[str, list[Field]] = {
     "teams": [
+        Field("teams_chat_enabled", "Allow technician Teams connections", "Optional delegated Microsoft sign-in. Technicians connect their own account under My preferences."),
+        Field("teams_tenant_id", "Teams directory (tenant) ID", "Single-tenant Entra application; separate from the mailbox integration.", check=_guid),
+        Field("teams_client_id", "Teams application (client) ID", "Configure a Web redirect URI: your HTTPS portal address followed by /teams/callback.", check=_guid),
+        Field("teams_client_secret", "Teams application secret", "The secret value, stored server-side. See docs/teams.md for delegated permissions.", secret=True),
         Field("teams_enabled", "Send Teams queue summaries", "Off by default. Shares aggregate counts from non-restricted queues only; no ticket subjects, people or notes."),
         Field("teams_webhook_url", "Workflows webhook URL", "A signed Teams Workflows URL. Kept as a secret and never shown back. See docs/teams.md for setup.", secret=True, check=_teams_url),
         Field("teams_summary_minutes", "Summary interval (minutes)", "Sends a periodic snapshot, including zero counts. Settings > Status can pause or run it now.", check=_between(15, 1440)),
