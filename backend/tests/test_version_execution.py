@@ -19,7 +19,7 @@ def queue(client, script_id, user):
     return result.json()[0]["id"]
 
 
-@pytest.mark.parametrize("change", [{"body": "echo changed"}, {"high_risk": True}, {"agents_can_run": False}, {"is_active": False}])
+@pytest.mark.parametrize("change", [{"body": "echo changed"}, {"agents_can_run": False}, {"is_active": False}])
 def test_changes_cancel_unclaimed_runs_and_clear_secrets(client, db, admin, agent, change):
     sid = make_script(client, admin)
     rid = queue(client, sid, agent)
@@ -91,3 +91,53 @@ def test_scheduled_discovery_service_identity_can_still_run(client, db, admin):
     job = client.post("/api/runner/claim", json={}, headers=bearer(token))
     assert job.status_code == 200, job.text
     assert job.json()["values"]["network"] == "10.7.0.0/24"
+
+
+def test_marking_high_risk_holds_queued_runs_for_approval(client, db, admin, agent):
+    sid = make_script(client, admin)
+    rid = queue(client, sid, agent)
+    assert client.put(f"/api/scripts/{sid}", json={**BODY, "high_risk": True}, headers=as_user(admin)).status_code == 200
+    db.expire_all()
+    assert db.get(ScriptRun, rid).status == "awaiting_approval"
+    token = runner(client, admin)
+    assert client.post("/api/runner/claim", json={}, headers=bearer(token)).status_code == 204
+    other = make_user(db, "reviewer@example.com", UserRole.admin)
+    assert client.post(f"/api/runs/{rid}/approve", headers=as_user(other)).status_code == 200
+    assert client.post("/api/runner/claim", json={}, headers=bearer(token)).json()["run_id"] == rid
+
+
+def dated_disable(db, requester, ticket=None):
+    from datetime import timedelta
+    from app import adchanges, sla
+    script = adchanges.disable_script(db)
+    run = ScriptRun(script_id=script.id, version_id=script.versions[0].id, values={"user_guid": "00000000-0000-0000-0000-000000000001"},
+                    requested_by_id=requester.id, status="queued", not_before=sla.utcnow() - timedelta(minutes=1),
+                    ticket_id=ticket.id if ticket else None)
+    db.add(run)
+    db.commit()
+    return run
+
+
+def test_leaver_disable_waits_for_an_admin_when_its_requester_has_left(client, db, admin, agent):
+    run = dated_disable(db, agent)
+    user = db.merge(agent)
+    user.is_active = False
+    db.commit()
+    token = runner(client, admin, languages=("powershell",))
+    assert client.post("/api/runner/claim", json={}, headers=bearer(token)).status_code == 204
+    db.expire_all()
+    assert db.get(ScriptRun, run.id).status == "awaiting_approval"
+    assert client.post(f"/api/runs/{run.id}/approve", headers=as_user(admin)).status_code == 200
+    assert client.post("/api/runner/claim", json={}, headers=bearer(token)).json()["run_id"] == run.id
+
+
+def test_limiting_a_builtin_to_admins_keeps_dated_runs_for_approval(client, db, admin, agent):
+    run = dated_disable(db, agent)
+    script = run.script
+    body = {"name": script.name, "description": script.description, "kind": "action", "language": "powershell",
+            "body": script.versions[0].body, "parameters": script.versions[0].parameters,
+            "agents_can_run": False, "high_risk": False, "is_active": True}
+    response = client.put(f"/api/scripts/{script.id}", json=body, headers=as_user(admin))
+    assert response.status_code == 200, response.text
+    db.expire_all()
+    assert db.get(ScriptRun, run.id).status == "awaiting_approval"

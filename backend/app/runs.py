@@ -162,8 +162,7 @@ def decide(session: Session, run: ScriptRun, admin: User, approve: bool) -> None
         raise RunError("Someone else has to approve your own run")
     if approve and run.version.author_id == admin.id:
         raise RunError("Someone else has to approve code you authored")
-    if approve and (not run.script.is_active or run.version.number != run.script.current_version
-                    or not _requester_authorized(session, run)):
+    if approve and _check(session, run, approving=True) == "cancel":
         raise RunError("Execution authorization changed; request a new run")
     run.status = RunStatus.queued if approve else RunStatus.rejected
     run.decided_by_id, run.decided_at = admin.id, sla.utcnow()
@@ -196,10 +195,7 @@ def cancel_pending(session: Session, script: Script, reason: str) -> None:
         ScriptRun.script_id == script.id,
         ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
     ).with_for_update()):
-        run.status, run.sealed, run.finished_at, run.error = RunStatus.cancelled, None, sla.utcnow(), reason
-        _log_finished(session, run)
-        from app import ipamscan
-        ipamscan.on_finished(session, run)
+        _revoke(session, run, reason)
 
 
 def _requester_authorized(session: Session, run: ScriptRun) -> bool:
@@ -218,18 +214,55 @@ def _requester_authorized(session: Session, run: ScriptRun) -> bool:
     return False
 
 
-def _claimable(session: Session, run: ScriptRun) -> bool:
-    if not run.script.is_active or not _requester_authorized(session, run):
-        return False
-    if run.version.number != run.script.current_version:
-        return False
-    if run.script.high_risk:
-        reviewer = run.decided_by
-        if reviewer is None or not reviewer.is_active or reviewer.role != UserRole.admin:
-            return False
-        if reviewer.id in (run.requested_by_id, run.version.author_id):
-            return False
-    return True
+def _check(session: Session, run: ScriptRun, *, approving: bool = False) -> str:
+    """"ok" to run, "approval" when an active admin (not the requester or the code's author) must
+    approve it first, "cancel" when it may no longer run at all. `approving`: as if approved now."""
+    script = run.script
+    if not script.is_active or run.version.number != script.current_version:
+        return "cancel"
+    requester_ok = _requester_authorized(session, run)
+    # A built-in job booked for a date (a leaver's disable, a start-date enable) is never dropped
+    # because its requester left or lost run rights since: an admin decides instead.
+    if not requester_ok and not (scripts.is_builtin(script.name) and run.not_before is not None):
+        return "cancel"
+    if requester_ok and not script.high_risk:
+        return "ok"
+    if approving:
+        return "ok"
+    reviewer = run.decided_by
+    if (reviewer is not None and reviewer.is_active and reviewer.role == UserRole.admin
+            and reviewer.id not in (run.requested_by_id, run.version.author_id)):
+        return "ok"
+    return "approval"
+
+
+def _revoke(session: Session, run: ScriptRun, reason: str) -> None:
+    run.status, run.sealed, run.finished_at, run.error = RunStatus.cancelled, None, sla.utcnow(), reason
+    _log_finished(session, run)
+    from app import ipamscan
+    ipamscan.on_finished(session, run)
+
+
+def _hold_for_approval(session: Session, run: ScriptRun) -> None:
+    run.status, run.decided_by_id, run.decided_at = RunStatus.awaiting_approval, None, None
+    ticket = session.get(Ticket, run.ticket_id) if run.ticket_id else None
+    if ticket is not None:
+        _ticket_note(session, ticket, run.requested_by or services.automation_user(session),
+                     f"Script \"{run.script.name}\" run #{run.id} now needs an admin's approval before it runs.")
+
+
+def recheck_pending(session: Session, script: Script) -> None:
+    """After a policy change (no new code): runs that may no longer go ahead are cancelled, and
+    runs that now need an admin wait for one instead of being dropped."""
+    for run in session.scalars(select(ScriptRun).where(
+        ScriptRun.script_id == script.id,
+        ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
+    ).with_for_update()):
+        verdict = _check(session, run)
+        if verdict == "cancel":
+            _revoke(session, run, "Script execution policy changed; request a new run")
+        elif verdict == "approval" and run.status == RunStatus.queued:
+            _hold_for_approval(session, run)
 
 
 def claim(session: Session, runner: Runner, host: str, version: str) -> tuple[ScriptRun | None, dict]:
@@ -255,13 +288,13 @@ def claim(session: Session, runner: Runner, host: str, version: str) -> tuple[Sc
         run = session.scalar(stmt)
         if run is None:
             return None, {}
-        if _claimable(session, run):
+        verdict = _check(session, run)
+        if verdict == "ok":
             break
-        run.status, run.sealed, run.finished_at = RunStatus.cancelled, None, sla.utcnow()
-        run.error = "Execution authorization changed; request a new run"
-        _log_finished(session, run)
-        from app import ipamscan
-        ipamscan.on_finished(session, run)
+        if verdict == "approval":
+            _hold_for_approval(session, run)
+        else:
+            _revoke(session, run, "Execution authorization changed; request a new run")
         session.flush()
     run.status, run.runner_id, run.claimed_at = RunStatus.running, runner.id, sla.utcnow()
     secret = runseal.unseal(run.sealed)

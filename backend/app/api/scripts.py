@@ -150,8 +150,10 @@ def update_script(script_id: int, body: ScriptIn, admin: ScriptsManager, session
         script.versions.append(ScriptVersion(number=number, body=body.body, language=body.language, parameters=params, note=body.note, author_id=admin.id))
         script.current_version = number
         log.info("Script %r saved as version %s by %s", script.name, number, admin.display_name, extra={"source": "settings"})
-    if executable_changed or policy_tightened:
-        runs.cancel_pending(session, script, "Script code or execution policy changed; request a new run")
+    if executable_changed:
+        runs.cancel_pending(session, script, "Script code changed; request a new run")
+    elif policy_tightened:
+        runs.recheck_pending(session, script)
     _review(_current(script), admin)
     session.commit()
     return _out(script, admin)
