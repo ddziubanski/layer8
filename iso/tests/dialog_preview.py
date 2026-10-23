@@ -50,6 +50,9 @@ def capture(script, output, label):
                         fg, bg = bg, fg
                     draw.rectangle((x*10, y*20, x*10+9, y*20+19), fill=bg)
                     draw.text((x*10, y*20), cell.data, font=font, fill=fg)
+            # The active menu row must use the brand accent, not newt's default red.
+            if not any(cell.bg == "cyan" for row in terminal.buffer.values() for cell in row.values()):
+                raise RuntimeError("The active menu row has no cyan accent")
             image.save(output)
         finally:
             child.terminate(force=True)

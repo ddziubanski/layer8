@@ -11,7 +11,7 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 ANSWERS=/root/helpdesk-answers.json
 TITLE="Layer 8 | 1 of 8 | Welcome"
-export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan checkbox=black,lightgray actcheckbox=black,cyan entry=black,white label=black,lightgray listbox=black,lightgray actlistbox=black,cyan textbox=black,lightgray'
+export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan checkbox=black,lightgray actcheckbox=black,cyan entry=black,white label=black,lightgray listbox=black,lightgray actlistbox=black,cyan sellistbox=black,lightgray actsellistbox=black,cyan textbox=black,lightgray'
 # Backtitle remains visible across every dialog, including optional integrations.
 dialog() { whiptail --backtitle "Layer 8 | Appliance setup | Tab: move  Space: select  Enter: continue" --title "$TITLE" "$@"; }
 step() { TITLE="Layer 8 | $1 of 8 | $2"; }

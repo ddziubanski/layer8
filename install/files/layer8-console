@@ -7,7 +7,7 @@ set -u
 
 TITLE="Layer 8 recovery console"
 HELPER="sudo -n /usr/local/sbin/layer8-recovery"
-export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan entry=black,white listbox=black,lightgray actlistbox=black,cyan textbox=black,lightgray'
+export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan entry=black,white listbox=black,lightgray actlistbox=black,cyan sellistbox=black,lightgray actsellistbox=black,cyan textbox=black,lightgray'
 
 ask() { whiptail --backtitle "Layer 8 | Recovery console | Maintenance and diagnostics" --title "$TITLE" --inputbox "$1" 12 76 "${2:-}" 3>&1 1>&2 2>&3; }
 secret() {
