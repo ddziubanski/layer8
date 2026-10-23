@@ -169,13 +169,14 @@ export function PurchaseOrderPage({ me }: { me: Me }) {
   };
 
   return (
-    <>
-      <div className="page-head row-gap">
+    <section className="purchase-workspace">
+      <header className="purchase-workspace-head row-gap">
         <div className="spacer">
           <div className="small">
             <Link to="/purchase-orders">Purchase orders</Link>
           </div>
-          <h1 style={{ marginTop: 4 }}>
+          <p className="workspace-area">PROCUREMENT WORKSPACE</p>
+          <h1>
             {data ? (
               <>
                 {data.label} {data.title} <POStatusChip status={data.status} />
@@ -195,7 +196,13 @@ export function PurchaseOrderPage({ me }: { me: Me }) {
             Receiving sheet
           </a>
         )}
-      </div>
+      </header>
+      {data && <dl className="purchase-summary" aria-label="Order summary">
+        <div><dt>Supplier</dt><dd>{data.vendor?.name || "Not selected"}</dd></div>
+        <div><dt>Expected delivery</dt><dd>{data.expected_date ? new Date(`${data.expected_date}T00:00`).toLocaleDateString() : "Not scheduled"}</dd></div>
+        <div><dt>Order total</dt><dd>{money(data.total, data.currency)}</dd></div>
+        <div><dt>Lines fully received</dt><dd>{data.lines_received} / {data.lines_count}</dd></div>
+      </dl>}
       {data && <StatusBar po={data} onChanged={refresh} />}
       {data ? (
         <div className="po-layout">
@@ -228,7 +235,7 @@ export function PurchaseOrderPage({ me }: { me: Me }) {
           <POForm key="new" po={null} fields={arrangement.layout?.effective} ticketIds={fromTicket ? [fromTicket] : []} onSaved={(p) => (refresh(p), navigate(`/purchase-orders/${p.id}`, { replace: true }))} />
         </div>
       )}
-    </>
+    </section>
   );
 }
 
@@ -247,7 +254,7 @@ function StatusBar({ po, onChanged }: { po: PO; onChanged: (p: PO) => void }) {
   if (!["cancelled", "closed", "received"].includes(po.status)) buttons.push(b("cancelled", "Cancel PO"));
   if (["cancelled", "closed"].includes(po.status)) buttons.push(b("draft", "Reopen as draft"));
   return (
-    <div className="card row-gap" style={{ margin: "0 0 12px", padding: 10 }}>
+    <div className="card row-gap purchase-actions" role="group" aria-label="Order actions" style={{ margin: "0 0 12px", padding: 10 }}>
       {buttons}
       {po.approver && !["approved", "ordered", "partially_received", "received", "closed"].includes(po.status) && (
         <span className="muted small">Needs approval by {po.approver.display_name} before it's ordered.</span>
