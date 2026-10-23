@@ -151,6 +151,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "checklists", label: "Checklists", adminOnly: true, permission: "templates_manage", page: (me) => <ChecklistsAdmin me={me} /> },
   { path: "changes", label: "Changes", adminOnly: true, permission: "templates_manage", page: (me) => <ChangesAdmin me={me} /> },
   { path: "email", label: "Email", adminOnly: true, page: (me) => <EmailAdmin me={me} /> },
+  { path: "teams", label: "Teams", adminOnly: true, page: (me) => <SettingsForm me={me} section="teams" title="Teams" intro="Optional periodic queue counts through a Teams Workflows webhook. Only non-restricted queues contribute. No ticket details or people are sent. Configure a workflow and enable summaries when ready; use Settings > Status to run or pause delivery." /> },
   { path: "windows-sign-in", label: "Windows sign-in", adminOnly: true, page: (me) => <WindowsSignInAdmin me={me} /> },
   { path: "surveys", label: "Surveys", adminOnly: true, page: (me) => <SurveysAdmin me={me} /> },
   { path: "notices", label: "Notices", adminOnly: true, permission: "notices_manage", page: (me) => <NoticesAdmin me={me} /> },
