@@ -68,4 +68,5 @@ From a ticket's **Requester's computer** card or a device's **Patching (Action1)
 - Disabling deployment stops catalogue/submission/provider refresh calls. Existing local history stays available. Rotating deployment settings requires checking older outstanding runs in Action1; Layer 8 does not query a different credential scope automatically.
 
 The optional feature does not deploy patches, change Action1 schedules or alter the existing patch-status worker. Primary contract: [Action1 REST API](https://app.action1.com/apidocs/), checked 22 October 2026: catalogue/versions, installed-software inventory, `POST /automations/instances/{orgId}` with `deploy_package`, and instance status reads. Implementation and tests are original; no PSAction1 code is copied.
-`n[View the mocked deployment screenshots](../screenshots/action1/README.md).
+
+[View the mocked deployment screenshots](../screenshots/action1/README.md).
