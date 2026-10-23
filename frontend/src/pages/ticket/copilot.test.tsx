@@ -40,8 +40,8 @@ test("review exact context, retain follow-up and explicitly save a note with sou
   expect(String((calls.find(c => c.path.endsWith("/comments"))?.body as { body: string }).body)).toContain("https://docs.example.com/runbook");
 });
 
-test("send to requester requires both choices, an edited reply and the send button", async () => {
-  const calls = mockApi({ ...base, "POST /api/tickets/4821/comments": { id: 1, emailed: true } });
+test.each([true, false])("send to requester requires explicit review and reports email queued=%s", async (emailed) => {
+  const calls = mockApi({ ...base, "POST /api/tickets/4821/comments": { id: 1, emailed } });
   renderAt("/", [{ path: "/", element: <CopilotCard ticket={ticket()} onChanged={vi.fn()} /> }]);
   await askWithPreview();
   expect(screen.getByLabelText("Send to requester")).toBeDisabled();
@@ -51,7 +51,7 @@ test("send to requester requires both choices, an edited reply and the send butt
   await userEvent.type(screen.getByLabelText("Reply to requester"), "Please reconnect your cable and let us know.");
   expect(calls.filter(c => c.path.endsWith("/comments"))).toHaveLength(0);
   await userEvent.click(screen.getByRole("button", { name: "Send reply" }));
-  expect(await screen.findByText("Saved as a public reply; email queued for the requester.")).toBeInTheDocument();
+  expect(await screen.findByText(emailed ? "Saved as a public reply; email queued for the requester." : "Saved to the requester portal. Email was not queued; check email setup.")).toBeInTheDocument();
   expect(calls.find(c => c.path.endsWith("/comments"))?.body).toEqual({ body: "Please reconnect your cable and let us know.", is_internal: false, email_requester: true });
 });
 
