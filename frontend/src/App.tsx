@@ -52,6 +52,8 @@ const DirectoryAdmin = named(() => import("./pages/admin/DirectoryAdmin"), "Dire
 const EmailAdmin = named(() => import("./pages/admin/EmailAdmin"), "EmailAdmin");
 const Action1Admin = named(() => import("./pages/admin/Action1Admin"), "Action1Admin");
 const ApiKeysAdmin = named(() => import("./pages/admin/ApiKeysAdmin"), "ApiKeysAdmin");
+const WallboardsAdmin = named(() => import("./pages/admin/WallboardsAdmin"), "WallboardsAdmin");
+const WallboardPage = named(() => import("./pages/Wallboard"), "WallboardPage");
 const SurveysAdmin = named(() => import("./pages/admin/SurveysAdmin"), "SurveysAdmin");
 const PermissionsAdmin = named(() => import("./pages/admin/PermissionsAdmin"), "PermissionsAdmin");
 const ChecklistsAdmin = named(() => import("./pages/admin/ChecklistsAdmin"), "ChecklistsAdmin");
@@ -165,6 +167,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "runners", label: "Runners", adminOnly: true, page: (me) => <RunnersAdmin me={me} /> },
   { path: "action1", label: "Action1", adminOnly: true, feature: "action1", page: (me) => <Action1Admin me={me} /> },
   { path: "api-keys", label: "API keys", adminOnly: true, page: (me) => <ApiKeysAdmin me={me} /> },
+  { path: "wallboards", label: "Wallboards", adminOnly: true, page: (me) => <WallboardsAdmin me={me} /> },
   {
     path: "sweeps",
     label: "Device sweeps",
@@ -294,6 +297,14 @@ export function App() {
     return (
       <Suspense fallback={null}>
         <ReceivePage />
+      </Suspense>
+    );
+  }
+  // So does a wallboard (its link, after the #, is the key).
+  if (window.location.pathname === "/wallboard") {
+    return (
+      <Suspense fallback={null}>
+        <WallboardPage />
       </Suspense>
     );
   }

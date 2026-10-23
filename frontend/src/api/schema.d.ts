@@ -3096,6 +3096,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/wallboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Boards */
+        get: operations["list_boards_api_wallboards_get"];
+        put?: never;
+        /**
+         * Create Board
+         * @description A new board. Its link is shown once.
+         */
+        post: operations["create_board_api_wallboards_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wallboards/{board_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Board */
+        put: operations["update_board_api_wallboards__board_id__put"];
+        post?: never;
+        /**
+         * Revoke Board
+         * @description Revoke: the link stops working at once (the screen shows that it was switched off).
+         */
+        delete: operations["revoke_board_api_wallboards__board_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wallboards/{board_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * New Link
+         * @description A new link (shown once); the old one stops working at once. Also brings a revoked board back.
+         */
+        post: operations["new_link_api_wallboards__board_id__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/wallboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Wallboard */
+        get: operations["wallboard_api_public_wallboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/action1/status": {
         parameters: {
             query?: never;
@@ -4425,6 +4504,13 @@ export interface components {
              */
             missing_orgs: string[];
         };
+        /** Alert */
+        Alert: {
+            /** Level */
+            level: string;
+            /** Text */
+            text: string;
+        };
         /** ApiKeyIn */
         ApiKeyIn: {
             /** Name */
@@ -4571,6 +4657,58 @@ export interface components {
             counts: {
                 [key: string]: number;
             };
+        };
+        /** BoardData */
+        BoardData: {
+            /** Name */
+            name: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Unassigned Alert Minutes */
+            unassigned_alert_minutes: number;
+            /** Totals */
+            totals: {
+                [key: string]: number;
+            };
+            /** Alerts */
+            alerts: components["schemas"]["Alert"][];
+            /** Unassigned */
+            unassigned: components["schemas"]["BoardTicket"][];
+            /** Sla */
+            sla: components["schemas"]["BoardTicket"][];
+            /** Queues */
+            queues: components["schemas"]["QueueCount"][];
+            /** People */
+            people: components["schemas"]["PersonCount"][];
+        };
+        /** BoardTicket */
+        BoardTicket: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Subject */
+            subject: string;
+            /** Priority */
+            priority: string;
+            /** Queue */
+            queue: string;
+            /** Requester */
+            requester: string;
+            /** Assignee */
+            assignee: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Due At */
+            due_at: string | null;
+            /** Breached */
+            breached: boolean;
         };
         /** Body_photo_api_public_receiving_photo_post */
         Body_photo_api_public_receiving_photo_post: {
@@ -7197,6 +7335,15 @@ export interface components {
              */
             group_ids: number[];
         };
+        /** PersonCount */
+        PersonCount: {
+            /** Name */
+            name: string;
+            /** Open */
+            open: number;
+            /** Needs Attention */
+            needs_attention: number;
+        };
         /** PortalDeviceOut */
         PortalDeviceOut: {
             /** Id */
@@ -7355,6 +7502,17 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** QueueCount */
+        QueueCount: {
+            /** Name */
+            name: string;
+            /** Open */
+            open: number;
+            /** Unassigned */
+            unassigned: number;
+            /** Breached */
+            breached: number;
         };
         /** QueueCreate */
         QueueCreate: {
@@ -8191,8 +8349,6 @@ export interface components {
         };
         /** RunnerIn */
         RunnerIn: {
-            /** Builtins Only; defaults to false for existing callers. */
-            builtins_only?: boolean;
             /** Name */
             name: string;
             /**
@@ -8207,6 +8363,11 @@ export interface components {
              * @default true
              */
             is_active: boolean;
+            /**
+             * Builtins Only
+             * @default false
+             */
+            builtins_only: boolean;
         };
         /** RunnerJobOut */
         RunnerJobOut: {
@@ -8236,8 +8397,6 @@ export interface components {
         };
         /** RunnerOut */
         RunnerOut: {
-            /** Builtins Only */
-            builtins_only?: boolean;
             /** Id */
             id: number;
             /** Name */
@@ -8248,6 +8407,11 @@ export interface components {
             languages: string[];
             /** Is Active */
             is_active: boolean;
+            /**
+             * Builtins Only
+             * @default false
+             */
+            builtins_only: boolean;
             /** Last Seen At */
             last_seen_at: string | null;
             /** Last Host */
@@ -8597,10 +8761,6 @@ export interface components {
         };
         /** ScriptVersionDetailOut */
         ScriptVersionDetailOut: {
-            language?: components["schemas"]["ScriptLanguage"] | null;
-            reviewed_by?: components["schemas"]["UserRef"] | null;
-            /** First administrator review, ISO date-time; unknown for legacy versions. */
-            reviewed_at?: string | null;
             /** Number */
             number: number;
             /** Note */
@@ -8613,6 +8773,10 @@ export interface components {
             created_at: string;
             /** Is Current */
             is_current: boolean;
+            language?: components["schemas"]["ScriptLanguage"] | null;
+            reviewed_by?: components["schemas"]["UserRef"] | null;
+            /** Reviewed At */
+            reviewed_at?: string | null;
             /** Body */
             body: string;
             /** Parameters */
@@ -9914,6 +10078,68 @@ export interface components {
             name: string;
             /** Site */
             site: string;
+        };
+        /** WallboardIn */
+        WallboardIn: {
+            /** Name */
+            name: string;
+            /** Queue Ids */
+            queue_ids?: number[];
+            /**
+             * Unassigned Alert Minutes
+             * @default 30
+             */
+            unassigned_alert_minutes: number;
+        };
+        /** WallboardMadeOut */
+        WallboardMadeOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Queue Ids */
+            queue_ids: number[];
+            /** Unassigned Alert Minutes */
+            unassigned_alert_minutes: number;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /** Token */
+            token: string;
+        };
+        /** WallboardOut */
+        WallboardOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Queue Ids */
+            queue_ids: number[];
+            /** Unassigned Alert Minutes */
+            unassigned_alert_minutes: number;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Last Seen At */
+            last_seen_at: string | null;
         };
         /** WarrantyEntitlementOut */
         WarrantyEntitlementOut: {
@@ -17404,6 +17630,206 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiKeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_boards_api_wallboards_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WallboardOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_board_api_wallboards_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WallboardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WallboardMadeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_board_api_wallboards__board_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                board_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WallboardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WallboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_board_api_wallboards__board_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                board_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WallboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    new_link_api_wallboards__board_id__link_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                board_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WallboardMadeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wallboard_api_public_wallboard_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardData"];
                 };
             };
             /** @description Validation Error */
