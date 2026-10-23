@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { api, type Branding } from "./api/client";
 
 export const DEFAULT_ICON = "/layer8.svg";
+export const DEFAULT_LOGO = "/layer8-mark.png";
 
 const DEFAULT: Branding = {
   product_name: "Layer 8",
@@ -114,7 +115,7 @@ export function backgroundStyle(b: Branding, where: "sign-in" | "portal" | "cons
 export function Brand({ b, className = "brand" }: { b: Branding; className?: string }) {
   return (
     <span className={className}>
-      <img className="brand-logo" src={b.logo_url ?? DEFAULT_ICON} alt="" />
+      <img className={`brand-logo${b.logo_url ? "" : " brand-logo-default"}`} src={b.logo_url ?? DEFAULT_LOGO} alt="" />
       {b.product_name}
     </span>
   );
