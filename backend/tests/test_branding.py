@@ -20,7 +20,7 @@ def test_public_branding_without_signing_in(client, db):
     assert r.status_code == 200
     assert r.json() == {
         "product_name": "Layer 8", "sign_in_message": "", "background_in_console": False, "portal_welcome": "",
-        "theme_brand": "#0f6b5c", "theme_sidebar": "#14211e", "dark_mode": "off",
+        "theme_preset": "custom", "theme_brand": "#0f6b5c", "theme_sidebar": "#14211e", "dark_mode": "off",
         "background_url": None, "logo_url": None, "favicon_url": None,
     }
 
@@ -93,3 +93,18 @@ def test_portal_welcome_and_email_footer(client, db, admin, requester, monkeypat
     assert outbox._queue(db, ticket, requester, "We're on it.")
     db.flush()
     assert db.query(OutboundEmail).one().body.endswith("\nIT Service Desk · ext. 4400")
+
+def test_midnight_preset_is_optional_reversible_and_importable(client, db, admin, agent):
+    from app import cli
+
+    assert client.put("/api/settings/theme", headers=as_user(agent), json={"values": {"theme_preset": "midnight"}}).status_code == 403
+    values = {"theme_brand": "#1d4ed8", "theme_sidebar": "#111827", "dark_mode": "auto"}
+    assert client.put("/api/settings/theme", headers=as_user(admin), json={"values": values}).status_code == 200
+    assert client.put("/api/settings/theme", headers=as_user(admin), json={"values": {"theme_preset": "midnight"}}).status_code == 200
+    assert client.get("/api/branding").json()["theme_preset"] == "midnight"
+    assert client.put("/api/settings/theme", headers=as_user(admin), json={"values": {"theme_preset": "unknown"}}).status_code == 422
+    cli.import_settings(db, {"theme": {"theme_preset": "custom"}})
+    db.commit()
+    public = client.get("/api/branding").json()
+    assert public["theme_preset"] == "custom"
+    assert {k: public[k] for k in values} == values

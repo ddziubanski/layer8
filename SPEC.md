@@ -111,3 +111,5 @@ A robust, self-hosted service desk that takes the best of ManageEngine (process 
 - Attachment size limit and retention period? - we can do 3M not sure withat 365 exchange limits are atm
 - How many agents and tickets per month (sizing)?
 - Where will it be hosted (Linux VM, Docker)? - response: it will be a self contained bootable iso - installation
+
+- Optional Midnight appearance (issue #41): Settings > Branding > Appearance selects a fixed dark navy/cyan command center palette. Custom colours remains the default and restores saved custom colours/dark-mode preference. The preset applies to console, sign-in and portal through existing branding; layouts, logos and permissions stay intact. CLI import: theme.theme_preset = midnight or custom; no schema migration.
