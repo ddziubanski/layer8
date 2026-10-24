@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Reports as files and email: PDF/CSV, sending now, and schedules the worker runs.
 
 Recipients must be people the service desk knows (active users) or addresses in the

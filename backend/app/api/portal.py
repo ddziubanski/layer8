@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Self-service portal for requesters: pick a queue, file a ticket, follow it, say it's fixed.
 
 Replies and attachments use the shared /api/tickets/{id}/comments and

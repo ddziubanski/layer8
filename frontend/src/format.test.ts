@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { duration, fileSize, slaInfo } from "./format";
 import { describe as describeEvent } from "./pages/ticket/history";
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """portal-only sessions (single sign-on)
 
 Revision ID: b7c1d2e3f4a5

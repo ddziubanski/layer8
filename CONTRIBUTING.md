@@ -16,6 +16,6 @@ Thanks for helping. Layer 8 is built in small, working slices, and contributions
 - **Tests:** add or update them with your change. Backend: `cd backend && .venv/bin/pytest -q`. Frontend: `cd frontend && npm run typecheck && npx vitest run`.
 - **Schema changes:** `alembic revision --autogenerate`, then `scripts/fix_enum_checks.py` on the new file.
 - **No real data:** examples, tests, demo data and screenshots use example.com and corp.example only. A test fails if a real organisation's name appears. Never commit database backups, exports or customer data.
-- **Licences:** only add dependencies or copied material under licences compatible with MIT.
+- **Licences:** only add dependencies or copied material under licences compatible with the AGPL-3.0 (MIT, BSD, ISC, Apache-2.0, MPL-2.0, LGPL/GPL-3.0 and the like; not GPL-2.0-only or proprietary terms). New source files start with `SPDX-License-Identifier: AGPL-3.0-or-later` (a test checks).
 
-By contributing, you agree that your contribution is licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contribution is licensed under the [GNU Affero General Public License, version 3 or later](LICENSE).

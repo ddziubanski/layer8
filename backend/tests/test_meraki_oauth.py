@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Synthetic OAuth exchanges; no Dashboard tenant or credentials are used."""
 import asyncio
 import json

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 <#
   Registers the service desk launcher for helpdesk-remote: links on a technician's PC.
   Run as administrator (or deploy the same registry values and file by GPO):

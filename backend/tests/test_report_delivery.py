@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Reports as PDF, emailed now, and on a schedule."""
 
 from datetime import date, datetime, timedelta, timezone

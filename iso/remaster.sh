@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Runs inside a debian:trixie container (iso/build.sh starts it): Debian's netinst ISO plus the
 # service desk bundle and an automated install entry, repacked with the same BIOS and UEFI boot.
 set -eu

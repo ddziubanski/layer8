@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """local fallback sign-in
 
 Revision ID: 6934ca350c90

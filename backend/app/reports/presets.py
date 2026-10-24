@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Ready-made reports: named ReportSpecs. The Reports screen lists them; each can be run
 for any period and opened in the builder to change."""
 

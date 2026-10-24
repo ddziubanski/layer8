@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Device sweeps: stale devices and unknown ones on the network or in Action1."""
 
 import ipaddress

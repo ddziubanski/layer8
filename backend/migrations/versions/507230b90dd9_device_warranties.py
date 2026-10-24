@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """device warranties
 
 Revision ID: 507230b90dd9

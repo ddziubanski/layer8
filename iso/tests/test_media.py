@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Boot overlay contracts, including the non-destructive default path."""
 import importlib.util
 from pathlib import Path

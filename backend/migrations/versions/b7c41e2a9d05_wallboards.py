@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Wallboards: read-only wall displays with a secret link.
 
 Revision ID: b7c41e2a9d05

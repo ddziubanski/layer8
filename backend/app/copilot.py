@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Microsoft 365 Copilot for technicians, from a ticket (Settings > Teams > Copilot on tickets).
 
 Uses Microsoft Graph's Copilot Chat API (beta: Microsoft says it isn't supported for production

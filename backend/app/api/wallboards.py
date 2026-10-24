@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Wallboards: a read-only page for a big screen in the IT office (live counts, alerts, and the
 tickets that need someone), opened by a secret link with no sign-in.
 

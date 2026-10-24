@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Reports: count and measure any dataset, grouped by up to two of its fields.
 
 A dataset (tickets, ...) declares what can be grouped by (dimensions), measured

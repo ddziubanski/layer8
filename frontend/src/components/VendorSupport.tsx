@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { type SystemItem } from "../api/client";
 
 const KIND_LABEL: Record<string, string> = { management: "Management", vip: "VIP / virtual", ilo: "iLO / iDRAC / out-of-band", service: "Service", other: "Other" };

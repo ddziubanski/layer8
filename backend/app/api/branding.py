@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Branding: public (the sign-in page needs it before anyone signs in), and the image uploads."""
 
 import logging

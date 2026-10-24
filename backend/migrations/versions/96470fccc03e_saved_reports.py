@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """saved reports
 
 Revision ID: 96470fccc03e

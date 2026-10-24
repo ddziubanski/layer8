@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Changes: risk, required plans, approval by someone else when the risk calls for it, standard and emergency changes, ticket notes."""
 
 from app.config import settings

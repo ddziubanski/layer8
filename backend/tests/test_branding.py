@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Branding: name, texts, theme, background, logo and favicon images."""
 
 from app.config import settings

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Synthetic diagnostics contracts, permission gates and cross-process request limits."""
 import json
 import threading

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """IPAM: VLANs, subnets (usage, map, next free) and documented IP addresses."""
 
 import json

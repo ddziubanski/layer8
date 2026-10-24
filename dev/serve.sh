@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Development only: the app on http://localhost:8000 with the dev database and the
 # Samba test AD (docker compose --profile ad up -d ad). Test credentials only (dev/answers.json).
 cd "$(dirname "$0")/../backend" || exit 1

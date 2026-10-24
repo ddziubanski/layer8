@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """users must change password
 
 Revision ID: 0afca1c43e79

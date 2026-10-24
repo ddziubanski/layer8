@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Layer 8 recovery console: the login shell of the "layer8" account, on the local console and over
 # SSH. A menu of the recovery tasks an appliance needs (network, DNS, break-glass passwords,
 # services, certificate, backups, power); each runs through the fixed commands of

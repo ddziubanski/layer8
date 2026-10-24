@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Runners and runs: requests, approval, the runner protocol, ticket logging, and the runner program itself."""
 
 import importlib.util

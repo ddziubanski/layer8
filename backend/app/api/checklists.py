@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Checklists: templates (Settings > Checklists, admins) and starting one on a ticket."""
 
 import logging

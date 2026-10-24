@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """IPAM scans: a runner pings a subnet, looks up reverse DNS and reads its ARP table; another
 (on Windows) reads the DHCP server's leases and reservations and the DNS server's A records. What
 they find updates last-seen, fills empty host names and MACs, and raises findings for everything

@@ -19,7 +19,7 @@ The product is called **Layer 8**: a self-hosted IT service desk. Be playful wit
 - Tickets can be created by email AND by a self-service portal. Both feed the same queue and the same routing engine.
 
 ## Decisions already made
-- License: MIT (LICENSE at the repo root). Only add dependencies and copied material whose licenses are compatible; KACE community queries (no license) are inspiration only, never copied.
+- License: AGPL-3.0-or-later from version 1.0 (LICENSE at the repo root; releases before 1.0 were MIT). Every source file starts with an SPDX-License-Identifier line (a test checks). Only add dependencies and copied material whose licenses are AGPL-compatible; KACE community queries (no license) are inspiration only, never copied. The app offers its own source to network users (AGPL section 13): /api/source and the Source code links.
 - Production target is a Linux installation. An installer detects the distro and decides which OS packages to install; the app itself stays OS-neutral. API and mailbox worker run as separate services. Paths come from config. Docker Compose is used for the dev database.
 - Script execution goes through a separate runner component, so a runner can live on another host (e.g. a domain-joined Windows box for PowerShell over WinRM).
 - Malware scanning is NOT built here. Exchange Online scans email before delivery; portal and agent uploads are not scanned (accepted risk).

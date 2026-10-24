@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Changing a ticket requester's AD account from the ticket: security groups, OU, department and
 title, by hand or from an onboarding template.
 

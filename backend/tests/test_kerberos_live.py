@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Portal single sign-on with real Kerberos against the dev Samba AD (docker compose --profile ad up -d ad).
 
 Skipped unless HELPDESK_TEST_LDAP=1. The container exports the portal's keytab

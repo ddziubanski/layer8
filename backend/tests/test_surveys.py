@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Satisfaction surveys: a random share of solved tickets, once per ticket and per person per cooldown, answered by link or in the portal."""
 
 import re

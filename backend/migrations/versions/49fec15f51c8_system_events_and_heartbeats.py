@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """system events and heartbeats
 
 Revision ID: 49fec15f51c8

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """change management
 
 Revision ID: 684bf173ae9a

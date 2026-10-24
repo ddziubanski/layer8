@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """merge tickets
 
 Revision ID: e3284076d62d

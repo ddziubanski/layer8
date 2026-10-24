@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Sign-in and the current user.
 
 Local accounts: Argon2 password hashes, server-side sessions, a random token

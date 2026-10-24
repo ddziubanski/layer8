@@ -123,7 +123,23 @@ Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Pl
 
 ## License
 
-[MIT](LICENSE).
+Layer 8 is free software: you can redistribute it and/or modify it under the terms of the
+[GNU Affero General Public License](LICENSE) as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version (SPDX:
+`AGPL-3.0-or-later`). It is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; see the license for details.
+
+Copyright (C) 2026 Dan Dziubanski and contributors.
+
+**What this means in practice.** You can run it, change it and share it. If you run a
+modified copy for other people over a network, offer them its source too. Layer 8 does this for
+you: the console, the portal and the sign-in page link to **Source code**, which downloads the
+exact source of the running installation (packed by the ISO build), and to the repository
+(Settings > General > Source code address; point it at your own fork if you change Layer 8).
+
+**Earlier versions.** Releases before 1.0 (the 0.1 alphas) were published under the MIT
+license, and copies of those releases remain available under MIT. Version 1.0 and everything
+after it is AGPL-3.0-or-later.
 
 ## Credits
 

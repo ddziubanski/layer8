@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Mocked Action1 transport plus real PostgreSQL intent, permissions and audit tests."""
 import json
 from concurrent.futures import ThreadPoolExecutor

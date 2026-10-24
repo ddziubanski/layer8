@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """groups, queue owners and managers
 
 Revision ID: 059a82bf25bc

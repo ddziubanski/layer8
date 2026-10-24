@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """ticket computer and remote sessions
 
 Revision ID: 23751df0ee66

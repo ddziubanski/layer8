@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """problem option routes
 
 Revision ID: fc11ce3871f3

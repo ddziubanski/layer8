@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import type { PortalHours, PortalQueue } from "../api/client";
 
 const STATUS: Record<string, string> = { available: "Available", busy: "Busy", away: "Away", offline: "Offline", unknown: "Status unknown" };

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /** Status and risk chips for changes (shared by the Changes page and the ticket's Changes panel). */
 
 export const CHANGE_STATUS: Record<string, [string, string]> = {

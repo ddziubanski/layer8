@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Device sweeps: stale devices (no sign of life anywhere for a while) and unknown ones (seen on the
 network, or by Action1, but not a device here). They only flag; nothing is disabled or removed.
 

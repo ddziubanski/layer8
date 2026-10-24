@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """onboarding templates
 
 Revision ID: 24036c92709f

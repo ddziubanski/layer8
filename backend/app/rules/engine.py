@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Running ticket rules.
 
 - on_create / on_update: after a save commits, the tickets it touched are run

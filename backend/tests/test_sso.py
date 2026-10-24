@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Portal single sign-on (Kerberos): who gets in, and that it's portal-only.
 
 The Kerberos check itself is faked here: a "token" is just the principal it proves.

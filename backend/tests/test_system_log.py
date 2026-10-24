@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Log: the database log handler, the worker heartbeat and the status summary."""
 
 import logging

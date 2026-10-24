@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /** May the signed-in person take this action (Settings > Permissions)? Admins always may. */
 /** Is this optional part in use (Settings > General), e.g. "action1"? */
 export function uses(me: { features?: string[] }, feature: string): boolean {

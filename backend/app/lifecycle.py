@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Device lifecycle: warranties ending, devices due for replacement, and a forecast of how many
 come due each quarter (for budgeting). Flags only."""
 

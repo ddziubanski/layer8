@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import enum
 import uuid
 from datetime import date, datetime

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Bootstrap commands, run on the server: python -m app.cli create-admin you@corp.local "Your Name" """
 
 import argparse

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """An in-memory directory with nested groups, for sync and sign-in tests."""
 
 import uuid

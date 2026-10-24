@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The integration API, for other applications (e.g. MER, a server-room sign-in app): look up and
 search tickets, and add internal notes. They sign in with an API key (Settings > API keys) sent as
 "Authorization: Bearer l8k_...". A key acts as its own technician account (inactive: it can't sign

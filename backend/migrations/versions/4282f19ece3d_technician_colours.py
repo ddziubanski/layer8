@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """technician colours
 
 Revision ID: 4282f19ece3d

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """ticket surveys
 
 Revision ID: 0e7406fed2ef

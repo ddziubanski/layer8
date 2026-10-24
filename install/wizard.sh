@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Layer 8 setup wizard: asks for every option once, writes the answers file and runs the
 # installer. The appliance ISO starts it on first boot; on any Debian 13 server run it as root:
 #

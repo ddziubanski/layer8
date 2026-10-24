@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { WorkspaceTitle } from "../components/WorkspaceTitle";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";

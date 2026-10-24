@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Device lifecycle: warranty and replacement dates, who may set them, the report and its forecast."""
 
 from datetime import date, timedelta

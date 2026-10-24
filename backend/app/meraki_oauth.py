@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Optional, admin-owned Meraki authorization. Call mutations/access under lock().
 
 Only the documented read scopes are requested. A durable refresh marker prevents

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Running action scripts: requesting runs (one per target), approval, and the runner's side
 (claim, output, finish). Runs started from a ticket are logged on it.
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """What sync and sign-in need from a directory. LDAP/AD implements it; tests use a fake."""
 
 from collections.abc import Iterator

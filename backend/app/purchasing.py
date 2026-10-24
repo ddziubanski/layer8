@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Purchase orders and ticket expenses: reference and receiving, not accounting.
 
 A PO moves draft -> requested -> approved -> ordered -> partially received / received -> closed

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """KACE-style custom ticket rules: builder and SQL, triggers, safety and test runs."""
 
 from datetime import timedelta

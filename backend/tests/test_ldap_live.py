@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The real LdapDirectory against the dev Samba AD (docker compose --profile ad up -d ad).
 
 Skipped unless HELPDESK_TEST_LDAP=1. Uses the users and groups from dev/ad/seed.sh.

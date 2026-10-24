@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Optional read-only Dashboard discovery. Observations never edit documented IPAM data."""
 
 import re

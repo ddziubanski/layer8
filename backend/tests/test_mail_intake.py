@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Email intake and outbox end to end, against a fake mailbox."""
 
 from datetime import timedelta

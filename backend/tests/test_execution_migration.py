@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Upgrade real pre-hardening data, including sealed work and ticket audit history."""
 import uuid
 

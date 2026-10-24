@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Opening hours per queue; technicians' Entra ID and Teams presence.
 
 Revision ID: c3d58f1b7a20

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Checklists (onboarding, offboarding...): a template's steps become child tickets of the ticket
 they're started on, each due a number of days from the checklist's date, in its own queue or with
 its own technician. An offboarding step can also disable the leaver's AD account on its day."""

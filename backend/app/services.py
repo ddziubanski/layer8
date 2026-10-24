@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Ticket operations. The API, the mailbox worker and the portal all go through here,
 so routing, SLA and history behave the same whatever the source.
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import type { Me } from "./api/client";
 
 export type SidebarModule = NonNullable<Me["hidden_modules"]>[number];

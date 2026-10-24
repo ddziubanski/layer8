@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Full backups: one encrypted file holding the database, the file store (attachments, raw
 emails, branding images) and the secrets folder.
 

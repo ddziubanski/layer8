@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Backups: encryption, create / verify / prune, restore into another database, and Settings > Backup."""
 
 import io

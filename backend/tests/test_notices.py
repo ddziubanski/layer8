@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Service notices: posted by admins, shown to the people they're meant for while current."""
 
 from datetime import timedelta

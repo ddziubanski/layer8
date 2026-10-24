@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Values a run needs but nobody may see or keep (a new AD account's first password).
 
 They're encrypted with a key that lives in the secrets folder (not the database), handed to the

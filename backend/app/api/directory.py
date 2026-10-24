@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """AD / LDAP: connection, group import, group-based roles, sync. Admins only."""
 
 import logging

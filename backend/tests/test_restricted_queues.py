@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Restricted queues (e.g. Human Resources): only owners, managers, viewers and admins see them."""
 
 import pytest

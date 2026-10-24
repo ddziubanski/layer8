@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings admins change in the app: Windows sign-in, and the general/directory/... sections."""
 
 import logging

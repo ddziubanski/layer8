@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """A report as a PDF: title, period, the table (first measure drawn as a bar), totals."""
 
 from datetime import date, datetime

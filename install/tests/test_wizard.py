@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Exercise the real wizard with dialog/provisioning commands replaced by test doubles.
 
 Run on Linux: python3 -m unittest discover -s install/tests -v

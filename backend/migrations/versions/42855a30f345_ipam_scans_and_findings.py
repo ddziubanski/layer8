@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """ipam scans and findings
 
 Revision ID: 42855a30f345

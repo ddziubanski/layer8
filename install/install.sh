@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Layer 8 installer for a Debian 13 server (the appliance ISO runs this too).
 #
 #   sudo ./install/install.sh --answers answers.json     # from the setup wizard, or written by hand
@@ -112,6 +113,8 @@ for extra in runner tools docs; do
   [ -d "$BUNDLE/$extra" ] && rsync -a --delete "$BUNDLE/$extra/" "$APP/$extra/"
 done
 [ -f "$BUNDLE/LICENSE" ] && cp "$BUNDLE/LICENSE" "$APP/"
+# The source of this exact build, offered at /api/source (AGPL section 13).
+[ -f "$BUNDLE/layer8-source.tar.gz" ] && cp "$BUNDLE/layer8-source.tar.gz" "$APP/"
 chown -R root:root "$APP"
 
 say "Python environment"
@@ -153,6 +156,7 @@ HELPDESK_RULES_DATABASE_URL=postgresql+psycopg://helpdesk_rules:$RULES_PW@localh
 HELPDESK_STORAGE_DIR=$DATA/storage
 HELPDESK_SECRETS_DIR=$DATA/secrets
 HELPDESK_FRONTEND_DIR=$APP/web
+HELPDESK_SOURCE_ARCHIVE=$APP/layer8-source.tar.gz
 HELPDESK_WORKER_RESTART_COMMAND="sudo -n /usr/bin/systemctl restart helpdesk-worker"
 ENVFILE
   chown root:helpdesk "$ENV"

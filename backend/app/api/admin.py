@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Setup data: users, groups, queues, SLA policies and routing rules. Agents can read; admins can change.
 
 Queue managers can also edit their own queues and set their owners.

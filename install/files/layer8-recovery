@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Layer 8 recovery helper: the only privileged commands the recovery menu (layer8-console) may
 run, through sudo. Each subcommand is fixed and checks its values; nothing goes through a shell.
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The appliance's recovery console: the privileged helper's checks and the files it writes, and the CLI commands it uses."""
 
 import importlib.machinery

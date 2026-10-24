@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import logging
 from contextlib import asynccontextmanager
 
@@ -18,7 +19,7 @@ from app.api import scripts as scripts_api
 from app.api import teams_chat as teams_chat_api
 from app.api import wallboards as wallboards_api
 from app.api import settings as settings_api
-from app import syslog
+from app import LICENSE, VERSION, syslog
 from app.config import settings
 from app.db import engine
 from app.rules import engine as _rules_engine  # noqa: F401  (registers the on-save rule hooks)
@@ -42,7 +43,7 @@ async def lifespan(_: FastAPI):
 
 from app.meraki_oauth import RedactCallbackQuery
 
-app = FastAPI(title="Layer 8", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Layer 8", version=VERSION, lifespan=lifespan, license_info={"name": LICENSE, "identifier": LICENSE})
 app.add_middleware(RedactCallbackQuery)
 app.include_router(auth.router)
 app.include_router(teams_chat_api.router)
@@ -106,6 +107,24 @@ async def security_headers(request: Request, call_next):
 @app.get("/api/health", tags=["meta"])
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/about", tags=["meta"])
+def about():
+    """Version and licence, and where to get the source (AGPL section 13): no sign-in needed."""
+    return {
+        "product": "Layer 8", "version": VERSION, "license": LICENSE,
+        "source_download": "/api/source" if settings.source_archive.is_file() else None,
+        "source_repository": settings.source_repository or None,
+    }
+
+
+@app.get("/api/source", tags=["meta"])
+def source():
+    """The exact source of this installation, packed when it was built (AGPL section 13)."""
+    if not settings.source_archive.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "This installation has no source archive; see /api/about for the repository")
+    return FileResponse(settings.source_archive, media_type="application/gzip", filename=f"layer8-{VERSION}-source.tar.gz")
 
 
 @app.get("/{path:path}", include_in_schema=False)

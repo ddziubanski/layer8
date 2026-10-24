@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings admins change in the app (Settings screen) and the installer sets
 (python -m app.cli settings import answers.json).
 
@@ -279,6 +280,7 @@ SECTIONS: dict[str, list[Field]] = {
     ],
     "general": [
         Field("portal_url", "Portal address", "The address people open, e.g. https://helpdesk.corp.example. Used in ticket links in emails.", check=_http_url),
+        Field("source_repository", "Source code address", "Where people can get Layer 8's source, linked in the console, portal and sign-in page beside the source download (the AGPL asks you to offer the source of what you run). A modified copy should point at its own repository. Empty: the download link only.", check=_http_url),
         Field("session_hours", "Sign-in lasts (hours)", "People are signed out after this long without using the app.", check=_between(1, 720)),
         Field("max_upload_mb", "Largest attachment (MB)", "Per file, from the portal and the agent console.", check=_between(1, 1024)),
         Field("ticket_first_number", "First ticket number", "The number the next ticket gets, e.g. 10000. Can only move forward once there are tickets.", check=_between(1, 10**12)),

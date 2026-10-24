@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """SNMP discovery: sealed communities on the runner's stdin, gear and its neighbours and MAC
 tables from the output, switch ports on addresses, and the /api/network endpoints."""
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Reports for agents and admins: ready-made reports, the report builder's options, and running
 a report as JSON or CSV. Agents only see tickets from queues they may see."""
 

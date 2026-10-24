@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """knowledge base
 
 Revision ID: 974aecd1e35f

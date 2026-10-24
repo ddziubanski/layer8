@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """permissions from the AD account setting
 
 Revision ID: 66dabb62089f

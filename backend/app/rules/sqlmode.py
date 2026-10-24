@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """SQL ticket rules, KACE-style, on their own restricted database login.
 
 The login (HELPDESK_RULES_DATABASE_URL) can read ticket data, not credentials or

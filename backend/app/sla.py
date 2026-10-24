@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import enum
 from datetime import UTC, datetime, timedelta
 from typing import Protocol

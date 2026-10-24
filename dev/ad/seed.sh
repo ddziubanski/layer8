@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Test people and groups, matching tests/fake_directory.py scenarios. Runs once.
 set -eu
 MARK=/var/lib/samba/.seeded

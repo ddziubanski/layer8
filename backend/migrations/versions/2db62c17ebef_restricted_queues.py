@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """restricted queues
 
 Revision ID: 2db62c17ebef

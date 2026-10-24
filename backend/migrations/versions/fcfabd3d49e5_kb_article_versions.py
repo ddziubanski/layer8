@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """kb article versions
 
 Revision ID: fcfabd3d49e5

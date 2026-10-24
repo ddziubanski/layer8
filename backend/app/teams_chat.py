@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Delegated Teams access. Tokens and pending OAuth flows never leave secret files."""
 import hashlib
 import json

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """script schedules
 
 Revision ID: 2d27dfc4234f

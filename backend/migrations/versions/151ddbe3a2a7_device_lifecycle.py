@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """device lifecycle
 
 Revision ID: 151ddbe3a2a7

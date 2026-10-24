@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Network discovery over SNMP: a runner asks every address in a subnet for its identity (name,
 model, serial), its LLDP neighbours and, for switches, its MAC forwarding table. Discovered gear
 is kept as network devices; MAC tables say which switch port a documented address is on.

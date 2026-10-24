@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Thin typed wrapper over the API. Types come from the backend's OpenAPI schema
 // (npm run api-types), so an API change that breaks the UI fails the build.
 import type { components } from "./schema";
@@ -237,6 +238,7 @@ export const api = {
   },
   me: () => request<Me>("GET", "/api/auth/me"),
   branding: () => request<Branding>("GET", "/api/branding"),
+  about: () => request<{ product: string; version: string; license: string; source_download: string | null; source_repository: string | null }>("GET", "/api/about"),
   notices: {
     current: () => request<Notice[]>("GET", "/api/notices/current"),
     all: () => request<Notice[]>("GET", "/api/notices"),

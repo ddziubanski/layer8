@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Passphrase encryption for backup archives, streamed in chunks.
 
 File layout: a header (magic, scrypt salt and cost, nonce prefix), then chunks, each a 4-byte

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Read-only Meraki transport, atomic snapshots and conservative IPAM identity matching."""
 from datetime import timedelta
 

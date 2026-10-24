@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Bind Copilot conversations to a technician, ticket and Microsoft account.
 
 Revision ID: e4a27b9f1062

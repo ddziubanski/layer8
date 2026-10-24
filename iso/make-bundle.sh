@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Runs inside a debian:trixie container (iso/build.sh starts it): makes the offline bundle the
 # ISO carries in /out/bundle: the app, the built web UI, Python wheels for Debian 13's Python
 # (gssapi built here, so the appliance needs no compiler), and the Debian packages the installer
@@ -33,5 +34,6 @@ rsync -a --exclude .venv --exclude storage --exclude secrets --exclude __pycache
 mkdir -p "$B/frontend" && rsync -a /src/frontend/dist/ "$B/frontend/dist/"
 for d in runner tools docs install; do rsync -a "/src/$d/" "$B/$d/"; done
 cp /src/LICENSE "$B/"
+[ -f /out/layer8-source.tar.gz ] && cp /out/layer8-source.tar.gz "$B/"
 cp /out/VERSION "$B/VERSION" 2>/dev/null || date +%Y%m%d > "$B/VERSION"
 echo "bundle: $(du -sh "$B" | cut -f1)"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Remote sessions from a ticket: Remote Assistance offered to the requester's computer.
 
 The browser can't start msra.exe, so technicians' PCs have a small launcher registered for

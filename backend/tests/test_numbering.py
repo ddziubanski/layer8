@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Ticket numbers and labels: where numbering starts, the label format, and email threading."""
 
 from datetime import datetime

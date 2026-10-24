@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Finer permissions: defaults as before, handing an action to groups, the reasons given, and deleting tickets."""
 
 import pytest

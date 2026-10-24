@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Ticket fields: the dropdown lists (resolution types, closure reasons, departments).
 Agents read the active choices; admins edit the lists."""
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The background worker's jobs and Settings > Status: run now, pause, restart."""
 
 import shlex

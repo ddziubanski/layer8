@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Background worker: email (read the intake mailbox, send queued email), directory sync,
 scheduled ticket rules and housekeeping, as jobs (app/jobs.py) that admins watch and
 control on Settings > Status.

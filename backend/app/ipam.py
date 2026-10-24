@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """IPAM helpers: parsing what people type (and what spreadsheets hold), and how full a subnet is."""
 
 import ipaddress

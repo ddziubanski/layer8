@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """action1 vulnerabilities and organization
 
 Revision ID: e278c0e8adaf

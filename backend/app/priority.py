@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Priority from what the requester tells us: business impact x urgency."""
 
 from sqlalchemy.orm import Session

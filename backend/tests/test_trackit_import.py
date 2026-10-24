@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Track-It! import from an export bundle. Everything here is made up: no real Track-It! data."""
 
 import json

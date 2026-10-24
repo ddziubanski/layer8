@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Service notices: outages and known problems admins post (Settings > Notices).
 
 Everyone signed in reads the current ones meant for them; admins manage them."""

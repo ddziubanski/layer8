@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Explicit read-only diagnostics. Discovery/IPAM data is never updated here."""
 import hashlib
 import json

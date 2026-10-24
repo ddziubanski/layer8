@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { useRef, useState, type DragEvent } from "react";
 
 /** Drag-and-drop files onto an element. Spread `props` on it; `dragging` styles it while

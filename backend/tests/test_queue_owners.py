@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Multiple queues with owners and managers, as users or groups."""
 
 import pytest

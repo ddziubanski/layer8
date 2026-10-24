@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Script schedules: a script run on a timetable, as its owner (app.scriptschedules)."""
 
 import logging

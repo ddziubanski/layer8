@@ -146,6 +146,8 @@ iso/build.sh --demo --test   # disposable VMs only: ERASE after 5 s, serial cons
 It downloads Debian's current 13.x netinst ISO (checking its SHA-256), builds the web UI, and builds the offline bundle in a Debian 13 container. The bundle holds Python wheels for Debian's Python (with `gssapi` compiled) and every Debian package the installer adds. It then repacks the ISO with the bundle and the automated install entry, keeping Debian's BIOS and UEFI boot. Output: `iso/build/layer8-<version>.iso`.
 
 
+**Source code.** The ISO build packs the exact source it was built from (`layer8-source.tar.gz`, the tracked files as they were on disk). The appliance serves it at `/api/source`, linked as **Source code** in the console, the portal and on the sign-in page, as the AGPL asks. If you change Layer 8, set Settings > General > Source code address to your own repository.
+
 ### Boot artwork and validation
 
 The boot artwork is original, code-generated artwork in `iso/branding/background.png`.

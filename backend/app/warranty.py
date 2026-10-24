@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Warranty lookups with the makers' own APIs (read-only), for devices with a serial.
 
 - Dell TechDirect: POST {DELL}/auth/oauth/v2/token (client credentials) gives a bearer token;
