@@ -261,6 +261,36 @@ class StatusItemOut(BaseModel):
     at: datetime | None = None
 
 
+class IntegrationHealthItemOut(BaseModel):
+    key: str
+    label: str
+    state: Literal["ok", "warning", "error", "off", "unknown"]
+    enabled: bool
+    configured: bool
+    summary: str
+    next_step: str
+    settings_path: str
+    job_name: str
+    evidence: Literal["Worker pass", "Directory sync", "Relay read"] = "Worker pass"
+    last_attempt_at: datetime | None = None
+    last_success_at: datetime | None = None
+    next_due_at: datetime | None = None
+
+
+class RelayHealthOut(BaseModel):
+    id: int
+    name: str
+    state: Literal["ok", "warning", "error"]
+    last_seen_at: datetime | None
+
+
+class IntegrationHealthOut(BaseModel):
+    checked_at: datetime
+    worker_state: Literal["running", "not_responding", "never_started"]
+    items: list[IntegrationHealthItemOut]
+    relays: list[RelayHealthOut]
+
+
 class SystemEventOut(ORM):
     id: int
     at: datetime

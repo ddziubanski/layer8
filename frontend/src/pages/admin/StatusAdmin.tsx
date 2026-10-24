@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, type Services, type User, type WorkerJob } from "../../api/client";
+import { IntegrationHealth } from "./IntegrationHealth";
 import { when } from "../../format";
 
 const STATE = { ok: ["g", "OK"], warning: ["a", "Warning"], error: ["r", "Problem"], off: ["n", "Off"] } as const;
@@ -39,6 +40,7 @@ export function StatusAdmin({ me }: { me: User }) {
         <h1>Status</h1>
       </div>
       <div className="stack">
+        <IntegrationHealth />
         <section className="card" style={{ margin: 0 }} aria-label="Overview">
           <div className="lbl">Overview</div>
           {status.error && <p className="error">{status.error.message}</p>}

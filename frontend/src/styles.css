@@ -1028,3 +1028,14 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .update-checks p { color:var(--muted); font-size:13px; line-height:1.5; margin-top:4px !important; }
 .update-progress details { border-top:1px solid var(--line); padding-top:14px; }
 .update-progress details ol { display:grid; gap:8px; font-size:13px; color:var(--muted); }
+
+/* Integration health: compact evidence and recovery links within Settings > Status. */
+.integration-health { margin:0; }
+.integration-health header h2 { margin:0; }
+.integration-health header p { margin:.4rem 0 0; max-width:750px; }
+.integration-health .grid td { vertical-align:top; white-space:normal; }
+.integration-health .grid td:nth-child(2) { min-width:220px; max-width:460px; }
+.integration-health .grid td p { margin:.5rem 0; }
+.integration-health .grid td:nth-child(3) { min-width:160px; line-height:1.7; }
+.integration-relays ul { list-style:none; padding:0; display:grid; gap:10px; }
+.integration-relays li { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }

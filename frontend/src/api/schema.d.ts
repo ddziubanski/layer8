@@ -1646,6 +1646,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Integration Health */
+        get: operations["integration_health_api_system_integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/services": {
         parameters: {
             query?: never;
@@ -7126,6 +7143,59 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** IntegrationHealthItemOut */
+        IntegrationHealthItemOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "ok" | "warning" | "error" | "off" | "unknown";
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Summary */
+            summary: string;
+            /** Next Step */
+            next_step: string;
+            /** Settings Path */
+            settings_path: string;
+            /** Job Name */
+            job_name: string;
+            /**
+             * Evidence
+             * @default Worker pass
+             * @enum {string}
+             */
+            evidence: "Worker pass" | "Directory sync" | "Relay read";
+            /** Last Attempt At */
+            last_attempt_at?: string | null;
+            /** Last Success At */
+            last_success_at?: string | null;
+            /** Next Due At */
+            next_due_at?: string | null;
+        };
+        /** IntegrationHealthOut */
+        IntegrationHealthOut: {
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /**
+             * Worker State
+             * @enum {string}
+             */
+            worker_state: "running" | "not_responding" | "never_started";
+            /** Items */
+            items: components["schemas"]["IntegrationHealthItemOut"][];
+            /** Relays */
+            relays: components["schemas"]["RelayHealthOut"][];
+        };
         /** IntegrationNoteIn */
         IntegrationNoteIn: {
             /** Text */
@@ -9264,6 +9334,20 @@ export interface components {
             } | null;
             /** Hours */
             hours?: string | null;
+        };
+        /** RelayHealthOut */
+        RelayHealthOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "ok" | "warning" | "error";
+            /** Last Seen At */
+            last_seen_at: string | null;
         };
         /** ReleaseOut */
         ReleaseOut: {
@@ -15790,6 +15874,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusItemOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    integration_health_api_system_integrations_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationHealthOut"];
                 };
             };
             /** @description Validation Error */

@@ -361,6 +361,8 @@ class Worker:
             row = self._row(session, job.name)
             now = sla.utcnow()
             row.last_finished_at, row.last_ok, row.last_error = now, ok, error
+            if ok:
+                row.last_success_at = now
             if summary is not None or not ok:
                 row.last_summary = summary
             row.next_due_at = now + job.every()

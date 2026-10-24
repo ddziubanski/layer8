@@ -60,6 +60,7 @@ export type SettingField = S["SettingFieldOut"];
 export type EmailTest = S["EmailTestOut"];
 export type MailPass = S["MailPassOut"];
 export type StatusItem = S["StatusItemOut"];
+export type IntegrationHealth = S["IntegrationHealthOut"];
 export type SystemEvent = S["SystemEventOut"];
 export type LogSource = S["LogSourceOut"];
 export type Services = S["ServicesOut"];
@@ -676,6 +677,7 @@ export const api = {
     apply: (body: S["ApplyIn"]) => request<UpdateStatus>("POST", "/api/system/updates/apply", body),
   },
   system: {
+    integrations: () => request<IntegrationHealth>("GET", "/api/system/integrations"),
     status: () => request<StatusItem[]>("GET", "/api/system/status"),
     logSources: () => request<LogSource[]>("GET", "/api/system/log/sources"),
     log: (p: { source?: string; level?: string; before_id?: number; limit?: number }) => request<SystemEvent[]>("GET", `/api/system/log${query(p)}`),
