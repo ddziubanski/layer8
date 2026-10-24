@@ -329,3 +329,27 @@ def test_wireless_event_times_are_returned_newest_first():
     client, _ = transport(o, events=[old, recent])
     result = diag.fetch(client, o, sla.utcnow())
     assert [e.type for e in result.events] == ["roam", "dhcp"]
+
+
+def test_oauth_diagnostic_reads_send_only_bearer_credentials(client, agent, configured, observed, session_factory, monkeypatch):
+    from app import db as database
+    for key, value in dict(meraki_auth_mode="oauth", meraki_client_id="example-client", meraki_client_secret="synthetic-secret",
+                           portal_url="https://helpdesk.corp.example").items():
+        monkeypatch.setattr(settings, key, value)
+    _, fingerprint = oauth.configuration()
+    oauth._write("tokens", dict(config=fingerprint, access_token="synthetic-oauth-diagnostics", refresh_token="synthetic-refresh", expires_at=oauth.time.time()+3600))
+    monkeypatch.setattr(database, "get_session_factory", lambda: session_factory)
+    real_client, calls = httpx.Client, []
+    def handler(request):
+        calls.append(request)
+        assert request.method == "GET" and request.url.host == "api.meraki.com"
+        assert request.headers["authorization"] == "Bearer synthetic-oauth-diagnostics"
+        assert "x-cisco-meraki-api-key" not in request.headers
+        if request.url.path.endswith("/clients/client1"): return httpx.Response(200, json=current(observed))
+        if request.url.path.endswith("/devices/" + SERIAL): return httpx.Response(200, json=dict(serial=SERIAL, networkId=NETWORK))
+        assert request.url.path.endswith("/switch/ports/statuses")
+        return httpx.Response(200, json=[port()])
+    monkeypatch.setattr(meraki.httpx, "Client", lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw))
+    result = client.post(PATH, headers=as_user(agent))
+    assert result.status_code == 200, result.text
+    assert result.json()["data"]["port"]["status"] == "Connected" and len(calls) == 3
