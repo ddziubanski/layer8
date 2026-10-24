@@ -8,7 +8,7 @@ The sidebar can collapse to an icon rail. It starts compact at a viewport width 
 
 The header identifies the current module, retains the existing Ctrl+K page finder and unaccepted-ticket alert, and shows account information when space allows. Module headings, toolbars, cards and tables share spacing and border treatment. Queue scrolling and the Option B ticket tool drawer keep their existing behavior.
 
-Settings categories/search are being reviewed separately in PR #78. This change does not alter Settings tabs or configuration behavior. Public portal, sign-in and remote wallboards retain their separate layouts. No new palette is installed and no tenant theme is changed.
+Settings categories/search from merged PR #78 are retained. This change does not alter Settings tabs or configuration behavior. Public portal, sign-in and remote wallboards retain their separate layouts. No new palette is installed and no tenant theme is changed.
 
 ## Review images
 
