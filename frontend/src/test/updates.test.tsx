@@ -47,7 +47,7 @@ test("sanitized progress and verification remain visible while the API is unavai
   await user.click(screen.getByRole("button", { name: "Back up and install 1.2.0" }));
   expect(await screen.findByText(/Database migration revision verified/)).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Simulate API downtime" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent("maintenance");
+  expect(await screen.findByText(/API is paused for maintenance/)).toBeInTheDocument();
   expect(screen.getByText(/Step 6 of 9/)).toBeInTheDocument();
   expect(screen.getByText(/Database migration revision verified/)).toBeInTheDocument();
 });

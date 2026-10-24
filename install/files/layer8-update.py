@@ -165,6 +165,13 @@ def database_report():
     return json.loads(result.stdout)
 
 
+def restore_snapshot(path):
+    # Use only bootstrap paths plus the existing secret file/environment. Loading
+    # old ORM/config models against a failed NEW schema could prevent recovery.
+    # The backup was created by this exact previous application before migration.
+    return as_app(["-c", "import sys; from pathlib import Path; from app.config import settings; from app.backup.archive import restore; secret=settings.backup_passphrase or (settings.secrets_dir/'backup_passphrase').read_text(); restore(Path(sys.argv[1]), secret, replace_public_schema=True); print('Verified pre-update database, files and secrets restored')", str(path)], python=True)
+
+
 def worker_ready(expected: str, since: str):
     for _ in range(30):
         result = as_app(["-c", "import json; from app.db import SessionLocal; from app.models import ServiceHeartbeat; s=SessionLocal(); b=s.get(ServiceHeartbeat,'worker'); print(json.dumps({'last_seen':b.last_seen.isoformat(),'started_at':b.info.get('started_at'),'version':b.info.get('version'),'pid':b.info.get('pid')} if b else {})); s.close()"], python=True)
@@ -418,10 +425,12 @@ class Updater:
                 self.previous.rename(APP)
             if self.migration:
                 self.status("rolling_back", "Restoring the verified pre-update backup with the previous application")
-                as_app(["-m", "app.cli", "backup", "restore", str(self.backup), "--yes", "--force"], python=True)
+                restore_snapshot(self.backup)
             run(["/usr/bin/systemctl", "start", "helpdesk-api"], timeout=90)
             health(self.old_version)
+            recovered_worker_started = datetime.now(timezone.utc).isoformat()
             run(["/usr/bin/systemctl", "start", "helpdesk-worker"], timeout=90)
+            worker_ready(self.old_version, recovered_worker_started)
             self.status("rolled_back", f"Update failed and the previous application was restored: {error}")
             (STATE / "maintenance").unlink(missing_ok=True)
         except BaseException:

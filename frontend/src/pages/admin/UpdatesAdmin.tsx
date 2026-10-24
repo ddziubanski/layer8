@@ -5,6 +5,9 @@ import { api, type User, type UpdateStatus } from "../../api/client";
 import { fileSize, when } from "../../format";
 import { SettingsForm } from "./SettingsForm";
 
+const CHECK_LABELS: Record<string, string> = { signature: "Publisher signature", package: "Package integrity", backup: "Recovery backup", installed_version: "Application version", schema: "Database schema", core_data: "Ticket data", installed_files: "Installed files", api: "API readiness", frontend: "Frontend delivery", source_offer: "Build source", worker: "Worker readiness", final_readiness: "Final readiness" };
+const PHASE_LABELS: Record<string, string> = { queued: "Update queued", verifying: "Verifying the signed release", downloading: "Downloading the update", backing_up: "Creating a recovery backup", installing: "Installing offline dependencies", migrating: "Applying database migrations", checking: "Verifying the upgraded application", starting: "Starting the worker", worker_check: "Verifying worker readiness", succeeded: "Update verified and complete", failed: "Update failed before installation", rolling_back: "Restoring the previous installation", rolled_back: "Previous installation restored", recovery_required: "Local recovery required" };
+
 /** No network check on page load; each installation is reviewed and explicitly confirmed. */
 export function UpdatesAdmin({ me }: { me: User }) {
   const client = useQueryClient();
@@ -33,20 +36,20 @@ export function UpdatesAdmin({ me }: { me: User }) {
   const phase = String(operation.phase ?? "");
   return <>
     <div className="page-head"><h1>Release updates</h1></div>
-    <div className="stack" style={{ maxWidth: 1000 }}>
-      <SettingsForm me={me} section="updates" title="GitHub release updates" embedded intro="Check published stable Layer 8 releases when this appliance is online. Updates are never installed automatically." />
+    <div className="stack updates-page" style={{ maxWidth: 1000 }}>
+      {!busy && <SettingsForm me={me} section="updates" title="GitHub release updates" embedded intro="Check published stable Layer 8 releases when this appliance is online. Updates are never installed automatically." />}
       <section className="card stack" aria-label="Release status">
         {query.isPending && <p>Reading installed version…</p>}
-        {query.error && <p role="alert" className="error">{busy ? "The appliance may be in maintenance. This page keeps checking; wait for it to return." : query.error.message}</p>}
+        {query.error && <p role={busy ? "status" : "alert"} className={busy ? "notice" : "error"}>{busy ? "The API is paused for maintenance. Live progress continues through the web server." : query.error.message}</p>}
         {data && <>
           <div className="row-gap"><h2 className="spacer">Installed: {data.current_version}</h2><button className="btn2" type="button" disabled={!data.enabled || busy || check.isPending} onClick={() => check.mutate()}>{check.isPending ? "Checking GitHub…" : "Check GitHub for updates"}</button></div>
           <p className="muted small">Source: <a href={data.repository} target="_blank" rel="noreferrer">ddziubanski/layer8 releases</a>. Stable releases only; main and pull requests are never installed. Checks are cached for one minute.</p>
-          {data.checked_at && <p className="small">Last checked {when(data.checked_at)}</p>}
+          {data.checked_at && !busy && <p className="small">Last checked {when(data.checked_at)}</p>}
           {!data.installer_ready && <p className="notice">Installation needs the Debian appliance updater service and a trusted publisher key provisioned locally. See docs/github-updates.md. Checking releases still works.</p>}
           {!data.backup_ready && <p className="notice">Set a backup passphrase under Settings → Backup before installing. Every update creates and verifies a separate encrypted local recovery backup.</p>}
           {data.problem && <p role="alert" className="error">{data.problem}</p>}
           {data.checked_at && !data.problem && !release && <p>No published stable releases were found.</p>}
-          {release && <>
+          {release && !busy && <>
             <h3>{release.newer ? "Available" : "Latest published release"}: {release.version}</h3>
             {!release.newer && <p>This release is not newer than your installation. No downgrade will be offered.</p>}
             <a href={release.url} target="_blank" rel="noreferrer">Read release on GitHub</a>
@@ -55,11 +58,14 @@ export function UpdatesAdmin({ me }: { me: User }) {
             {release.verified && <p>Publisher signature verified{release.package_size ? ` · ${fileSize(release.package_size)}` : ""}. The installer verifies it again before changing anything.</p>}
             {eligible && <button className="btn" type="button" onClick={() => { setReview(release); setConfirmed(false); apply.reset(); }}>Review update</button>}
           </>}
-          {!!phase && <div className="stack" aria-label="Update progress">
-            <div role="status"><strong>{phase.replaceAll("_", " ")}</strong>{!!operation.step && <span> · Step {String(operation.step)} of {String(operation.steps)}</span>}{elapsed !== null && <span> · {Math.floor(elapsed / 60)}m {elapsed % 60}s elapsed</span>}<p>{String(operation.message ?? "")}</p></div>
+          {!!phase && <div className="stack update-progress" aria-label="Update progress">
+            <div role="status"><strong className="update-phase">{PHASE_LABELS[phase] ?? phase.replaceAll("_", " ")}</strong>{!!operation.step && <span> · Step {String(operation.step)} of {String(operation.steps)}</span>}{elapsed !== null && <span> · {Math.floor(elapsed / 60)}m {elapsed % 60}s elapsed</span>}<p>{String(operation.message ?? "")}</p></div>
+            {!!operation.step && <progress aria-label="Upgrade stages" max={Number(operation.steps)} value={Number(operation.step)} />}
+            {progress.error && <p className="notice" role="status">Live progress is temporarily unavailable. Reconnecting; the last reported step remains visible.</p>}
+            {typeof operation.updated_at === "string" && <p className="muted small">Last progress update {when(operation.updated_at)}</p>}
             {phase === "downloading" && download && <label className="field">Downloaded {fileSize(download.received)} of {fileSize(download.total)}<progress aria-label="Update download" max={download.total} value={download.received} /></label>}
-            {checks.length > 0 && <><h3>Verification checklist</h3><ul>{checks.map((item, index) => <li key={index}><strong>{item.state === "passed" ? "✓" : "✕"} {item.name.replaceAll("_", " ")}</strong> — {item.detail}</li>)}</ul></>}
-            {events.length > 0 && <details><summary>Upgrade activity ({events.length})</summary><ol>{events.map((event, index) => <li key={index}><time>{when(event.at)}</time> · {event.message}</li>)}</ol></details>}
+            {checks.length > 0 && <><h3>Verification checklist</h3><ul className="update-checks">{checks.map((item, index) => <li key={index}><span className={item.state === "passed" ? "chip g" : "chip r"}>{item.state === "passed" ? "✓ Passed" : "✕ Failed"}</span><div><strong>{CHECK_LABELS[item.name] ?? item.name.replaceAll("_", " ")}</strong><p>{item.detail}</p></div></li>)}</ul></>}
+            {events.length > 0 && <details open={busy}><summary>Upgrade activity ({events.length})</summary><ol>{events.map((event, index) => <li key={index}><time>{when(event.at)}</time> · {event.message}</li>)}</ol></details>}
             {!!data.operation?.backup && <p className="small">Recovery backup: <code>{String(data.operation.backup)}</code></p>}
             {progressUrl && <p className="muted small">Progress continues through the web server while the API is stopped. Keep this tab open; refreshing the whole page during maintenance may show the maintenance notice.</p>}
           </div>}

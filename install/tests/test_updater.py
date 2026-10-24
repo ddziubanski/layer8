@@ -83,7 +83,7 @@ class UpdateFlowTests(unittest.TestCase):
         (self.app / "old").write_text("old")
         self.calls = []
         self.failure = None
-        for name, value in [("APP", self.app), ("STATE", self.state), ("run", self.run_command), ("as_app", self.app_command), ("health", self.health), ("worker_ready", self.worker), ("database_report", self.report), ("http_hash", self.http_hash)]:
+        for name, value in [("APP", self.app), ("STATE", self.state), ("run", self.run_command), ("as_app", self.app_command), ("health", self.health), ("worker_ready", self.worker), ("database_report", self.report), ("http_hash", self.http_hash), ("restore_snapshot", self.restore)]:
             patcher = patch.object(helper, name, value)
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -126,6 +126,11 @@ class UpdateFlowTests(unittest.TestCase):
         self.calls.append(("health", expected))
         if self.failure in ("health", "restore") and expected == "1.2.0":
             raise protocol.UpdateError("Health check failed")
+
+    def restore(self, path):
+        self.calls.append(("restore", str(path)))
+        if self.failure == "restore":
+            raise protocol.UpdateError("Recovery failed")
 
     def worker(self, expected, since):
         self.calls.append(("worker_ready", expected))
