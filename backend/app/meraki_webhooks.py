@@ -51,9 +51,9 @@ async def read_body(request: Request) -> bytes:
         raise HTTPException(415, "Use application/json")
     body = bytearray()
     async for chunk in request.stream():
-        body.extend(chunk)
-        if len(body) > MAX_BODY:
+        if len(body) + len(chunk) > MAX_BODY:
             raise HTTPException(413, "Webhook body is too large")
+        body.extend(chunk)
     return bytes(body)
 
 
