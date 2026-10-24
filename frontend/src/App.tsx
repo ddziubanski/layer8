@@ -112,7 +112,7 @@ function Shell({ me }: { me: Me }) {
           <button type="button" onClick={() => logout.mutate()}>
             Sign out
           </button>
-          <SourceNotice className="source-notice side-source" />
+          <SourceNotice className="source-notice side-source" compact />
         </div>
       </nav>
       <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
