@@ -6,7 +6,28 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 
 > **Status: alpha.** It's being tested on real desks now. Expect rough edges, and back up before upgrading.
 
-![The technician's queue](screenshots/02-queue.png)
+![Layer 8 operations dashboard](screenshots/command-center/01-dashboard.jpg)
+
+[View the current GUI gallery](screenshots/command-center/README.md) · [Feature screenshots](screenshots/README.md)
+
+## The workspace
+
+The Hybrid Command Center interface brings a persistent sidebar, a light workspace, teal accents, clearer tables and consistent forms across the application. Sidebar and accent colours follow **Settings > Branding**, including a navy sidebar when configured; dark mode can be off, always on, or follow the device.
+
+- **Ticket workspace:** a conversation and work-note composer beside assignment, requester, SLA and asset context; clear public-reply and internal-note choices; attachments and arrangeable panels.
+- **Operations dashboard:** open, unassigned, SLA-risk and waiting-on-user counts, filtered by workload and queue. The attention list links to tickets approaching an SLA breach; data refreshes every 30 seconds.
+- **Ctrl+K / ⌘K:** find a page or jump to a ticket number. Arrow keys select a destination, Enter opens it and Escape closes the palette; destinations still enforce existing permissions.
+- **Keyboard access:** skip links, visible focus and focus moved to the workspace heading after page navigation, including the portal. Keyboard controls also support arranging ticket panels.
+- **Module refresh:** Devices, Changes, Purchase orders, Vendors, IP addresses, Knowledge base, Scripts, Reports, My preferences and Settings share the updated workspace presentation. Existing routes, APIs, permissions and workflows remain in place.
+- **Self-service portal:** a clearer request flow, knowledge suggestions, per-queue opening hours and optional technician Teams availability. The portal remains usable outside desk hours.
+- **Desktop and tablet:** the console is designed for technicians at desks, with layouts that adapt for tablet use. Phones are not the primary target.
+
+<p>
+  <img src="screenshots/command-center/03-ticket-workspace.jpg" width="49%" alt="Ticket conversation, work notes, assignment and requester context">
+  <img src="screenshots/command-center/02-command-palette.jpg" width="49%" alt="Keyboard command palette for pages and ticket numbers">
+  <img src="screenshots/command-center/04-dashboard-dark.jpg" width="49%" alt="Operations dashboard in dark mode">
+  <img src="screenshots/command-center/06-self-service-portal.jpg" width="49%" alt="Self-service portal with queue hours and technician availability">
+</p>
 
 ## What it does
 
@@ -46,6 +67,11 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - A Remote Assistance button on tickets, logged as well.
 - Optional reviewed Action1 software deployments: search available packages from a ticket-linked computer or device, choose an exact version, review the endpoint and explicitly deploy. Separate credentials and permissions; results and ticket notes track the outcome. [Setup and first-slice limits](docs/action1.md#reviewed-software-deployment-first-slice).
 
+**Microsoft 365 and Teams**
+- Optional Teams Workflows summaries with queue counts; restricted queues are excluded.
+- Technicians connect their own Microsoft work accounts in My preferences and send a requester a message in an existing one-to-one Teams chat from a ticket. The message is recorded as a public ticket reply.
+- Optional **Microsoft 365 Copilot on tickets (preview)**: ask questions as the connected technician, optionally include ticket text, follow up, view source links and choose to save an answer as an internal note. Each technician using it needs a Microsoft 365 Copilot licence and the configured delegated permissions. Microsoft's Chat API is a preview; live-tenant validation is still required. See the [Microsoft 365 setup guide](docs/microsoft-365.md).
+
 **Everything else a desk needs**
 - Knowledge base with versions and images, suggested in the portal as people type.
 - Satisfaction surveys on a random share of solved tickets.
@@ -54,39 +80,32 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
 - Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It!.
 
-**Dark mode** (Settings > Branding: off, always, or following each person's device):
-
-<p>
-  <img src="screenshots/dark/02-queue.png" width="49%" alt="The queue in dark mode">
-  <img src="screenshots/dark/05k-ipam-subnet.png" width="49%" alt="A subnet in dark mode">
-</p>
-
-More screenshots: [screenshots/](screenshots/README.md). The full requirements and decisions: [SPEC.md](SPEC.md).
-
-<p>
-  <img src="screenshots/03-ticket.png" width="49%" alt="A ticket">
-  <img src="screenshots/13-portal.png" width="49%" alt="The self-service portal">
-  <img src="screenshots/05k-ipam-subnet.png" width="49%" alt="A subnet's address map">
-  <img src="screenshots/06-reports.png" width="49%" alt="Reports">
-</p>
+Current GUI screenshots, including dark mode, Settings and a tablet view: [command-center gallery](screenshots/command-center/README.md). Older feature examples remain in [screenshots/](screenshots/README.md). The full requirements and decisions are in [SPEC.md](SPEC.md).
 
 ## Try it
 
-- **Appliance ISO (recommended):** Debian 13 plus Layer 8. It installs with no internet access and asks its questions in a setup wizard on first boot. Build it with `iso/build.sh` (needs Docker and npm), or `iso/build.sh --demo` for a one-click offline demo with sample data. See [docs/install.md](docs/install.md).
+- **Appliance ISO (recommended):** Debian 13 plus Layer 8. It installs with no internet access and asks its questions in a setup wizard on first boot. Build it with `iso/build.sh` (needs Docker and npm), or `iso/build.sh --demo` for a one-click offline demo with sample data. The branded BIOS/UEFI boot menu defaults to choosing the disk and partitioning; erasing the entire first disk is a separate explicit choice. The setup wizard and recovery console also use the refreshed styling. See [docs/install.md](docs/install.md).
 - **On an existing Debian 13 server:** `install/install.sh`, same doc.
 - **For development:** [backend/README.md](backend/README.md) covers the dev database (Docker Compose), the API, the web UI, tests and migrations.
 
 Every setting can be changed in the app (Settings), and also imported from an answers file, so installs can be scripted end to end.
+
+## Planned and under review
+
+- **Action1 software deployment — [#33](https://github.com/ddziubanski/layer8/issues/33):** a searchable application catalogue, one reviewed package deployment to a ticket-linked computer, progress and a ticket audit trail. Later slices add bulk deployments and onboarding bundles. This is backlog work; the current Action1 integration reads patch status and automation schedules only.
+- **Copilot response review — [draft PR #32](https://github.com/ddziubanski/layer8/pull/32):** exact ticket-context preview, separate internal-note sharing, and editable answers that a technician can add as a note or explicitly send to the requester. These additions are not part of merged main yet.
+- **Appliance updates:** an optional online release check alongside offline installation, followed by signed update bundles, backup and rollback support. The current ISO installs its bundled application; it does not automatically pull a newer version from GitHub. Rebuild the ISO to include newer merged application changes.
 
 ## Integrations (all optional)
 
 | | Guide |
 |---|---|
 | Email intake and notifications (Microsoft Entra app, Graph) | [docs/email-setup.md](docs/email-setup.md) |
+| Technician Teams messages and queue summaries | [docs/teams.md](docs/teams.md) |
 | Windows sign-in (Kerberos SSO) | [docs/windows-sign-in.md](docs/windows-sign-in.md) |
 | Runners: scripts, AD changes, IP scans, DHCP/DNS, SNMP | [docs/runner.md](docs/runner.md) |
 | Remote Assistance from tickets | [docs/remote-assistance.md](docs/remote-assistance.md) |
-| Action1 patch status | [docs/action1.md](docs/action1.md) |
+| Action1 patch status and patch automation calendar (read-only) | [docs/action1.md](docs/action1.md) |
 | Dell and Lenovo warranty lookups | [docs/warranty.md](docs/warranty.md) |
 | Moving from Track-It! | [docs/trackit-import.md](docs/trackit-import.md) |
 | Recovery console | [docs/recovery-console.md](docs/recovery-console.md) |
