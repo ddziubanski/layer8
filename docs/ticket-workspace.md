@@ -1,0 +1,11 @@
+# Ticket workspace: Option B
+
+The default technician ticket view puts Conversation first. Work contains child tickets, checklists, expenses and changes; History retains the existing audit trail. Status, priority, SLA, requester, queue and assignee remain in the ticket header. Status & assignment opens Details.
+
+Tools opens a docked drawer: Details (status, assignment, requester and actions), Devices (computer, linked devices and systems), Directory, Scripts, Network, Copilot, Knowledge, Files, and Guest Wi-Fi when enabled and permitted. Existing forms, permission checks and API actions are reused. Computer script shortcuts open Scripts. Network reads existing ticket device links and cached IPAM/vendor observations; opening it launches no scan or diagnostic.
+
+Activated panels stay mounted while switching tabs/tools or closing the drawer, retaining unfinished forms and running operations. Escape closes Tools and restores focus to its button. Tab lists support Left/Right/Home/End. Reply text, selected files and public/internal choices also survive entering the Arrange editor. Drafts are in memory only, scoped to the signed-in user and ticket; navigating away resets them. Other tool forms can reset when entering Arrange, so finish those edits first.
+
+My preferences offers Conversation with tools drawer or Classic arranged panels, preferred tool, width (320–720 pixels), and keeping tools open on other tickets. Drawer controls save personal presentation preferences automatically, with errors and Retry. Mode changes take effect on the next ticket navigation so active work is not remounted. An omitted `ticket_workspace` in PUT /api/auth/me/preferences preserves it; null resets defaults. No database migration is required. These settings never grant permissions or enable integrations.
+
+Arrange this page retains the existing editor and saved layouts. Drawer mode respects hidden panels while grouping visible panels by purpose; classic mode also retains saved columns and order. Optional feature/permission gates continue to apply. The layout uses existing theme tokens, including light and Midnight; it does not change the tenant theme or introduce a Carbon color preset. Below 1200px the drawer stacks above the conversation and scrolls internally.

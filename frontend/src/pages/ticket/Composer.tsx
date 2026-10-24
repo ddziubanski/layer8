@@ -8,11 +8,17 @@ import { fileSize } from "../../format";
 
 /** Work notes and replies, with optional files. A note stays internal (technicians and admins)
  * unless it's shown to the requester in the portal, and maybe emailed to them too. */
-export function Composer({ ticketId, onDone }: { ticketId: number; onDone: () => void }) {
+export function useComposerDraft() {
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [toRequester, setToRequester] = useState(false);
   const [email, setEmail] = useState(true);
+  return { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail };
+}
+
+export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone: () => void; draft?: ReturnType<typeof useComposerDraft> }) {
+  const local = useComposerDraft();
+  const { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail } = draft ?? local;
   const picker = useRef<HTMLInputElement>(null);
   const drop = useDropFiles((dropped) => setFiles((f) => [...f, ...dropped]));
 

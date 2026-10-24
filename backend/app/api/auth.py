@@ -7,12 +7,13 @@ from typing import Annotated, get_args
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from sqlalchemy import select
+from pydantic import ValidationError
 
 from app import auth, kerberos, permissions, sla
 from app.auth import CurrentUser, SessionDep
 from app.config import settings
-from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SidebarModule, SignInOptionsOut
-from app.models import AppSetting, User
+from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SidebarModule, SignInOptionsOut, TicketWorkspacePreferences
+from app.models import AppSetting, User, UserRole
 
 
 def me_out(session, user) -> MeOut:
@@ -22,6 +23,12 @@ def me_out(session, user) -> MeOut:
     navigation = session.get(AppSetting, f"personal_navigation:{user.id}")
     hidden = navigation.value.get("hidden_modules", []) if navigation else []
     out.hidden_modules = sorted({m for m in hidden if isinstance(m, str) and m in get_args(SidebarModule)}) if isinstance(hidden, list) else []
+    presentation = session.get(AppSetting, f"personal_ticket_workspace:{user.id}")
+    if presentation:
+        try:
+            out.ticket_workspace = TicketWorkspacePreferences.model_validate(presentation.value)
+        except ValidationError:
+            pass  # A damaged preference never prevents signing in or working a ticket.
     return out
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -119,6 +126,8 @@ def change_password(body: PasswordChangeIn, user: CurrentUser, request: Request,
 @router.put("/me/preferences", response_model=MeOut)
 def save_preferences(body: PreferencesIn, user: CurrentUser, session: SessionDep):
     """My colours and sidebar; omitted fields preserve independently saved preferences."""
+    if "ticket_workspace" in body.model_fields_set and user.role == UserRole.requester:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Ticket workspace preferences are for technicians")
     session.scalar(select(User).where(User.id == user.id).with_for_update())
     if "ticket_color" in body.model_fields_set:
         user.ticket_color = body.ticket_color.lower() if body.ticket_color else None
@@ -131,6 +140,14 @@ def save_preferences(body: PreferencesIn, user: CurrentUser, session: SessionDep
             row = AppSetting(key=key)
             session.add(row)
         row.value = {"hidden_modules": body.hidden_modules or []}
+        row.updated_by_id, row.updated_at = user.id, sla.utcnow()
+    if "ticket_workspace" in body.model_fields_set:
+        key = f"personal_ticket_workspace:{user.id}"
+        row = session.get(AppSetting, key)
+        if row is None:
+            row = AppSetting(key=key)
+            session.add(row)
+        row.value = (body.ticket_workspace or TicketWorkspacePreferences()).model_dump()
         row.updated_by_id, row.updated_at = user.id, sla.utcnow()
     session.commit()
     return me_out(session, user)
