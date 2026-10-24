@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from app import meraki_oauth
-from app.auth import COOKIE, current_user, require_admin
+from app.auth import COOKIE, _user_from_cookie, current_user, require_admin
 from sqlalchemy import func, select
 
 from app import meraki
@@ -63,6 +63,9 @@ class MerakiDisconnectOut(BaseModel):
 
 @router.post("/oauth/connect", response_model=MerakiStartOut)
 def connect(user: Admin, request: Request, session: SessionDep):
+    browser_user = _user_from_cookie(session, request)
+    if browser_user is None or browser_user.id != user.id:
+        raise HTTPException(409, "Sign in with a browser session before connecting Meraki")
     meraki_oauth.lock(session)
     try:
         return {"url": meraki_oauth.begin(user.id, request.cookies.get(COOKIE))}

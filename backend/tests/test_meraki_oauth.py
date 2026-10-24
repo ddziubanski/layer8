@@ -218,6 +218,9 @@ def test_api_requires_admin_real_session_and_csrf(client, admin, agent, db, conf
     for path, method in [("/api/meraki/oauth/connect", "post"), ("/api/meraki/oauth/connection", "delete")]:
         assert getattr(client, method)(path, headers=as_user(agent)).status_code == 403
     assert client.post("/api/meraki/oauth/connect", headers=as_user(admin)).status_code == 409
+    client.cookies.set(auth.COOKIE, "invalid-browser-cookie")
+    assert client.post("/api/meraki/oauth/connect", headers=as_user(admin)).status_code == 409
+    client.cookies.clear()
     response = Response()
     auth.start_session(db, admin, response, sla.utcnow()); db.commit()
     cookie = response.headers["set-cookie"].split(";", 1)[0].split("=", 1)[1]
