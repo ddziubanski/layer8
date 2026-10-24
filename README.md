@@ -90,11 +90,10 @@ Current GUI screenshots, including dark mode, Settings and a tablet view: [comma
 
 Every setting can be changed in the app (Settings), and also imported from an answers file, so installs can be scripted end to end.
 
-## Planned and under review
+## Planned
 
-- **Action1 software deployment — [#33](https://github.com/ddziubanski/layer8/issues/33):** a searchable application catalogue, one reviewed package deployment to a ticket-linked computer, progress and a ticket audit trail. Later slices add bulk deployments and onboarding bundles. This is backlog work; the current Action1 integration reads patch status and automation schedules only.
-- **Copilot response review — [draft PR #32](https://github.com/ddziubanski/layer8/pull/32):** exact ticket-context preview, separate internal-note sharing, and editable answers that a technician can add as a note or explicitly send to the requester. These additions are not part of merged main yet.
 - **Appliance updates:** an optional online release check alongside offline installation, followed by signed update bundles, backup and rollback support. The current ISO installs its bundled application; it does not automatically pull a newer version from GitHub. Rebuild the ISO to include newer merged application changes.
+- **Action1 deployment, later slices ([#33](https://github.com/ddziubanski/layer8/issues/33)):** bulk targets and onboarding software bundles. One reviewed package to one ticket-linked computer is already available (opt-in, Settings > Action1).
 
 ## Integrations (all optional)
 
