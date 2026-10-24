@@ -12,7 +12,7 @@ test("personal show-all leaves global-off modules disabled", async () => {
   expect(ipam).toBeDisabled(); expect(ipam).not.toBeChecked();
   await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
   expect(ipam).toBeDisabled(); expect(ipam).not.toBeChecked();
-  expect(screen.getByRole("checkbox", { name: "Reports", exact: true })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "Reports" })).toBeChecked();
 });
 
 afterEach(() => vi.unstubAllGlobals());

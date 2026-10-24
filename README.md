@@ -43,7 +43,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md). A ga
 - Silent Windows sign-in (Kerberos) to the portal.
 - Creating AD accounts from a ticket: onboarding templates, group lists, a start date, and the password shown once.
 - Finer permissions: who may delete, merge, publish or manage each area, by group.
-- A personal workspace: hide optional sidebar modules individually or choose a minimal preset in My preferences. Tickets, My preferences and sign-out stay available; hidden modules remain reachable through Ctrl+K and direct links with existing permissions. [Workspace preferences](docs/workspace-preferences.md).
+- Global workspace modules in Settings > Modules: admins choose which areas the organization uses; technicians can hide more or choose a minimal preset in My preferences. Tickets, My preferences, admin recovery access and requester self-service stay available. Personally hidden modules remain reachable through Ctrl+K and direct links while globally enabled. [Workspace preferences](docs/workspace-preferences.md).
 
 **Devices and network**
 - Devices from AD computer objects, with tickets, IP addresses, switch port and lifecycle on each.

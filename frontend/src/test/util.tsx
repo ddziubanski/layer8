@@ -52,6 +52,7 @@ export const ME: Me = {
   ticket_color: null,
   color_rules: [],
   hidden_modules: [],
+  disabled_modules: [],
   // What every technician may do by default (Settings > Permissions).
   permissions: ["ticket_merge", "ticket_bulk", "ad_create_accounts", "kb_publish"],
   // Optional parts in use (Settings > General).
