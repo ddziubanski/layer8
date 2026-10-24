@@ -11,6 +11,7 @@ import io
 import json
 import os
 import pwd
+import re
 import shutil
 import signal
 import subprocess
@@ -36,6 +37,15 @@ def load(name, path):
 
 
 BUNDLE = Path("/bundle")
+# The bundle's own version, and patch releases after it for the fixtures.
+CURRENT = re.search(r'^VERSION = "([0-9.]+)"$', (BUNDLE / "backend/app/__init__.py").read_text(), re.M).group(1)
+
+
+def later(n):
+    major, minor, patch = map(int, CURRENT.split("."))
+    return f"{major}.{minor}.{patch + n}"
+
+
 command(["sh", str(BUNDLE / "install/install.sh"), "--demo", "--no-services"])
 protocol = load("protocol", Path("/usr/local/lib/layer8-updater/protocol.py"))
 helper = load("layer8_update", Path("/usr/local/lib/layer8-updater/layer8-update.py"))
@@ -102,7 +112,7 @@ def service(command_args, **kwargs):
 helper.run = service
 start("helpdesk-api")
 start("helpdesk-worker")
-helper.health("1.1.0")
+helper.health(CURRENT)
 command(["/usr/sbin/nginx"])
 
 
@@ -158,7 +168,7 @@ def downgrade():
             if relative not in seen:
                 target.add(path, arcname=prefix + "/" + relative)
     output = Path("/tmp") / ("release-" + release)
-    builder.build(bundle, output, release, "1.1.0", private)
+    builder.build(bundle, output, release, CURRENT, private)
     raw = (output / protocol.MANIFEST).read_bytes()
     request = {"version": "v" + release, "manifest_sha256": hashlib.sha256(raw).hexdigest(), "requested_by": 1, "id": os.urandom(16).hex()}
 
@@ -191,13 +201,13 @@ def execute(updater):
 
 
 try:
-    success = fixture("1.1.1")
+    success = fixture(later(1))
     assert execute(success)["phase"] == "succeeded"
     assert not (helper.STATE / "maintenance").exists()
     assert success.backup.is_file()
     # Make build tools available in this newly installed fixture's venv too.
     command([str(helper.APP / "venv/bin/pip"), "install", "--no-index", "--find-links", str(BUNDLE / "wheels"), "setuptools", "wheel"])
-    failed = fixture("1.1.2")
+    failed = fixture(later(2))
     original_as_app = helper.as_app
 
     def fail_after_migration(args, **kwargs):
@@ -209,17 +219,18 @@ try:
     helper.as_app = fail_after_migration
     assert execute(failed)["phase"] == "rolled_back"
     helper.as_app = original_as_app
-    assert helper.installed_version() == "1.1.1"
+    assert helper.installed_version() == later(1)
     assert not (helper.STATE / "maintenance").exists()
-    check = helper.as_app(["-c", "from app.db import engine; from sqlalchemy import text; c=engine.connect(); assert c.execute(text(\"SELECT to_regclass('public.updater_test_1_1_1')\")).scalar(); assert c.execute(text(\"SELECT to_regclass('public.updater_test_1_1_2')\")).scalar() is None; c.close()"], python=True)
-    helper.health("1.1.1")
-    uncertain = fixture("1.1.3")
+    first, second = (later(n).replace(".", "_") for n in (1, 2))
+    check = helper.as_app(["-c", f"from app.db import engine; from sqlalchemy import text; c=engine.connect(); assert c.execute(text(\"SELECT to_regclass('public.updater_test_{first}')\")).scalar(); assert c.execute(text(\"SELECT to_regclass('public.updater_test_{second}')\")).scalar() is None; c.close()"], python=True)
+    helper.health(later(1))
+    uncertain = fixture(later(3))
     original_worker_ready = helper.worker_ready
     helper.worker_ready = lambda *args: (_ for _ in ()).throw(protocol.UpdateError("Synthetic worker validation failure"))
     assert execute(uncertain)["phase"] == "recovery_required"
     assert (helper.STATE / "maintenance").exists()
     assert not processes
-    assert helper.installed_version() == "1.1.3"
+    assert helper.installed_version() == later(3)
     helper.worker_ready = original_worker_ready
     # An interrupted update must not be retried or clear maintenance at startup.
     sys.argv = ["layer8-update.py"]
