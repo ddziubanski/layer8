@@ -36,6 +36,9 @@ OUT = ROOT / "screenshots"
 # Also taken with dark mode on (Settings > Branding), into screenshots/dark/.
 DARK = ["01-sign-in", "02-queue", "03-ticket", "05-device", "05f-kb", "05k-ipam-subnet", "05o-network-gear", "06-reports", "13-portal"]
 PORT = 9333
+# Also taken with each fixed dark theme (Settings > Branding > Appearance), into screenshots/themes/<name>/.
+THEMES = {"ember": "Ember", "ultraviolet": "Ultraviolet"}
+THEMED = ["01-sign-in", "02-queue", "03-ticket", "13-portal"]
 WIDTH, HEIGHT = 1440, 900
 # A wallboard made for the run (and removed after), so its link is known.
 WALLBOARD_TOKEN = "l8w_screenshot-wallboard-token-for-dev-only"
@@ -279,6 +282,15 @@ def dark_mode(token: str, value: str | None = None) -> str:
     return was
 
 
+def theme_preset(token: str, value: str | None = None) -> str:
+    """Read Settings > Branding's appearance, or set it (returns what it was)."""
+    client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
+    was = next(f["value"] for f in client.get("/api/settings/theme").raise_for_status().json()["fields"] if f["name"] == "theme_preset")
+    if value is not None:
+        client.put("/api/settings/theme", json={"values": {"theme_preset": value}}).raise_for_status()
+    return was
+
+
 def main() -> None:
     try:
         httpx.get(f"{BASE}/api/health", timeout=3).raise_for_status()
@@ -306,6 +318,15 @@ def main() -> None:
             dark = asyncio.run(capture(tokens, [p for p in plan if p[0] in DARK], OUT / "dark"))
         finally:
             dark_mode(tokens["admin"], was)
+        themed = {}
+        was = theme_preset(tokens["admin"])
+        try:
+            for preset in THEMES:
+                theme_preset(tokens["admin"], preset)
+                (OUT / "themes" / preset).mkdir(parents=True, exist_ok=True)
+                themed[preset] = asyncio.run(capture(tokens, [p for p in plan if p[0] in THEMED], OUT / "themes" / preset))
+        finally:
+            theme_preset(tokens["admin"], was)
     finally:
         with SessionLocal() as session:
             session.execute(delete(UserSession).where(UserSession.token_hash.in_([_hash_token(t) for t in tokens.values()])))
@@ -317,6 +338,10 @@ def main() -> None:
     lines += ["# Dark mode", "", "Settings > Branding > Dark mode: off, always, or following each person's device setting.", ""]
     for name, caption in dark:
         lines += [f"## {caption} (dark)", "", f"![{caption}, dark](dark/{name}.png)", ""]
+    lines += ["# Dark themes", "", "Settings > Branding > Appearance: fixed dark palettes, alongside Midnight ([midnight/](midnight/README.md)).", ""]
+    for preset, shots_taken in themed.items():
+        for name, caption in shots_taken:
+            lines += [f"## {caption} ({THEMES[preset]})", "", f"![{caption}, {THEMES[preset]}](themes/{preset}/{name}.png)", ""]
     (OUT / "README.md").write_text("\n".join(lines))
     print(f"{len(done)} screenshots in {OUT}")
 

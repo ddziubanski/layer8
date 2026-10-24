@@ -444,7 +444,7 @@ class BrandingOut(BaseModel):
     sign_in_message: str
     background_in_console: bool
     portal_welcome: str
-    theme_preset: Literal["custom", "midnight"] = "custom"
+    theme_preset: Literal["custom", "midnight", "ember", "ultraviolet"] = "custom"
     theme_brand: str
     theme_sidebar: str
     dark_mode: str

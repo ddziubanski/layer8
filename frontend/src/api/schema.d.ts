@@ -5364,7 +5364,7 @@ export interface components {
              * @default custom
              * @enum {string}
              */
-            theme_preset: "custom" | "midnight";
+            theme_preset: "custom" | "midnight" | "ember" | "ultraviolet";
             /** Theme Brand */
             theme_brand: string;
             /** Theme Sidebar */

@@ -377,7 +377,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("receiving_notify", "Also tell this address when something arrives", "E.g. the service desk mailbox. The PO's requester and approver are always told.", check=_email),
     ],
     "theme": [
-        Field("theme_preset", "Appearance", "Midnight uses a fixed dark navy and cyan palette. Choose Custom colours to restore your saved colours and dark-mode preference.", choices=(("custom", "Custom colours"), ("midnight", "Midnight command center"))),
+        Field("theme_preset", "Appearance", "Midnight, Ember and Ultraviolet are fixed dark palettes: navy and cyan; plum, violet and amber; near-black, violet and gold. Choose Custom colours to restore your saved colours and dark-mode preference.", choices=(("custom", "Custom colours"), ("midnight", "Midnight command center"), ("ember", "Ember"), ("ultraviolet", "Ultraviolet"))),
         Field("theme_brand", "Main colour", "For Custom colours: buttons, links, selected items and report bars. White text goes on it, so it must be dark enough.", check=_colour_under_white_text, colour=True),
         Field("theme_sidebar", "Sidebar colour", "For Custom colours: the console's sidebar and the portal's top bar, with white text.", check=_colour_under_white_text, colour=True),
         Field("dark_mode", "Dark mode", "For Custom colours. Midnight is always dark.", choices=(("off", "Off"), ("auto", "Follow each person's device setting"), ("on", "Always dark"))),

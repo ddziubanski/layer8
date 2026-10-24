@@ -922,6 +922,77 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 :root[data-preset="midnight"] input::placeholder,
 :root[data-preset="midnight"] textarea::placeholder { color: #9ab1c7; opacity: 1; }
 
+/* Ember is opt-in: dark plum, violet buttons, amber highlights. */
+:root[data-preset="ember"], .theme-preview[data-preset="ember"] {
+  --ink: #f3ecfb; --muted: #b9a8cf;
+  --bg: #110a1a; --surface: #1b1228;
+  --line: #33244a; --line-soft: #2a1d3d; --input-line: #6e5896;
+  --note-bg: #2a2014; --note-line: #6e5326; --error: #ff9fb0;
+  --head-bg: #241834; --row-hover: #2a1d42; --tint: #2a1a45; --code-bg: #150d21;
+  --chip-g-bg: #0f3d3a; --chip-g: #9ff0dc;
+  --chip-a-bg: #4a3510; --chip-a: #ffe08a;
+  --chip-r-bg: #4a1424; --chip-r: #ffc2cc; --chip-n-bg: #2b2040;
+  --outage-bg: #3a1424; --outage-line: #a34a66;
+  --shade: rgba(8, 3, 14, .76); --shadow: rgba(5, 1, 10, .6); --veil: rgba(27, 18, 40, .94);
+  --link: var(--dark-link); --console-shadow: 0 7px 24px rgba(5, 1, 10, .25);
+  color-scheme: dark;
+}
+:root[data-preset="ember"] .shell .side {
+  background: linear-gradient(170deg, #1a0f2e, #2a0f2a);
+  border-right-color: #33244a;
+}
+:root[data-preset="ember"] .shell .side > a.active {
+  background: #3a2160;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+:root[data-preset="ember"] .trow.head { background: var(--head-bg); }
+:root[data-preset="ember"] .trow.body:nth-child(odd) { background: #160e22; }
+:root[data-preset="ember"] .trow.body:hover,
+:root[data-preset="ember"] .trow.body:focus-within { background: var(--row-hover); }
+:root[data-preset="ember"] .chip { border-radius: 6px; }
+:root[data-preset="ember"] .shell .card.note,
+:root[data-preset="ember"] .ticket-message-internal { background: var(--note-bg); }
+:root[data-preset="ember"] .queue-eyebrow,
+:root[data-preset="ember"] .workspace-area { color: var(--accent); }
+:root[data-preset="ember"] .btn,
+.theme-preview[data-preset="ember"] .btn { box-shadow: 0 4px 16px rgba(124, 77, 255, .3); }
+:root[data-preset="ember"] :focus-visible { outline-color: #ffb547; }
+:root[data-preset="ember"] input::placeholder,
+:root[data-preset="ember"] textarea::placeholder { color: #a594bd; opacity: 1; }
+
+/* Ultraviolet is opt-in: flat near-black, one violet, gold highlights. */
+:root[data-preset="ultraviolet"], .theme-preview[data-preset="ultraviolet"] {
+  --ink: #ecebf3; --muted: #a9a5bb;
+  --bg: #0c0b12; --surface: #16141f;
+  --line: #2a2638; --line-soft: #221f2e; --input-line: #5a5572;
+  --note-bg: #221f16; --note-line: #5c4d1c; --error: #ffb4b4;
+  --head-bg: #1d1a29; --row-hover: #211c33; --tint: #1f1b2c; --code-bg: #100f17;
+  --chip-g-bg: #0f3326; --chip-g: #a7f3d0;
+  --chip-a-bg: #3b3008; --chip-a: #fde68a;
+  --chip-r-bg: #3d1418; --chip-r: #ffb4b4; --chip-n-bg: #26222f;
+  --outage-bg: #33171b; --outage-line: #8f4048;
+  --shade: rgba(4, 3, 8, .78); --shadow: rgba(0, 0, 4, .6); --veil: rgba(22, 20, 31, .95);
+  --link: var(--dark-link); --console-shadow: none;
+  color-scheme: dark;
+}
+:root[data-preset="ultraviolet"] .shell .side { border-right-color: #2a2638; }
+:root[data-preset="ultraviolet"] .shell .side > a.active {
+  background: #241d38;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+:root[data-preset="ultraviolet"] .trow.head { background: var(--head-bg); }
+:root[data-preset="ultraviolet"] .trow.body:nth-child(odd) { background: #13111b; }
+:root[data-preset="ultraviolet"] .trow.body:hover,
+:root[data-preset="ultraviolet"] .trow.body:focus-within { background: var(--row-hover); }
+:root[data-preset="ultraviolet"] .chip { border-radius: 4px; }
+:root[data-preset="ultraviolet"] .shell .card.note,
+:root[data-preset="ultraviolet"] .ticket-message-internal { background: var(--note-bg); }
+:root[data-preset="ultraviolet"] .queue-eyebrow,
+:root[data-preset="ultraviolet"] .workspace-area { color: #a78bfa; }
+:root[data-preset="ultraviolet"] :focus-visible { outline-color: #facc15; }
+:root[data-preset="ultraviolet"] input::placeholder,
+:root[data-preset="ultraviolet"] textarea::placeholder { color: #9792ab; opacity: 1; }
+
 /* AGPL section 13: where to get the source of this installation. */
 .source-notice { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
 .source-notice a { color: inherit; text-decoration: underline; }
