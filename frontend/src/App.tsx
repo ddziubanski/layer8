@@ -52,6 +52,7 @@ const SurveyPage = named(() => import("./portal/Survey"), "SurveyPage");
 const VendorsPage = named(() => import("./pages/vendors/VendorsPage"), "VendorsPage");
 const JunosAdmin = named(() => import("./pages/admin/JunosAdmin"), "JunosAdmin");
 const UnifiAdmin = named(() => import("./pages/admin/UnifiAdmin"), "UnifiAdmin");
+const NutanixAdmin = named(() => import("./pages/admin/NutanixAdmin"), "NutanixAdmin");
 const MerakiAdmin = named(() => import("./pages/admin/MerakiAdmin"), "MerakiAdmin");
 const IpamPage = named(() => import("./pages/ipam/IpamPage"), "IpamPage");
 const DevicesPage = named(() => import("./pages/devices/DevicesPage"), "DevicesPage");
@@ -173,6 +174,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "runners", label: "Runners", adminOnly: true, page: (me) => <RunnersAdmin me={me} /> },
   { path: "meraki", label: "Meraki", adminOnly: true, page: (me) => <MerakiAdmin me={me} /> },
   { path: "unifi", label: "UniFi", adminOnly: true, page: (me) => <UnifiAdmin me={me} /> },
+  { path: "nutanix", label: "Nutanix", adminOnly: true, page: (me) => <NutanixAdmin me={me} /> },
   { path: "juniper", label: "Juniper", adminOnly: true, page: (me) => <JunosAdmin me={me} /> },
   { path: "action1", label: "Action1", adminOnly: true, feature: "action1", page: (me) => <Action1Admin me={me} /> },
   { path: "api-keys", label: "API keys", adminOnly: true, page: (me) => <ApiKeysAdmin me={me} /> },

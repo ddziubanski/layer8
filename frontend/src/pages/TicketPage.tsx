@@ -24,6 +24,7 @@ import { SystemsCard } from "./ticket/SystemsCard";
 import { KnowledgeCard } from "./ticket/KnowledgeCard";
 import { CopilotCard } from "./ticket/CopilotCard";
 import { GuestWifiCard } from "./ticket/GuestWifiCard";
+import { TicketVmsCard } from "../components/Nutanix";
 import { can, uses } from "../permissions";
 import { ME_KEY } from "../queryClient";
 import { ScriptsCard } from "./ticket/ScriptsCard";
@@ -190,6 +191,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           },
           devices: { label: "Devices", node: <DevicesCard ticket={t} onChanged={refresh} /> },
           systems: { label: "Systems", node: <SystemsCard ticket={t} onChanged={refresh} /> },
+          vms: { label: "Virtual machines", node: uses(signedIn.data ?? {}, "nutanix") ? <TicketVmsCard ticketId={t.id} onChanged={refresh} /> : null },
           changes: { label: "Changes", node: <ChangesCard ticket={t} /> },
           knowledge: { label: "Knowledge base", node: <KnowledgeCard ticket={t} /> },
           copilot: { label: "Copilot", node: uses(signedIn.data ?? {}, "copilot") ? <CopilotCard ticket={t} onChanged={refresh} /> : null },

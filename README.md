@@ -55,6 +55,7 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Cisco Meraki, read-only and opt-in: client discovery (switch port, VLAN, SSID) on IP records, devices and tickets; port and wireless diagnostics; and device outage tickets from Meraki alerts.
 - Ubiquiti UniFi, opt-in, through the cloud or a local console: equipment with its state, client discovery on IP records, devices and tickets, outage tickets for offline equipment, and guest Wi-Fi vouchers from a ticket ([docs/unifi.md](docs/unifi.md)).
 - Juniper EX switches (configured one by one), opt-in and read-only: a runner on the LAN reads each switch's Junos REST API, so clients show with their switch, port and VLAN; outage tickets for switches that stop answering ([docs/juniper.md](docs/juniper.md)).
+- Nutanix AHV through Prism Central, opt-in: VMs with their power state, host and addresses, matched to devices and linked to tickets; optional restart, power on and power cycle from a ticket, each noted on it ([docs/nutanix.md](docs/nutanix.md)).
 - Dell and Lenovo warranty lookups through their official APIs.
 - IP address management:
   - subnets and VLANs, with a used/free map
@@ -118,6 +119,7 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Wallboards (live board for a big screen, secret link) | [docs/wallboard.md](docs/wallboard.md) |
 | Ubiquiti UniFi (cloud or local console) | [docs/unifi.md](docs/unifi.md) |
 | Juniper EX switches (Junos REST, through a runner) | [docs/juniper.md](docs/juniper.md) |
+| Nutanix AHV (Prism Central v4 API) | [docs/nutanix.md](docs/nutanix.md) |
 | Desk hours and technicians' Teams status on the portal | [docs/desk-hours.md](docs/desk-hours.md) |
 | **Microsoft 365, step by step** (email, Teams, technician connections, Copilot) | [docs/microsoft-365.md](docs/microsoft-365.md) |
 

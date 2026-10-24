@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app import ipam, services, sla
 from app.models import NetworkInventory, NetworkObservation, NetworkOutage, Priority, Queue, Ticket, TicketSource, TicketStatus
 
-LABELS = {"unifi": "UniFi", "junos": "Juniper"}
+LABELS = {"unifi": "UniFi", "junos": "Juniper", "nutanix": "Nutanix"}
 OPEN = (TicketStatus.new, TicketStatus.open, TicketStatus.waiting_on_user)
 
 
@@ -144,9 +144,11 @@ def context_for(session: Session, macs, providers: dict[str, timedelta]) -> dict
 
 def active_providers() -> dict[str, timedelta]:
     """Integrations that are on, with how old their observations may get before they're stale."""
-    from app import junos, unifi
+    from app import junos, nutanix, unifi
 
     out = {}
+    if nutanix.on():
+        out[nutanix.PROVIDER] = nutanix.stale_after()
     if unifi.on():
         out[unifi.PROVIDER] = unifi.stale_after()
     if junos.on():

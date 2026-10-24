@@ -10,7 +10,7 @@ export type TicketTool = TicketWorkspacePreference["selected_tool"];
 export const DEFAULT_TICKET_WORKSPACE: TicketWorkspacePreference = { mode: "drawer", selected_tool: "details", keep_open: false, width: 440 };
 export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; panels: string[] }[] = [
   { id: "details", label: "Details", symbol: "◧", panels: ["status", "assignment", "requester", "actions"] },
-  { id: "devices", label: "Devices", symbol: "▣", panels: ["computer", "devices", "systems"] },
+  { id: "devices", label: "Devices", symbol: "▣", panels: ["computer", "devices", "systems", "vms"] },
   { id: "directory", label: "Directory", symbol: "♙", panels: ["ad_account"] },
   { id: "scripts", label: "Scripts", symbol: "⌘", panels: ["scripts"] },
   { id: "network", label: "Network", symbol: "⌗", panels: ["network"] },
