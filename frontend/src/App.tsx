@@ -4,7 +4,7 @@ import { ModuleAccess } from "./components/ModuleAccess";
 import { ConsoleLayout } from "./components/ConsoleLayout";
 import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { lazy, Suspense, useMemo, type ComponentType } from "react";
+import { lazy, Suspense, useMemo, useState, type ComponentType } from "react";
 import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider, useParams } from "react-router";
 
 import { ApiError, api, type Me } from "./api/client";
@@ -142,13 +142,13 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "users", label: "Users", page: (me) => <UsersAdmin me={me} /> },
   { path: "groups", label: "Groups", page: (me) => <GroupsAdmin me={me} /> },
   { path: "permissions", label: "Permissions", adminOnly: true, page: () => <PermissionsAdmin /> },
-  { path: "directory", label: "Directory", adminOnly: true, page: (me) => <DirectoryAdmin me={me} /> },
+  { path: "directory", label: "Directory (AD)", adminOnly: true, page: (me) => <DirectoryAdmin me={me} /> },
   { path: "onboarding", label: "Onboarding templates", adminOnly: true, permission: "templates_manage", page: (me) => <OnboardingAdmin me={me} /> },
   { path: "checklists", label: "Checklists", adminOnly: true, permission: "templates_manage", page: (me) => <ChecklistsAdmin me={me} /> },
   { path: "changes", label: "Changes", adminOnly: true, permission: "templates_manage", page: (me) => <ChangesAdmin me={me} /> },
-  { path: "email", label: "Email", adminOnly: true, page: (me) => <EmailAdmin me={me} /> },
+  { path: "email", label: "Mailbox (Microsoft 365)", adminOnly: true, page: (me) => <EmailAdmin me={me} /> },
   { path: "requester-emails", label: "Requester emails", adminOnly: true, page: (me) => <RequesterEmailsAdmin me={me} /> },
-  { path: "desk-hours", label: "Desk hours", adminOnly: true, page: (me) => <SettingsForm me={me} section="hours" title="Desk hours" intro="When technicians are in. The portal shows each queue as open or closed, with the after-hours message and when someone is next expected. A queue can have its own hours (Settings > Queues). Teams status shows each queue's owners as available, busy, away or offline: status only, with no way to start a chat." /> },
+  { path: "desk-hours", label: "Desk hours and SLA", adminOnly: true, page: (me) => <SettingsForm me={me} section="hours" title="Desk hours" intro="When technicians are in. The portal shows each queue as open or closed, with the after-hours message and when someone is next expected. A queue can have its own hours (Settings > Queues). Teams status shows each queue's owners as available, busy, away or offline: status only, with no way to start a chat." /> },
   { path: "teams", label: "Teams", adminOnly: true, page: (me) => <SettingsForm me={me} section="teams" title="Teams" intro="Optional periodic queue counts through a Teams Workflows webhook. Only non-restricted queues contribute. No ticket details or people are sent. Configure a workflow and enable summaries when ready; use Settings > Status to run or pause delivery." /> },
   { path: "windows-sign-in", label: "Windows sign-in", adminOnly: true, page: (me) => <WindowsSignInAdmin me={me} /> },
   { path: "sign-in", label: "Sign-in", adminOnly: true, page: (me) => <SettingsForm me={me} section="signin" title="Sign-in" intro="Two-factor sign-in for admins, and Sign in with Microsoft (Entra ID). Everyone can turn two-factor sign-in on for themselves in My preferences. Recovery from the server: python -m app.cli two-factor-reset <email>. Step by step: docs/entra-sign-in.md." /> },
@@ -189,7 +189,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   },
   {
     path: "ipam",
-    label: "IP addresses",
+    label: "IP address scans",
     adminOnly: true,
     page: (me) => <SettingsForm me={me} section="ipam" title="IP addresses" intro="Scans: when a documented address counts as gone, and which unknown hosts are flagged. Each subnet's schedule and relay are set on the subnet." />,
   },
@@ -212,20 +212,61 @@ function LabelPreview({ format, first }: { format: string; first: number }) {
   );
 }
 
-const settingsTabs = (me: Me) =>
+// Settings > category > page. A page not listed here shows under "Other" (so a new page is never lost).
+const SETTINGS_GROUPS: { name: string; paths: string[] }[] = [
+  { name: "Helpdesk", paths: ["queues", "rules", "ticket-fields", "canned-replies", "requester-emails", "desk-hours", "surveys", "notices"] },
+  { name: "Workflows", paths: ["checklists", "onboarding", "changes", "purchasing"] },
+  { name: "Monitoring", paths: ["meraki", "unifi", "juniper", "nutanix", "ipam", "sweeps"] },
+  { name: "API / Integrations", paths: ["api-keys", "runners", "email", "teams", "action1", "warranty"] },
+  { name: "People and access", paths: ["users", "groups", "permissions", "directory", "sign-in", "windows-sign-in"] },
+  { name: "Look and feel", paths: ["branding", "modules", "wallboards"] },
+  { name: "System", paths: ["general", "updates", "backup", "status", "log"] },
+];
+
+const allowedSettings = (me: Me) =>
   SETTINGS.filter((s) => (!s.adminOnly || me.role === "admin" || (s.permission && can(me, s.permission))) && (!s.feature || uses(me, s.feature)));
+
+/** The pages this person may open, by category, in the order shown. */
+function settingsGroups(me: Me) {
+  const pages = allowedSettings(me);
+  const listed = new Set(SETTINGS_GROUPS.flatMap((g) => g.paths));
+  const groups = SETTINGS_GROUPS.map((g) => ({ name: g.name, pages: g.paths.map((path) => pages.find((p) => p.path === path)).filter((p) => p !== undefined) }));
+  groups.push({ name: "Other", pages: pages.filter((p) => !listed.has(p.path)) });
+  return groups.filter((g) => g.pages.length > 0);
+}
+
+const settingsTabs = (me: Me) => settingsGroups(me).flatMap((g) => g.pages);
+
+/** Settings' own menu: categories with their pages, and a box to find a page by name. */
+function SettingsNavigation({ me }: { me: Me }) {
+  const [find, setFind] = useState("");
+  const words = find.trim().toLowerCase();
+  const groups = settingsGroups(me)
+    .map((g) => ({ ...g, pages: words && !g.name.toLowerCase().includes(words) ? g.pages.filter((p) => p.label.toLowerCase().includes(words)) : g.pages }))
+    .filter((g) => g.pages.length > 0);
+  return (
+    <nav className="settings-navigation" aria-label="Settings">
+      <input type="search" className="settings-find" aria-label="Find a setting" placeholder="Find a setting" value={find} onChange={(e) => setFind(e.target.value)} />
+      {groups.map((g) => (
+        <div key={g.name} className="settings-group" role="group" aria-label={g.name}>
+          <div className="settings-group-name" aria-hidden="true">{g.name}</div>
+          {g.pages.map((s) => (
+            <NavLink key={s.path} to={`/settings/${s.path}`}>
+              {s.label}
+            </NavLink>
+          ))}
+        </div>
+      ))}
+      {groups.length === 0 && <p className="muted small">No setting called that.</p>}
+    </nav>
+  );
+}
 
 function SettingsLayout({ me }: { me: Me }) {
   return (
     <section className="settings-workspace">
       <div className="settings-grid">
-      <nav className="tabs settings-navigation" aria-label="Settings">
-        {settingsTabs(me).map((s) => (
-          <NavLink key={s.path} to={`/settings/${s.path}`}>
-            {s.label}
-          </NavLink>
-        ))}
-      </nav>
+      <SettingsNavigation me={me} />
       <div className="settings-content"><Outlet /></div>
       </div>
     </section>

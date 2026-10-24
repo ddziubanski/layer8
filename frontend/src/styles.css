@@ -818,10 +818,14 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 @media(max-width:1000px) { .module-workspace .admin { grid-template-columns:minmax(0,1fr); } }
 
 /* All Settings sections share navigation and a readable configuration canvas. */
-.settings-grid { display:grid; grid-template-columns:220px minmax(0,1fr); gap:22px; align-items:start; }
-.main .settings-navigation { display:flex; flex-direction:column; flex-wrap:nowrap; gap:3px; margin:0; padding:10px; position:sticky; top:16px; max-height:calc(100vh - 48px); overflow:auto; }
-.main .settings-navigation a { padding:10px 12px; border-radius:7px; line-height:1.4; }
-.main .settings-navigation a.active { box-shadow:inset 3px 0 var(--link); }
+.settings-grid { display:grid; grid-template-columns:240px minmax(0,1fr); gap:22px; align-items:start; }
+.main .settings-navigation { display:flex; flex-direction:column; flex-wrap:nowrap; gap:12px; margin:0; padding:12px 10px; position:sticky; top:16px; max-height:calc(100vh - 48px); overflow:auto; background:var(--surface); border:1px solid var(--line); border-radius:10px; }
+.main .settings-navigation a { display:block; padding:6px 10px; border-radius:7px; line-height:1.4; color:var(--ink); text-decoration:none; }
+.main .settings-navigation a:hover { background:var(--row-hover); }
+.main .settings-navigation a.active { box-shadow:inset 3px 0 var(--link); background:var(--tint); font-weight:600; }
+.settings-find { width:100%; box-sizing:border-box; }
+.settings-group { display:flex; flex-direction:column; gap:1px; }
+.settings-group-name { padding:0 10px 4px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
 .settings-content { min-width:0; }
 .settings-content > .stack, .settings-content > .card, .settings-content > form { max-width:1100px; }
 .settings-content .settings-form { width:100%; max-width:960px; box-sizing:border-box; }
@@ -830,7 +834,7 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .settings-content .form-grid { gap:14px; }
 .settings-content :is(input,select,textarea) { min-width:0; }
 .settings-content .table-wrap { overflow:auto; max-width:100%; }
-@media(max-width:1100px) { .settings-grid { grid-template-columns:minmax(0,1fr); } .main .settings-navigation { flex-direction:row; flex-wrap:wrap; position:static; max-height:none; } }
+@media(max-width:1100px) { .settings-grid { grid-template-columns:minmax(0,1fr); } .main .settings-navigation { flex-direction:row; flex-wrap:wrap; position:static; max-height:none; } .settings-find { flex-basis:100%; } }
 
 /* Requesters keep the same conversation, document and account workflows. */
 .portal-detail-workspace { max-width:1160px; }
