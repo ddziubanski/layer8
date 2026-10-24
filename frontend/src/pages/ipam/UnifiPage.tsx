@@ -7,15 +7,26 @@ import { when } from "../../format";
 
 const KIND: Record<string, string> = { gateway: "Gateway", switch: "Switch", ap: "Access point", other: "Device" };
 
-/** IP addresses > UniFi: equipment with its state, and the clients UniFi last saw (cached, read only). */
+type Vendor = "unifi" | "junos";
+const VENDOR = {
+  unifi: { name: "UniFi", settings: "Settings > UniFi has the connection and a Read now button.", api: api.unifi },
+  junos: { name: "Juniper", settings: "Settings > Juniper has the switches and a Read now button.", api: api.junos },
+};
+
+/** IP addresses > UniFi / Juniper: equipment with its state, and the clients it last saw (cached, read only). */
 export function UnifiPage() {
+  return <VendorNetworkPage vendor="unifi" />;
+}
+
+export function VendorNetworkPage({ vendor }: { vendor: Vendor }) {
+  const v = VENDOR[vendor];
   const [q, setQ] = useState("");
-  const devices = useQuery({ queryKey: ["unifi-devices"], queryFn: () => api.unifi.devices() });
-  const clients = useQuery({ queryKey: ["unifi-clients", q], queryFn: () => api.unifi.clients({ q }) });
+  const devices = useQuery({ queryKey: [vendor, "devices"], queryFn: () => v.api.devices() });
+  const clients = useQuery({ queryKey: [vendor, "clients", q], queryFn: () => v.api.clients({ q }) });
   const offline = (devices.data ?? []).filter((d) => d.state === "offline").length;
   return (
     <div className="stack">
-      <section className="card stack" aria-label="UniFi equipment">
+      <section className="card stack" aria-label={`${v.name} equipment`}>
         <div className="row-gap">
           <h2 className="spacer" style={{ margin: 0 }}>Equipment</h2>
           <span className={offline ? "chip r" : "chip g"}>{offline ? `${offline} offline` : "All online"}</span>
@@ -39,17 +50,17 @@ export function UnifiPage() {
                   <td><span className={`chip ${d.state === "online" ? "g" : d.state === "offline" ? "r" : "n"}`}>{d.state}</span></td>
                 </tr>
               ))}
-              {devices.data?.length === 0 && <tr><td colSpan={8} className="muted small">Nothing read yet. Settings &gt; UniFi has the connection and a Read now button.</td></tr>}
+              {devices.data?.length === 0 && <tr><td colSpan={8} className="muted small">Nothing read yet. {v.settings}</td></tr>}
             </tbody>
           </table>
         </div>
       </section>
-      <section className="card stack" aria-label="UniFi clients">
+      <section className="card stack" aria-label={`${v.name} clients`}>
         <div className="row-gap">
           <h2 className="spacer" style={{ margin: 0 }}>Clients</h2>
-          <input type="search" aria-label="Search UniFi clients" placeholder="Name, IP, MAC, access point, SSID or network" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input type="search" aria-label={`Search ${v.name} clients`} placeholder={vendor === "junos" ? "IP, MAC, switch, port or VLAN" : "Name, IP, MAC, access point, SSID or network"} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <p className="muted small" style={{ margin: 0 }}>What UniFi last reported; documented IP records are not changed. Matching records show this beside them.</p>
+        <p className="muted small" style={{ margin: 0 }}>What {v.name} last reported; documented IP records are not changed. Matching records show this beside them.</p>
         <div className="table-wrap">
           <table className="grid">
             <thead>

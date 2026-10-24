@@ -79,6 +79,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Runners",
     "Meraki",
     "UniFi",
+    "Juniper",
     "Action1",
     "API keys",
     "Wallboards",

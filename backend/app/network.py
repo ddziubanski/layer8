@@ -52,6 +52,26 @@ def replace_snapshot(session: Session, provider: str, observations: list[Network
     session.flush()
 
 
+def replace_sources(session: Session, provider: str, sources: set[str], observations: list[NetworkObservation], inventory: list[NetworkInventory], *, all_inventory: bool = False) -> None:
+    """Swap in the clients of the sources that answered (others keep theirs, going stale), and the
+    inventory: of those sources, or of every source when the read reports all of them (`all_inventory`)."""
+    if sources:
+        session.execute(delete(NetworkObservation).where(NetworkObservation.provider == provider, NetworkObservation.source_id.in_(sources)))
+    inv = delete(NetworkInventory).where(NetworkInventory.provider == provider)
+    session.execute(inv if all_inventory else inv.where(NetworkInventory.source_id.in_(sources or {""})))
+    seen = set()
+    for o in observations:
+        if o.mac and o.source_id in sources and (o.source_id, o.mac) not in seen:
+            seen.add((o.source_id, o.mac))
+            session.add(o)
+    keys = set()
+    for i in inventory:
+        if (i.source_id, i.device_key) not in keys:
+            keys.add((i.source_id, i.device_key))
+            session.add(i)
+    session.flush()
+
+
 def track_outages(session: Session, provider: str, *, enabled: bool, after_minutes: int, queue_id: int, now: datetime | None = None) -> dict[str, int]:
     """After a complete read: equipment offline for `after_minutes` gets one ticket (when `enabled`);
     when it's back online, its open ticket gets an internal note for review, never a status change."""
@@ -124,9 +144,11 @@ def context_for(session: Session, macs, providers: dict[str, timedelta]) -> dict
 
 def active_providers() -> dict[str, timedelta]:
     """Integrations that are on, with how old their observations may get before they're stale."""
-    from app import unifi
+    from app import junos, unifi
 
     out = {}
     if unifi.on():
         out[unifi.PROVIDER] = unifi.stale_after()
+    if junos.on():
+        out[junos.PROVIDER] = junos.stale_after()
     return out

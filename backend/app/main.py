@@ -72,6 +72,8 @@ app.include_router(action1.router)
 app.include_router(meraki.router)
 from app.api import unifi as unifi_api
 app.include_router(unifi_api.router)
+from app.api import junos as junos_api
+app.include_router(junos_api.router)
 from app.api import software_deployment as software_deployment_api
 app.include_router(software_deployment_api.router)
 app.include_router(checklists.router)

@@ -75,6 +75,20 @@ class Settings(BaseSettings):
     unifi_outage_minutes: int = 10
     unifi_outage_queue_id: int = 0
     unifi_vouchers_enabled: bool = False
+    # Juniper EX switches managed one by one (app.junos): a runner on the LAN reads each switch's
+    # Junos REST API (read only) and reports clients and reachability.
+    junos_enabled: bool = False
+    junos_switches: str = ""
+    junos_username: str = ""
+    junos_password: str = ""
+    junos_ca_file: str = ""
+    junos_verify_tls: bool = True
+    junos_runner: str = ""
+    junos_sync_minutes: int = 30
+    junos_uplink_macs: int = 20
+    junos_outage_tickets: bool = False
+    junos_outage_minutes: int = 10
+    junos_outage_queue_id: int = 0
 
     # Action1 API credentials and console region (patch state is read only).
     action1_region: str = "NorthAmerica"

@@ -45,3 +45,30 @@ test("guest Wi-Fi: make a voucher for the ticket and show its code", async () =>
   expect(await screen.findByText("12345-67890")).toBeInTheDocument();
   expect(calls.find((c) => c.method === "POST")?.body).toEqual({ source_id: "c1:s1", minutes: 1440, guests: 1 });
 });
+
+test("IP addresses > Juniper shows switches (not answering first) and clients with switch and port", async () => {
+  const { VendorNetworkPage } = await import("./ipam/UnifiPage");
+  mockApi({
+    "GET /api/junos/devices": [{ source_id: "idf-2", source_name: "idf-2", device_key: "idf-2", name: "idf-2", model: "ex2300-48p", kind: "switch", mac: "", address: "10.0.0.3", state: "offline", firmware: "", observed_at: NOW }],
+    "GET /api/junos/clients": [{ ...OBS, provider: "junos", provider_label: "Juniper", source_id: "core-1", source_name: "core-1", uplink_name: "core-1", port: "ge-0/0/5", network: "staff", ssid: "", connection: "wired" }],
+  });
+  renderAt("/", [{ path: "/", element: <VendorNetworkPage vendor="junos" /> }]);
+  expect(await screen.findByText("1 offline")).toBeInTheDocument();
+  expect(await screen.findByText("core-1 · port ge-0/0/5 · wired")).toBeInTheDocument();
+  expect(screen.getByLabelText("Search Juniper clients")).toBeInTheDocument();
+});
+
+test("Settings > Juniper asks a runner to read the switches", async () => {
+  const { JunosAdmin } = await import("./admin/JunosAdmin");
+  const { ME } = await import("../test/util");
+  const calls = mockApi({
+    "GET /api/junos/status": { enabled: true, configured: true, switches: 2, offline: 0, clients: 14, waiting: false, last_read_at: NOW, last_summary: "2 of 2 switches answered, 14 clients", last_error: "" },
+    "POST /api/junos/read": { run_id: 77 },
+    "GET /api/settings/junos": { section: "junos", fields: [] },
+  });
+  renderAt("/", [{ path: "/", element: <JunosAdmin me={{ ...ME, role: "admin" }} /> }]);
+  expect(await screen.findByText(/2 of 2 switches answered, 14 clients/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Read the switches now" }));
+  expect(await screen.findByText(/run #77/)).toBeInTheDocument();
+  expect(calls.some((c) => c.method === "POST" && c.path === "/api/junos/read")).toBe(true);
+});

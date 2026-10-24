@@ -43,6 +43,7 @@ LABELS = {
     "ipam": "IP address scans (scheduled)",
     "meraki": "Meraki: read client observations",
     "unifi": "UniFi: read clients and equipment, outage tickets",
+    "junos": "Juniper: ask a runner to read the switches",
     "action1": "Action1: read patch status",
     "sweeps": "Device sweep (weekly ticket)",
     "warranty": "Warranty lookups (Dell, Lenovo)",
@@ -182,6 +183,17 @@ def build_jobs(session_factory, mail) -> list[Job]:
         finally:
             client.close()
 
+    def junos_read(forced: bool):
+        from app import junos
+
+        with session_factory() as session:
+            try:
+                result = junos.scheduled_read(session)
+            except junos.JunosError as exc:
+                return str(exc), False
+            session.commit()
+            return result
+
     def action1_sync(forced: bool):
         from app import action1
 
@@ -264,6 +276,7 @@ def build_jobs(session_factory, mail) -> list[Job]:
         Job("ipam", "ipam", _every(300), ipam_scans),
         Job("meraki", "meraki", lambda: timedelta(minutes=settings.meraki_sync_minutes), meraki_sync),
         Job("unifi", "worker", lambda: timedelta(minutes=max(5, settings.unifi_sync_minutes)), unifi_sync),
+        Job("junos", "worker", lambda: timedelta(minutes=max(5, settings.junos_sync_minutes)), junos_read),
         Job("action1", "action1", lambda: timedelta(minutes=settings.action1_sync_minutes), action1_sync),
         Job("sweeps", "worker", _every(7 * 86400), device_sweep),
         Job("warranty", "devices", _every(6 * 3600), warranty_lookups),

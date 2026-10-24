@@ -1937,6 +1937,21 @@ class NetworkOutage(Base):
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class NetworkRead(Base):
+    """A runner-driven vendor read (Juniper): the run it asked for and what came of it."""
+
+    __tablename__ = "network_reads"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    provider: Mapped[str] = mapped_column(String(16))
+    run_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("script_runs.id", ondelete="CASCADE"), unique=True)
+    scheduled: Mapped[bool] = mapped_column(Boolean, default=False)
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    error: Mapped[str] = mapped_column(Text, default="")
+
+
 class ServiceHeartbeat(Base):
     """A background service saying it's alive, and what its last pass did."""
 
