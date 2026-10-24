@@ -62,6 +62,7 @@ The Hybrid Command Center interface brings a persistent sidebar, a light workspa
 
 **Automation**
 - A script library: PowerShell (locally or over WinRM), bash, Python and Arista EOS.
+- 27 ready-made SQL queries to add from the Scripts page: ticket throughput and ageing, reopened and moved tickets, first-response and resolution times, busiest requesters and hours, warranties, replacements, duplicate serials and more. Device and people queries double as dynamic groups.
 - Scripts run on "runners" that pull work over HTTPS, so no inbound ports are needed.
 - Versions with diffs, approval for high-risk scripts, schedules, and every run logged on its ticket.
 - A Remote Assistance button on tickets, logged as well.
