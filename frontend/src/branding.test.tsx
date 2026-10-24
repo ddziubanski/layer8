@@ -22,17 +22,30 @@ test("uploaded customer logos keep their original presentation", () => {
 });
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { waitFor } from "@testing-library/react";
-import { contrast, MIDNIGHT, themeTokens, useBranding } from "./branding";
+import { contrast, EMBER, MIDNIGHT, PRESETS, themeTokens, ULTRAVIOLET, useBranding } from "./branding";
 import { mockApi } from "./test/util";
 
 afterEach(() => vi.unstubAllGlobals());
 
-test("Midnight text, links and status badges meet AA contrast", () => {
+test.each(Object.entries(PRESETS))("%s text, links and status badges meet AA contrast", (_, p) => {
   for (const [foreground, background] of [
-    [MIDNIGHT.onBrand, MIDNIGHT.brand], [MIDNIGHT.ink, MIDNIGHT.surface],
-    [MIDNIGHT.muted, MIDNIGHT.surface], [MIDNIGHT.link, MIDNIGHT.surface],
-    [MIDNIGHT.green, MIDNIGHT.greenBg], [MIDNIGHT.amber, MIDNIGHT.amberBg], [MIDNIGHT.red, MIDNIGHT.redBg],
+    [p.onBrand, p.brand], [p.ink, p.surface], [p.muted, p.surface], [p.link, p.surface],
+    [p.sideInk, p.sidebar], [p.green, p.greenBg], [p.amber, p.amberBg], [p.red, p.redBg],
   ]) expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
+});
+
+test("Ember and Ultraviolet apply their own palette in dark mode", () => {
+  for (const [name, preset] of [["ember", EMBER], ["ultraviolet", ULTRAVIOLET]] as const) {
+    const client = new QueryClient();
+    client.setQueryData(["branding"], { theme_preset: name, theme_brand: "#1d4ed8", theme_sidebar: "#111827", dark_mode: "off" });
+    function Probe() { useBranding(); return null; }
+    const view = render(<QueryClientProvider client={client}><Probe /></QueryClientProvider>);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.preset).toBe(name);
+    expect(document.documentElement.style.getPropertyValue("--brand")).toBe(preset.brand);
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe(preset.accent);
+    view.unmount();
+  }
 });
 
 test("switching back from Midnight restores custom colours and light mode", async () => {

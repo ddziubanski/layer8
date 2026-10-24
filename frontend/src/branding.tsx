@@ -53,18 +53,44 @@ function lightOn(colour: string, background: string, ratio: number): string {
 
 const DARK_SURFACE = "#1a2321";
 
-/** The CSS tokens a theme sets (see styles.css), for the page or a preview box. */
-export const MIDNIGHT = {
-  brand: "#00b7d6", onBrand: "#031b28", sidebar: "#07131f", ink: "#e6f0fa", muted: "#acc2d5",
-  surface: "#101f2d", link: "#55dbf3", greenBg: "#134d41", green: "#a0f4d2",
-  amberBg: "#624600", amber: "#ffe1a2", redBg: "#702932", red: "#ffe3e6",
+/** A fixed dark palette (styles.css has the rest of each one's tokens under data-preset). */
+export type Preset = {
+  label: string; button: string; about: string;
+  brand: string; onBrand: string; brandDark: string; accent: string; link: string;
+  sidebar: string; sideOn: string; sideInk: string; ink: string; muted: string; surface: string;
+  greenBg: string; green: string; amberBg: string; amber: string; redBg: string; red: string;
 };
 
+export const MIDNIGHT: Preset = {
+  label: "Midnight", button: "Cyan button", about: "Midnight pairs dark navy panels with cyan highlights.",
+  brand: "#00b7d6", onBrand: "#031b28", brandDark: "#36d1e9", accent: "#26d8f0", link: "#55dbf3",
+  sidebar: "#07131f", sideOn: "#102d43", sideInk: "#acc2d5", ink: "#e6f0fa", muted: "#acc2d5", surface: "#101f2d",
+  greenBg: "#134d41", green: "#a0f4d2", amberBg: "#624600", amber: "#ffe1a2", redBg: "#702932", red: "#ffe3e6",
+};
+
+export const EMBER: Preset = {
+  label: "Ember", button: "Violet button", about: "Ember pairs dark plum panels with violet buttons and amber highlights.",
+  brand: "#7c4dff", onBrand: "#ffffff", brandDark: "#9670ff", accent: "#ffb547", link: "#ffb547",
+  sidebar: "#1a0f2e", sideOn: "#2a1a45", sideInk: "#cdbfe2", ink: "#f3ecfb", muted: "#b9a8cf", surface: "#1b1228",
+  greenBg: "#0f3d3a", green: "#9ff0dc", amberBg: "#4a3510", amber: "#ffe08a", redBg: "#4a1424", red: "#ffc2cc",
+};
+
+export const ULTRAVIOLET: Preset = {
+  label: "Ultraviolet", button: "Violet button", about: "Ultraviolet is flat near-black with one violet and gold highlights.",
+  brand: "#7c3aed", onBrand: "#ffffff", brandDark: "#9461f2", accent: "#facc15", link: "#facc15",
+  sidebar: "#121019", sideOn: "#1f1b2c", sideInk: "#c4c0d4", ink: "#ecebf3", muted: "#a9a5bb", surface: "#16141f",
+  greenBg: "#0f3326", green: "#a7f3d0", amberBg: "#3b3008", amber: "#fde68a", redBg: "#3d1418", red: "#ffb4b4",
+};
+
+export const PRESETS: Record<string, Preset> = { midnight: MIDNIGHT, ember: EMBER, ultraviolet: ULTRAVIOLET };
+
+/** The CSS tokens a theme sets (see styles.css), for the page or a preview box. */
 export function themeTokens(brand: string, sidebar: string, preset = "custom"): Record<string, string> {
-  if (preset === "midnight") return {
-    "--brand": MIDNIGHT.brand, "--on-brand": MIDNIGHT.onBrand, "--brand-dark": "#36d1e9",
-    "--side": MIDNIGHT.sidebar, "--side-on": "#102d43", "--side-ink": MIDNIGHT.muted,
-    "--accent": "#26d8f0", "--dark-link": MIDNIGHT.link,
+  const fixed = PRESETS[preset];
+  if (fixed) return {
+    "--brand": fixed.brand, "--on-brand": fixed.onBrand, "--brand-dark": fixed.brandDark,
+    "--side": fixed.sidebar, "--side-on": fixed.sideOn, "--side-ink": fixed.sideInk,
+    "--accent": fixed.accent, "--dark-link": fixed.link,
   };
   const light = lightOn(brand, DARK_SURFACE, 4.5);
   return {
@@ -97,7 +123,7 @@ export function useBranding(): Branding {
   const q = useQuery({ queryKey: ["branding"], queryFn: api.branding, staleTime: 5 * 60_000 });
   const b = { ...DEFAULT, ...q.data };
   const customDark = useDark(b.dark_mode);
-  const dark = b.theme_preset === "midnight" || customDark;
+  const dark = b.theme_preset in PRESETS || customDark;
   useEffect(() => {
     document.title = b.product_name;
   }, [b.product_name]);

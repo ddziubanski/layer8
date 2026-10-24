@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Branding: name, texts, theme, background, logo and favicon images."""
 
+import pytest
+
 from app.config import settings
 from app.mail import outbox
 from app.models import OutboundEmail, Queue, Ticket, TicketSource
@@ -109,3 +111,14 @@ def test_midnight_preset_is_optional_reversible_and_importable(client, db, admin
     public = client.get("/api/branding").json()
     assert public["theme_preset"] == "custom"
     assert {k: public[k] for k in values} == values
+
+
+@pytest.mark.parametrize("preset", ["ember", "ultraviolet"])
+def test_ember_and_ultraviolet_are_choices_like_midnight(client, db, admin, preset):
+    from app import cli
+
+    assert client.put("/api/settings/theme", headers=as_user(admin), json={"values": {"theme_preset": preset}}).status_code == 200
+    assert client.get("/api/branding").json()["theme_preset"] == preset
+    cli.import_settings(db, {"theme": {"theme_preset": "custom"}})
+    db.commit()
+    assert client.get("/api/branding").json()["theme_preset"] == "custom"
