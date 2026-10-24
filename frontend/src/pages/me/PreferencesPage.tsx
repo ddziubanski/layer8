@@ -8,7 +8,7 @@ import { api, type ColorRule, type Me } from "../../api/client";
 import { PALETTE, RULE_FIELDS } from "../../colors";
 import { UserPicker } from "../../components/UserPicker";
 import { ME_KEY } from "../../queryClient";
-import { MINIMAL_HIDDEN, OPTIONAL_MODULES, type SidebarModule } from "../../navigation";
+import { MINIMAL_HIDDEN, OPTIONAL_MODULES, moduleEnabled, type SidebarModule } from "../../navigation";
 
 import { DEFAULT_TICKET_WORKSPACE, TICKET_TOOLS, type TicketWorkspacePreference } from "../ticket/TicketToolsWorkspace";
 
@@ -67,7 +67,7 @@ export function PreferencesPage({ me }: { me: Me }) {
       <div className="stack" style={{ maxWidth: 900 }}>
         {isStaff && <section className="card stack" aria-label="My workspace">
           <div className="lbl" style={{ margin: 0 }}>My workspace</div>
-          <p className="small muted">Choose what appears in your sidebar. This follows your account across browsers. Hiding a module keeps its features and permissions in place; you can still open it with Ctrl+K / ⌘K or a direct link.</p>
+          <p className="small muted">Choose what appears in your sidebar. This follows your account across browsers. Personally hidden modules remain available through Ctrl+K / ⌘K or a direct link, while globally disabled workspace modules stay unavailable.</p>
           <div className="row-gap">
             <button className="btn2" type="button" disabled={save.isPending} onClick={() => setHidden([...MINIMAL_HIDDEN])}>Use minimal workspace</button>
             <button className="btn2" type="button" disabled={save.isPending} onClick={() => setHidden([])}>Show all modules</button>
@@ -75,8 +75,8 @@ export function PreferencesPage({ me }: { me: Me }) {
           <p className="small">Minimal keeps Tickets, Dashboard, Devices and Knowledge base. Tickets, My preferences and sign-out are always available. Save below to apply.</p>
           <fieldset className="stack" style={{ gap: 6, border: 0, padding: 0, margin: 0 }}>
             <legend>Show in my sidebar</legend>
-            {OPTIONAL_MODULES.map(module => <label className="inline" key={module.id}><input type="checkbox" checked={!hidden.includes(module.id)} disabled={save.isPending}
-              onChange={e => setHidden(e.target.checked ? hidden.filter(id => id !== module.id) : [...hidden, module.id])} />{module.label}</label>)}
+            {OPTIONAL_MODULES.map(module => <label className="inline" key={module.id}><input type="checkbox" checked={moduleEnabled(activeMe, module.id) && !hidden.includes(module.id)} disabled={save.isPending || !moduleEnabled(activeMe, module.id)}
+              onChange={e => setHidden(e.target.checked ? hidden.filter(id => id !== module.id) : [...hidden, module.id])} />{module.label}{!moduleEnabled(activeMe, module.id) && <span className="muted small"> — turned off by administrator</span>}</label>)}
           </fieldset>
         </section>}
         {isStaff && <section className="card stack" aria-label="Ticket workspace">

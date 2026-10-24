@@ -7243,6 +7243,11 @@ export interface components {
              */
             hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"];
+            /**
+             * Disabled Modules
+             * @default []
+             */
+            disabled_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             /** Has Password */
             readonly has_password: boolean;
         };

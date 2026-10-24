@@ -27,6 +27,19 @@ class Settings(BaseSettings):
     # Per-file cap for uploads from the portal and agent UI.
     max_upload_mb: int = 25
 
+    # Global console modules; existing data, APIs and worker controls are independent.
+    workspace_dashboard_enabled: bool = True
+    workspace_devices_enabled: bool = True
+    workspace_changes_enabled: bool = True
+    workspace_purchasing_enabled: bool = True
+    workspace_vendors_enabled: bool = True
+    workspace_ipam_enabled: bool = True
+    workspace_kb_enabled: bool = True
+    workspace_scripts_enabled: bool = True
+    workspace_reports_enabled: bool = True
+    workspace_settings_enabled: bool = True
+    workspace_portal_shortcut_enabled: bool = True
+
     # Microsoft Graph app registration for the intake mailbox (Exchange Online).
     graph_tenant_id: str = ""
     graph_client_id: str = ""

@@ -16,6 +16,14 @@ export const OPTIONAL_MODULES: { id: SidebarModule; label: string; to: string; s
   { id: "portal", label: "Self-service portal", to: "/portal", symbol: "↗" },
 ];
 export const MINIMAL_HIDDEN = OPTIONAL_MODULES.filter(m => !["dashboard", "devices", "kb"].includes(m.id)).map(m => m.id);
-export function visibleModules(me: Pick<Me, "hidden_modules">) {
-  return OPTIONAL_MODULES.filter(m => !(me.hidden_modules ?? []).includes(m.id));
+export function moduleEnabled(me: Pick<Me, "disabled_modules" | "role">, module: SidebarModule) {
+  return (module === "settings" && me.role === "admin") || !(me.disabled_modules ?? []).includes(module);
+}
+export function moduleForPath(path: string): SidebarModule | undefined {
+  const root = path.split("/")[1];
+  if (root === "admin") return "settings";
+  return OPTIONAL_MODULES.find(m => m.id === root)?.id;
+}
+export function visibleModules(me: Pick<Me, "hidden_modules" | "disabled_modules" | "role">) {
+  return OPTIONAL_MODULES.filter(m => moduleEnabled(me, m.id) && !(me.hidden_modules ?? []).includes(m.id));
 }
