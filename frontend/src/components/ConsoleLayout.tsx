@@ -73,7 +73,7 @@ export function ConsoleLayout({ me, brand, onLogout, logoutPending, children }: 
         <div className="me-identity"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><div className="console-nav-label console-account-name"><strong>{me.display_name}</strong><span>{role}</span></div></div>
         <NavLink to="/preferences" aria-label="My preferences" title={collapsed ? "My preferences" : undefined}><Icon name="preferences" /><span className="console-nav-label">My preferences</span></NavLink>
         <button type="button" onClick={onLogout} disabled={logoutPending} aria-label="Sign out" title={collapsed ? "Sign out" : undefined}><Icon name="logout" /><span className="console-nav-label">Sign out</span></button>
-        <SourceNotice className="source-notice side-source" compact />
+        <SourceNotice className="source-notice side-source" compact={!collapsed} stacked={collapsed} />
       </div>
     </nav>
     <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>

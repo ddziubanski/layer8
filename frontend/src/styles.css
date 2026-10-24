@@ -135,8 +135,8 @@ h2 { margin: 0; font-size: 18px; }
 .ticket-tool-drawer-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px 8px 16px; border-bottom:1px solid var(--line); }
 .ticket-tool-drawer-head h2 { font-size:16px; margin:0; }
 .ticket-tool-drawer-head button { min-width:32px; min-height:32px; padding:0; font-size:20px; }
-/* One row of tools that scrolls sideways when the drawer is narrow, so the tool itself keeps the height. */
-.ticket-tool-tabs { padding:4px 8px 0; border-bottom:1px solid var(--line); flex-wrap:nowrap; overflow-x:auto; scrollbar-width:thin; flex-shrink:0; }
+/* Tools wrap onto a second row rather than scrolling sideways: no scroll bar inside the drawer's header. */
+.ticket-tool-tabs { padding:4px 8px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; flex-shrink:0; }
 .ticket-tool-tabs button { display:flex; align-items:center; gap:6px; padding:8px 9px; font-size:13px; white-space:nowrap; flex-shrink:0; }
 .ticket-tool-tabs button > span { font-size:17px; }
 .ticket-tool-body { flex:1; overflow:auto; padding:14px; scrollbar-gutter:stable; overflow-wrap:anywhere; }
