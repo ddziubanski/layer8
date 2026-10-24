@@ -42,7 +42,7 @@ export function UpdatesAdmin({ me }: { me: User }) {
         {query.isPending && <p>Reading installed version…</p>}
         {query.error && <p role={busy ? "status" : "alert"} className={busy ? "notice" : "error"}>{busy ? "The API is paused for maintenance. Live progress continues through the web server." : query.error.message}</p>}
         {data && <>
-          <div className="row-gap"><h2 className="spacer">Installed: {data.current_version}</h2><button className="btn2" type="button" disabled={!data.enabled || busy || check.isPending} onClick={() => check.mutate()}>{check.isPending ? "Checking GitHub…" : "Check GitHub for updates"}</button></div>
+          <div className="row-gap"><h2 className="spacer">{busy ? `Updating to ${String(operation.version ?? release?.version ?? "the reviewed release").replace(/^v/, "")}` : `Installed: ${data.current_version}`}</h2><button className="btn2" type="button" disabled={!data.enabled || busy || check.isPending} onClick={() => check.mutate()}>{check.isPending ? "Checking GitHub…" : "Check GitHub for updates"}</button></div>
           <p className="muted small">Source: <a href={data.repository} target="_blank" rel="noreferrer">ddziubanski/layer8 releases</a>. Stable releases only; main and pull requests are never installed. Checks are cached for one minute.</p>
           {data.checked_at && !busy && <p className="small">Last checked {when(data.checked_at)}</p>}
           {!data.installer_ready && <p className="notice">Installation needs the Debian appliance updater service and a trusted publisher key provisioned locally. See docs/github-updates.md. Checking releases still works.</p>}

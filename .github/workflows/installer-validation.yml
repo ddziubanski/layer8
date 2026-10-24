@@ -59,7 +59,7 @@ jobs:
           docker run --rm --network none \
             -e LAYER8_DISPOSABLE_UPDATE_TEST=1 \
             -v "$PWD:/src:ro" -v "$PWD/iso/build/bundle:/bundle:ro" \
-            debian:trixie sh -c 'set -eu; export DEBIAN_FRONTEND=noninteractive; apt-get install -y -qq --no-download --no-install-recommends /bundle/debs/*.deb >/dev/null; python3 /src/install/tests/update_integration.py'
+            debian:trixie sh -c 'set -eu; export DEBIAN_FRONTEND=noninteractive; apt-get install -y -qq --no-install-recommends /bundle/debs/*.deb >/dev/null; python3 /src/install/tests/update_integration.py'
       - name: Boot both firmware menus without a disk
         run: python3 iso/tests/boot_smoke.py "$(find iso/build -maxdepth 1 -name 'layer8-*.iso' -print -quit)" iso/build/previews
       - uses: actions/upload-artifact@v4
