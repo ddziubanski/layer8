@@ -87,7 +87,6 @@ export function PreferencesPage({ me }: { me: Me }) {
           <label className="field">Layout<select value={workspace.mode} onChange={e => setWorkspace({ ...workspace, mode: e.target.value as TicketWorkspacePreference["mode"] })}><option value="drawer">Conversation with tools drawer</option><option value="classic">Classic arranged panels</option></select></label>
           <label className="field">Preferred tool<select value={workspace.selected_tool} onChange={e => setWorkspace({ ...workspace, selected_tool: e.target.value as TicketWorkspacePreference["selected_tool"] })}>{TICKET_TOOLS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
           <label className="inline"><input type="checkbox" checked={workspace.keep_open} onChange={e => setWorkspace({ ...workspace, keep_open: e.target.checked })} />Keep tools open on new tickets</label>
-          <label className="field">Tools width (pixels)<input type="number" min={320} max={1200} value={workspace.width} onChange={e => setWorkspace({ ...workspace, width: Math.max(320, Math.min(1200, Number(e.target.value) || 440)) })} /></label>
         </section>}
         {isStaff && <TeamsConnection />}
         {isStaff && (
