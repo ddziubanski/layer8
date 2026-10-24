@@ -66,3 +66,17 @@ test("failed presentation saves can be retried", async () => {
   await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   expect(screen.getByLabelText("Script argument")).toHaveValue("retained");
 });
+test("the drawer is resized with its drag handle (here by keyboard), and the width is saved", async () => {
+  const user = userEvent.setup(); const calls = setup();
+  await user.click(screen.getByRole("button", { name: /Tools/ }));
+  expect(screen.queryByLabelText("Tools drawer width")).not.toBeInTheDocument();  // no slider any more
+  const handle = screen.getByRole("separator", { name: "Resize ticket tools" });
+  expect(handle).toHaveAttribute("aria-valuenow", "440");
+  fireEvent.keyDown(handle, { key: "ArrowLeft" });
+  fireEvent.keyDown(handle, { key: "ArrowLeft", shiftKey: true });
+  expect(handle).toHaveAttribute("aria-valuenow", "540");
+  fireEvent.keyUp(handle, { key: "ArrowLeft" });
+  await waitFor(() => expect(calls.find(c => c.method === "PUT")?.body).toEqual({ ticket_workspace: { ...DEFAULT_TICKET_WORKSPACE, width: 540 } }));
+  fireEvent.keyDown(handle, { key: "Home" });
+  expect(handle).toHaveAttribute("aria-valuenow", "320");
+});

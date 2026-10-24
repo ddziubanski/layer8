@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type Layout, type Me } from "../../api/client";
 import type { Panel } from "../../components/Arrange";
@@ -7,6 +7,10 @@ import { ME_KEY } from "../../queryClient";
 
 export type TicketWorkspacePreference = NonNullable<Me["ticket_workspace"]>;
 export type TicketTool = TicketWorkspacePreference["selected_tool"];
+// Drawer width limits; the conversation always keeps at least CONVERSATION_MIN pixels beside it.
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 1200;
+const CONVERSATION_MIN = 460;
 export const DEFAULT_TICKET_WORKSPACE: TicketWorkspacePreference = { mode: "drawer", selected_tool: "details", keep_open: false, width: 440 };
 export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; panels: string[] }[] = [
   { id: "details", label: "Details", symbol: "◧", panels: ["status", "assignment", "requester", "actions"] },
@@ -48,6 +52,7 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
   const latest = useRef(prefs);
   const toggle = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLElement>(null);
+  const columns = useRef<HTMLDivElement>(null);
   const previousOpen = useRef(open);
   const prefix = useId();
   const hidden = new Set(layout.hidden ?? []);
@@ -85,6 +90,37 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
   function close() { setOpen(false); toggle.current?.focus(); }
   function chooseSection(id: string) { setSection(id); setVisited(old => new Set([...old, id])); }
   function saveWidth() { if (width !== latest.current.width) save({ ...latest.current, width }); }
+  /** The widest the drawer can be here, so the conversation keeps CONVERSATION_MIN pixels. */
+  function maxWidth() {
+    const room = columns.current?.clientWidth ?? 0;
+    return Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, room ? room - CONVERSATION_MIN - 20 : MAX_WIDTH));
+  }
+  const clampWidth = (w: number) => Math.round(Math.max(MIN_WIDTH, Math.min(maxWidth(), w)));
+  function startResize(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const handle = event.currentTarget;
+    handle.setPointerCapture(event.pointerId);
+    const startX = event.clientX, startWidth = width;
+    let next = width;
+    const move = (e: PointerEvent) => { next = clampWidth(startWidth + (startX - e.clientX)); setWidth(next); };
+    const up = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", up);
+      handle.removeEventListener("pointercancel", up);
+      if (next !== latest.current.width) save({ ...latest.current, width: next });
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", up);
+    handle.addEventListener("pointercancel", up);
+  }
+  function resizeKey(event: KeyboardEvent<HTMLDivElement>) {
+    const step = event.shiftKey ? 80 : 20;
+    const next = event.key === "ArrowLeft" ? width + step : event.key === "ArrowRight" ? width - step
+      : event.key === "Home" ? MIN_WIDTH : event.key === "End" ? maxWidth() : null;
+    if (next === null) return;
+    event.preventDefault();
+    setWidth(clampWidth(next));
+  }
 
   const render = (ids: string[]) => ids.filter(visible).map(id => <div key={id} data-ticket-panel={id}>{panels[id].node}</div>);
   return <div className="ticket-tools-workspace" style={{ "--ticket-drawer-width": `${width}px` } as CSSProperties}>
@@ -96,7 +132,7 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
       </div>
       <button ref={toggle} className={open ? "btn" : "btn2"} type="button" aria-expanded={open} aria-controls={`${prefix}-drawer`} onClick={() => { if (open) close(); else setOpen(true); }}>▥ Tools</button>
     </div>
-    <div className={`ticket-workspace-columns${open && tools.length ? " drawer-open" : ""}`}>
+    <div ref={columns} className={`ticket-workspace-columns${open && tools.length ? " drawer-open" : ""}`}>
       <div className="ticket-primary-panels">
         {sections.map(item => <section key={item.id} id={`${prefix}-section-panel-${item.id}`} role="tabpanel" aria-labelledby={`${prefix}-section-${item.id}`} hidden={activeSection !== item.id} tabIndex={0}>
           {visited.has(item.id) && <div className="stack">{render(item.panels)}</div>}
@@ -104,6 +140,10 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
       </div>
       <aside ref={drawer} id={`${prefix}-drawer`} className="ticket-tool-drawer" aria-label="Ticket tools" hidden={!open || !tools.length}
         onKeyDown={event => { if (event.key === "Escape" && !event.defaultPrevented) { event.preventDefault(); close(); } }}>
+        <div className="ticket-tool-resize" role="separator" aria-orientation="vertical" aria-label="Resize ticket tools" tabIndex={0}
+          aria-valuemin={MIN_WIDTH} aria-valuemax={maxWidth()} aria-valuenow={width} title="Drag to resize; double-click for the usual width"
+          onPointerDown={startResize} onDoubleClick={() => { setWidth(DEFAULT_TICKET_WORKSPACE.width); save({ ...latest.current, width: DEFAULT_TICKET_WORKSPACE.width }); }}
+          onKeyDown={resizeKey} onKeyUp={saveWidth} onBlur={saveWidth} />
         <header className="ticket-tool-drawer-head"><h2>Ticket tools</h2><button className="btn2" type="button" aria-label="Close ticket tools" onClick={close}>×</button></header>
         <div className="ticket-tool-tabs" role="tablist" aria-label="Ticket tools">
           {tools.map(tool => <button key={tool.id} id={`${prefix}-tool-${tool.id}`} role="tab" type="button" aria-selected={selected === tool.id}
@@ -119,8 +159,6 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
         </div>
         <footer className="ticket-tool-footer">
           <label className="inline small"><input type="checkbox" checked={prefs.keep_open} onChange={event => save({ ...latest.current, keep_open: event.target.checked })} />Keep panel open on other tickets</label>
-          <label className="field small ticket-tool-width">Panel width <span>{width}px</span><input aria-label="Tools drawer width" type="range" min={320} max={720} step={20} value={width}
-            onChange={event => setWidth(Number(event.target.value))} onPointerUp={saveWidth} onKeyUp={saveWidth} onBlur={saveWidth} /></label>
           {saving > 0 && <span className="muted small" role="status">Saving workspace…</span>}
           {error && <p className="error small" role="alert">Workspace preference was not saved: {error} <button className="linkish" type="button" onClick={() => save(latest.current)}>Retry</button></p>}
         </footer>
