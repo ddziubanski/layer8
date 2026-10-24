@@ -218,6 +218,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/copilot/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview Copilot Context */
+        get: operations["preview_copilot_context_api_tickets__ticket_id__copilot_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/copilot": {
         parameters: {
             query?: never;
@@ -229,7 +246,7 @@ export interface paths {
         put?: never;
         /**
          * Ask Copilot
-         * @description Ask Microsoft 365 Copilot as yourself. The question (not the answer) is noted in the ticket's history.
+         * @description Ask as yourself; bind follow-ups and review the bounded context before sharing it.
          */
         post: operations["ask_copilot_api_tickets__ticket_id__copilot_post"];
         delete?: never;
@@ -5396,6 +5413,17 @@ export interface components {
              */
             copilot: boolean;
         };
+        /** CopilotContextOut */
+        CopilotContextOut: {
+            /** Sections */
+            sections: string[];
+            /** Characters */
+            characters: number;
+            /** Limit */
+            limit: number;
+            /** Digest */
+            digest: string;
+        };
         /** CopilotIn */
         CopilotIn: {
             /** Question */
@@ -5405,6 +5433,13 @@ export interface components {
              * @default true
              */
             include_ticket: boolean;
+            /**
+             * Include Internal
+             * @default false
+             */
+            include_internal: boolean;
+            /** Context Digest */
+            context_digest?: string | null;
             /** Conversation Id */
             conversation_id?: string | null;
         };
@@ -10727,6 +10762,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_copilot_context_api_tickets__ticket_id__copilot_context_get: {
+        parameters: {
+            query?: {
+                include_internal?: boolean;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotContextOut"];
                 };
             };
             /** @description Validation Error */

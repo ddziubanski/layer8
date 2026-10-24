@@ -62,13 +62,15 @@ def test_ticket_context_is_capped_and_labelled(db, ticket):
     parts = copilot.ticket_context(ticket, comments)
     assert parts[0].startswith(f"Help desk ticket {ticket.id}")
     assert sum(len(p) for p in parts) <= copilot.MAX_CONTEXT
-    assert any(p.startswith("Internal note by") for p in parts[1:]) or len(parts) < 3
+    assert not any(p.startswith("Internal note by") for p in parts[1:])
+    shared = copilot.ticket_context(ticket, comments, include_internal=True)
+    assert any(p.startswith("Internal note by") for p in shared[1:]) or len(shared) < 3
 
 
 def test_endpoint_needs_copilot_on_and_logs_the_question(client, db, agent, ticket, monkeypatch):
     assert client.post(f"/api/tickets/{ticket.id}/copilot", json={"question": "Hi"}, headers=as_user(agent)).status_code == 409
     monkeypatch.setattr(settings, "copilot_enabled", True)
-    monkeypatch.setattr(teams_chat, "access", lambda uid, wanted=None: ("token", {}))
+    monkeypatch.setattr(teams_chat, "access", lambda uid, wanted=None: ("token", {"oid": "technician-1", "config": {"tenant": "tenant-1", "client": "client-1"}}))
     asked = {}
     def fake(token, question, context, conversation_id=None):
         asked.update(question=question, context=context, conversation_id=conversation_id)
