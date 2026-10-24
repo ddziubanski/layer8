@@ -395,6 +395,7 @@ SECTIONS: dict[str, list[Field]] = {
     ],
     "meraki": [
         Field("meraki_enabled", "Read Meraki client observations", "Optional, read only. Turning this off stops discovery and hides cached observations."),
+        Field("meraki_diagnostics_enabled", "Allow read-only network diagnostics", "Technicians may explicitly read last-known switch port status or recent wireless events from the Meraki client view. OAuth requires switch:telemetry:read and wireless:telemetry:read in addition to discovery scopes; update the app registration and reconnect after changing this option."),
         Field("meraki_auth_mode", "Authentication", choices=(("api_key", "Dashboard API key"), ("oauth", "OAuth connection"))),
         Field("meraki_client_id", "OAuth client ID", "Register a confidential application at integrate.cisco.com. The exact redirect URI is shown above after saving.", check=_length(0, 256)),
         Field("meraki_client_secret", "OAuth client secret", "Written to a secret file and never shown back. Changing the registration requires reconnecting.", secret=True, check=_length(0, 1024)),

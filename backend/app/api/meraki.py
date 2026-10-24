@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from app import meraki_oauth
+from app import meraki_oauth, meraki_diagnostics
 from app.auth import COOKIE, _user_from_cookie, current_user, require_admin
 from sqlalchemy import func, select
 
@@ -11,7 +11,7 @@ from app import meraki
 from app.auth import Admin, Agent, SessionDep
 from app.config import settings
 from app.models import MerakiClient, WorkerJob
-from app.schemas import MerakiClientOut, MerakiStatusOut, MerakiTestOut
+from app.schemas import MerakiClientOut, MerakiStatusOut, MerakiTestOut, MerakiDiagnosticOut
 
 router = APIRouter(prefix="/api/meraki", tags=["meraki"])
 
@@ -95,3 +95,14 @@ def disconnect(_: Admin, session: SessionDep):
         return {"revoked": meraki_oauth.disconnect()}
     except meraki.MerakiError as exc:
         raise HTTPException(409, str(exc)) from None
+
+
+@router.get("/clients/{network_id}/{mac}/diagnostics", response_model=MerakiDiagnosticOut | None)
+def diagnostic_cache(network_id: str, mac: str, _: Agent, session: SessionDep):
+    item = meraki_diagnostics.selected(session, network_id, mac)
+    return meraki_diagnostics.cached(session, item)
+
+
+@router.post("/clients/{network_id}/{mac}/diagnostics", response_model=MerakiDiagnosticOut)
+def read_diagnostics(network_id: str, mac: str, _: Agent, session: SessionDep):
+    return meraki_diagnostics.read(session, network_id, mac)

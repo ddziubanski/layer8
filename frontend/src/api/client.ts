@@ -12,6 +12,7 @@ export type Queue = S["QueueOut"];
 export type User = S["UserOut"];
 /** The signed-in user; portal_only after Windows sign-in (the console needs a password). */
 export type Me = S["MeOut"];
+export type MerakiObservation = S["MerakiClientOut"];
 export type SignInOptions = S["SignInOptionsOut"];
 export type UserRef = S["UserRef"];
 export type SavedView = S["SavedView"];
@@ -531,6 +532,8 @@ export const api = {
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
   meraki: {
+    diagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"] | null>("GET", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
+    readDiagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"]>("POST", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
     connect: () => request<S["MerakiStartOut"]>("POST", "/api/meraki/oauth/connect"),
     disconnect: () => request<S["MerakiDisconnectOut"]>("DELETE", "/api/meraki/oauth/connection"),
     status: () => request<S["MerakiStatusOut"]>("GET", "/api/meraki/status"),

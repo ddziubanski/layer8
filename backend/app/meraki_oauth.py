@@ -22,6 +22,10 @@ TOKEN_URL = "https://as.meraki.com/oauth/token"
 RECONNECT = "Meraki OAuth needs reconnecting in Settings > Meraki"
 
 
+def scopes():
+    return SCOPES + (" switch:telemetry:read wireless:telemetry:read" if settings.meraki_diagnostics_enabled else "")
+
+
 def lock(session):
     # A different lock from discovery: API workers and the scheduler share it.
     session.execute(text("SELECT pg_advisory_xact_lock(82638115)"))
@@ -37,7 +41,7 @@ def configuration():
             or url.username or url.password or url.query or url.fragment or url.path not in ("", "/")):
         raise MerakiError("Save OAuth client credentials and an HTTPS portal base address first")
     redirect = settings.portal_url.rstrip("/") + CALLBACK
-    fingerprint = hashlib.sha256(json.dumps([settings.meraki_client_id, settings.meraki_client_secret, redirect, SCOPES]).encode()).hexdigest()
+    fingerprint = hashlib.sha256(json.dumps([settings.meraki_client_id, settings.meraki_client_secret, redirect, scopes()]).encode()).hexdigest()
     return redirect, fingerprint
 
 
@@ -106,7 +110,7 @@ def begin(user_id, cookie):
     # Meraki documents query callbacks, not fragment response_mode or PKCE.
     return "https://as.meraki.com/oauth/authorize?" + urlencode(dict(
         response_type="code", client_id=settings.meraki_client_id, redirect_uri=redirect,
-        scope=SCOPES, state=state))
+        scope=scopes(), state=state))
 
 
 def _exchange(data):
@@ -125,7 +129,7 @@ def _exchange(data):
         expiry = token.get("expires_in")
         if type(expiry) is not int or not 1 <= expiry <= 3600 or str(token.get("token_type", "")).lower() != "bearer":
             raise ValueError()
-        if set(str(token.get("scope", SCOPES)).split()) != set(SCOPES.split()):
+        if set(str(token.get("scope", scopes())).split()) != set(scopes().split()):
             raise ValueError()
         if data.get("refresh_token") == token["refresh_token"]:
             raise ValueError()
@@ -149,7 +153,7 @@ def finish(user_id, cookie, params):
     code = params.get("code")
     if params.get("error") or not isinstance(code, str) or not 1 <= len(code) <= 8192:
         raise MerakiError("Meraki authorization was not completed; connect again")
-    token = _exchange(dict(grant_type="authorization_code", code=code, redirect_uri=redirect, scope=SCOPES))
+    token = _exchange(dict(grant_type="authorization_code", code=code, redirect_uri=redirect, scope=scopes()))
     _write("tokens", dict(config=fingerprint, **token))
 
 

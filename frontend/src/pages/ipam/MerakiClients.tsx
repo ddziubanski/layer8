@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "../../api/client";
+import { MerakiDiagnostics } from "../../components/MerakiDiagnostics";
 import { MerakiContext } from "../../components/MerakiContext";
 
 export function MerakiClients() {
@@ -14,7 +15,7 @@ export function MerakiClients() {
     {clients.error && <p className="error" role="alert">{clients.error.message}</p>}
     {clients.data?.length === 0 && <p className="muted">No observations match. An admin can configure and run discovery under Settings → Meraki.</p>}
     <div className="meraki-grid">{clients.data?.map(o => <article className="meraki-client" key={`${o.network_id}:${o.mac}`}>
-      <b>{o.description || o.mac}</b><div className="mono small">{o.mac}</div><MerakiContext observation={o} />
+      <b>{o.description || o.mac}</b><div className="mono small">{o.mac}</div><MerakiContext observation={o} /><MerakiDiagnostics observation={o} />
     </article>)}</div>
     {(clients.data?.length ?? 0) >= 200 && <p className="muted small">Showing the first 200 results. Narrow your search to find more.</p>}
   </section>;

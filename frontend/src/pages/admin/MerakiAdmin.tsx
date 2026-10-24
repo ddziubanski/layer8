@@ -34,7 +34,7 @@ export function MerakiAdmin({ me }: { me: Me }) {
     </section>
     {s?.auth_mode === "oauth" && <section className="card stack" aria-label="Meraki OAuth connection">
       <h2>OAuth connection</h2>
-      <p className="muted">Authorize this server to read network configuration and client telemetry. Discovery reads only the network IDs you save below. OAuth is currently available for the meraki.com region.</p>
+      <p className="muted">Authorize this server to read network configuration and client telemetry. Discovery reads only the network IDs you save below. OAuth is currently available for the meraki.com region. Enabling diagnostics also requires switch:telemetry:read and wireless:telemetry:read in the application registration; reconnect after changing that option.</p>
       {s.oauth?.redirect_uri && <p>Register this exact redirect URI: <code>{s.oauth.redirect_uri}</code></p>}
       <p>{s.oauth?.connected ? "Meraki OAuth connected." : "Save the application credentials and HTTPS portal address, then connect with a Meraki organization administrator."}</p>
       {params.get("meraki_oauth") === "failed" && <p role="alert" className="error">Meraki authorization was not completed. Check your application registration, sign in to Layer 8, and connect again.</p>}

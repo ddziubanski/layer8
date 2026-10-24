@@ -186,3 +186,67 @@ the previous observation snapshot.
 Protocol reference: [Meraki OAuth overview](https://developer.cisco.com/meraki/api-v1/oauth-overview/).
 Endpoint scopes were checked against Cisco's
 [OpenAPI specification](https://github.com/meraki/openapi/blob/master/openapi/spec3.json).
+
+
+### On-demand Meraki network diagnostics
+
+Admins may enable **Allow read-only network diagnostics** in Settings > Meraki
+(`meraki_diagnostics_enabled`, also accepted by the settings API and CLI answers
+import). It defaults off. The existing discovery-only OAuth connection still
+requests its original two scopes while this option is off. Enabling diagnostics
+adds `switch:telemetry:read` and `wireless:telemetry:read`; update the confidential
+application registration and reconnect. Changing this option invalidates the
+OAuth configuration fingerprint, rather than silently assuming broader access.
+API-key authentication remains available with a dedicated read-only administrator.
+
+Technicians open IP addresses > Meraki clients, expand **Network diagnostics**,
+then explicitly choose **Read diagnostics**. Expanding the panel reads only the
+local cache. No browser polling calls Meraki, and no diagnostics run automatically
+with discovery. Ticket/device/IPAM cards retain their existing observation-only
+behavior; a future ticket diagnostic action must add ticket audit history.
+
+For a wired client, Layer 8 checks the current client ID/MAC/attachment and the
+switch's current network membership, then reads the matching last-known port's
+status, enabled state, speed/duplex, client count, uplink status, errors and
+warnings. Other ports and CDP/LLDP payloads are not returned to the technician.
+The port may be shared, and the read does not prove this client is connected.
+
+For a wireless client, the same identity/attachment check precedes reading the
+last fifteen minutes of connectivity events. Only one descending page of at most
+50 events is read; a visible truncation notice indicates additional pages. The
+app never follows the next-page URL. Event timestamps, type/subtype, severity, AP
+serial, band/channel, RSSI and duration are retained; arbitrary eventData, capture
+IDs and provider links are omitted. An empty result makes no health claim.
+
+The result distinguishes the client discovery timestamp, diagnostic attempt,
+successful read, and wireless source event times. Port status has no source
+timestamp in this endpoint; its read time is labelled accordingly. These are
+separate cached observations, not edits to documented IPAM or discovery records.
+
+API (agent/admin only):
+
+- `GET /api/meraki/clients/{network_id}/{mac}/diagnostics`: local result or null;
+  never contacts Meraki.
+- `POST` on the same path: explicit read; cookie authentication requires the usual
+  CSRF header. Repeated attempts within 60 seconds reuse the cached result.
+
+A shared PostgreSQL advisory lock admits one diagnostic read at a time across API
+processes. A different client is limited to one new attempt per five seconds;
+busy work returns 409, and rate limits return 429 with Retry-After. Failed attempts
+also consume the per-client cooldown. Provider failures return an `error` alongside
+the previous successful `data` (or null), with the updated attempt time; they do
+not erase earlier evidence. Removed networks, disabled connections/features and
+changed attachments cannot expose an old result. Client identity or location
+changes require discovery before reading from the new attachment.
+
+Migration `b97e31a50d82` adds the separate `meraki_diagnostics` cache after
+`a86d20f49c71`. Entries not attempted for 24 hours are discarded, and the cache is capped at
+500 entries when new reads are made. Last successful evidence can be older after
+repeated failures; its read timestamp is retained and labelled. No secrets or raw provider responses are stored in this cache.
+No POST/PUT/DELETE is sent to Meraki's configuration API, and no cable test,
+port-cycle or configuration action is included.
+
+Contracts and scopes were checked against Cisco's official
+[OpenAPI specification](https://github.com/meraki/openapi/blob/master/openapi/spec3.json),
+[switch port status](https://developer.cisco.com/meraki/api-v1/get-device-switch-ports-statuses/),
+and [wireless connectivity events](https://developer.cisco.com/meraki/api-v1/get-network-wireless-client-connectivity-events/).

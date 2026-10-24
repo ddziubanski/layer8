@@ -896,6 +896,18 @@ class MerakiClient(Base):
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class MerakiDiagnostic(Base):
+    """Bounded, replaceable diagnostic cache, never authoritative IPAM data."""
+
+    __tablename__ = "meraki_diagnostics"
+    network_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    mac: Mapped[str] = mapped_column(String(17), primary_key=True)
+    identity_hash: Mapped[str] = mapped_column(String(64))
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    data: Mapped[dict] = mapped_column(JSONB, default=dict)
+    last_error: Mapped[str | None] = mapped_column(String(255))
+
+
 class DevicePatch(Base):
     """A machine as Action1 (patching, read-only) reports it: its patch state, matched to a device by
     name. Kept current by the "action1" worker job; overdue patching can open a ticket."""

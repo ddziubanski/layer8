@@ -206,5 +206,6 @@ def as_dict(item):
     fields = ("network_id", "network_name", "client_id", "mac", "address", "description", "status", "vlan", "switch_name", "switch_serial", "port", "connection", "ssid", "last_seen_at", "observed_at")
     result = {field: getattr(item, field) for field in fields}
     now = sla.utcnow()
+    result["diagnostics_available"] = settings.meraki_diagnostics_enabled and item.connection.lower() in ("wired", "wireless")
     result["stale"] = item.observed_at < now - timedelta(minutes=max(settings.meraki_sync_minutes * 2, 30)) or item.last_seen_at is None or item.last_seen_at < now - timedelta(days=1)
     return result

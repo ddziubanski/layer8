@@ -2184,7 +2184,57 @@ class SwitchPortOut(BaseModel):
     shared: bool
 
 
+class MerakiPortOut(BaseModel):
+    model_config = ConfigDict(strict=True)
+    port_id: str = Field(min_length=1, max_length=100)
+    enabled: bool | None = None
+    status: str | None = Field(default=None, max_length=64)
+    speed: str | None = Field(default=None, max_length=64)
+    duplex: str | None = Field(default=None, max_length=32)
+    is_uplink: bool | None = None
+    client_count: int | None = Field(default=None, ge=0, le=1000000)
+    errors: list[Annotated[str, Field(max_length=256)]] = Field(default_factory=list, max_length=32)
+    warnings: list[Annotated[str, Field(max_length=256)]] = Field(default_factory=list, max_length=32)
+
+
+class MerakiWirelessEventOut(BaseModel):
+    model_config = ConfigDict(strict=True)
+    occurred_at: datetime
+    type: str = Field(min_length=1, max_length=64)
+    subtype: str | None = Field(default=None, max_length=128)
+    severity: str | None = Field(default=None, max_length=32)
+    device_serial: str | None = Field(default=None, max_length=100)
+    band: str | None = Field(default=None, max_length=16)
+    channel: int | None = Field(default=None, ge=1, le=1000)
+    rssi: int | None = Field(default=None, ge=-200, le=0)
+    duration_ms: int | None = Field(default=None, ge=0, le=2147483647)
+
+
+class MerakiDiagnosticData(BaseModel):
+    kind: Literal["wired", "wireless"]
+    read_at: datetime
+    window_start: datetime
+    window_end: datetime
+    switch_serial: str | None = None
+    port: MerakiPortOut | None = None
+    events: list[MerakiWirelessEventOut] = Field(default_factory=list, max_length=50)
+    events_truncated: bool = False
+
+
+class MerakiDiagnosticOut(BaseModel):
+    network_id: str
+    mac: str
+    client_id: str
+    client_observed_at: datetime
+    attempted_at: datetime
+    retry_at: datetime
+    cached: bool
+    error: str | None
+    data: MerakiDiagnosticData | None
+
+
 class MerakiClientOut(BaseModel):
+    diagnostics_available: bool = False
     network_id: str
     network_name: str
     client_id: str
