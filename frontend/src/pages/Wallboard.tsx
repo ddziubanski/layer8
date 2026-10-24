@@ -78,8 +78,8 @@ export function WallboardPage() {
     return (
       <main className="wallboard wallboard-message">
         <Brand b={brand} />
-        <h1>{token ? "This wallboard was switched off" : "No wallboard link"}</h1>
-        <p>{token ? error?.message : "Open the full link from Settings > Wallboards, including the part after #."}</p>
+        <h1>{token ? "This remote display was switched off" : "No remote display link"}</h1>
+        <p>{token ? error?.message : "Open the full link from Settings > Remote displays, including the part after #."}</p>
       </main>
     );
   }

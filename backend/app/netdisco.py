@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Network discovery over SNMP: a runner asks every address in a subnet for its identity (name,
+"""Network discovery over SNMP: a relay asks every address in a subnet for its identity (name,
 model, serial), its LLDP neighbours and, for switches, its MAC forwarding table. Discovered gear
 is kept as network devices; MAC tables say which switch port a documented address is on.
 
-SNMP v2c, read-only, standard library only on the runner. The communities reach the runner
-sealed (runner 1.2 hands them to the script on stdin). Unlike IPAM scans this changes no
+SNMP v2c, read-only, standard library only on the relay. The communities reach the relay
+sealed (relay 1.2 hands them to the script on stdin). Unlike IPAM scans this changes no
 documentation: what gear says about itself is simply its latest state.
 """
 

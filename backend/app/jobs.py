@@ -45,7 +45,7 @@ LABELS = {
     "unifi": "UniFi: read clients and equipment, outage tickets",
     "nutanix": "Nutanix: read VMs, clusters and hosts",
     "nutanix_tasks": "Nutanix: follow power actions asked for from tickets",
-    "junos": "Juniper: ask a runner to read the switches",
+    "junos": "Juniper: ask a relay to read the switches",
     "action1": "Action1: read patch status",
     "sweeps": "Device sweep (weekly ticket)",
     "warranty": "Warranty lookups (Dell, Lenovo)",
@@ -135,7 +135,7 @@ def build_jobs(session_factory, mail) -> list[Job]:
             session.commit()
         summary = f"Removed {pruned} log entries older than {syslog.LOG_DAYS} days"
         if stale:
-            summary += f"; {stale} script run(s) whose runner went quiet marked failed"
+            summary += f"; {stale} script run(s) whose relay went quiet marked failed"
         return summary, bool(pruned or stale)
 
     def backup(forced: bool):

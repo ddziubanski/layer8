@@ -672,7 +672,7 @@ class RunStatus(enum.StrEnum):
 
 
 class ScriptRun(Base):
-    """One action script run on one target (a device, or the runner itself), with its output."""
+    """One action script run on one target (a device, or the relay itself), with its output."""
 
     __tablename__ = "script_runs"
 
@@ -718,7 +718,7 @@ class ScriptRun(Base):
 
 class ScriptSchedule(Base):
     """A script run on a timetable (Scripts > Schedules): an action queued on its devices, a dynamic
-    group's devices (worked out at each run) or the runner itself; or a query whose result is emailed
+    group's devices (worked out at each run) or the relay itself; or a query whose result is emailed
     as CSV. It runs as its owner, with the owner's rights. The timetable is as a report schedule's."""
 
     __tablename__ = "script_schedules"
@@ -1080,7 +1080,7 @@ class ScanKind(enum.StrEnum):
 
 
 class IpScan(Base):
-    """A scan of a subnet, done by a runner with one of the built-in scan scripts."""
+    """A scan of a subnet, done by a relay with one of the built-in scan scripts."""
 
     __tablename__ = "ip_scans"
 
@@ -1401,7 +1401,7 @@ class TicketExpense(Base):
 class OnboardingTemplate(Base):
     """A starting set for someone's AD account: security groups, an OU and a few attributes.
     Admins keep them in Settings > Onboarding templates; technicians apply one to a ticket's
-    requester (a preview first), through the AD change action on a runner."""
+    requester (a preview first), through the AD change action on a relay."""
 
     __tablename__ = "onboarding_templates"
 
@@ -1539,7 +1539,7 @@ class ChecklistKind(enum.StrEnum):
 class ChecklistTemplate(Base):
     """A named list of steps (Settings > Checklists): started on a ticket, each step becomes a child
     ticket, due a number of days from the checklist's date. A step can also act: "disable_ad_account"
-    queues the account's disabling on a runner for that day."""
+    queues the account's disabling on a relay for that day."""
 
     __tablename__ = "checklist_templates"
 
@@ -1858,7 +1858,7 @@ class SystemEvent(Base):
 
 
 class Wallboard(Base):
-    """A read-only wall display (Settings > Wallboards): live counts, alerts and ticket lists for a
+    """A read-only wall display (Settings > Remote displays): live counts, alerts and ticket lists for a
     big screen. Its secret link is the key; only a hash of it is kept."""
 
     __tablename__ = "wallboards"

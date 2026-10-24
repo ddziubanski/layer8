@@ -17,7 +17,7 @@ A stricter policy without new code (marking a script high risk, or limiting it t
 rechecks unclaimed work instead: runs that may still go ahead with an admin's say-so wait for
 approval, and the rest are cancelled. Claiming rechecks the same things: current version,
 requester activity and execution rights, and any required approver's active admin status.
-Already-running work cannot be recalled by the API; the runner's time limit still applies.
+Already-running work cannot be recalled by the API; the relay's time limit still applies.
 
 Built-in jobs booked for a date (an offboarding checklist's "disable on the day", a new
 account's start-date enable) are never dropped because their requester has left or lost run
@@ -36,24 +36,24 @@ restoring it. It does not invent review records for existing versions. Queued an
 awaiting-approval runs of your own scripts are cancelled during this migration (request them
 again after review); built-in Layer 8 jobs, such as dated account disables, are kept. Running and completed runs are retained. Take the normal backup before upgrading.
 
-## Privileged runners
+## Privileged relays
 
-In Settings > Runners, enable **Dedicated integration runner** for a host with AD write,
+In Settings > Relays, enable **Dedicated integration relay** for a host with AD write,
 DHCP/DNS, SNMP or other privileged credentials. It accepts only built-in jobs explicitly
-assigned to that runner. General scripts, even admin-authored ones, and unpinned integration
-jobs cannot land there. Explicitly select the runner in the relevant integration settings;
-an empty "any runner" selection will not use a dedicated host. Keep general scripts on a
+assigned to that relay. General scripts, even admin-authored ones, and unpinned integration
+jobs cannot land there. Explicitly select the relay in the relevant integration settings;
+an empty "any relay" selection will not use a dedicated host. Keep general scripts on a
 separate service account and machine with only the rights those scripts need.
 
-For AD, set **Settings > Directory > Runner for AD account changes**. This pins group/OU
+For AD, set **Settings > Directory > Relay for AD account changes**. This pins group/OU
 changes, new accounts, deferred account enabling and offboarding jobs to that host. The
 same setting is importable as `directory.ad_runner_name` in installer answers. A missing,
-disabled or non-PowerShell selected runner causes an error; there is no silent fallback.
+disabled or non-PowerShell selected relay causes an error; there is no silent fallback.
 Saving the setting moves AD jobs that haven't started yet (dated disables and enables
-included) to the selected runner, so none are left waiting for a host that won't take them.
+included) to the selected relay, so none are left waiting for a host that won't take them.
 
-Existing runners retain general mode for compatibility. Enabling this setting prevents
-future claims; it cannot stop work already running. Removing a runner cancels pending jobs
+Existing relays retain general mode for compatibility. Enabling this setting prevents
+future claims; it cannot stop work already running. Removing a relay cancels pending jobs
 pinned to it and clears their secrets, rather than letting another host inherit them.
-This is a dispatch boundary, not an OS sandbox: a compromised runner token or administrator
+This is a dispatch boundary, not an OS sandbox: a compromised relay token or administrator
 remains privileged within its configured role. Restrict OS credentials and protect tokens.

@@ -2,8 +2,8 @@
 """Changing a ticket requester's AD account from the ticket: security groups, OU, department and
 title, by hand or from an onboarding template.
 
-Layer 8 itself only reads AD. The change runs as a built-in PowerShell action script on a runner
-(ActiveDirectory module, the runner's service account needs the rights), so it is queued, maybe
+Layer 8 itself only reads AD. The change runs as a built-in PowerShell action script on a relay
+(ActiveDirectory module, the relay's service account needs the rights), so it is queued, maybe
 approved (if an admin marks that script high risk), logged on the ticket and shown with its
 output like any script run. Only groups under Settings > Directory's group OUs, and moves into
 its allowed OUs, are accepted.
@@ -227,12 +227,12 @@ def runner_id(session: Session) -> int | None:
         return None
     runner = session.scalar(select(Runner).where(Runner.name == name, Runner.is_active))
     if runner is None or "powershell" not in runner.languages:
-        raise runs.RunError(f"No active PowerShell runner called {name!r} (Settings > Directory)")
+        raise runs.RunError(f"No active PowerShell relay called {name!r} (Settings > Directory)")
     return runner.id
 
 
 def repin_pending(session: Session) -> int:
-    """After Settings > Directory names a new AD runner: move AD jobs that haven't started (dated
+    """After Settings > Directory names a new AD relay: move AD jobs that haven't started (dated
     disables and enables among them) to it, so none wait for a host that won't take them."""
     rid = runner_id(session)
     if rid is None:
@@ -249,7 +249,7 @@ def repin_pending(session: Session) -> int:
 
 
 def request(session: Session, ticket: Ticket, actor: User, p: Plan, template_name: str | None = None):
-    """Queue the change on a PowerShell runner; it's logged on the ticket like any script run."""
+    """Queue the change on a PowerShell relay; it's logged on the ticket like any script run."""
     if p.empty:
         raise ADChangeError("Nothing to change")
     user = requester_account(ticket)
@@ -576,8 +576,8 @@ def plan_new(
 
 
 def create(session: Session, ticket: Ticket, actor: User, a: NewAccount, template_name: str | None = None):
-    """Queue the new account on a PowerShell runner. Returns the runs and the first password, which is
-    shown once to `actor` and kept nowhere (the runner gets it sealed, see app.runseal)."""
+    """Queue the new account on a PowerShell relay. Returns the runs and the first password, which is
+    shown once to `actor` and kept nowhere (the relay gets it sealed, see app.runseal)."""
     if a.problems:
         raise ADChangeError("; ".join(a.problems))
     script = create_script(session)

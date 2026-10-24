@@ -18,14 +18,14 @@ export function WallboardsAdmin({ me }: { me: User }) {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["wallboards"] });
   const newLink = useMutation({ mutationFn: api.wallboards.newLink, onSuccess: (b) => (setMade(b), setConfirm(null)), onSettled: refresh });
   const revoke = useMutation({ mutationFn: api.wallboards.revoke, onSuccess: () => setConfirm(null), onSettled: refresh });
-  if (me.role !== "admin") return <p>Wallboards are managed by admins.</p>;
+  if (me.role !== "admin") return <p>Remote displays are managed by admins.</p>;
   const queueName = (id: number) => queues.data?.find((q) => q.id === id)?.name ?? `#${id}`;
 
   return (
     <div className="stack">
       <div className="row-gap">
         <div className="spacer">
-          <h1 style={{ margin: 0 }}>Wallboards</h1>
+          <h1 style={{ margin: 0 }}>Remote displays</h1>
           <p className="muted" style={{ margin: "4px 0 0", maxWidth: "75ch" }}>
             A live board for a big screen: counts, alerts (SLA breaches, unassigned tickets, a stopped worker) and the tickets
             that need someone, with requester and technician names. It opens from a secret link with no sign-in, so put it only
@@ -34,13 +34,13 @@ export function WallboardsAdmin({ me }: { me: User }) {
         </div>
         {editing === null && (
           <button className="btn" type="button" onClick={() => (setEditing("new"), setMade(null))}>
-            New wallboard
+            New remote display
           </button>
         )}
       </div>
 
       {made && (
-        <section className="card note stack" style={{ margin: 0 }} aria-label="Wallboard link">
+        <section className="card note stack" style={{ margin: 0 }} aria-label="Remote display link">
           <strong>Link for {made.name}: copy it now, it isn&apos;t shown again.</strong>
           <pre className="log-details code" style={{ margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
             {link(made.token)}
@@ -129,7 +129,7 @@ export function WallboardsAdmin({ me }: { me: User }) {
           {boards.data?.length === 0 && (
             <tr>
               <td colSpan={5} className="muted small">
-                No wallboards yet.
+                No remote displays yet.
               </td>
             </tr>
           )}
@@ -162,7 +162,7 @@ function BoardForm({
     <form
       className="card stack settings-form"
       style={{ margin: 0 }}
-      aria-label={board ? `Edit ${board.name}` : "New wallboard"}
+      aria-label={board ? `Edit ${board.name}` : "New remote display"}
       onSubmit={(e) => {
         e.preventDefault();
         if (b.name.trim()) save.mutate();
@@ -199,7 +199,7 @@ function BoardForm({
       {save.error && <p className="error">{save.error.message}</p>}
       <div className="row-gap">
         <button className="btn" type="submit" disabled={!b.name.trim() || save.isPending}>
-          {board ? "Save" : "Make the wallboard"}
+          {board ? "Save" : "Make the remote display"}
         </button>
         <button className="btn2" type="button" onClick={() => onDone()}>
           Cancel

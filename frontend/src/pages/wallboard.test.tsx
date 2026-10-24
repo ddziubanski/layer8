@@ -76,15 +76,15 @@ test("no critical VM tile without Nutanix", async () => {
 
 test("a switched-off link says so instead of showing stale numbers", async () => {
   window.location.hash = "#l8w_old";
-  mockApi({ "GET /api/public/wallboard": new Response(JSON.stringify({ detail: "This wallboard link was switched off or replaced." }), { status: 401 }), "GET /api/branding": {} });
+  mockApi({ "GET /api/public/wallboard": new Response(JSON.stringify({ detail: "This remote display link was switched off or replaced." }), { status: 401 }), "GET /api/branding": {} });
   show();
-  expect(await screen.findByRole("heading", { name: "This wallboard was switched off" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "This remote display was switched off" })).toBeInTheDocument();
 });
 
 test("without the part after # the page explains where the link comes from", () => {
   mockApi({ "GET /api/branding": {} });
   show();
-  expect(screen.getByRole("heading", { name: "No wallboard link" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "No remote display link" })).toBeInTheDocument();
 });
 
 test("ages read well across a room", () => {
@@ -93,20 +93,20 @@ test("ages read well across a room", () => {
   expect(span(52 * 3_600_000)).toBe("2 d 4 h");
 });
 
-test("settings: make a wallboard for chosen queues and see its link once", async () => {
+test("settings: make a remote display for chosen queues and see its link once", async () => {
   const calls = mockApi({
     "GET /api/wallboards": [],
     "GET /api/queues": [{ id: 2, name: "Network", restricted: false, is_active: true }, { id: 3, name: "HR cases", restricted: true, is_active: true }],
     "POST /api/wallboards": { id: 1, name: "Service desk TV", prefix: "l8w_abcd", queue_ids: [3], unassigned_alert_minutes: 15, is_active: true, created_at: now.toISOString(), created_by: "Admin", last_seen_at: null, token: "l8w_abcdsecret" },
   });
   renderAt("/", [{ path: "/", element: <WallboardsAdmin me={{ ...ME, role: "admin" }} /> }]);
-  await userEvent.click(await screen.findByRole("button", { name: "New wallboard" }));
+  await userEvent.click(await screen.findByRole("button", { name: "New remote display" }));
   await userEvent.type(screen.getByLabelText("Name"), "Service desk TV");
   await userEvent.click(await screen.findByLabelText(/HR cases/));
   const minutes = screen.getByLabelText(/unassigned for/);
   await userEvent.clear(minutes);
   await userEvent.type(minutes, "15");
-  await userEvent.click(screen.getByRole("button", { name: "Make the wallboard" }));
+  await userEvent.click(screen.getByRole("button", { name: "Make the remote display" }));
   await waitFor(() => expect(calls.find((c) => c.method === "POST")?.body).toEqual({ name: "Service desk TV", queue_ids: [3], unassigned_alert_minutes: 15 }));
   expect(await screen.findByText(`${window.location.origin}/wallboard#l8w_abcdsecret`)).toBeInTheDocument();
 });

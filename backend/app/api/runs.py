@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Runners (Settings > Runners), running action scripts, and the API runners poll.
+"""Relays (Settings > Relays), running action scripts, and the API relays poll.
 
-Runners authenticate with their own bearer token (Authorization: Bearer hdr_...), never a
+Relays authenticate with their own bearer token (Authorization: Bearer hdr_...), never a
 user session; they can only claim queued runs and report on the runs they hold.
 """
 
@@ -46,14 +46,14 @@ def _err(exc: Exception, code: int = status.HTTP_422_UNPROCESSABLE_CONTENT) -> H
 def _runner(session, runner_id: int) -> Runner:
     runner = session.get(Runner, runner_id)
     if runner is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Runner not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Relay not found")
     return runner
 
 
 def _name_free(session, name: str, runner_id: int | None = None) -> None:
     other = session.scalar(select(Runner).where(Runner.name == name))
     if other is not None and other.id != runner_id:
-        raise HTTPException(status.HTTP_409_CONFLICT, f"There's already a runner called {name!r}")
+        raise HTTPException(status.HTTP_409_CONFLICT, f"There's already a relay called {name!r}")
 
 
 @router.get("/api/runners", response_model=list[RunnerOut])
@@ -69,7 +69,7 @@ def create_runner(body: RunnerIn, admin: Admin, session: SessionDep):
     runner = Runner(name=name, description=body.description, languages=sorted(set(body.languages)), is_active=body.is_active, builtins_only=body.builtins_only, token_hash=token_hash)
     session.add(runner)
     session.commit()
-    log.info("Runner %r added by %s", runner.name, admin.display_name, extra={"source": "settings"})
+    log.info("Relay %r added by %s", runner.name, admin.display_name, extra={"source": "settings"})
     return RunnerTokenOut(runner=RunnerOut.model_validate(runner), token=token)
 
 
@@ -91,7 +91,7 @@ def new_runner_token(runner_id: int, admin: Admin, session: SessionDep):
     runner = _runner(session, runner_id)
     token, runner.token_hash = runs.new_token()
     session.commit()
-    log.warning("Runner %r given a new token by %s", runner.name, admin.display_name, extra={"source": "settings"})
+    log.warning("Relay %r given a new token by %s", runner.name, admin.display_name, extra={"source": "settings"})
     return RunnerTokenOut(runner=RunnerOut.model_validate(runner), token=token)
 
 
@@ -104,10 +104,10 @@ def delete_runner(runner_id: int, admin: Admin, session: SessionDep):
         ScriptRun.status.in_((RunStatus.queued, RunStatus.awaiting_approval)),
     ).with_for_update()):
         # Cancelled without taking over decided_by: whoever approved it stays on record.
-        runs._revoke(session, run, "Selected runner removed; request a new run on an appropriate runner")
+        runs._revoke(session, run, "Selected relay removed; request a new run on an appropriate relay")
     session.delete(runner)
     session.commit()
-    log.info("Runner %r removed by %s", runner.name, admin.display_name, extra={"source": "settings"})
+    log.info("Relay %r removed by %s", runner.name, admin.display_name, extra={"source": "settings"})
 
 
 # Running action scripts
@@ -153,7 +153,7 @@ def _targets(session, body: RunRequestIn, user: User) -> list[int]:
 
 @router.post("/api/scripts/{script_id}/preview", response_model=RunPreviewOut)
 def preview_run(script_id: int, body: RunRequestIn, user: Agent, session: SessionDep):
-    """What a run would do: its targets, its parameter values, whether it needs approval and a runner is about. Nothing runs."""
+    """What a run would do: its targets, its parameter values, whether it needs approval and a relay is about. Nothing runs."""
     script = _action(session, script_id, user)
     version = next(v for v in script.versions if v.number == script.current_version)
     try:
@@ -167,7 +167,7 @@ def preview_run(script_id: int, body: RunRequestIn, user: Agent, session: Sessio
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"No device {device_id}")
         targets.append(RunTargetOut(device_id=d.id, name=d.name, target=runs.target_name(d)))
     if body.on_runner:
-        targets.append(RunTargetOut(device_id=None, name="On the runner itself", target=None))
+        targets.append(RunTargetOut(device_id=None, name="On the relay itself", target=None))
     able = [r for r in session.scalars(select(Runner).where(Runner.is_active, Runner.builtins_only.is_(False))) if script.language in (r.languages or [])]
     online = any(r.last_seen_at and sla.utcnow() - r.last_seen_at < ONLINE for r in able)
     return RunPreviewOut(
@@ -266,7 +266,7 @@ def _calling_runner(session, authorization: str | None) -> Runner:
     token = (authorization or "").removeprefix("Bearer ").strip()
     runner = runs.runner_for_token(session, token) if token else None
     if runner is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown or disabled runner token", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown or disabled relay token", headers={"WWW-Authenticate": "Bearer"})
     return runner
 
 
@@ -277,7 +277,7 @@ def runner_claim(body: RunnerClaimIn, session: SessionDep, authorization: str | 
     session.commit()
     if run is None:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
-    log.info("Runner %r started run #%s (%r on %s)", runner.name, run.id, run.script.name, run.target or "itself", extra={"source": "scripts"})
+    log.info("Relay %r started run #%s (%r on %s)", runner.name, run.id, run.script.name, run.target or "itself", extra={"source": "scripts"})
     return RunnerJobOut(
         run_id=run.id, language=run.version.language or run.script.language, body=run.version.body, values=run.values, target=run.target,
         target_os=run.device.os if run.device else None, time_limit_seconds=runs.TIME_LIMIT_SECONDS, secret_values=secret,
@@ -302,4 +302,4 @@ def runner_finish(run_id: int, body: RunnerFinishIn, session: SessionDep, author
     except runs.RunError as exc:
         raise _err(exc, status.HTTP_409_CONFLICT) from None
     session.commit()
-    log.info("Run #%s of %r on %s: %s", run.id, run.script.name, run.target or "the runner", run.status, extra={"source": "scripts"})
+    log.info("Run #%s of %r on %s: %s", run.id, run.script.name, run.target or "the relay", run.status, extra={"source": "scripts"})

@@ -2,7 +2,7 @@
 """Values a run needs but nobody may see or keep (a new AD account's first password).
 
 They're encrypted with a key that lives in the secrets folder (not the database), handed to the
-runner once when it claims the run, and then cleared, so neither the database nor a backup holds
+relay once when it claims the run, and then cleared, so neither the database nor a backup holds
 them in the clear, and they're gone once the run starts.
 """
 

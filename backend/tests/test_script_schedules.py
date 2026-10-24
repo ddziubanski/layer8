@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Script schedules: actions queued on a timetable (devices, a dynamic group, the runner), queries emailed as CSV."""
+"""Script schedules: actions queued on a timetable (devices, a dynamic group, the relay), queries emailed as CSV."""
 
 from datetime import date, datetime, timedelta
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Juniper EX switches managed one by one (not Mist): opt-in and read only. Settings > Juniper.
 
-A runner on the LAN (runner 1.2+, Python) reads each switch's Junos REST API: HTTPS, by default port
+A relay on the LAN (relay 1.2+, Python) reads each switch's Junos REST API: HTTPS, by default port
 3443, enabled on the switch with `set system services rest https port 3443` and a server
 certificate, and a login with a read-only class. It asks four RPCs as JSON (Accept:
 application/json) at https://{switch}:{port}/rpc/{name}:
@@ -11,8 +11,8 @@ application/json) at https://{switch}:{port}/rpc/{name}:
   get-ethernet-switching-table-information  MAC -> VLAN and port (ELS and older output both read)
   (reachability)                            a switch that doesn't answer counts as offline
 
-The login and password reach the runner sealed (on stdin), never in the run's values or output. The
-runner sends back one compact line per switch; the server joins MAC -> port with MAC -> IP into the
+The login and password reach the relay sealed (on stdin), never in the run's values or output. The
+relay sends back one compact line per switch; the server joins MAC -> port with MAC -> IP into the
 vendor-neutral observations (app.network). Ports with many MACs are uplinks and are skipped.
 """
 
@@ -150,7 +150,7 @@ def ensure_script(session: Session) -> Script:
     script = session.scalar(select(Script).where(Script.name == SCRIPT_NAME))
     if script is None:
         script = Script(name=SCRIPT_NAME, kind=ScriptKind.action, language=ScriptLanguage.python, agents_can_run=True, current_version=1,
-                        description="Built in: reads Juniper switches for Settings > Juniper. Needs a runner that takes Python, version 1.2 or later.")
+                        description="Built in: reads Juniper switches for Settings > Juniper. Needs a relay that takes Python, version 1.2 or later.")
         script.versions.append(ScriptVersion(number=1, language=script.language, body=SCRIPT_BODY, parameters=[], note="Built in"))
         session.add(script)
         session.flush()
@@ -171,7 +171,7 @@ def request_read(session: Session, user, *, scheduled: bool) -> NetworkRead:
     if name := settings.junos_runner.strip():
         runner = session.scalar(select(Runner).where(Runner.name == name, Runner.is_active))
         if runner is None or "python" not in (runner.languages or []):
-            raise JunosError(f"No active runner called {name!r} that takes Python (Settings > Juniper)")
+            raise JunosError(f"No active relay called {name!r} that takes Python (Settings > Juniper)")
         runner_id = runner.id
     ca = ""
     if settings.junos_ca_file:
@@ -212,7 +212,7 @@ def _port(value: str) -> str:
 
 
 def apply(session: Session, switches: list[dict]) -> str:
-    """Store what the runner read. Switches that failed keep their previous clients (marked stale
+    """Store what the relay read. Switches that failed keep their previous clients (marked stale
     in time) and count as offline; answered switches replace theirs."""
     now = sla.utcnow()
     configured = {s["name"] for s in parse_switches(settings.junos_switches)}
@@ -282,6 +282,6 @@ def scheduled_read(session: Session) -> tuple[str, bool]:
     if not on():
         return "Off: Settings > Juniper", False
     if pending(session) is not None:
-        return "A read is still waiting for its runner", False
+        return "A read is still waiting for its relay", False
     read = request_read(session, services.automation_user(session), scheduled=True)
     return f"Asked for a Juniper read (run #{read.run_id})", True

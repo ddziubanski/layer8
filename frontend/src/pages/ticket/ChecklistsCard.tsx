@@ -135,7 +135,7 @@ export function ChecklistsCard({ ticket, onChanged }: { ticket: Ticket; onChange
               ))}
             </ul>
           )}
-          {disables && <p className="small muted" style={{ margin: 0 }}>The person must be from AD; the disable waits on the runner until that day and can be cancelled from the step&apos;s ticket.</p>}
+          {disables && <p className="small muted" style={{ margin: 0 }}>The person must be from AD; the disable waits on the relay until that day and can be cancelled from the step&apos;s ticket.</p>}
           {start.error && <p className="error small">{start.error.message}</p>}
           <div className="row-gap">
             <button className="btn" type="submit" disabled={start.isPending || !templateId}>

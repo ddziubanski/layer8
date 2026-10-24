@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Running action scripts: requesting runs (one per target), approval, and the runner's side
+"""Running action scripts: requesting runs (one per target), approval, and the relay's side
 (claim, output, finish). Runs started from a ticket are logged on it.
 
 A run's lifecycle: awaiting_approval (high-risk scripts) -> queued -> running -> succeeded or
-failed; or rejected / cancelled before it starts. A runner only claims queued runs in the
+failed; or rejected / cancelled before it starts. A relay only claims queued runs in the
 languages it takes; a run still "running" long after its time limit is failed by housekeeping.
 """
 
@@ -102,14 +102,14 @@ def request(
     on_success: dict | None = None,
     schedule_id: int | None = None,
 ) -> list[ScriptRun]:
-    """Queue the script on each device (or once on the runner itself). Doesn't commit.
-    `sealed`: values only the runner gets (see app.runseal); never stored in the clear or shown.
+    """Queue the script on each device (or once on the relay itself). Doesn't commit.
+    `sealed`: values only the relay gets (see app.runseal); never stored in the clear or shown.
     `not_before`: not claimed before then. `on_success`: an email ({to, subject, body}) sent if it succeeds."""
     session.flush()
     session.refresh(script, with_for_update=True)
     session.expire(script, ["versions"])
     if script.kind != ScriptKind.action:
-        raise RunError("Queries run straight away; only actions go to a runner")
+        raise RunError("Queries run straight away; only actions go to a relay")
     if not script.is_active:
         raise RunError("This script isn't in use")
     if not (user.role == UserRole.admin or script.agents_can_run):
@@ -128,7 +128,7 @@ def request(
             raise RunError(f"No device {device_id}")
         devices.append(device)
     if on_runner == bool(devices):
-        raise RunError("Pick the devices to run it on, or run it on the runner itself")
+        raise RunError("Pick the devices to run it on, or run it on the relay itself")
     if len(devices) > MAX_TARGETS:
         raise RunError(f"At most {MAX_TARGETS} devices at a time")
     status = RunStatus.awaiting_approval if script.high_risk else RunStatus.queued
@@ -144,7 +144,7 @@ def request(
         made.append(run)
     session.flush()
     if ticket is not None:
-        where = ", ".join(r.target for r in made if r.target) or "the runner"
+        where = ", ".join(r.target for r in made if r.target) or "the relay"
         services._event(session, ticket, EventType.script_run, user, script=script.name, version=version.number, runs=[r.id for r in made], targets=where)
         wait = " It needs an admin's approval first." if script.high_risk else ""
         if not_before is not None:
@@ -273,8 +273,8 @@ def recheck_pending(session: Session, script: Script) -> None:
 
 
 def claim(session: Session, runner: Runner, host: str, version: str) -> tuple[ScriptRun | None, dict]:
-    """Mark the runner seen and give it the oldest queued run in its languages, if any, with its
-    sealed values (which are cleared from the run here: the runner gets them once)."""
+    """Mark the relay seen and give it the oldest queued run in its languages, if any, with its
+    sealed values (which are cleared from the run here: the relay gets them once)."""
     runner.last_seen_at, runner.last_host, runner.last_version = sla.utcnow(), host[:255], version[:50]
     stmt = (
         select(ScriptRun)
@@ -317,7 +317,7 @@ def claim(session: Session, runner: Runner, host: str, version: str) -> tuple[Sc
 def _own_run(session: Session, runner: Runner, run_id: int) -> ScriptRun:
     run = session.get(ScriptRun, run_id)
     if run is None or run.runner_id != runner.id or run.status != RunStatus.running:
-        raise RunError("Not a run this runner is running")
+        raise RunError("Not a run this relay is running")
     return run
 
 
@@ -353,7 +353,7 @@ def _log_finished(session: Session, run: ScriptRun) -> None:
     author = run.requested_by or services.automation_user(session)
     if ticket is None:
         return
-    where = run.target or "the runner"
+    where = run.target or "the relay"
     if run.status == RunStatus.rejected:
         who = run.decided_by.display_name if run.decided_by else "an admin"
         _ticket_note(session, ticket, author, f"Script \"{run.script.name}\" on {where} was not approved ({who}).")
@@ -371,13 +371,13 @@ def _log_finished(session: Session, run: ScriptRun) -> None:
 
 
 def fail_stale(session: Session, now: datetime | None = None) -> int:
-    """Runs whose runner went quiet past their time limit: failed. Returns how many."""
+    """Runs whose relay went quiet past their time limit: failed. Returns how many."""
     now = now or sla.utcnow()
     cutoff = now - timedelta(seconds=TIME_LIMIT_SECONDS) - STALE_GRACE
     stale = list(session.scalars(select(ScriptRun).where(ScriptRun.status == RunStatus.running, ScriptRun.claimed_at < cutoff)))
     for run in stale:
         run.status, run.finished_at = RunStatus.failed, now
-        run.error = "The runner stopped answering before the run finished"
+        run.error = "The relay stopped answering before the run finished"
         _log_finished(session, run)
         from app import ipamscan
 

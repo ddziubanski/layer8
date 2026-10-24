@@ -99,6 +99,17 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
           sel.dispatchEvent(new Event('change', { bubbles: true }));
           await new Promise(r => setTimeout(r, 500));
         })()"""))
+    if ticket_id:
+        out.append(("03f-ticket-vms", "admin", f"/tickets/{ticket_id}", "Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket", """(async () => {
+          [...document.querySelectorAll('button')].find(b => b.textContent.includes('Tools') && b.getAttribute('aria-expanded') === 'false')?.click();
+          await new Promise(r => setTimeout(r, 600));
+          [...document.querySelectorAll('[role=tab]')].find(b => b.textContent.endsWith('Devices'))?.click();
+          await new Promise(r => setTimeout(r, 900));
+          [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Restart')?.click();
+          await new Promise(r => setTimeout(r, 400));
+          document.querySelector('[data-ticket-panel="vms"]')?.scrollIntoView({ block: 'center' });
+          await new Promise(r => setTimeout(r, 400));
+        })()"""))
     if ad_ticket:
         out.append(("03e-ticket-checklist", "admin", f"/tickets/{ad_ticket}", "Ticket: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress"))
     if ad_ticket:
@@ -113,6 +124,7 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         ("04-devices", "admin", "/devices", "Devices: AD computers from directory sync and devices added by hand"),
         ("04b-devices-stale", "admin", "/devices?view=stale", "Devices > Stale: no sign of life from AD, Action1 or network scans for 90 days"),
         ("04c-devices-unknown", "admin", "/devices?view=unknown", "Devices > Unknown on the network: seen by scans or in Action1, but not a device here"),
+        ("04d-devices-vms", "admin", "/devices?view=vms", "Devices > Virtual machines: VMs read from Nutanix Prism Central, with host, size, addresses and the device each matches"),
     ]
     if device_id:
         out.append(("05-device", "admin", f"/devices/{device_id}", "A device: details, patching from Action1, IP addresses, notes and linked tickets"))
@@ -170,6 +182,9 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         ("17-wallboard", "none", f"/wallboard#{WALLBOARD_TOKEN}", "Wallboard for a big screen: alerts, counts, the oldest unassigned tickets, SLA due soonest, queues and technicians (a secret link, no sign-in)"),
         ("09e-settings-wallboards", "admin", "/settings/wallboards", "Settings > Wallboards: boards for big screens, by queue, each with its own secret link"),
         ("09f-settings-desk-hours", "admin", "/settings/desk-hours", "Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal"),
+        ("09h-settings-nutanix", "admin", "/settings/nutanix", "Settings > Nutanix: Prism Central connection, power actions from tickets, critical VMs with outage tickets and a wallboard tile"),
+        ("09i-settings-unifi", "admin", "/settings/unifi", "Settings > UniFi: cloud or local console, what's read, outage tickets and guest Wi-Fi vouchers"),
+        ("09j-settings-juniper", "admin", "/settings/juniper", "Settings > Juniper: EX switches read over Junos REST through a runner"),
         ("09g-settings-meraki", "admin", "/settings/meraki", "Settings > Meraki: read-only discovery by API key or OAuth, diagnostics and outage alerts, each opt-in"),
         ("12c-workspace", "admin", "/preferences", "My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)"),
     ]
@@ -282,6 +297,57 @@ def dark_mode(token: str, value: str | None = None) -> str:
     return was
 
 
+# Made-up VMs for the run (and removed after), so the Nutanix pages have something to show.
+DEMO_VMS = [
+    ("fileserver01", "on", "ahv-node-1", 4, 16384, "10.20.0.11", True),
+    ("sql01", "on", "ahv-node-2", 8, 65536, "10.20.0.12", True),
+    ("app01", "on", "ahv-node-1", 4, 8192, "10.20.0.13", False),
+    ("print01", "off", "ahv-node-3", 2, 4096, "10.20.0.14", True),
+    ("build-agent", "on", "ahv-node-3", 8, 32768, "10.20.0.15", True),
+    ("old-test", "off", "ahv-node-2", 2, 4096, "10.20.0.16", False),
+]
+
+
+def nutanix_demo(session, token: str, ticket_id: int | None, device_id: int | None) -> dict:
+    """Turn Nutanix on with a made-up Prism Central (nothing reads it: no worker runs during capture)
+    and add the demo VMs; returns what to put back."""
+    from app import sla
+    from app.models import NutanixVm, TicketNutanixVm
+
+    client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
+    was = {f["name"]: f["value"] for f in client.get("/api/settings/nutanix").raise_for_status().json()["fields"] if "is_set" not in f and not f["locked"]}
+    client.put("/api/settings/nutanix", json={"values": {
+        "nutanix_enabled": True, "nutanix_url": "https://prism.corp.example:9440", "nutanix_username": "layer8-read", "nutanix_password": "not-a-real-password",
+        "nutanix_power_enabled": True, "nutanix_critical_vms": ["sql01", "print01"], "nutanix_outage_tickets": True, "nutanix_wallboard": True}}).raise_for_status()
+    now = sla.utcnow()
+    for i, (name, state, host, cpus, memory, ip, tools) in enumerate(DEMO_VMS):
+        session.add(NutanixVm(ext_id=f"screenshot-{i}", name=name, power_state=state, cluster_name="HQ-cluster", host_name=host, vcpus=cpus, memory_mb=memory,
+                              ips=[ip], macs=[f"50:6b:8d:00:00:{i:02x}"], guest_tools=tools, guest_tools_reachable=tools and state == "on",
+                              device_id=device_id if name == "fileserver01" else None, observed_at=now))
+    session.flush()
+    if ticket_id:
+        session.add(TicketNutanixVm(ticket_id=ticket_id, vm_id="screenshot-0"))
+    from app import nutanix
+    from app.models import NetworkInventory
+
+    for name in ("sql01", "print01"):
+        vm = session.scalar(select(NutanixVm).where(NutanixVm.ext_id.like("screenshot-%"), NutanixVm.name == name))
+        session.add(NetworkInventory(provider=nutanix.PROVIDER, source_id=nutanix.CRITICAL_SOURCE, device_key=vm.ext_id, name=name, kind="VM",
+                                     state="online" if vm.power_state == "on" else "offline", observed_at=now))
+    session.commit()
+    return was
+
+
+def nutanix_undo(session, token: str, was: dict) -> None:
+    from app.models import NetworkInventory, NutanixVm
+
+    session.execute(delete(NetworkInventory).where(NetworkInventory.device_key.like("screenshot-%")))
+    session.execute(delete(NutanixVm).where(NutanixVm.ext_id.like("screenshot-%")))
+    session.commit()
+    client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
+    client.put("/api/settings/nutanix", json={"values": was, "clear": ["nutanix_password"]}).raise_for_status()
+
+
 def theme_preset(token: str, value: str | None = None) -> str:
     """Read Settings > Branding's appearance, or set it (returns what it was)."""
     client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
@@ -309,6 +375,7 @@ def main() -> None:
         session.execute(delete(Wallboard).where(Wallboard.token_hash == _hash(WALLBOARD_TOKEN)))
         session.add(Wallboard(name="Service desk TV", token_hash=_hash(WALLBOARD_TOKEN), prefix=WALLBOARD_TOKEN[:8]))
         session.commit()
+        nutanix_was = nutanix_demo(session, tokens["admin"], ticket_id, device_id)
     try:
         plan = shots(ticket_id, device_id, ad_ticket)
         done = asyncio.run(capture(tokens, plan))
@@ -329,6 +396,7 @@ def main() -> None:
             theme_preset(tokens["admin"], was)
     finally:
         with SessionLocal() as session:
+            nutanix_undo(session, tokens["admin"], nutanix_was)  # while the admin session still works
             session.execute(delete(UserSession).where(UserSession.token_hash.in_([_hash_token(t) for t in tokens.values()])))
             session.execute(delete(Wallboard).where(Wallboard.token_hash == _hash(WALLBOARD_TOKEN)))
             session.commit()
