@@ -15,7 +15,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
 - **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
 - **For the room:** a remote display for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
-- **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, and no cloud required.
+- **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, signed updates from GitHub releases, and no cloud required.
 
 <p>
   <img src="screenshots/03-ticket.png" width="49%" alt="A ticket: conversation, assignment, requester and devices">
@@ -24,19 +24,16 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
   <img src="screenshots/dark/02-queue.png" width="49%" alt="The queue in dark mode">
 </p>
 
-All screenshots, from the demo data: [screenshots/](screenshots/README.md). A gallery of the refreshed interface: [screenshots/command-center/](screenshots/command-center/README.md).
+All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 
 ## What it does
-
-Administrators can check GitHub stable releases and review signed appliance updates under **Settings > Updates**. Installation creates a verified encrypted backup, checks code/schema/frontend/source and worker readiness, and keeps progress visible during API downtime. See [GitHub updates](docs/github-updates.md) for initial provisioning, release signing and recovery.
-
 
 **Tickets**
 - Email (Microsoft 365 / Exchange Online through Graph) and a self-service portal feed one queue and one routing engine.
 - Queues with owners, managers and restricted visibility; SLAs; priorities from urgency × impact.
 - KACE-style ticket rules: on save, on a schedule, or in SQL.
 - Merge, parent and child tickets, bulk changes, and a page layout each technician can arrange.
-- Conversation-first ticket workspace: Conversation, Work and History tabs, with a closable tools drawer. Personal preferences keep a preferred tool, width and open state; classic arranged panels remain available. See [ticket workspace](docs/ticket-workspace.md).
+- A ticket page that puts the conversation first, with Work and History tabs and a drawer of tools (details, devices, directory, scripts, network…); the classic arranged layout is still there ([docs/ticket-workspace.md](docs/ticket-workspace.md)).
 - "Tickets Anywhere": technicians act on tickets by replying to email (`#close`, `#assign`, `#priority`).
 - Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
 - A remote display for a big screen in the IT office: live counts, alerts (SLA breaches, unassigned tickets) and the tickets that need someone, opened by a secret link.
@@ -47,7 +44,7 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Silent Windows sign-in (Kerberos) to the portal.
 - Creating AD accounts from a ticket: onboarding templates, group lists, a start date, and the password shown once.
 - Finer permissions: who may delete, merge, publish or manage each area, by group.
-- Global workspace modules in Settings > Modules: admins choose which areas the organization uses; technicians can hide more or choose a minimal preset in My preferences. Tickets, My preferences, admin recovery access and requester self-service stay available. Personally hidden modules remain reachable through Ctrl+K and direct links while globally enabled. [Workspace preferences](docs/workspace-preferences.md).
+- Admins choose which areas the organization uses (Settings > Modules), and each technician can trim their own sidebar further ([docs/workspace-preferences.md](docs/workspace-preferences.md)).
 
 **Devices and network**
 - Devices from AD computer objects, with tickets, IP addresses, switch port and lifecycle on each.
@@ -72,7 +69,6 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Scripts run on "relays" that pull work over HTTPS, so no inbound ports are needed.
 - Versions with diffs, approval for high-risk scripts, schedules, and every run logged on its ticket.
 - A Remote Assistance button on tickets, logged as well.
-- Optional reviewed Action1 software deployments: search available packages from a ticket-linked computer or device, choose an exact version, review the endpoint and explicitly deploy. Separate credentials and permissions; results and ticket notes track the outcome. [Setup and first-slice limits](docs/action1.md#reviewed-software-deployment-first-slice).
 
 **Microsoft 365 and Teams**
 - Optional Teams Workflows summaries with queue counts; restricted queues are excluded.
@@ -86,12 +82,13 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Purchase orders, with receiving by the clerk, vendors and systems.
 - Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
 - Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It!.
+- Signed updates: Settings > Updates checks Layer 8's stable GitHub releases, verifies the publisher's signature, backs up first and checks the result ([docs/github-updates.md](docs/github-updates.md)).
 
-Current GUI screenshots, including dark mode, Settings and a tablet view: [command-center gallery](screenshots/command-center/README.md). Older feature examples remain in [screenshots/](screenshots/README.md). The full requirements and decisions are in [SPEC.md](SPEC.md).
+Screenshots of every page, in light and dark and in each theme: [screenshots/](screenshots/README.md) (an earlier gallery: [command-center](screenshots/command-center/README.md)). The full requirements and decisions are in [SPEC.md](SPEC.md).
 
 ## Try it
 
-- **Appliance ISO (recommended):** Debian 13 plus Layer 8. It installs with no internet access and asks its questions in a setup wizard on first boot. Build it with `iso/build.sh` (needs Docker and npm), or `iso/build.sh --demo` for a one-click offline demo with sample data. The branded BIOS/UEFI boot menu defaults to choosing the disk and partitioning; erasing the entire first disk is a separate explicit choice. The setup wizard and recovery console also use the refreshed styling. See [docs/install.md](docs/install.md).
+- **Appliance ISO (recommended):** download `layer8-v<version>.iso` from the [latest release](https://github.com/ddziubanski/layer8/releases/latest) and check it against `SHA256SUMS`. It's Debian 13 plus Layer 8, installs with no internet access, and asks its questions in a setup wizard on first boot (or choose the offline demo there). The boot menu defaults to choosing the disk and partitioning; erasing the first disk is a separate choice. To build it yourself: `iso/build.sh` (needs Docker and npm). See [docs/install.md](docs/install.md).
 - **On an existing Debian 13 server:** `install/install.sh`, same doc.
 - **For development:** [backend/README.md](backend/README.md) covers the dev database (Docker Compose), the API, the web UI, tests and migrations.
 
@@ -99,7 +96,7 @@ Every setting can be changed in the app (Settings), and also imported from an an
 
 ## Planned
 
-- **Appliance updates:** an optional online release check alongside offline installation, followed by signed update bundles, backup and rollback support. The current ISO installs its bundled application; it does not automatically pull a newer version from GitHub. Rebuild the ISO to include newer merged application changes.
+- **Updates without internet access:** importing a signed update package from a USB stick or file share (online updates from GitHub releases are in 1.2).
 - **Action1 deployment, later slices ([#33](https://github.com/ddziubanski/layer8/issues/33)):** bulk targets and onboarding software bundles. One reviewed package to one ticket-linked computer is already available (opt-in, Settings > Action1).
 
 ## Integrations (all optional)
@@ -112,9 +109,11 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Relays: scripts, AD changes, IP scans, DHCP/DNS, SNMP | [docs/runner.md](docs/runner.md) |
 | Remote Assistance from tickets | [docs/remote-assistance.md](docs/remote-assistance.md) |
 | Action1 patch status and patch automation calendar (read-only) | [docs/action1.md](docs/action1.md) |
+| Cisco Meraki (discovery, diagnostics, alert webhooks) | [docs/meraki-webhooks.md](docs/meraki-webhooks.md) |
 | Dell and Lenovo warranty lookups | [docs/warranty.md](docs/warranty.md) |
 | Moving from Track-It! | [docs/trackit-import.md](docs/trackit-import.md) |
 | Recovery console | [docs/recovery-console.md](docs/recovery-console.md) |
+| Appliance updates (signed GitHub releases) | [docs/github-updates.md](docs/github-updates.md) |
 | Other apps (API keys: look up tickets, add notes) | [docs/integrations.md](docs/integrations.md) |
 | Remote displays (live board for a big screen, secret link) | [docs/wallboard.md](docs/wallboard.md) |
 | Ubiquiti UniFi (cloud or local console) | [docs/unifi.md](docs/unifi.md) |
