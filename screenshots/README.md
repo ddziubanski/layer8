@@ -1,5 +1,7 @@
 # Screenshots
 
+For the refreshed GUI, start with the [Command Center gallery (22 October 2026)](command-center/README.md). The images below are older feature examples and may show the previous layout.
+
 From the dev app, 2026-10-21. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
