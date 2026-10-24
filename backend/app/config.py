@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     # SLA clock: "desk" counts only the queue's hours (or the desk hours), "always" around the clock.
     sla_clock: str = "desk"
     sla_pause_waiting: bool = True
+    # Tickets nobody has taken: an email to everyone who could take them, after this many minutes.
+    unaccepted_alert_enabled: bool = False
+    unaccepted_alert_minutes: int = 30
+    # How: "email" each technician, "teams" a post in the Teams channel (Settings > Teams webhook), or "both".
+    unaccepted_alert_via: str = "email"
     after_hours_message: str = "No one is in right now. A technician is next expected {next}."
     # Technicians' Teams status (status only) on the portal, read through the Email tab's app registration.
     presence_on_portal: bool = False

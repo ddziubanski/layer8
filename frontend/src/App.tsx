@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { ModuleWorkspace } from "./components/ModuleWorkspace";
 import { ModuleAccess } from "./components/ModuleAccess";
+import { UnacceptedCounter } from "./components/UnacceptedCounter";
 import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
@@ -124,7 +125,7 @@ function Shell({ me }: { me: Me }) {
       </nav>
       <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
         <RouteFocus mainId="console-main" />
-        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={activeMe} /><span className="console-topbar-user">{me.display_name}</span></div>
+        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={activeMe} /><UnacceptedCounter /><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>

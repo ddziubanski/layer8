@@ -39,6 +39,7 @@ LABELS = {
     "reports": "Scheduled reports",
     "script_schedules": "Scheduled scripts",
     "housekeeping": "Housekeeping",
+    "unaccepted": "Tickets nobody has taken: alert technicians",
     "backup": "Backup",
     "ipam": "IP address scans (scheduled)",
     "meraki": "Meraki: read client observations",
@@ -185,6 +186,14 @@ def build_jobs(session_factory, mail) -> list[Job]:
         finally:
             client.close()
 
+    def unaccepted_alerts(forced: bool):
+        from app import unaccepted
+
+        with session_factory() as session:
+            summary = unaccepted.run(session)
+            session.commit()
+            return summary, True
+
     def nutanix_sync(forced: bool):
         from app import nutanix
 
@@ -304,6 +313,7 @@ def build_jobs(session_factory, mail) -> list[Job]:
         Job("reports", "reports", _every(60), scheduled_reports),
         Job("script_schedules", "scripts", _every(60), scheduled_scripts),
         Job("housekeeping", "worker", _every(600), housekeeping),
+        Job("unaccepted", "worker", _every(60), unaccepted_alerts),
         # Daily at backup_time: the next due time is worked out after each run.
         Job("backup", "backup", until_backup, backup),
         Job("ipam", "ipam", _every(300), ipam_scans),

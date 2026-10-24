@@ -112,7 +112,7 @@ def test_force_restart_runs_the_server_command(client, admin, monkeypatch):
 def test_services_overview(client, db, admin, agent):
     s = client.get("/api/system/services", headers=as_user(admin)).json()
     assert s["worker"]["state"] == "never_started"
-    assert [j["name"] for j in s["jobs"]] == ["software_deployments", "teams", "presence", "email", "directory", "rules", "reports", "script_schedules", "housekeeping", "backup", "ipam", "meraki", "unifi", "nutanix", "nutanix_tasks", "junos", "action1", "sweeps", "warranty"]
+    assert [j["name"] for j in s["jobs"]] == ["software_deployments", "teams", "presence", "email", "directory", "rules", "reports", "script_schedules", "housekeeping", "unaccepted", "backup", "ipam", "meraki", "unifi", "nutanix", "nutanix_tasks", "junos", "action1", "sweeps", "warranty"]
     assert s["api"]["pid"] > 0
     db.add(ServiceHeartbeat(name="worker", last_seen=sla.utcnow() - timedelta(minutes=10), info={}))
     db.add(WorkerJob(name="directory", last_started_at=sla.utcnow(), last_finished_at=sla.utcnow() - timedelta(minutes=1)))

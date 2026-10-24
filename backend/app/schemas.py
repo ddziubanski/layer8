@@ -929,6 +929,12 @@ class AttachmentOut(ORM):
         return preview_kind(self.content_type, self.filename)
 
 
+class UnacceptedOut(BaseModel):
+    enabled: bool
+    count: int
+    minutes: int
+
+
 class TicketPage(BaseModel):
     items: list[TicketOut]
     total: int

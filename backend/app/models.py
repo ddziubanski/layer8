@@ -450,6 +450,9 @@ class Ticket(Base):
     sla_paused_minutes: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     # The policy's resolution window (business minutes), for how much of it is left.
     sla_resolution_minutes: Mapped[int | None] = mapped_column(Integer)
+    # Nobody assigned since then (None while someone has it), and when that set off an alert.
+    unassigned_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    unaccepted_alerted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     first_responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # For "time in status" rule conditions.
     status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
