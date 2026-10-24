@@ -18,7 +18,7 @@ from app.models import AppSetting, User
 def me_out(session, user) -> MeOut:
     out = MeOut.model_validate(user)
     out.permissions = permissions.granted(session, user)
-    out.features = [name for name, on in (("meraki", settings.meraki_enabled), ("unifi", settings.unifi_enabled), ("unifi_vouchers", settings.unifi_enabled and settings.unifi_vouchers_enabled), ("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
+    out.features = [name for name, on in (("meraki", settings.meraki_enabled), ("unifi", settings.unifi_enabled), ("junos", settings.junos_enabled), ("unifi_vouchers", settings.unifi_enabled and settings.unifi_vouchers_enabled), ("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
     navigation = session.get(AppSetting, f"personal_navigation:{user.id}")
     hidden = navigation.value.get("hidden_modules", []) if navigation else []
     out.hidden_modules = sorted({m for m in hidden if isinstance(m, str) and m in get_args(SidebarModule)}) if isinstance(hidden, list) else []

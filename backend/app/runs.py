@@ -211,7 +211,13 @@ def _requester_authorized(session: Session, run: ScriptRun) -> bool:
         from app import ipamscan
         from app.models import IpScan
         names = {definition[0] for definition in ipamscan.SCRIPTS.values()}
-        return run.script.name in names and session.scalar(select(IpScan.id).where(IpScan.run_id == run.id, IpScan.scheduled)) is not None
+        if run.script.name in names and session.scalar(select(IpScan.id).where(IpScan.run_id == run.id, IpScan.scheduled)) is not None:
+            return True
+        # Scheduled Juniper reads too: the built-in script, for a read recorded as scheduled.
+        from app import junos
+        from app.models import NetworkRead
+        return run.script.name == junos.SCRIPT_NAME and session.scalar(
+            select(NetworkRead.id).where(NetworkRead.run_id == run.id, NetworkRead.scheduled)) is not None
     return False
 
 

@@ -536,6 +536,12 @@ export const api = {
     start: (ticketId: number, body: StartChecklist) => request<TicketChecklist>("POST", `/api/tickets/${ticketId}/checklists`, body),
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
+  junos: {
+    status: () => request<S["JunosStatusOut"]>("GET", "/api/junos/status"),
+    read: () => request<S["JunosReadOut"]>("POST", "/api/junos/read"),
+    devices: () => request<S["VendorDeviceOut"][]>("GET", "/api/junos/devices"),
+    clients: (p: { q?: string } = {}) => request<S["NetworkObservationOut"][]>("GET", `/api/junos/clients${query(p)}`),
+  },
   unifi: {
     status: () => request<S["UnifiStatusOut"]>("GET", "/api/unifi/status"),
     test: () => request<S["UnifiTestOut"]>("POST", "/api/unifi/test"),

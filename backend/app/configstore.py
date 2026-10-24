@@ -102,6 +102,15 @@ def _https_url(v: str) -> None:
         raise SettingsError("The console's address, e.g. https://unifi.corp.example (https, no path)")
 
 
+def _junos_switches(v: str) -> None:
+    from app.junos import JunosError, parse_switches
+
+    try:
+        parse_switches(v)
+    except JunosError as exc:
+        raise SettingsError(str(exc)) from None
+
+
 def _domain(v: str) -> None:
     if v:
         _domains([v])
@@ -419,6 +428,20 @@ SECTIONS: dict[str, list[Field]] = {
         Field("unifi_outage_minutes", "Offline for (minutes) before a ticket", "Rides out reboots and firmware updates.", check=_between(1, 1440)),
         Field("unifi_outage_queue_id", "Queue for outage tickets (ID)", "0: the default queue. Routing rules still apply.", check=_between(0, 2_000_000_000)),
         Field("unifi_vouchers_enabled", "Guest Wi-Fi vouchers from tickets", "Lets people with the permission make UniFi hotspot vouchers from a ticket (a write to UniFi). Logged on the ticket."),
+    ],
+    "junos": [
+        Field("junos_enabled", "Read Juniper switches", "Optional, read only: a runner on your LAN reads each switch's Junos REST API for its MAC table, ARP table and identity. Clients show beside IP records, devices and tickets; switches show under IP addresses > Juniper."),
+        Field("junos_switches", "Switches", "One per line: a name, then its address and, if not the default 3443, the REST port, e.g. core-1 10.0.0.2 or idf2-sw 10.0.2.2:8443. At most 100. Enable the API on each switch: set system services rest https port 3443 (with a server certificate).", multiline=True, check=_junos_switches),
+        Field("junos_username", "Login", "A Junos login with a read-only class (e.g. read-only) on every switch.", check=_length(0, 64)),
+        Field("junos_password", "Password", "Sealed to the runner for each read and never shown back.", secret=True, check=_length(0, 256)),
+        Field("junos_ca_file", "Switches' CA certificate", "The CA that issued the switches' REST certificates, in PEM form, when it isn't publicly trusted.", check=_certificates, file="junos-ca.pem"),
+        Field("junos_verify_tls", "Check the switches' certificates", "Leave on. Turn off only to try a switch with a self-signed certificate on a network you trust."),
+        Field("junos_runner", "Runner", "The runner that reaches the switches (Python, runner 1.2 or later). Empty: any runner that takes Python.", check=_length(0, 100)),
+        Field("junos_sync_minutes", "Read every (minutes)", "", check=_between(5, 1440)),
+        Field("junos_uplink_macs", "A port with this many MACs is an uplink", "Uplinks see every client; they're skipped so each client shows on its access port.", check=_between(2, 10000)),
+        Field("junos_outage_tickets", "Open tickets for unreachable switches", "A switch the runner can't read for the time below gets one ticket; when it answers again, an internal note is added for review."),
+        Field("junos_outage_minutes", "Unreachable for (minutes) before a ticket", "", check=_between(1, 1440)),
+        Field("junos_outage_queue_id", "Queue for outage tickets (ID)", "0: the default queue.", check=_between(0, 2_000_000_000)),
     ],
     "meraki": [
         Field("meraki_webhook_enabled", "Create tickets from Meraki device outages", "Opt in to stopped_reporting / started_reporting webhooks. Uses the selected network IDs below, independently of discovery. Recovery adds an internal note; it never closes a ticket."),

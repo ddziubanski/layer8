@@ -308,6 +308,9 @@ def parse(output: str) -> list[dict]:
 
 def on_finished(session: Session, run: ScriptRun) -> None:
     """Called when any run ends: if it was a scan, read its results."""
+    from app import junos
+
+    junos.on_finished(session, run)
     scan = session.scalar(select(IpScan).where(IpScan.run_id == run.id))
     if scan is None or scan.processed_at is not None:
         return
