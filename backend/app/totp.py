@@ -77,7 +77,8 @@ def _hash(code: str) -> str:
 
 def recovery_codes() -> tuple[list[str], list[str]]:
     """New one-time codes to show once, and their hashes to keep."""
-    codes = [f"{secrets.token_hex(3)}-{secrets.token_hex(3)}" for _ in range(RECOVERY_CODES)]
+    # 64 random bits each, so the stored hashes can't be guessed back.
+    codes = [f"{secrets.token_hex(4)}-{secrets.token_hex(4)}" for _ in range(RECOVERY_CODES)]
     return codes, [_hash(c) for c in codes]
 
 

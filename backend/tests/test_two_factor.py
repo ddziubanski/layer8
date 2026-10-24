@@ -162,3 +162,29 @@ def test_microsoft_sign_in_refusals(client, db, microsoft):
     state, browser = _start(client)
     client.cookies.set(entra.COOKIE, browser, path="/api/auth/entra")
     assert "organization" in client.get(f"/api/auth/entra/callback?code=x&state={state}", follow_redirects=False).headers["location"]
+
+
+def test_wrong_codes_add_up_to_a_lockout_even_with_the_right_password(client, db):
+    user = _local(db)
+    secret, _, used = _turn_on(client, db, user)
+    client.cookies.clear()
+    for _ in range(auth.MAX_FAILED_LOGINS):
+        assert _login(client, user.email, code="000000").status_code == 401
+    db.expire_all()
+    assert db.get(User, user.id).locked_until is not None
+    # Locked: even the right code doesn't get in until the lockout ends.
+    assert _login(client, user.email, code=totp.code_at(secret, used + 1)).status_code == 401
+
+
+def test_recovery_codes_are_long(client, db):
+    _, codes, _ = _turn_on(client, db, _local(db))
+    assert all(len(c.replace("-", "")) == 16 for c in codes)
+
+
+def test_microsoft_sign_in_never_matches_by_the_email_claim(client, db, microsoft):
+    db.add(User(email="boss@corp.example", display_name="Boss", role=UserRole.admin, auth_source=AuthSource.directory, upn="boss@corp.example"))
+    db.commit()
+    microsoft.update(preferred_username="intern@corp.example", email="boss@corp.example")
+    state, browser = _start(client)
+    client.cookies.set(entra.COOKIE, browser, path="/api/auth/entra")
+    assert "no%20account" in client.get(f"/api/auth/entra/callback?code=x&state={state}", follow_redirects=False).headers["location"]

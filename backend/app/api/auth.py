@@ -64,12 +64,18 @@ def login(body: LoginIn, request: Request, response: Response, session: SessionD
         recent.popleft()
     if len(recent) >= MAX_FAILURES:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed sign-ins from here. Wait a few minutes and try again")
+    # A right password alone mustn't clear the failed-attempt count of an account with two-factor
+    # sign-in, or wrong codes would never add up to a lockout.
+    known = auth._find_login(session, body.email)
+    before = (known.failed_logins, known.locked_until) if known is not None and known.totp_enabled_at is not None else None
     try:
         user = auth.authenticate(session, body.email, body.password, now)
     except auth.AuthError as exc:
         recent.append(time.monotonic())
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from None
     if user.totp_enabled_at is not None:
+        if before is not None and known is user:
+            user.failed_logins, user.locked_until = before
         if not body.code:
             # The password was right; the sign-in page now asks for the code (nothing is counted yet).
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, TWO_FACTOR_NEEDED)
@@ -77,6 +83,7 @@ def login(body: LoginIn, request: Request, response: Response, session: SessionD
             recent.append(time.monotonic())
             auth._failed(session, user, now)
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "That code didn't work. Use the newest one in your authenticator app, or a recovery code")
+        user.failed_logins, user.locked_until = 0, None
     auth.start_session(session, user, response, now)
     session.commit()
     return me_out(session, user)

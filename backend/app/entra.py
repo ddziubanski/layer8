@@ -6,7 +6,7 @@ as a file in the secrets folder, named by a hash of a random state and bound to 
 short-lived cookie, and sends it to Microsoft. Microsoft
 returns to /api/auth/entra/callback; MSAL checks state and nonce and exchanges the code directly
 with Microsoft over TLS. Only existing, active people sign in, matched by their Entra object ID (oid)
-or by UPN/email; accounts with a local password never do (the break-glass admin stays local)."""
+or by UPN (never the unverified email claim); accounts with a local password never do (the break-glass admin stays local)."""
 
 import hashlib
 import json
@@ -125,7 +125,8 @@ def _match(session, claims: dict) -> User:
     oid = claims["oid"].lower()
     user = session.scalar(select(User).where(func.lower(User.entra_id) == oid))
     if user is None:
-        for name in (claims.get("preferred_username"), claims.get("upn"), claims.get("email")):
+        # Not the email claim: Microsoft doesn't guarantee it's verified, so it mustn't pick an account.
+        for name in (claims.get("preferred_username"), claims.get("upn")):
             if isinstance(name, str) and name:
                 user = _find_login(session, name)
                 if user is not None:

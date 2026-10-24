@@ -20,7 +20,7 @@ Windows sign-in to the portal and Sign in with Microsoft don't ask for a Layer 8
 The sign-in page offers **Sign in with Microsoft**. It uses OpenID Connect (authorization code flow with PKCE), so Entra's own MFA and Conditional Access apply.
 
 **Who can use it:**
-- Only people who already have an account in Layer 8. They're matched by their Entra object ID once linked, or the first time by UPN or email.
+- Only people who already have an account in Layer 8. They're matched by their Entra object ID once linked, or the first time by their UPN. The email claim isn't used: Microsoft doesn't guarantee it's verified.
 - Nobody is created by signing in. People come from AD sync, or an admin adds them.
 - Accounts with a local password can't use it, so the break-glass admin always signs in locally.
 
