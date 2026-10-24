@@ -25,7 +25,7 @@ from sqlalchemy import func, select, text
 
 from app import network, sla
 from app.config import settings
-from app.models import Device, NetworkObservation, NutanixAction, NutanixVm
+from app.models import Device, NetworkInventory, NetworkObservation, NutanixAction, NutanixVm
 
 PROVIDER = "nutanix"
 VMS = "/api/vmm/v4.0/ahv/config/vms"
@@ -35,6 +35,8 @@ TASKS = "/api/prism/v4.0/config/tasks"
 PAGE = 100
 MAX_PAGES = 200
 LOCK = 82638131
+# Critical VMs are tracked as equipment under one source, so their outage state survives cluster moves.
+CRITICAL_SOURCE = "vms"
 # What a ticket may ask for: (Prism Central action, what the ticket note calls it, permission).
 ACTIONS = {
     "restart": ("reboot", "graceful restart", "nutanix_power"),
@@ -252,10 +254,40 @@ def sync(session, client: Client) -> str:
     for ext_id, row in known.items():
         if ext_id not in seen:
             row.present = False
-    network.replace_snapshot(session, PROVIDER, observations, [])
+    inventory, missing = critical_inventory(session, now)
+    network.replace_snapshot(session, PROVIDER, observations, inventory)
+    outages = network.track_outages(session, PROVIDER, enabled=settings.nutanix_outage_tickets,
+                                    after_minutes=settings.nutanix_outage_minutes, queue_id=settings.nutanix_outage_queue_id, now=now)
     off = sum(1 for vm in vms if vm["power_state"] != "on")
     matched = sum(1 for vm in vms if devices.get(vm["name"].lower()))
-    return f"{len(seen)} VMs ({off} not running), {matched} matched to devices"
+    out = f"{len(seen)} VMs ({off} not running), {matched} matched to devices"
+    if inventory:
+        out += f"; critical VMs down: {sum(1 for i in inventory if i.state == 'offline')} of {len(inventory)}"
+    if missing:
+        out += f"; critical VMs never seen in Nutanix: {', '.join(missing[:5])}{'…' if len(missing) > 5 else ''}"
+    if outages["opened"] or outages["recovered"]:
+        out += f"; outage tickets opened {outages['opened']}, recoveries noted {outages['recovered']}"
+    return out
+
+
+def critical_inventory(session, now) -> tuple[list[NetworkInventory], list[str]]:
+    """Settings > Nutanix > Critical VMs as equipment: online when running, offline when not running
+    or gone from Prism Central. Names never seen at all are returned separately (a typo, most likely)."""
+    wanted = {n.strip().lower(): n.strip() for n in settings.nutanix_critical_vms if n.strip()}
+    if not wanted:
+        return [], []
+    rows = list(session.scalars(select(NutanixVm).where(func.lower(NutanixVm.name).in_(wanted))))
+    inventory = [NetworkInventory(
+        provider=PROVIDER, source_id=CRITICAL_SOURCE, device_key=v.ext_id, source_name=v.cluster_name, name=v.name, model="AHV VM",
+        kind="VM", mac=(v.macs or [""])[0], address=(v.ips or [""])[0], state="online" if v.present and v.power_state == "on" else "offline",
+        observed_at=now) for v in rows]
+    found = {v.name.lower() for v in rows}
+    return inventory, sorted(name for key, name in wanted.items() if key not in found)
+
+
+def critical_down(session) -> list[str]:
+    """Names of critical VMs down as of the last read."""
+    return list(session.scalars(select(NetworkInventory.name).where(NetworkInventory.provider == PROVIDER, NetworkInventory.state == "offline").order_by(NetworkInventory.name)))
 
 
 def note_result(session, action: NutanixAction) -> None:

@@ -6,6 +6,7 @@ Layer 8 can read your Nutanix AHV VMs from **Prism Central**:
 - **IP addresses:** each VM's MAC and IP show beside matching IP records, like UniFi and Juniper clients. Documented records are never changed.
 - **Tickets:** link VMs to a ticket in its **Virtual machines** panel. VMs of the ticket's computer and linked devices show there too.
 - **Power actions** (optional): restart, power on or power-cycle a ticket's VM. Each one is noted on the ticket, and so is how it ended.
+- **Critical VMs** (optional): a ticket when one is down, and a tile and alert on wallboards.
 
 Everything is off by default. **Settings > Nutanix** has every option.
 
@@ -48,6 +49,16 @@ You confirm each action first. Then:
 
 Nutanix's own documentation warns that a graceful restart of a Windows VM can quietly do nothing while a screen saver is running. If a restart "finished" but the VM didn't restart, check that.
 
+## Critical VMs
+
+List the VMs that matter most in **Critical VMs**, one name per line (not case-sensitive). After each read:
+- A critical VM that isn't running, or is gone from Prism Central, counts as **down**.
+- With **Open tickets for critical VMs that are down** on, a VM down for longer than **Down for (minutes) before a ticket** (10 by default) gets one high-priority ticket, "Offline: Nutanix VM <name>", in the chosen queue. When it runs again, an internal note is added for review; the ticket isn't closed for you.
+- A VM shut down on purpose still counts. Take it off the list first, or close the ticket.
+- A name that was never seen in Prism Central is named in Settings > Status (most likely a typo).
+
+With **Show critical VMs on wallboards** on, every wallboard gets a "Critical VMs down" tile and a critical alert naming each VM that's down. It's off by default, because wallboards are often on screens anyone can read.
+
 ## What happens on each read
 
 - Every VM page is read, plus cluster and host names. If the VM list can't be read in full, nothing changes and the error shows in Settings > Status. Cluster and host names are optional: an account that can't list them still reads VMs.
@@ -58,6 +69,5 @@ Nutanix's own documentation warns that a graceful restart of a Windows VM can qu
 
 - Built against Nutanix's published v4 API reference and tested with a mocked Prism Central. Check it against yours with **Test connection** and a first **Read now** before relying on it, and try a power action on a test VM first.
 - Prism Element on its own (without Prism Central), and the older v2 and v3 APIs, aren't supported.
-- Not yet: outage tickets for VMs you mark as critical, and a VM tile on the wallboard.
 
 Nutanix, Prism and AHV are trademarks of Nutanix, Inc.

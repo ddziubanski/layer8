@@ -99,6 +99,12 @@ class Settings(BaseSettings):
     nutanix_verify_tls: bool = True
     nutanix_sync_minutes: int = 15
     nutanix_power_enabled: bool = False
+    # VMs (by name) that get outage tickets when they stop running, and optionally a wallboard tile.
+    nutanix_critical_vms: list[str] = []
+    nutanix_outage_tickets: bool = False
+    nutanix_outage_minutes: int = 10
+    nutanix_outage_queue_id: int = 0
+    nutanix_wallboard: bool = False
     # Juniper EX switches managed one by one (app.junos): a runner on the LAN reads each switch's
     # Junos REST API (read only) and reports clients and reachability.
     junos_enabled: bool = False

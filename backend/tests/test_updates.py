@@ -15,6 +15,8 @@ from app.config import settings
 from app.models import AppSetting
 from tests.conftest import as_user
 
+# A release newer than this one, so the tests keep working as VERSION moves on.
+NEXT = f"{VERSION.split('.')[0]}.{int(VERSION.split('.')[1]) + 1}.0"
 MANIFEST = {"format": 1, "repository": protocol.REPOSITORY, "version": "1.2.0", "minimum_version": "1.1.0", "platform": "debian13-amd64", "python": "3.13", "package": "layer8-v1.2.0-update.tar.gz", "size": 50, "sha256": "a" * 64}
 
 
@@ -125,12 +127,12 @@ def test_reviewed_update_queues_only_fixed_service_once(client, db, admin, tmp_p
     monkeypatch.setattr(updates, "ready", lambda: True)
     monkeypatch.setattr(updates, "STATE", tmp_path)
     (tmp_path / "inbox").mkdir()
-    db.add(AppSetting(key=updates.CHECK_KEY, value={"release": {"version": "1.2.0", "url": "https://github.com/ddziubanski/layer8/releases/tag/v1.2.0", "notes": "Test", "newer": True, "verified": True, "manifest_sha256": "a" * 64}}))
+    db.add(AppSetting(key=updates.CHECK_KEY, value={"release": {"version": NEXT, "url": f"https://github.com/ddziubanski/layer8/releases/tag/v{NEXT}", "notes": "Test", "newer": True, "verified": True, "manifest_sha256": "a" * 64}}))
     db.commit()
     launch = Mock(return_value=Mock(returncode=0))
     monkeypatch.setattr(updates.subprocess, "run", launch)
     h = as_user(admin)
-    body = {"version": "1.2.0", "manifest_sha256": "a" * 64, "confirm": True}
+    body = {"version": NEXT, "manifest_sha256": "a" * 64, "confirm": True}
     assert client.post("/api/system/updates/apply", headers=h, json={**body, "manifest_sha256": "b" * 64}).status_code == 409
     assert client.post("/api/system/updates/apply", headers=h, json={**body, "confirm": False}).status_code == 422
     assert client.post("/api/system/updates/apply", headers=h, json={**body, "version": "1.0.0"}).status_code == 409
@@ -138,7 +140,7 @@ def test_reviewed_update_queues_only_fixed_service_once(client, db, admin, tmp_p
     assert client.post("/api/system/updates/apply", headers=h, json=body).status_code == 202
     queued = json.loads((tmp_path / "inbox/request.json").read_text())
     assert set(queued) == {"version", "manifest_sha256", "requested_by", "id"}
-    assert queued["requested_by"] == admin.id and queued["version"] == "v1.2.0"
+    assert queued["requested_by"] == admin.id and queued["version"] == f"v{NEXT}"
     assert client.post("/api/system/updates/apply", headers=h, json=body).status_code == 409
     launch.assert_called_once_with(["sudo", "-n", "/usr/bin/systemctl", "start", "--no-block", "layer8-update.service"], capture_output=True, timeout=10)
 

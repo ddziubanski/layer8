@@ -56,6 +56,24 @@ test("the board shows counts, alerts and the tickets that need someone, using th
   expect(calls.every((c) => !c.path.includes("l8w_"))).toBe(true);
 });
 
+test("critical VMs get a tile only when the server sends them", async () => {
+  window.location.hash = "#l8w_secret";
+  mockApi({ "GET /api/public/wallboard": { ...BOARD, totals: { ...BOARD.totals, critical_vms_down: 1 }, alerts: [{ level: "critical", text: "Critical VM APP01 is down" }] }, "GET /api/branding": {} });
+  show();
+  expect(await screen.findByText("Critical VM APP01 is down")).toBeInTheDocument();
+  const counts = screen.getByRole("region", { name: "Counts" });
+  expect(within(counts).getByText("Critical VMs down").closest(".wb-tile")).toHaveClass("alarm");
+  expect(counts.style.getPropertyValue("--wb-tiles")).toBe("8");
+});
+
+test("no critical VM tile without Nutanix", async () => {
+  window.location.hash = "#l8w_secret";
+  mockApi({ "GET /api/public/wallboard": BOARD, "GET /api/branding": {} });
+  show();
+  const counts = await screen.findByRole("region", { name: "Counts" });
+  expect(within(counts).queryByText("Critical VMs down")).not.toBeInTheDocument();
+});
+
 test("a switched-off link says so instead of showing stale numbers", async () => {
   window.location.hash = "#l8w_old";
   mockApi({ "GET /api/public/wallboard": new Response(JSON.stringify({ detail: "This wallboard link was switched off or replaced." }), { status: 401 }), "GET /api/branding": {} });

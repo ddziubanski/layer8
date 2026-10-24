@@ -181,7 +181,8 @@ def test_restart_without_guest_tools_uses_acpi(client, db, admin, requester, fak
 
 
 def test_settings_checks(db, admin):
-    for bad in ({"nutanix_url": "http://prism.corp.example:9440"}, {"nutanix_url": "https://prism.corp.example/api"}, {"nutanix_sync_minutes": 1}):
+    for bad in ({"nutanix_url": "http://prism.corp.example:9440"}, {"nutanix_url": "https://prism.corp.example/api"}, {"nutanix_sync_minutes": 1},
+                {"nutanix_critical_vms": ["x" * 256]}, {"nutanix_critical_vms": [f"vm{i}" for i in range(201)]}):
         with pytest.raises(configstore.SettingsError):
             configstore.update(db, "nutanix", bad, admin)
     configstore.update(db, "nutanix", {"nutanix_url": "https://prism.corp.example:9440"}, admin)
@@ -192,3 +193,51 @@ def test_parse_vm_ignores_garbage():
     parsed = nutanix.parse_vm({"extId": "x", "powerState": "<b>", "nics": [{"backingInfo": {"macAddress": "zz"}, "networkInfo": {"ipv4Config": {"ipAddress": {"value": "999.1.1.1"}}}}], "memorySizeBytes": "lots"}, {}, {})
     assert (parsed["name"], parsed["power_state"], parsed["macs"], parsed["ips"], parsed["memory_mb"]) == ("x", "unknown", [], [], 0)
     json.dumps({k: v for k, v in parsed.items()})
+
+
+def test_critical_vm_down_opens_one_ticket_after_the_grace_period_and_notes_recovery(db, fake, monkeypatch, service_desk):
+    from datetime import timedelta
+
+    from app import sla
+    from app.models import NetworkOutage, Ticket, TicketStatus
+
+    monkeypatch.setattr(settings, "nutanix_critical_vms", ["app01", "DB01", "typo-vm"])
+    monkeypatch.setattr(settings, "nutanix_outage_tickets", True)
+    fake.vms[0]["powerState"] = "OFF"
+    summary = nutanix.sync(db, nutanix.from_settings())
+    db.commit()
+    assert "critical VMs down: 1 of 2" in summary and "never seen in Nutanix: typo-vm" in summary
+    assert db.query(Ticket).count() == 0  # within the grace period
+    db.get(NetworkOutage, ("nutanix", "vms", "vm-0001")).down_since = sla.utcnow() - timedelta(minutes=11)
+    db.commit()
+    nutanix.sync(db, nutanix.from_settings())
+    nutanix.sync(db, nutanix.from_settings())
+    db.commit()
+    tickets = db.query(Ticket).all()
+    assert [t.subject for t in tickets] == ["Offline: Nutanix VM APP01"]
+    # Gone from Prism Central counts as down too.
+    fake.vms = [v for v in fake.vms if v["extId"] != "vm-0002"]
+    nutanix.sync(db, nutanix.from_settings())
+    db.commit()
+    assert db.get(NetworkOutage, ("nutanix", "vms", "vm-0002")).is_down
+    fake.vms[0]["powerState"] = "ON"
+    nutanix.sync(db, nutanix.from_settings())
+    db.commit()
+    assert db.get(Ticket, tickets[0].id).status != TicketStatus.resolved
+    assert any("APP01 is back online" in c.body for c in db.query(Comment).filter_by(ticket_id=tickets[0].id))
+
+
+def test_wallboard_shows_critical_vms_only_when_chosen(client, db, admin, fake, monkeypatch):
+    from tests.test_wallboards import make_board, show
+
+    monkeypatch.setattr(settings, "nutanix_critical_vms", ["APP01"])
+    fake.vms[0]["powerState"] = "OFF"
+    nutanix.sync(db, nutanix.from_settings())
+    db.commit()
+    token = make_board(client, admin)["token"]
+    data = show(client, token).json()
+    assert "critical_vms_down" not in data["totals"] and not any("APP01" in a["text"] for a in data["alerts"])
+    monkeypatch.setattr(settings, "nutanix_wallboard", True)
+    data = show(client, token).json()
+    assert data["totals"]["critical_vms_down"] == 1
+    assert data["alerts"][0] == {"level": "critical", "text": "Critical VM APP01 is down"}
