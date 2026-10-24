@@ -3309,6 +3309,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/action1/devices/{device_id}/software": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_action1_devices__device_id__software_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["preview_api_action1_deployments_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit */
+        post: operations["submit_api_action1_deployments__id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_action1_deployments__id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/{id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh */
+        post: operations["refresh_api_action1_deployments__id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/devices/{device_id}/deployments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History */
+        get: operations["history_api_action1_devices__device_id__deployments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/checklist-templates": {
         parameters: {
             query?: never;
@@ -5452,6 +5554,67 @@ export interface components {
             /** Citations */
             citations: components["schemas"]["CitationOut"][];
         };
+        /** DeploymentDetailsOut */
+        DeploymentDetailsOut: {
+            /** Organization Id */
+            organization_id: string;
+            /** Organization */
+            organization: string;
+            /** Endpoint Id */
+            endpoint_id: string;
+            /** Endpoint Name */
+            endpoint_name: string;
+            /** Device Name */
+            device_name: string;
+            /** Platform */
+            platform: string;
+            /** Connection */
+            connection: string;
+            /** Package Id */
+            package_id: string;
+            /** Package Name */
+            package_name: string;
+            /** Vendor */
+            vendor: string;
+            /** Version Id */
+            version_id: string;
+            /** Version */
+            version: string;
+            /** Installed */
+            installed: components["schemas"]["InstalledSoftwareMatchOut"][];
+        };
+        /** DeploymentOut */
+        DeploymentOut: {
+            /** Id */
+            id: string;
+            /** Device Id */
+            device_id: number | null;
+            /** Ticket Id */
+            ticket_id: number | null;
+            /** State */
+            state: string;
+            /** Message */
+            message: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Instance Id */
+            instance_id: string | null;
+            details: components["schemas"]["DeploymentDetailsOut"];
+        };
+        /** DeploymentPreviewIn */
+        DeploymentPreviewIn: {
+            /** Device Id */
+            device_id: number;
+            /** Ticket Id */
+            ticket_id?: number | null;
+            /** Package Id */
+            package_id: string;
+            /** Version Id */
+            version_id: string;
+        };
         /** DeviceDetailOut */
         DeviceDetailOut: {
             /** Id */
@@ -6074,6 +6237,13 @@ export interface components {
         ImportGroupIn: {
             /** Guid */
             guid: string;
+        };
+        /** InstalledSoftwareMatchOut */
+        InstalledSoftwareMatchOut: {
+            /** Name */
+            name: string;
+            /** Version */
+            version: string;
         };
         /** IntegrationNoteIn */
         IntegrationNoteIn: {
@@ -9093,6 +9263,35 @@ export interface components {
          * @enum {string}
          */
         SlaState: "none" | "ok" | "at_risk" | "breached" | "met";
+        /** SoftwareCatalogOut */
+        SoftwareCatalogOut: {
+            /** Items */
+            items: components["schemas"]["SoftwarePackageOut"][];
+            /** More */
+            more: boolean;
+            /** Offset */
+            offset: number;
+        };
+        /** SoftwarePackageOut */
+        SoftwarePackageOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Vendor */
+            vendor: string;
+            /** Platform */
+            platform: string;
+            /** Versions */
+            versions: components["schemas"]["SoftwareVersionOut"][];
+        };
+        /** SoftwareVersionOut */
+        SoftwareVersionOut: {
+            /** Id */
+            id: string;
+            /** Version */
+            version: string;
+        };
         /** StaleDeviceOut */
         StaleDeviceOut: {
             device: components["schemas"]["DeviceOut"];
@@ -18216,6 +18415,212 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Action1TestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_api_action1_devices__device_id__software_get: {
+        parameters: {
+            query: {
+                q: string;
+                offset?: number;
+                ticket_id?: number | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareCatalogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_action1_deployments_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeploymentPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_api_action1_deployments__id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_action1_deployments__id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_action1_deployments__id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    history_api_action1_devices__device_id__deployments_get: {
+        parameters: {
+            query?: {
+                ticket_id?: number | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"][];
                 };
             };
             /** @description Validation Error */

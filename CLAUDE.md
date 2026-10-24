@@ -27,7 +27,7 @@ The product is called **Layer 8**: a self-hosted IT service desk. Be playful wit
 - Must run standalone with local data: local accounts (Argon2 passwords, server-side sessions) need no AD/Entra. Directory sign-in, email intake and other integrations are optional add-ons.
 - Permissions are primarily AD/LDAP groups: role mappings (group -> agent/admin, nested, highest wins) set directory users' roles; roles can't be edited by hand for them. Local accounts with a password are never taken over by sync (break-glass admin). Queue owners/managers can be users or groups; groups are local or directory (synced by objectGUID).
 - Email intake and notifications use Microsoft Graph against Exchange Online (app registration scoped to the intake mailbox).
-- Patching is NOT built here. A third party (e.g. Action1) does patching. This suite only reads its data (compliance, pending reboots) and raises tickets or links changes.
+- Patching is NOT built here. A third party (e.g. Action1) does patching. The patch integration reads its data (compliance, pending reboots) and raises tickets or links changes. Separately, opt-in software deployment through Action1 uses dedicated credentials and an explicit organisation allowlist, technician review and the action1_deploy permission; it does not implement patching.
 - Remote control is NOT built here. The ticket has a "Remote session" button that launches existing Windows tooling and logs the session to the ticket.
 - The script library has two kinds of items: read-only queries (reports and dynamic groups) and scripts that act on devices.
 - Devices come first from AD computer objects, synced with the directory sync (Action1 or our own agent can add data later).
