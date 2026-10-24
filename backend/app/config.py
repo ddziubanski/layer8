@@ -60,6 +60,21 @@ class Settings(BaseSettings):
     meraki_webhook_secret: str = ""
     meraki_webhook_organization_ids: list[str] = []
     meraki_webhook_queue_id: int = 0
+    # Ubiquiti UniFi (app.unifi): opt-in, read-only discovery, inventory and outage tickets; guest
+    # vouchers separately opt-in. "cloud": Site Manager API + Connector Proxy (api.ui.com);
+    # "local": one UniFi OS console's Network Integration API.
+    unifi_enabled: bool = False
+    unifi_mode: str = "cloud"
+    unifi_api_key: str = ""
+    unifi_console_ids: list[str] = []
+    unifi_console_url: str = ""
+    unifi_ca_file: str = ""
+    unifi_site_ids: list[str] = []
+    unifi_sync_minutes: int = 15
+    unifi_outage_tickets: bool = False
+    unifi_outage_minutes: int = 10
+    unifi_outage_queue_id: int = 0
+    unifi_vouchers_enabled: bool = False
 
     # Action1 API credentials and console region (patch state is read only).
     action1_region: str = "NorthAmerica"

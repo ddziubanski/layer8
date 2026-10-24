@@ -3449,6 +3449,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/unifi/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_unifi_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/unifi/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test
+         * @description Cloud: the consoles the key can see. Both: the sites on the selected consoles. Reads nothing else.
+         */
+        post: operations["test_api_unifi_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/unifi/sites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sites */
+        get: operations["list_sites_api_unifi_sites_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/unifi/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Devices */
+        get: operations["list_devices_api_unifi_devices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/unifi/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Clients */
+        get: operations["list_clients_api_unifi_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/unifi/tickets/{ticket_id}/vouchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make Voucher
+         * @description A guest Wi-Fi voucher for this ticket's requester (or their visitor); the code is noted on the ticket.
+         */
+        post: operations["make_voucher_api_unifi_tickets__ticket_id__vouchers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/action1/devices/{device_id}/software": {
         parameters: {
             query?: never;
@@ -4691,6 +4799,46 @@ export interface paths {
         };
         /** Health */
         get: operations["health_api_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/about": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * About
+         * @description Version and licence, and where to get the source (AGPL section 13): no sign-in needed.
+         */
+        get: operations["about_api_about_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Source
+         * @description The exact source of this installation, packed when it was built (AGPL section 13).
+         */
+        get: operations["source_api_source_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6496,6 +6644,11 @@ export interface components {
             subnet?: components["schemas"]["SubnetRef"] | null;
             switch_port?: components["schemas"]["SwitchPortOut"] | null;
             meraki?: components["schemas"]["MerakiClientOut"] | null;
+            /**
+             * Observations
+             * @default []
+             */
+            observations: components["schemas"]["NetworkObservationOut"][];
         };
         /** IpCell */
         IpCell: {
@@ -7345,6 +7498,49 @@ export interface components {
             remote_address: string | null;
             /** Remote Id */
             remote_id?: number | null;
+        };
+        /** NetworkObservationOut */
+        NetworkObservationOut: {
+            /** Provider */
+            provider: string;
+            /** Provider Label */
+            provider_label: string;
+            /** Source Id */
+            source_id: string;
+            /** Source Name */
+            source_name: string;
+            /** Mac */
+            mac: string;
+            /** Address */
+            address: string;
+            /** Hostname */
+            hostname: string;
+            /** Network */
+            network: string;
+            /** Uplink Name */
+            uplink_name: string;
+            /** Port */
+            port: string;
+            /** Ssid */
+            ssid: string;
+            /** Connection */
+            connection: string;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Stale */
+            stale: boolean;
+        };
+        /** NetworkSiteOut */
+        NetworkSiteOut: {
+            /** Source Id */
+            source_id: string;
+            /** Name */
+            name: string;
         };
         /** NewADAccountIn */
         NewADAccountIn: {
@@ -10451,6 +10647,38 @@ export interface components {
             /** Parent Id */
             parent_id?: number | null;
         };
+        /** UnifiStatusOut */
+        UnifiStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Mode */
+            mode: string;
+            /** Clients */
+            clients: number;
+            /** Devices */
+            devices: number;
+            /** Offline */
+            offline: number;
+            /** Vouchers Enabled */
+            vouchers_enabled: boolean;
+            /** Last Sync At */
+            last_sync_at: string | null;
+            /** Last Sync Ok */
+            last_sync_ok: boolean | null;
+            /** Last Sync Error */
+            last_sync_error: string | null;
+            /** Last Sync Summary */
+            last_sync_summary: string | null;
+        };
+        /** UnifiTestOut */
+        UnifiTestOut: {
+            /** Consoles */
+            consoles: string[];
+            /** Sites */
+            sites: string[];
+        };
         /** UnknownDeviceOut */
         UnknownDeviceOut: {
             /**
@@ -10614,6 +10842,34 @@ export interface components {
             /** Notes */
             notes: string;
         };
+        /** VendorDeviceOut */
+        VendorDeviceOut: {
+            /** Source Id */
+            source_id: string;
+            /** Source Name */
+            source_name: string;
+            /** Device Key */
+            device_key: string;
+            /** Name */
+            name: string;
+            /** Model */
+            model: string;
+            /** Kind */
+            kind: string;
+            /** Mac */
+            mac: string;
+            /** Address */
+            address: string;
+            /** State */
+            state: string;
+            /** Firmware */
+            firmware: string;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+        };
         /** VendorIn */
         VendorIn: {
             /** Name */
@@ -10770,6 +11026,30 @@ export interface components {
             number: number;
             /** Name */
             name: string;
+            /** Site */
+            site: string;
+        };
+        /** VoucherIn */
+        VoucherIn: {
+            /** Source Id */
+            source_id: string;
+            /**
+             * Minutes
+             * @default 480
+             */
+            minutes: number;
+            /**
+             * Guests
+             * @default 1
+             */
+            guests: number;
+        };
+        /** VoucherOut */
+        VoucherOut: {
+            /** Codes */
+            codes: string[];
+            /** Minutes */
+            minutes: number;
             /** Site */
             site: string;
         };
@@ -19097,6 +19377,204 @@ export interface operations {
             };
         };
     };
+    status_api_unifi_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_api_unifi_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiTestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sites_api_unifi_sites_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkSiteOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_devices_api_unifi_devices_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                state?: string;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorDeviceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_clients_api_unifi_clients_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkObservationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_voucher_api_unifi_tickets__ticket_id__vouchers_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoucherIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoucherOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     catalog_api_action1_devices__device_id__software_get: {
         parameters: {
             query: {
@@ -22133,6 +22611,46 @@ export interface operations {
         };
     };
     health_api_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    about_api_about_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    source_api_source_get: {
         parameters: {
             query?: never;
             header?: never;

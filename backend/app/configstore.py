@@ -92,6 +92,16 @@ def _meraki_networks(v: list[str]) -> None:
         raise SettingsError("Choose at most 20 network IDs, one per line (e.g. N_123456)")
 
 
+def _unifi_ids(v: list[str]) -> None:
+    if len(v) > 50 or any(not re.fullmatch(r"[A-Za-z0-9:._-]{1,200}", n) for n in v):
+        raise SettingsError("At most 50 IDs, one per line, as UniFi shows them (letters, digits, : . _ -)")
+
+
+def _https_url(v: str) -> None:
+    if v and not re.match(r"^https://[^\s/]+/?$", v):
+        raise SettingsError("The console's address, e.g. https://unifi.corp.example (https, no path)")
+
+
 def _domain(v: str) -> None:
     if v:
         _domains([v])
@@ -395,6 +405,20 @@ SECTIONS: dict[str, list[Field]] = {
             check=_between(0, 4),
         ),
         Field("survey_question", "The question", "Answered from 1 (very unhappy) to 5 (very happy), with an optional comment.", check=_length(5, 300)),
+    ],
+    "unifi": [
+        Field("unifi_enabled", "Read UniFi networks", "Optional, read only: clients (MAC, IP, access point or switch, network) on IP records, devices and tickets, and UniFi gateways, switches and access points with their state. Turning it off stops reading and hides cached data."),
+        Field("unifi_mode", "Connection", "Cloud: the Site Manager API at api.ui.com, reaching each console through Ubiquiti's Connector Proxy (console firmware 5.0.3 or later); no access to your LAN needed. Local: one UniFi OS console's own Network Integration API (UniFi Network 9 or later).", choices=(("cloud", "Cloud (api.ui.com)"), ("local", "Local console"))),
+        Field("unifi_api_key", "API key", "Cloud: create it at unifi.ui.com > API. Local: UniFi Network > Settings > Integrations. Use a read-only admin where you can. Written to a secret file and never shown back.", secret=True, check=_length(0, 512)),
+        Field("unifi_console_ids", "Consoles (cloud)", "Required in cloud mode: the console (host) IDs to read, one per line, at most 50. Empty reads nothing. Test connection lists the consoles the key can see.", check=_unifi_ids),
+        Field("unifi_console_url", "Console address (local)", "Local mode: the console's HTTPS address, e.g. https://unifi.corp.example.", check=_https_url),
+        Field("unifi_ca_file", "Console CA certificate (local)", "The CA that issued the console's certificate, in PEM form, when it isn't publicly trusted (UniFi consoles often use their own). Empty: the server's trusted CAs.", check=_certificates, file="unifi-ca.pem"),
+        Field("unifi_site_ids", "Sites", "Optional: only these site IDs, one per line. Empty: every site on the selected consoles.", check=_unifi_ids),
+        Field("unifi_sync_minutes", "Read UniFi every (minutes)", "A failed read keeps the last complete snapshot; older data is marked stale.", check=_between(5, 1440)),
+        Field("unifi_outage_tickets", "Open tickets for offline UniFi devices", "A gateway, switch or access point offline for the time below gets one ticket; when it comes back, an internal note is added for review (the ticket isn't closed). UniFi's official API has no alerts to push, so this follows each read."),
+        Field("unifi_outage_minutes", "Offline for (minutes) before a ticket", "Rides out reboots and firmware updates.", check=_between(1, 1440)),
+        Field("unifi_outage_queue_id", "Queue for outage tickets (ID)", "0: the default queue. Routing rules still apply.", check=_between(0, 2_000_000_000)),
+        Field("unifi_vouchers_enabled", "Guest Wi-Fi vouchers from tickets", "Lets people with the permission make UniFi hotspot vouchers from a ticket (a write to UniFi). Logged on the ticket."),
     ],
     "meraki": [
         Field("meraki_webhook_enabled", "Create tickets from Meraki device outages", "Opt in to stopped_reporting / started_reporting webhooks. Uses the selected network IDs below, independently of discovery. Recovery adds an internal note; it never closes a ticket."),

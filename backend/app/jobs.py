@@ -42,6 +42,7 @@ LABELS = {
     "backup": "Backup",
     "ipam": "IP address scans (scheduled)",
     "meraki": "Meraki: read client observations",
+    "unifi": "UniFi: read clients and equipment, outage tickets",
     "action1": "Action1: read patch status",
     "sweeps": "Device sweep (weekly ticket)",
     "warranty": "Warranty lookups (Dell, Lenovo)",
@@ -167,6 +168,20 @@ def build_jobs(session_factory, mail) -> list[Job]:
         finally:
             client.close()
 
+    def unifi_sync(forced: bool):
+        from app import unifi
+
+        if not unifi.on():
+            return "Off: enable and configure Settings > UniFi", False
+        client = unifi.from_settings()
+        try:
+            with session_factory() as session:
+                summary = unifi.sync(session, client)
+                session.commit()
+            return f"Read {summary}", True
+        finally:
+            client.close()
+
     def action1_sync(forced: bool):
         from app import action1
 
@@ -248,6 +263,7 @@ def build_jobs(session_factory, mail) -> list[Job]:
         Job("backup", "backup", until_backup, backup),
         Job("ipam", "ipam", _every(300), ipam_scans),
         Job("meraki", "meraki", lambda: timedelta(minutes=settings.meraki_sync_minutes), meraki_sync),
+        Job("unifi", "worker", lambda: timedelta(minutes=max(5, settings.unifi_sync_minutes)), unifi_sync),
         Job("action1", "action1", lambda: timedelta(minutes=settings.action1_sync_minutes), action1_sync),
         Job("sweeps", "worker", _every(7 * 86400), device_sweep),
         Job("warranty", "devices", _every(6 * 3600), warranty_lookups),
