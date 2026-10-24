@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { TwoFactorSection } from "../../components/TwoFactor";
 import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { TeamsConnection } from "../../components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -65,6 +66,7 @@ export function PreferencesPage({ me }: { me: Me }) {
         <WorkspaceTitle title="My preferences" area="YOUR WORKSPACE" />
       </div>
       <div className="stack" style={{ maxWidth: 900 }}>
+        {isStaff && <TwoFactorSection />}
         {isStaff && <section className="card stack" aria-label="My workspace">
           <div className="lbl" style={{ margin: 0 }}>My workspace</div>
           <p className="small muted">Choose what appears in your sidebar. This follows your account across browsers. Personally hidden modules remain available through Ctrl+K / ⌘K or a direct link, while globally disabled workspace modules stay unavailable.</p>

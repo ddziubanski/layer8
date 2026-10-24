@@ -76,6 +76,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Desk hours",
     "Teams",
     "Windows sign-in",
+    "Sign-in",
     "Surveys",
     "Notices",
     "Relays",

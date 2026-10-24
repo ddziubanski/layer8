@@ -5,14 +5,20 @@ import time
 from collections import defaultdict, deque
 from typing import Annotated, get_args
 
+from urllib.parse import quote
+
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from pydantic import ValidationError
 
-from app import auth, kerberos, permissions, sla, workspace
+from app import auth, entra, kerberos, permissions, sla, totp, workspace
 from app.auth import CurrentUser, SessionDep
 from app.config import settings
-from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SidebarModule, SignInOptionsOut, TicketWorkspacePreferences
+from app.schemas import (
+    LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SidebarModule, SignInOptionsOut, TicketWorkspacePreferences,
+    TwoFactorConfirmIn, TwoFactorOffIn, TwoFactorRecoveryOut, TwoFactorSetupOut, TwoFactorStatusOut,
+)
 from app.models import AppSetting, User, UserRole
 
 
@@ -20,6 +26,7 @@ def me_out(session, user) -> MeOut:
     out = MeOut.model_validate(user)
     out.permissions = permissions.granted(session, user)
     out.disabled_modules = workspace.disabled()
+    out.must_set_up_two_factor = auth.must_set_up_two_factor(user)
     out.features = [name for name, on in (("meraki", settings.meraki_enabled), ("unifi", settings.unifi_enabled), ("nutanix", settings.nutanix_enabled), ("nutanix_power", settings.nutanix_enabled and settings.nutanix_power_enabled), ("junos", settings.junos_enabled), ("unifi_vouchers", settings.unifi_enabled and settings.unifi_vouchers_enabled), ("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
     navigation = session.get(AppSetting, f"personal_navigation:{user.id}")
     hidden = navigation.value.get("hidden_modules", []) if navigation else []
@@ -39,7 +46,7 @@ log = logging.getLogger(__name__)
 @router.get("/options", response_model=SignInOptionsOut)
 def sign_in_options(session: SessionDep):
     config = kerberos.active(session)
-    return SignInOptionsOut(windows_sign_in=config is not None, windows_sign_in_silent=config is not None and config.silent)
+    return SignInOptionsOut(windows_sign_in=config is not None, windows_sign_in_silent=config is not None and config.silent, entra_sign_in=entra.available())
 
 
 # Failed sign-ins per client address: password spraying across accounts is slowed down too, not
@@ -62,9 +69,34 @@ def login(body: LoginIn, request: Request, response: Response, session: SessionD
     except auth.AuthError as exc:
         recent.append(time.monotonic())
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from None
+    if user.totp_enabled_at is not None:
+        if not body.code:
+            # The password was right; the sign-in page now asks for the code (nothing is counted yet).
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, TWO_FACTOR_NEEDED)
+        if not _second_factor(user, body.code):
+            recent.append(time.monotonic())
+            auth._failed(session, user, now)
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "That code didn't work. Use the newest one in your authenticator app, or a recovery code")
     auth.start_session(session, user, response, now)
     session.commit()
     return me_out(session, user)
+
+
+TWO_FACTOR_NEEDED = "Enter the code from your authenticator app"
+
+
+def _second_factor(user: User, code: str) -> bool:
+    """An authenticator code (once only) or one of the recovery codes (used up)."""
+    secret = totp.unseal(user.totp_secret) if user.totp_secret else None
+    if secret is not None and (step := totp.check(secret, code, user.totp_last_step)) is not None:
+        user.totp_last_step = step
+        return True
+    left = totp.use_recovery_code(user.totp_recovery or [], code)
+    if left is not None:
+        user.totp_recovery = left
+        log.warning("%s signed in with a recovery code (%d left)", user.email, len(left), extra={"source": "auth"})
+        return True
+    return False
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -152,3 +184,92 @@ def save_preferences(body: PreferencesIn, user: CurrentUser, session: SessionDep
         row.updated_by_id, row.updated_at = user.id, sla.utcnow()
     session.commit()
     return me_out(session, user)
+
+
+# Two-factor sign-in (authenticator app)
+
+
+@router.get("/two-factor", response_model=TwoFactorStatusOut)
+def two_factor_status(user: CurrentUser):
+    return {"enabled": user.totp_enabled_at is not None, "recovery_codes_left": len(user.totp_recovery or []),
+            "required": auth.must_set_up_two_factor(user)}
+
+
+@router.post("/two-factor/setup", response_model=TwoFactorSetupOut)
+def two_factor_setup(user: CurrentUser, session: SessionDep):
+    """A new secret to add to an authenticator app; it's on once a code from it is confirmed."""
+    if user.portal_only:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password first")
+    if user.totp_enabled_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Two-factor sign-in is already on; turn it off first to move it to another app")
+    secret = totp.new_secret()
+    user.totp_pending = totp.seal(secret)
+    session.commit()
+    return {"secret": secret, "uri": totp.uri(secret, user.email, settings.product_name or "Layer 8")}
+
+
+@router.post("/two-factor/confirm", response_model=TwoFactorRecoveryOut)
+def two_factor_confirm(body: TwoFactorConfirmIn, user: CurrentUser, session: SessionDep):
+    secret = totp.unseal(user.totp_pending) if user.totp_pending else None
+    step = totp.check(secret, body.code, None) if secret else None
+    if step is None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That code didn't match; check the app's clock and try the newest code")
+    codes, hashes = totp.recovery_codes()
+    user.totp_secret, user.totp_pending = user.totp_pending, None
+    user.totp_enabled_at, user.totp_last_step, user.totp_recovery = sla.utcnow(), step, hashes
+    log.info("%s turned on two-factor sign-in", user.email, extra={"source": "auth"})
+    session.commit()
+    return {"recovery_codes": codes}
+
+
+@router.post("/two-factor/off", status_code=status.HTTP_204_NO_CONTENT)
+def two_factor_off(body: TwoFactorOffIn, user: CurrentUser, request: Request, session: SessionDep):
+    if auth.must_set_up_two_factor(user) or (settings.totp_required_admins and user.role == UserRole.admin and user.password_hash is not None):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Two-factor sign-in is required for admins here (Settings > Sign-in)")
+    try:
+        auth.authenticate(session, user.email, body.password, sla.utcnow())
+    except auth.AuthError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
+    if user.totp_enabled_at is None or not _second_factor(user, body.code):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That code didn't work")
+    clear_two_factor(user)
+    log.warning("%s turned off two-factor sign-in", user.email, extra={"source": "auth"})
+    session.commit()
+
+
+def clear_two_factor(user: User) -> None:
+    user.totp_secret = user.totp_pending = None
+    user.totp_enabled_at = user.totp_last_step = None
+    user.totp_recovery = []
+
+
+# Sign in with Microsoft (Entra ID)
+
+
+@router.get("/entra/start")
+def entra_start():
+    try:
+        url, browser = entra.begin()
+    except entra.EntraError as exc:
+        return RedirectResponse("/?signin_error=" + quote(str(exc)), status_code=303)
+    response = RedirectResponse(url, status_code=303)
+    response.set_cookie(entra.COOKIE, browser, max_age=entra.MAX_AGE, httponly=True, secure=settings.cookie_secure, samesite="lax", path="/api/auth/entra")
+    return response
+
+
+@router.get("/entra/callback")
+def entra_callback(request: Request, session: SessionDep):
+    params = dict(request.query_params)
+    try:
+        user = entra.finish(session, params, request.cookies.get(entra.COOKIE))
+    except entra.EntraError as exc:
+        log.info("Microsoft sign-in refused: %s", exc, extra={"source": "auth"})
+        response = RedirectResponse("/?signin_error=" + quote(str(exc)), status_code=303)
+    else:
+        response = RedirectResponse("/", status_code=303)
+        auth.start_session(session, user, response, sla.utcnow())
+        log.info("%s signed in with Microsoft", user.email, extra={"source": "auth"})
+    session.commit()
+    response.delete_cookie(entra.COOKIE, path="/api/auth/entra")
+    return response
+

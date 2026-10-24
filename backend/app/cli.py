@@ -82,6 +82,20 @@ def set_password(email: str, password: str) -> None:
         print(f"Password set for {user.email}; their other sessions were signed out")
 
 
+def reset_two_factor(email: str) -> None:
+    """Recovery from the server: someone (often the only admin) lost their authenticator app."""
+    from app.api.auth import clear_two_factor
+
+    with SessionLocal() as session:
+        user = session.scalar(select(User).where(func.lower(User.email) == email.lower()))
+        if user is None:
+            raise SystemExit(f"No user {email}")
+        clear_two_factor(user)
+        auth.end_sessions(session, user)
+        session.commit()
+        print(f"Two-factor sign-in turned off for {user.email}; they were signed out everywhere")
+
+
 def seed(session=None) -> None:
     """Create a default "Service desk" queue and SLA policies if none exist (in the given session, which the caller commits; else its own)."""
     if session is None:
@@ -582,6 +596,8 @@ def main() -> None:
     p = sub.add_parser("set-password", help="Set or reset a local user's password")
     p.add_argument("email")
     p.add_argument("--password-stdin", action="store_true", help="Read the password from stdin (for installers)")
+    p = sub.add_parser("two-factor-reset", help="Turn off someone's two-factor sign-in (a lost authenticator app)")
+    p.add_argument("email")
     sub.add_parser("admins", help="List admins and whether they can sign in with a local password (break-glass)")
     sub.add_parser("sign-out-everyone", help="End every signed-in session (recovery: after a password reset, or a suspected break-in)")
     sub.add_parser("seed", help="Create a default queue and SLA policies")
@@ -627,6 +643,8 @@ def main() -> None:
         create_admin(args.email, args.name, read_password(args.password_stdin))
     elif args.cmd == "set-password":
         set_password(args.email, read_password(args.password_stdin))
+    elif args.cmd == "two-factor-reset":
+        reset_two_factor(args.email)
     elif args.cmd == "admins":
         list_admins()
     elif args.cmd == "sign-out-everyone":

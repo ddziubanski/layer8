@@ -7,6 +7,9 @@ import { Brand, backgroundStyle, useBranding } from "../branding";
 import { SourceNotice } from "../components/SourceNotice";
 import { ME_KEY } from "../queryClient";
 
+// The server's answer when the password was right and the authenticator code is next.
+const TWO_FACTOR_NEEDED = "Enter the code from your authenticator app";
+
 // Per-browser memory, so Windows sign-in is tried by itself only when it can help.
 // Storage can be unavailable (private windows, blocked site data): then it's always tried.
 const SKIP_SILENT = "helpdesk.windowsSignIn.skip"; // this tab: it failed, or they signed out
@@ -39,6 +42,10 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
   const brand = useBranding();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [needCode, setNeedCode] = useState(false);
+  // A refused Microsoft sign-in comes back here with its reason.
+  const [entraError] = useState(() => new URLSearchParams(window.location.search).get("signin_error"));
   const options = useQuery({ queryKey: ["sign-in-options"], queryFn: api.signInOptions, staleTime: Infinity, enabled: !forConsole });
   const windows = !forConsole && options.data?.windows_sign_in === true;
 
@@ -48,7 +55,10 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
   }
 
   const login = useMutation({
-    mutationFn: () => api.login(email, password),
+    mutationFn: () => api.login(email, password, needCode ? code : undefined),
+    onError: (e) => {
+      if (e.message === TWO_FACTOR_NEEDED) setNeedCode(true);
+    },
     onSuccess: (user) => {
       if (user.role !== "requester") remember(() => localStorage, TECHNICIAN);
       signedIn(user);
@@ -118,6 +128,17 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
             </div>
           </>
         )}
+        {!forConsole && options.data?.entra_sign_in && (
+          <>
+            <a className={windows ? "btn2" : "btn"} href="/api/auth/entra/start" style={{ textAlign: "center", textDecoration: "none" }}>
+              Sign in with Microsoft
+            </a>
+            <div className="or" aria-hidden="true">
+              or
+            </div>
+          </>
+        )}
+        {entraError && <p className="error" role="alert">{entraError}</p>}
         <label className="field">
           Email or username
           <input type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -132,7 +153,13 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
-        {login.error && (
+        {needCode && (
+          <label className="field">
+            Code from your authenticator app (or a recovery code)
+            <input inputMode="numeric" autoComplete="one-time-code" autoFocus required value={code} onChange={(e) => setCode(e.target.value)} />
+          </label>
+        )}
+        {login.error && !(login.error.message === TWO_FACTOR_NEEDED && !code) && (
           <p className="error" role="alert">
             {login.error.message}
           </p>

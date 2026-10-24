@@ -319,11 +319,19 @@ def _user_from_cookie(session: Session, request: Request) -> User | None:
         session.commit()
     if row.user.must_change_password and not request.url.path.startswith("/api/auth/"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Change your password first")
+    if must_set_up_two_factor(row.user) and not request.url.path.startswith("/api/auth/"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Set up two-factor sign-in first")
     if row.portal_only:
         if not PORTAL_ONLY_PATHS.match(request.url.path):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
         row.user.portal_only = True
     return row.user
+
+
+def must_set_up_two_factor(user: User) -> bool:
+    """Settings > Sign-in requires it of admins with a local password, and it isn't on yet."""
+    return (settings.totp_required_admins and user.role == UserRole.admin and user.auth_source == AuthSource.local
+            and user.password_hash is not None and user.totp_enabled_at is None)
 
 
 def current_user(

@@ -62,7 +62,7 @@ def test_upload_keytab_then_turn_on(client, admin):
     assert client.get("/api/auth/options").json()["windows_sign_in"] is False
     r = client.put("/api/settings/windows-sign-in", json={"enabled": True, "silent": False}, headers=as_user(admin))
     assert r.status_code == 200 and r.json()["enabled"] is True
-    assert client.get("/api/auth/options").json() == {"windows_sign_in": True, "windows_sign_in_silent": False}
+    assert client.get("/api/auth/options").json() == {"windows_sign_in": True, "windows_sign_in_silent": False, "entra_sign_in": False}
 
 
 def test_bad_keytabs_are_refused_with_a_reason(client, admin):

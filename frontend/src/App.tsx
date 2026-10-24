@@ -16,6 +16,7 @@ import { SourceNotice } from "./components/SourceNotice";
 import { CommandPalette } from "./components/CommandPalette";
 import { visibleModules } from "./navigation";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
+import { TwoFactorFirst } from "./components/TwoFactor";
 import { QueuePage } from "./pages/QueuePage";
 import { TicketPage } from "./pages/TicketPage";
 
@@ -172,6 +173,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "desk-hours", label: "Desk hours", adminOnly: true, page: (me) => <SettingsForm me={me} section="hours" title="Desk hours" intro="When technicians are in. The portal shows each queue as open or closed, with the after-hours message and when someone is next expected. A queue can have its own hours (Settings > Queues). Teams status shows each queue's owners as available, busy, away or offline: status only, with no way to start a chat." /> },
   { path: "teams", label: "Teams", adminOnly: true, page: (me) => <SettingsForm me={me} section="teams" title="Teams" intro="Optional periodic queue counts through a Teams Workflows webhook. Only non-restricted queues contribute. No ticket details or people are sent. Configure a workflow and enable summaries when ready; use Settings > Status to run or pause delivery." /> },
   { path: "windows-sign-in", label: "Windows sign-in", adminOnly: true, page: (me) => <WindowsSignInAdmin me={me} /> },
+  { path: "sign-in", label: "Sign-in", adminOnly: true, page: (me) => <SettingsForm me={me} section="signin" title="Sign-in" intro="Two-factor sign-in for admins, and Sign in with Microsoft (Entra ID). Everyone can turn two-factor sign-in on for themselves in My preferences. Recovery from the server: python -m app.cli two-factor-reset <email>. Step by step: docs/entra-sign-in.md." /> },
   { path: "surveys", label: "Surveys", adminOnly: true, page: (me) => <SurveysAdmin me={me} /> },
   { path: "notices", label: "Notices", adminOnly: true, permission: "notices_manage", page: (me) => <NoticesAdmin me={me} /> },
   { path: "runners", label: "Relays", adminOnly: true, page: (me) => <RunnersAdmin me={me} /> },
@@ -351,6 +353,7 @@ function SignedInApp() {
   if (me.error instanceof ApiError && me.error.status === 401) return <Login />;
   if (portalOnly && new URLSearchParams(window.location.search).has("console-sign-in")) return <Login console />;
   if (me.data?.must_change_password) return <ChangePasswordFirst me={me.data} />;
+  if (me.data?.must_set_up_two_factor) return <TwoFactorFirst me={me.data} />;
   if (me.error) return <p className="error">Could not reach the server: {me.error.message}</p>;
   return <RouterProvider router={appRouter!} />;
 }

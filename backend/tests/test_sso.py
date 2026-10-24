@@ -50,16 +50,16 @@ def test_first_request_asks_the_browser_for_a_ticket(client):
 
 
 def test_options_follow_settings(client, db):
-    assert client.get("/api/auth/options").json() == {"windows_sign_in": True, "windows_sign_in_silent": True}
+    assert client.get("/api/auth/options").json() == {"windows_sign_in": True, "windows_sign_in_silent": True, "entra_sign_in": False}
     config = kerberos.load(db)
     config.silent = False
     kerberos.save(db, config, None)
     db.commit()
-    assert client.get("/api/auth/options").json() == {"windows_sign_in": True, "windows_sign_in_silent": False}
+    assert client.get("/api/auth/options").json() == {"windows_sign_in": True, "windows_sign_in_silent": False, "entra_sign_in": False}
     # No keytab on the server: off, whatever the setting says.
     kerberos.keytab_path().unlink()
     assert client.post("/api/auth/sso").status_code == 404
-    assert client.get("/api/auth/options").json() == {"windows_sign_in": False, "windows_sign_in_silent": False}
+    assert client.get("/api/auth/options").json() == {"windows_sign_in": False, "windows_sign_in_silent": False, "entra_sign_in": False}
 
 
 def test_signs_in_a_directory_user_to_the_portal(client, db, mapped, service_desk, slas):

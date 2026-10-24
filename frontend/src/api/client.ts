@@ -257,7 +257,14 @@ export const api = {
   },
   removeBrandingImage: (name: "background" | "logo" | "favicon") => request<Branding>("DELETE", `/api/settings/branding/files/${name}`),
   signInOptions: () => request<SignInOptions>("GET", "/api/auth/options"),
-  login: (email: string, password: string) => request<Me>("POST", "/api/auth/login", { email, password }),
+  login: (email: string, password: string, code?: string) => request<Me>("POST", "/api/auth/login", code ? { email, password, code } : { email, password }),
+  twoFactor: {
+    status: () => request<S["TwoFactorStatusOut"]>("GET", "/api/auth/two-factor"),
+    setup: () => request<S["TwoFactorSetupOut"]>("POST", "/api/auth/two-factor/setup"),
+    confirm: (code: string) => request<S["TwoFactorRecoveryOut"]>("POST", "/api/auth/two-factor/confirm", { code }),
+    off: (password: string, code: string) => request<void>("POST", "/api/auth/two-factor/off", { password, code }),
+    reset: (userId: number) => request<void>("DELETE", `/api/users/${userId}/two-factor`),
+  },
   changePassword: (current: string, next: string) => request<void>("POST", "/api/auth/password", { current_password: current, new_password: next }),
   // The browser answers the server's Kerberos challenge itself when it trusts this site.
   windowsSignIn: () => request<Me>("POST", "/api/auth/sso"),
