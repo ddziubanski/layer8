@@ -13,6 +13,12 @@ concurrency:
   group: installer-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  oauth-proxy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify OAuth callback headers and log redaction through Nginx
+        run: sh install/tests/check-oauth-proxy.sh
   wizard:
     runs-on: ubuntu-latest
     steps:
