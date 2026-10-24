@@ -24,3 +24,15 @@ Those parent edits exist only in this QA branch. They must be carried into the r
 
 ## Validation
 Combined frontend and PostgreSQL CI plus mock-data browser QA are recorded in the QA PR and source PR descriptions. No real integration credentials, outbound provider calls, software installation or appliance changes are used. Temporary browser previews are not committed.
+
+
+## Completed validation on runtime commit 2240629989c042318ed905965470b6ad4fb4dea4
+
+- PostgreSQL CI: 620 passed, 24 optional live AD/Kerberos skips; staged migration upgrade and existing downgrade tests passed.
+- Frontend CI: 198 tests passed; TypeScript and production build passed.
+- Local combined focus/navigation/branding tests: 10 passed; production build passed.
+- Browser: save minimal, navigate without reload, Ctrl+K > Scripts > Enter opens the hidden module and focuses its heading, return/reload retains choices, Show all/save/reload restores every module.
+- Browser: Midnight > Custom restores saved purple main colour (#643b92), navy sidebar (#101a2a), light mode, custom L8 logo and custom gradient background. Switching back to Midnight retains the same assets.
+- Browser: tablet viewport 1029 CSS px had no horizontal overflow; command Escape restores trigger focus. All API data was synthetic, including persisted browser fixture state; no real user settings changed.
+
+[Visual evidence](../screenshots/combined-review/) contains desktop minimal mode, hidden-module command palette, custom-brand restoration and tablet screenshots. Source feature branches remain independent; this QA branch must not be merged.
