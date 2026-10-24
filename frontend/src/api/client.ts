@@ -4,6 +4,7 @@
 import type { components } from "./schema";
 
 type S = components["schemas"];
+export type UpdateStatus = S["UpdateStatusOut"];
 export type SoftwareDeployment = S["DeploymentOut"];
 export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
@@ -635,6 +636,12 @@ export const api = {
     unlink: (ticketId: number, deviceId: number) => request<TicketDevice[]>("DELETE", `/api/tickets/${ticketId}/devices/${deviceId}`),
   },
 
+  updates: {
+    progress: (path: string) => request<Record<string, unknown>>("GET", path),
+    status: () => request<UpdateStatus>("GET", "/api/system/updates"),
+    check: () => request<UpdateStatus>("POST", "/api/system/updates/check"),
+    apply: (body: S["ApplyIn"]) => request<UpdateStatus>("POST", "/api/system/updates/apply", body),
+  },
   system: {
     status: () => request<StatusItem[]>("GET", "/api/system/status"),
     logSources: () => request<LogSource[]>("GET", "/api/system/log/sources"),

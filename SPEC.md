@@ -134,3 +134,8 @@ cards remain observation-only. Webhook intake and any audited ticket action rema
 future slices; network configuration writes are not included.
 
 - Optional Midnight appearance (issue #41): Settings > Branding > Appearance selects a fixed dark navy/cyan command center palette. Custom colours remains the default and restores saved custom colours/dark-mode preference. The preset applies to console, sign-in and portal through existing branding; layouts, logos and permissions stay intact. CLI import: theme.theme_preset = midnight or custom; no schema migration.
+
+
+### GitHub appliance release updates
+
+Built: opt-in Settings > Updates checks stable releases of ddziubanski/layer8; an admin reviews and confirms a signed package. A fixed root service independently verifies Ed25519 signature, reviewed digest, artifact hash/limits, platform and version. It gates access, stops API/worker, verifies an encrypted backup, installs offline wheels, migrates, checks data/schema/application/frontend/source and a fresh worker process heartbeat, and retains recovery files. Sanitized capability-based Nginx progress survives API downtime. Pre-worker failures attempt restoration; uncertain recovery/interruption/worker failures keep maintenance active for local review. No automatic installs or downgrades. See docs/github-updates.md. Publisher trust-key provisioning and a disposable VM test of each signed release remain release responsibilities; local USB/share package import remains future work.

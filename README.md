@@ -28,6 +28,9 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md). A ga
 
 ## What it does
 
+Administrators can check GitHub stable releases and review signed appliance updates under **Settings > Updates**. Installation creates a verified encrypted backup, checks code/schema/frontend/source and worker readiness, and keeps progress visible during API downtime. See [GitHub updates](docs/github-updates.md) for initial provisioning, release signing and recovery.
+
+
 **Tickets**
 - Email (Microsoft 365 / Exchange Online through Graph) and a self-service portal feed one queue and one routing engine.
 - Queues with owners, managers and restricted visibility; SLAs; priorities from urgency × impact.

@@ -75,6 +75,8 @@ def main() -> None:
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
     log.info("Started", extra={"source": "worker"})
+    # Announce startup before potentially long integration jobs, including the build version.
+    worker.beat()
     while not stop.is_set():
         try:
             if not worker.tick():

@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify update progress during API downtime
+        run: sh install/tests/check-update-progress.sh
       - name: Verify OAuth callback headers and log redaction through Nginx
         run: sh install/tests/check-oauth-proxy.sh
   wizard:
@@ -25,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check shell syntax
         run: |
-          for file in install/wizard.sh install/files/layer8-console iso/*.sh dev/iso-test.sh; do sh -n "$file"; done
+          for file in install/install.sh install/install-updater.sh install/wizard.sh install/files/layer8-console install/tests/*.sh iso/*.sh dev/iso-test.sh; do sh -n "$file"; done
       - name: Exercise wizard flows without provisioning
         run: python3 -m unittest discover -s install/tests -v
       - name: Check boot media contracts

@@ -297,6 +297,9 @@ SECTIONS: dict[str, list[Field]] = {
         Field("teams_webhook_url", "Workflows webhook URL", "A signed Teams Workflows URL. Kept as a secret and never shown back. See docs/teams.md for setup.", secret=True, check=_teams_url),
         Field("teams_summary_minutes", "Summary interval (minutes)", "Sends a periodic snapshot, including zero counts. Settings > Status can pause or run it now.", check=_between(15, 1440)),
     ],
+    "updates": [
+        Field("updates_enabled", "Enable GitHub release updates", "Allows explicit administrator release checks and reviewed signed updates from ddziubanski/layer8. No automatic installs; leave off for offline appliances."),
+    ],
     "general": [
         Field("portal_url", "Portal address", "The address people open, e.g. https://helpdesk.corp.example. Used in ticket links in emails.", check=_http_url),
         Field("source_repository", "Source code address", "Where people can get Layer 8's source, linked in the console, portal and sign-in page beside the source download (the AGPL asks you to offer the source of what you run). A modified copy should point at its own repository. Empty: the download link only.", check=_http_url),

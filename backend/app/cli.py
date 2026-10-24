@@ -399,6 +399,9 @@ def backup_command(args) -> None:
     from app.backup import archive
     from app.config import settings
 
+    # Separate CLI processes must load the same stored secrets/settings as the API.
+    with SessionLocal() as session:
+        configstore.refresh(session, force=True)
     try:
         if args.action == "create":
             folder = Path(args.to) if args.to else archive.target_dir()
