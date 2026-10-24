@@ -153,6 +153,8 @@ class BoardTicket(BaseModel):
     assignee: str | None
     created_at: datetime
     due_at: datetime | None
+    # Business minutes left on the SLA (Settings > Desk hours > SLA clock); negative: past it.
+    minutes_left: int | None = None
     breached: bool
 
 
@@ -206,7 +208,7 @@ def _ticket(t: Ticket, now: datetime) -> BoardTicket:
     return BoardTicket(
         id=t.id, label=numbering.label(t.id, t.created_at), subject=t.subject, priority=t.priority.value, queue=t.queue.name,
         requester=t.requester.display_name, assignee=t.assignee.display_name if t.assignee else None, created_at=t.created_at,
-        due_at=t.resolution_due_at, breached=t.resolution_due_at is not None and t.resolution_due_at <= now,
+        due_at=t.resolution_due_at, minutes_left=t.sla_minutes_left, breached=t.resolution_due_at is not None and t.resolution_due_at <= now,
     )
 
 

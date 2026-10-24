@@ -13,9 +13,9 @@ test("duration", () => {
 });
 
 test("sla states", () => {
-  expect(slaInfo({ sla_state: "ok", resolution_due_at: at(190) }, NOW)).toEqual({ tone: "g", short: "3h 10m", long: "SLA breach in 3h 10m" });
+  expect(slaInfo({ sla_state: "ok", resolution_due_at: at(190) }, NOW)).toEqual({ tone: "g", short: "3h 10m", long: "3h 10m left on the SLA", left: null });
   expect(slaInfo({ sla_state: "at_risk", resolution_due_at: at(42) }, NOW).tone).toBe("a");
-  expect(slaInfo({ sla_state: "breached", resolution_due_at: at(-65) }, NOW)).toEqual({ tone: "r", short: "-1h 05m", long: "SLA breached 1h 05m ago" });
+  expect(slaInfo({ sla_state: "breached", resolution_due_at: at(-65) }, NOW)).toEqual({ tone: "r", short: "-1h 05m", long: "SLA breached 1h 05m ago", left: 0 });
   expect(slaInfo({ sla_state: "met", resolution_due_at: at(-5) }, NOW).long).toBe("SLA met");
   expect(slaInfo({ sla_state: "none", resolution_due_at: null }, NOW).short).toBe("None");
 });
@@ -37,4 +37,12 @@ test("history lines", () => {
   ).toBe("Moved from Service desk to Network, assigned to D. Cole");
   expect(describeEvent(ev("status_changed", { before: "open", after: "waiting_on_user" }), names)).toBe("Status Open → Waiting on user");
   expect(describeEvent(ev("comment_added", { is_internal: true }), names)).toBe("Added an internal note");
+});
+
+test("SLA time left comes from the server's business clock, with a share for the meter", () => {
+  // Due in 3 days of wall time, but only 2 hours of desk hours are left.
+  const t = { sla_state: "ok" as const, resolution_due_at: at(3 * 1440), sla_minutes_left: 120, sla_resolution_minutes: 480 };
+  expect(slaInfo(t, NOW)).toMatchObject({ tone: "g", short: "2h 00m", left: 0.25 });
+  expect(slaInfo({ ...t, sla_minutes_left: 30 }, NOW).tone).toBe("r");  // the last tenth is red
+  expect(slaInfo({ ...t, sla_state: "paused", resolution_due_at: null }, NOW)).toMatchObject({ tone: "n", short: "Paused", long: "SLA paused while waiting on the user (2h 00m left)" });
 });

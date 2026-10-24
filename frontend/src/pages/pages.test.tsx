@@ -145,7 +145,7 @@ describe("ticket", () => {
     expect(screen.getByText("Checked the switch logs").closest(".card")).toHaveClass("note", "ticket-message", "ticket-message-internal");
     expect(screen.getByText(/R\. Alvarez, via email/).closest(".card")).toHaveClass("ticket-message-original");
     expect(screen.getByText('Routed by rule: subject contains "switch"')).toBeInTheDocument();
-    expect(screen.getByText("SLA breach in 0h 42m")).toBeInTheDocument();
+    expect(screen.getByText("0h 42m left on the SLA")).toBeInTheDocument();
     expect(await screen.findByText('Routed to Network by rule "switch"')).toBeInTheDocument();
   });
 

@@ -40,8 +40,11 @@ export function span(ms: number): string {
 
 function due(t: Ticket, now: number): string {
   if (!t.due_at) return "";
-  const left = new Date(t.due_at).getTime() - now;
-  return left <= 0 ? `${span(-left)} over` : `due in ${span(left)}`;
+  const over = new Date(t.due_at).getTime() - now;
+  if (over <= 0) return `${span(-over)} over`;
+  // Business time left when the server counts it (desk hours), else wall time.
+  const left = t.minutes_left != null ? t.minutes_left * 60_000 : over;
+  return `${span(left)} left`;
 }
 
 /** /wallboard#l8w_...: a read-only board for a big screen. No sign-in: the link is the key. */

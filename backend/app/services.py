@@ -292,6 +292,10 @@ def _set_status(session: Session, ticket: Ticket, status: TicketStatus, actor: U
         return
     ticket.status = status
     ticket.status_changed_at = sla.utcnow()
+    if status == TicketStatus.waiting_on_user:
+        sla.pause(ticket, ticket.status_changed_at)
+    elif old == TicketStatus.waiting_on_user:
+        sla.resume(ticket, ticket.status_changed_at)
     if status == TicketStatus.resolved:
         ticket.resolved_at = sla.utcnow()
     elif status == TicketStatus.closed:
