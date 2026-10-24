@@ -815,6 +815,18 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .presence-dot.away { background: #d99a1e; }
 .presence-dot.offline { background: transparent; border: 2px solid #9aa5a2; box-sizing: border-box; }
 
+.meraki-context { border-left: 3px solid var(--teal, #0f766e); padding: 6px 10px; margin-top: 6px; overflow-wrap: anywhere; }
+.meraki-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.meraki-client { border: 1px solid var(--border, #dbe3e8); border-radius: 8px; padding: 14px; }
+
+
+.meraki-diagnostics { margin-top: .8rem; }
+.meraki-diagnostics > section { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.meraki-diagnostic-values { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: .35rem .8rem; margin: 0; }
+.meraki-diagnostic-values dd { margin: 0; overflow-wrap: anywhere; }
+.meraki-event-list { padding-left: 1.2rem; max-height: 24rem; overflow: auto; }
+.meraki-event-list li { margin-bottom: .8rem; overflow-wrap: anywhere; }
+
 /* Midnight is opt-in. Both the app and the unsaved Branding preview use this palette. */
 :root[data-preset="midnight"], .theme-preview[data-preset="midnight"] {
   --ink: #e6f0fa; --muted: #acc2d5;

@@ -875,6 +875,66 @@ class TicketSystem(Base):
     system: Mapped[System] = relationship()
 
 
+class MerakiClient(Base):
+    """Replaceable observations, separate from authoritative IPAM records."""
+
+    __tablename__ = "meraki_clients"
+    network_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    mac: Mapped[str] = mapped_column(String(17), primary_key=True, index=True)
+    network_name: Mapped[str] = mapped_column(String(255))
+    client_id: Mapped[str] = mapped_column(String(100))
+    address: Mapped[str] = mapped_column(String(45))
+    description: Mapped[str] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(32))
+    vlan: Mapped[str] = mapped_column(String(32))
+    switch_name: Mapped[str] = mapped_column(String(255))
+    switch_serial: Mapped[str] = mapped_column(String(100))
+    port: Mapped[str] = mapped_column(String(100))
+    connection: Mapped[str] = mapped_column(String(32))
+    ssid: Mapped[str] = mapped_column(String(100))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class MerakiDiagnostic(Base):
+    """Bounded, replaceable diagnostic cache, never authoritative IPAM data."""
+
+    __tablename__ = "meraki_diagnostics"
+    network_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    mac: Mapped[str] = mapped_column(String(17), primary_key=True)
+    identity_hash: Mapped[str] = mapped_column(String(64))
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    data: Mapped[dict] = mapped_column(JSONB, default=dict)
+    last_error: Mapped[str | None] = mapped_column(String(255))
+
+
+class MerakiWebhookReceipt(Base):
+    """Replay protection and a bounded administrator delivery history; no raw payloads."""
+    __tablename__ = "meraki_webhook_receipts"
+    organization_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    alert_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    network_id: Mapped[str] = mapped_column(String(100))
+    serial: Mapped[str] = mapped_column(String(32))
+    alert_type: Mapped[str] = mapped_column(String(32))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    outcome: Mapped[str] = mapped_column(String(32))
+    ticket_id: Mapped[int | None] = mapped_column(ForeignKey("tickets.id", ondelete="SET NULL"))
+
+
+class MerakiWebhookIncident(Base):
+    """Latest device reporting state, including recoveries received before the outage."""
+    __tablename__ = "meraki_webhook_incidents"
+    organization_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    network_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    serial: Mapped[str] = mapped_column(String(32), primary_key=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    is_down: Mapped[bool] = mapped_column(Boolean)
+    ticket_id: Mapped[int | None] = mapped_column(ForeignKey("tickets.id", ondelete="SET NULL"))
+
+
 class DevicePatch(Base):
     """A machine as Action1 (patching, read-only) reports it: its patch state, matched to a device by
     name. Kept current by the "action1" worker job; overdue patching can open a ticket."""

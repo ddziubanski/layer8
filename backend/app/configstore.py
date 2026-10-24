@@ -86,6 +86,11 @@ def _org_ids(v: list[str]) -> None:
             raise SettingsError(f"{o!r} isn't an Action1 organization ID (Test connection lists them)")
 
 
+def _meraki_networks(v: list[str]) -> None:
+    if len(v) > 20 or any(not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", n) for n in v):
+        raise SettingsError("Choose at most 20 network IDs, one per line (e.g. N_123456)")
+
+
 def _domain(v: str) -> None:
     if v:
         _domains([v])
@@ -388,6 +393,20 @@ SECTIONS: dict[str, list[Field]] = {
             check=_between(0, 4),
         ),
         Field("survey_question", "The question", "Answered from 1 (very unhappy) to 5 (very happy), with an optional comment.", check=_length(5, 300)),
+    ],
+    "meraki": [
+        Field("meraki_webhook_enabled", "Create tickets from Meraki device outages", "Opt in to stopped_reporting / started_reporting webhooks. Uses the selected network IDs below, independently of discovery. Recovery adds an internal note; it never closes a ticket."),
+        Field("meraki_webhook_secret", "Webhook shared secret", "Use a separate random secret of at least 32 characters in the default Meraki payload. Stored in a secret file and never shown back.", secret=True, check=lambda v: _length(32, 256)(v) if v else None),
+        Field("meraki_webhook_organization_ids", "Webhook organization IDs", "Required for webhooks: at most 20 organization IDs, one per line. Empty accepts nothing.", check=_meraki_networks),
+        Field("meraki_webhook_queue_id", "Webhook fallback queue ID", "0 uses the default queue. Normal ticket routing rules still apply. A nonzero ID must identify an active queue.", check=_between(0, 2147483647)),
+        Field("meraki_enabled", "Read Meraki client observations", "Optional, read only. Turning this off stops discovery and hides cached observations."),
+        Field("meraki_diagnostics_enabled", "Allow read-only network diagnostics", "Technicians may explicitly read last-known switch port status or recent wireless events from the Meraki client view. OAuth requires switch:telemetry:read and wireless:telemetry:read in addition to discovery scopes; update the app registration and reconnect after changing this option."),
+        Field("meraki_auth_mode", "Authentication", choices=(("api_key", "Dashboard API key"), ("oauth", "OAuth connection"))),
+        Field("meraki_client_id", "OAuth client ID", "Register a confidential application at integrate.cisco.com. The exact redirect URI is shown above after saving.", check=_length(0, 256)),
+        Field("meraki_client_secret", "OAuth client secret", "Written to a secret file and never shown back. Changing the registration requires reconnecting.", secret=True, check=_length(0, 1024)),
+        Field("meraki_api_key", "Dashboard API key", "Use a dedicated Dashboard administrator with read-only access to the selected networks. This key is written to a secret file and never shown back.", secret=True, check=_length(0, 256)),
+        Field("meraki_network_ids", "Selected Meraki networks", "Required for discovery and webhook intake: one network ID per line, at most 20. Empty reads and accepts nothing. Test selected networks after saving.", check=_meraki_networks),
+        Field("meraki_sync_minutes", "Read Meraki every (minutes)", "Reads the last 24 hours of clients. Failed reads keep the last complete snapshot; older observations are marked stale.", check=_between(15, 1440)),
     ],
     "action1": [
         Field(

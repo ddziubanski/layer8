@@ -3309,6 +3309,146 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meraki/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook
+         * @description Default Meraki JSON payload; authenticates with its dedicated sharedSecret, not a user cookie.
+         */
+        post: operations["webhook_api_meraki_webhooks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/webhooks/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Webhook Status */
+        get: operations["webhook_status_api_meraki_webhooks_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_meraki_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test */
+        post: operations["test_api_meraki_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clients */
+        get: operations["clients_api_meraki_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/oauth/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect */
+        post: operations["connect_api_meraki_oauth_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/oauth/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Disconnect */
+        delete: operations["disconnect_api_meraki_oauth_connection_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/clients/{network_id}/{mac}/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diagnostic Cache */
+        get: operations["diagnostic_cache_api_meraki_clients__network_id___mac__diagnostics_get"];
+        put?: never;
+        /** Read Diagnostics */
+        post: operations["read_diagnostics_api_meraki_clients__network_id___mac__diagnostics_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/action1/devices/{device_id}/software": {
         parameters: {
             query?: never;
@@ -6355,6 +6495,7 @@ export interface components {
             updated_at: string;
             subnet?: components["schemas"]["SubnetRef"] | null;
             switch_port?: components["schemas"]["SwitchPortOut"] | null;
+            meraki?: components["schemas"]["MerakiClientOut"] | null;
         };
         /** IpCell */
         IpCell: {
@@ -6861,6 +7002,205 @@ export interface components {
         MembersIn: {
             /** User Ids */
             user_ids: number[];
+        };
+        /** MerakiClientOut */
+        MerakiClientOut: {
+            /**
+             * Diagnostics Available
+             * @default false
+             */
+            diagnostics_available: boolean;
+            /** Network Id */
+            network_id: string;
+            /** Network Name */
+            network_name: string;
+            /** Client Id */
+            client_id: string;
+            /** Mac */
+            mac: string;
+            /** Address */
+            address: string;
+            /** Description */
+            description: string;
+            /** Status */
+            status: string;
+            /** Vlan */
+            vlan: string;
+            /** Switch Name */
+            switch_name: string;
+            /** Switch Serial */
+            switch_serial: string;
+            /** Port */
+            port: string;
+            /** Connection */
+            connection: string;
+            /** Ssid */
+            ssid: string;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Stale */
+            stale: boolean;
+        };
+        /** MerakiDiagnosticData */
+        MerakiDiagnosticData: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "wired" | "wireless";
+            /**
+             * Read At
+             * Format: date-time
+             */
+            read_at: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /** Switch Serial */
+            switch_serial?: string | null;
+            port?: components["schemas"]["MerakiPortOut"] | null;
+            /** Events */
+            events?: components["schemas"]["MerakiWirelessEventOut"][];
+            /**
+             * Events Truncated
+             * @default false
+             */
+            events_truncated: boolean;
+        };
+        /** MerakiDiagnosticOut */
+        MerakiDiagnosticOut: {
+            /** Network Id */
+            network_id: string;
+            /** Mac */
+            mac: string;
+            /** Client Id */
+            client_id: string;
+            /**
+             * Client Observed At
+             * Format: date-time
+             */
+            client_observed_at: string;
+            /**
+             * Attempted At
+             * Format: date-time
+             */
+            attempted_at: string;
+            /**
+             * Retry At
+             * Format: date-time
+             */
+            retry_at: string;
+            /** Cached */
+            cached: boolean;
+            /** Error */
+            error: string | null;
+            data: components["schemas"]["MerakiDiagnosticData"] | null;
+        };
+        /** MerakiDisconnectOut */
+        MerakiDisconnectOut: {
+            /** Revoked */
+            revoked: boolean;
+        };
+        /** MerakiOAuthOut */
+        MerakiOAuthOut: {
+            /** Configured */
+            configured: boolean;
+            /** Connected */
+            connected: boolean;
+            /** Redirect Uri */
+            redirect_uri?: string | null;
+        };
+        /** MerakiPortOut */
+        MerakiPortOut: {
+            /** Port Id */
+            port_id: string;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Status */
+            status?: string | null;
+            /** Speed */
+            speed?: string | null;
+            /** Duplex */
+            duplex?: string | null;
+            /** Is Uplink */
+            is_uplink?: boolean | null;
+            /** Client Count */
+            client_count?: number | null;
+            /** Errors */
+            errors?: string[];
+            /** Warnings */
+            warnings?: string[];
+        };
+        /** MerakiStartOut */
+        MerakiStartOut: {
+            /** Url */
+            url: string;
+        };
+        /** MerakiStatusOut */
+        MerakiStatusOut: {
+            /**
+             * Auth Mode
+             * @default api_key
+             */
+            auth_mode: string;
+            oauth?: components["schemas"]["MerakiOAuthOut"] | null;
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Clients */
+            clients: number;
+            /** Networks */
+            networks: string[];
+            /** Last Sync At */
+            last_sync_at: string | null;
+            /** Last Sync Ok */
+            last_sync_ok: boolean | null;
+            /** Last Sync Error */
+            last_sync_error: string | null;
+            /** Last Sync Summary */
+            last_sync_summary: string | null;
+        };
+        /** MerakiTestOut */
+        MerakiTestOut: {
+            /** Networks */
+            networks: string[];
+        };
+        /** MerakiWirelessEventOut */
+        MerakiWirelessEventOut: {
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Type */
+            type: string;
+            /** Subtype */
+            subtype?: string | null;
+            /** Severity */
+            severity?: string | null;
+            /** Device Serial */
+            device_serial?: string | null;
+            /** Band */
+            band?: string | null;
+            /** Channel */
+            channel?: number | null;
+            /** Rssi */
+            rssi?: number | null;
+            /** Duration Ms */
+            duration_ms?: number | null;
         };
         /** MergeIn */
         MergeIn: {
@@ -10511,6 +10851,40 @@ export interface components {
             start?: string | null;
             /** End */
             end?: string | null;
+        };
+        /** WebhookDeliveryOut */
+        WebhookDeliveryOut: {
+            /** Network Id */
+            network_id: string;
+            /** Serial */
+            serial: string;
+            /** Alert Type */
+            alert_type: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Outcome */
+            outcome: string;
+            /** Ticket Id */
+            ticket_id: number | null;
+        };
+        /** WebhookStatusOut */
+        WebhookStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Endpoint */
+            endpoint: string | null;
+            /** Deliveries */
+            deliveries: components["schemas"]["WebhookDeliveryOut"][];
         };
         /** WindowsSignInIn */
         WindowsSignInIn: {
@@ -18415,6 +18789,301 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Action1TestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_api_meraki_webhooks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    sharedSecret: string;
+                    /** @description 0.1 for availability alerts */
+                    version?: string;
+                    organizationId: string;
+                    networkId: string;
+                    /** @description stopped_reporting / started_reporting; other types are ignored */
+                    alertTypeId: string;
+                    alertId?: string;
+                    deviceSerial?: string;
+                    /** Format: date-time */
+                    occurredAt?: string;
+                    /** Format: date-time */
+                    sentAt?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    webhook_status_api_meraki_webhooks_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_meraki_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_api_meraki_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiTestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clients_api_meraki_clients_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiClientOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_api_meraki_oauth_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_meraki_oauth_connection_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDisconnectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    diagnostic_cache_api_meraki_clients__network_id___mac__diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                network_id: string;
+                mac: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDiagnosticOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_diagnostics_api_meraki_clients__network_id___mac__diagnostics_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                network_id: string;
+                mac: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDiagnosticOut"];
                 };
             };
             /** @description Validation Error */

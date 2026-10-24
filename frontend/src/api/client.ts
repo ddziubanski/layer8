@@ -14,6 +14,7 @@ export type Queue = S["QueueOut"];
 export type User = S["UserOut"];
 /** The signed-in user; portal_only after Windows sign-in (the console needs a password). */
 export type Me = S["MeOut"];
+export type MerakiObservation = S["MerakiClientOut"];
 export type SignInOptions = S["SignInOptionsOut"];
 export type UserRef = S["UserRef"];
 export type SavedView = S["SavedView"];
@@ -532,6 +533,16 @@ export const api = {
     forTicket: (ticketId: number) => request<TicketChecklist[]>("GET", `/api/tickets/${ticketId}/checklists`),
     start: (ticketId: number, body: StartChecklist) => request<TicketChecklist>("POST", `/api/tickets/${ticketId}/checklists`, body),
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
+  },
+  meraki: {
+    webhooks: () => request<S["WebhookStatusOut"]>("GET", "/api/meraki/webhooks/status"),
+    diagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"] | null>("GET", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
+    readDiagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"]>("POST", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
+    connect: () => request<S["MerakiStartOut"]>("POST", "/api/meraki/oauth/connect"),
+    disconnect: () => request<S["MerakiDisconnectOut"]>("DELETE", "/api/meraki/oauth/connection"),
+    status: () => request<S["MerakiStatusOut"]>("GET", "/api/meraki/status"),
+    test: () => request<S["MerakiTestOut"]>("POST", "/api/meraki/test"),
+    clients: (q = "") => request<S["MerakiClientOut"][]>("GET", `/api/meraki/clients${query({ q })}`),
   },
   action1: {
     software: (deviceId: number, q: string, offset = 0, ticket_id?: number) => request<S["SoftwareCatalogOut"]>("GET", `/api/action1/devices/${deviceId}/software${query({ q, offset, ticket_id })}`),
