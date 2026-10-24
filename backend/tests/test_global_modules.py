@@ -77,3 +77,17 @@ def test_unknown_core_switches_are_refused_atomically(client, admin):
     response = client.put("/api/settings/modules", headers=as_user(admin), json={"values": {
         "workspace_devices_enabled": False, "workspace_tickets_enabled": False}})
     assert response.status_code == 422 and settings.workspace_devices_enabled
+
+
+def test_core_helpdesk_and_source_offer_survive_all_workspace_modules_off(client, admin, agent, service_desk):
+    before = client.get("/api/auth/me", headers=as_user(agent)).json()["features"]
+    values = {name: False for _, name, _, _ in workspace.MODULES}
+    assert client.put("/api/settings/modules", headers=as_user(admin), json={"values": values}).status_code == 200
+    assert client.get("/api/settings/modules", headers=as_user(admin)).status_code == 200
+    assert client.get("/api/tickets", headers=as_user(agent)).status_code == 200
+    assert client.get("/api/portal/queues", headers=as_user(agent)).status_code == 200
+    profile = client.get("/api/auth/me", headers=as_user(agent)).json()
+    assert profile["features"] == before and len(profile["disabled_modules"]) == len(workspace.MODULES)
+    about = client.get("/api/about")
+    assert about.status_code == 200 and about.json()["license"] == "AGPL-3.0-or-later"
+    assert about.json()["source_download"] or about.json()["source_repository"]
