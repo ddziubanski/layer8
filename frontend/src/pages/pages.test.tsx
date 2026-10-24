@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { ME, mockApi, renderAt, ticket } from "../test/util";
 import { QueuePage } from "./QueuePage";
 import { TicketPage } from "./TicketPage";
+import { DEFAULT_TICKET_WORKSPACE } from "./ticket/TicketToolsWorkspace";
 
 const COUNTS = { open: 12, unassigned: 7, mine: 12, my_queues: 4, sla_at_risk: 3, waiting_on_user: 9, from_email: 18, from_portal: 11 };
 
@@ -62,9 +63,12 @@ describe("queue sorting", () => {
 });
 
 describe("ticket", () => {
-  function setup(over = {}) {
+  function setup(over = {}, drawer = false) {
+    const me = drawer ? { ...ME, ticket_workspace: DEFAULT_TICKET_WORKSPACE } : ME;
     const t = ticket(over);
     const calls = mockApi({
+      "GET /api/auth/me": me,
+      "PUT /api/auth/me/preferences": me,
       [`GET /api/tickets/${t.id}`]: t,
       [`GET /api/tickets/${t.id}/comments`]: [
         { id: 10, author: { id: 1, email: ME.email, display_name: "J. Park" }, body: "Checked the switch logs", is_internal: true, source: "agent", created_at: t.created_at },
@@ -86,9 +90,29 @@ describe("ticket", () => {
       [`POST /api/tickets/${t.id}/attachments`]: { id: "a2" },
       [`POST /api/tickets/${t.id}/assign`]: t,
     });
-    renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+    renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={me} /> }]);
     return { t, calls };
   }
+
+  test("drawer reply and attachments survive sections and Arrange; file tools reuse existing downloads", async () => {
+    setup({}, true);
+    const input = await screen.findByLabelText("Work notes and replies");
+    await userEvent.type(input, "Unfinished reply");
+    await userEvent.click(screen.getByLabelText("Show to the requester in the portal"));
+    await userEvent.upload(screen.getByTestId("file-input"), new File(["notes"], "draft.txt", { type: "text/plain" }));
+    await userEvent.click(screen.getByRole("tab", { name: "History" }));
+    expect(await screen.findByText('Routed to Network by rule "switch"')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Conversation" }));
+    await userEvent.click(screen.getByRole("button", { name: "Arrange this page" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByLabelText("Work notes and replies")).toHaveValue("Unfinished reply");
+    expect(screen.getByLabelText("Show to the requester in the portal")).toBeChecked();
+    expect(screen.getByRole("button", { name: "Remove draft.txt" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Tools/ }));
+    await userEvent.click(screen.getByRole("tab", { name: "Files" }));
+    expect(await screen.findByRole("link", { name: "Download ping-log.txt" })).toHaveAttribute("href", "/api/attachments/a1/download");
+    expect(screen.getByRole("button", { name: "Status & assignment" })).toBeInTheDocument();
+  });
 
   test("links the parent ticket in the breadcrumb without making the current ticket a link", async () => {
     setup({ parent: { id: 4700, label: "#4700", subject: "Network outage" } });

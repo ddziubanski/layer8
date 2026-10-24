@@ -7242,6 +7242,7 @@ export interface components {
              * @default []
              */
             hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
+            ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"];
             /**
              * Disabled Modules
              * @default []
@@ -8389,6 +8390,7 @@ export interface components {
             color_rules?: components["schemas"]["ColorRule"][];
             /** Hidden Modules */
             hidden_modules?: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
+            ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"] | null;
         };
         /**
          * Priority
@@ -10745,6 +10747,34 @@ export interface components {
             computer_id?: number | null;
             /** Parent Id */
             parent_id?: number | null;
+        };
+        /**
+         * TicketWorkspacePreferences
+         * @description Presentation only; no ticket content or permissions are stored here.
+         */
+        TicketWorkspacePreferences: {
+            /**
+             * Mode
+             * @default drawer
+             * @enum {string}
+             */
+            mode: "drawer" | "classic";
+            /**
+             * Selected Tool
+             * @default details
+             * @enum {string}
+             */
+            selected_tool: "details" | "devices" | "directory" | "scripts" | "network" | "copilot" | "knowledge" | "files" | "guest_wifi";
+            /**
+             * Keep Open
+             * @default false
+             */
+            keep_open: boolean;
+            /**
+             * Width
+             * @default 440
+             */
+            width: number;
         };
         /** UnifiStatusOut */
         UnifiStatusOut: {

@@ -33,6 +33,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md). A ga
 - Queues with owners, managers and restricted visibility; SLAs; priorities from urgency × impact.
 - KACE-style ticket rules: on save, on a schedule, or in SQL.
 - Merge, parent and child tickets, bulk changes, and a page layout each technician can arrange.
+- Conversation-first ticket workspace: Conversation, Work and History tabs, with a closable tools drawer. Personal preferences keep a preferred tool, width and open state; classic arranged panels remain available. See [ticket workspace](docs/ticket-workspace.md).
 - "Tickets Anywhere": technicians act on tickets by replying to email (`#close`, `#assign`, `#priority`).
 - Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
 - A wallboard for a big screen in the IT office: live counts, alerts (SLA breaches, unassigned tickets) and the tickets that need someone, opened by a secret link.

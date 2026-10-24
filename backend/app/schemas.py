@@ -90,6 +90,15 @@ class UserOut(ORM):
 SidebarModule = Literal["dashboard", "devices", "changes", "purchase-orders", "vendors", "ipam", "kb", "scripts", "reports", "settings", "portal"]
 
 
+class TicketWorkspacePreferences(BaseModel):
+    """Presentation only; no ticket content or permissions are stored here."""
+    model_config = ConfigDict(extra="forbid")
+    mode: Literal["drawer", "classic"] = "drawer"
+    selected_tool: Literal["details", "devices", "directory", "scripts", "network", "copilot", "knowledge", "files", "guest_wifi"] = "details"
+    keep_open: bool = False
+    width: int = Field(default=440, ge=320, le=720)
+
+
 class MeOut(UserOut):
     """The signed-in user. portal_only: signed in by single sign-on, so the portal only;
     the console asks for a password. must_change_password: change it before anything else
@@ -105,6 +114,7 @@ class MeOut(UserOut):
     features: list[str] = []
     # Personal navigation only; never changes permissions, routes or global features.
     hidden_modules: list[SidebarModule] = []
+    ticket_workspace: TicketWorkspacePreferences = Field(default_factory=TicketWorkspacePreferences)
     # Global console availability, above personal visibility; never an authorization grant.
     disabled_modules: list[SidebarModule] = []
 
@@ -127,6 +137,8 @@ class PreferencesIn(BaseModel):
     color_rules: list[ColorRule] = Field(default_factory=list, max_length=30)
     # Omitted: preserve it, including when an older client saves colours. Null/[]: show all.
     hidden_modules: list[SidebarModule] | None = Field(default=None, max_length=11)
+    # Omitted preserves; null resets. Explicit objects replace the presentation preferences.
+    ticket_workspace: TicketWorkspacePreferences | None = None
 
     @field_validator("hidden_modules")
     @classmethod

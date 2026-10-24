@@ -154,7 +154,7 @@ test("minimal navigation applies on save without rebuilding the route; show all 
   expect(screen.getByRole("heading", { name: "My preferences" })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
   await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
-  expect(screen.getByRole("option", { name: "Scripts" })).toBeInTheDocument();
+  expect(within(screen.getByRole("listbox")).getByRole("option", { name: "Scripts" })).toBeInTheDocument();
   await userEvent.keyboard("{Escape}");
   await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));

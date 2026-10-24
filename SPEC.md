@@ -134,3 +134,8 @@ cards remain observation-only. Webhook intake and any audited ticket action rema
 future slices; network configuration writes are not included.
 
 - Optional Midnight appearance (issue #41): Settings > Branding > Appearance selects a fixed dark navy/cyan command center palette. Custom colours remains the default and restores saved custom colours/dark-mode preference. The preset applies to console, sign-in and portal through existing branding; layouts, logos and permissions stay intact. CLI import: theme.theme_preset = midnight or custom; no schema migration.
+
+
+### Ticket workspace presentation (Option B)
+
+Technician tickets default to Conversation / Work / History with a closable tools drawer. All existing tool APIs and permissions remain unchanged. Personal workspace preferences are stored under `personal_ticket_workspace:<user.id>`; see [docs/ticket-workspace.md](docs/ticket-workspace.md) for layout compatibility, draft scope and keyboard controls. Classic arranged panels remain selectable.
