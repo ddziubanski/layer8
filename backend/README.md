@@ -107,3 +107,9 @@ Tests run against the `helpdesk_test` database and wipe it. They build the schem
 ```
 
 Review the generated file. If it adds enum columns, run `.venv/bin/python scripts/fix_enum_checks.py <file>`: autogenerate emits each CHECK constraint twice with a clashing name.
+
+### Midnight appearance
+
+Select **Settings > Branding > Colours > Appearance > Midnight command center**, review the live preview, then Save. This optional preset uses dark navy panels, cyan actions with dark readable text, brighter status badges and compact ticket rows. It applies to the console, portal and sign-in screen. Choose **Custom colours** to restore the saved main/sidebar colours and dark-mode preference; those values are never replaced by the preset. Existing logos and backgrounds are retained.
+
+Installer/CLI answers can set `{"theme": {"theme_preset": "midnight"}}` through `python -m app.cli settings import answers.json`. The default remains `custom`. No database migration is needed.

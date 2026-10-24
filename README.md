@@ -25,6 +25,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - Silent Windows sign-in (Kerberos) to the portal.
 - Creating AD accounts from a ticket: onboarding templates, group lists, a start date, and the password shown once.
 - Finer permissions: who may delete, merge, publish or manage each area, by group.
+- A personal workspace: hide optional sidebar modules individually or choose a minimal preset in My preferences. Tickets, My preferences and sign-out stay available; hidden modules remain reachable through Ctrl+K and direct links with existing permissions. [Workspace preferences](docs/workspace-preferences.md).
 
 **Devices and network**
 - Devices from AD computer objects, with tickets, IP addresses, switch port and lifecycle on each.

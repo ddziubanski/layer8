@@ -122,7 +122,7 @@ export interface paths {
         get?: never;
         /**
          * Save Preferences
-         * @description My colour in the queue and my own colour rules.
+         * @description My colours and sidebar; omitted fields preserve independently saved preferences.
          */
         put: operations["save_preferences_api_auth_me_preferences_put"];
         post?: never;
@@ -4920,6 +4920,12 @@ export interface components {
             background_in_console: boolean;
             /** Portal Welcome */
             portal_welcome: string;
+            /**
+             * Theme Preset
+             * @default custom
+             * @enum {string}
+             */
+            theme_preset: "custom" | "midnight";
             /** Theme Brand */
             theme_brand: string;
             /** Theme Sidebar */
@@ -6843,6 +6849,11 @@ export interface components {
              * @default []
              */
             features: string[];
+            /**
+             * Hidden Modules
+             * @default []
+             */
+            hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             /** Has Password */
             readonly has_password: boolean;
         };
@@ -7741,6 +7752,8 @@ export interface components {
             ticket_color?: string | null;
             /** Color Rules */
             color_rules?: components["schemas"]["ColorRule"][];
+            /** Hidden Modules */
+            hidden_modules?: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
         };
         /**
          * Priority

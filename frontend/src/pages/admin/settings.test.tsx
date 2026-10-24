@@ -459,3 +459,26 @@ test("API keys: a new key is shown once", async () => {
   expect(card).toHaveTextContent("l8k_AbCdSecretSecret");
   expect(calls.find((c) => c.method === "POST")!.body).toEqual({ name: "MER server room" });
 });
+
+test("Midnight can be previewed before saving and keeps custom colours", async () => {
+  const fields = [
+    { name: "theme_preset", label: "Appearance", help: "", kind: "choice", value: "custom", locked: false, choices: [{ value: "custom", label: "Custom colours" }, { value: "midnight", label: "Midnight command center" }] },
+    { name: "theme_brand", label: "Main colour", help: "", kind: "colour", value: "#0f6b5c", locked: false },
+    { name: "dark_mode", label: "Dark mode", help: "", kind: "choice", value: "off", locked: false, choices: [{ value: "off", label: "Off" }] },
+  ];
+  const calls = mockApi({
+    "GET /api/branding": { product_name: "Layer 8", theme_preset: "custom" },
+    "GET /api/settings/branding": { section: "branding", fields: [] },
+    "GET /api/settings/theme": { section: "theme", fields },
+    "PUT /api/settings/theme": { section: "theme", fields: fields.map(f => f.name === "theme_preset" ? { ...f, value: "midnight" } : f) },
+  });
+  renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
+  const form = await screen.findByRole("form", { name: "Colours" });
+  await userEvent.selectOptions(within(form).getByLabelText("Appearance"), "midnight");
+  expect(within(form).getByRole("img", { name: "Dark preview" })).toHaveAttribute("data-preset", "midnight");
+  expect(within(form).queryByRole("img", { name: "Light preview" })).not.toBeInTheDocument();
+  expect(within(form).getByRole("textbox", { name: "Main colour" })).toHaveValue("#0f6b5c");
+  expect(calls.filter(c => c.method === "PUT")).toHaveLength(0);
+  await userEvent.click(within(form).getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(calls.find(c => c.method === "PUT")?.body).toEqual({ values: { theme_preset: "midnight" }, clear: [] }));
+});
