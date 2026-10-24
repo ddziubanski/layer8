@@ -18,7 +18,8 @@ These are real React pages with synthetic fixture data and mocked API responses;
 ![Light device list](../screenshots/application-layout/devices-light.png)
 ![Midnight dashboard](../screenshots/application-layout/dashboard-midnight.png)
 ![Midnight Settings](../screenshots/application-layout/settings-midnight.png)
+![Compact Settings navigation](../screenshots/application-layout/settings-compact.png)
 
 ## Validation
 
-Regression coverage checks visibility filtering, administrator recovery access, active ticket navigation, draft retention, responsive collapse and sign-out. Existing module, ticket drawer, permission and keyboard tests remain part of the full frontend suite. Browser checks cover the queue, ticket conversation/tools, dashboard, Devices, Reports and Settings with synthetic data in light and Midnight modes, including a 1000 x 750 CSS-pixel compact layout. Database-backed regression results are reported separately in the pull request.
+Regression coverage checks visibility filtering, administrator recovery access, active ticket navigation, draft retention, responsive collapse and sign-out. Existing module, ticket drawer, permission and keyboard tests remain part of the full frontend suite. Browser checks cover the queue, ticket conversation/tools, dashboard, Devices, Reports, Knowledge base, Purchase orders, IP addresses and Settings with synthetic data in light and Midnight modes, including a 1000 x 750 CSS-pixel compact layout. GitHub CI passes TypeScript, all 254 frontend tests and the production build. Backend/API code is unchanged; database-backed backend tests were not run for this presentation-only branch (no local PostgreSQL service). The no-site-data guard passes.
