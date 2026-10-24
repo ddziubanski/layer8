@@ -105,6 +105,8 @@ class MeOut(UserOut):
     features: list[str] = []
     # Personal navigation only; never changes permissions, routes or global features.
     hidden_modules: list[SidebarModule] = []
+    # Global console availability, above personal visibility; never an authorization grant.
+    disabled_modules: list[SidebarModule] = []
 
 
 HexColor = Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]

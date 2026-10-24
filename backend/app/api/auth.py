@@ -8,7 +8,7 @@ from typing import Annotated, get_args
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from sqlalchemy import select
 
-from app import auth, kerberos, permissions, sla
+from app import auth, kerberos, permissions, sla, workspace
 from app.auth import CurrentUser, SessionDep
 from app.config import settings
 from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SidebarModule, SignInOptionsOut
@@ -18,6 +18,7 @@ from app.models import AppSetting, User
 def me_out(session, user) -> MeOut:
     out = MeOut.model_validate(user)
     out.permissions = permissions.granted(session, user)
+    out.disabled_modules = workspace.disabled()
     out.features = [name for name, on in (("meraki", settings.meraki_enabled), ("unifi", settings.unifi_enabled), ("junos", settings.junos_enabled), ("unifi_vouchers", settings.unifi_enabled and settings.unifi_vouchers_enabled), ("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
     navigation = session.get(AppSetting, f"personal_navigation:{user.id}")
     hidden = navigation.value.get("hidden_modules", []) if navigation else []

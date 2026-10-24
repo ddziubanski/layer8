@@ -59,6 +59,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
   const tabs = screen.getByRole("navigation", { name: "Settings" });
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
     "General",
+    "Modules",
     "Branding",
     "Queues",
     "Ticket rules",
