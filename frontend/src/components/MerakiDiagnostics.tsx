@@ -38,7 +38,7 @@ export function MerakiDiagnostics({ observation: o }: { observation: MerakiObser
       </div>
       {result && <p className="muted small">Attempted {when(result.attempted_at)}{result.cached ? " · Saved result" : ""} · Client discovery {when(result.client_observed_at)}</p>}
       {data && <div className="stack small" aria-label="Diagnostic result">
-        <p className="muted">Last successful read {when(data.read_at)}. This is the read time; port status has no source timestamp.</p>
+        <p className="muted">Last successful read {when(data.read_at)}. {data.kind === "wired" ? "This is the read time; port status has no source timestamp." : "Event times below come from Meraki."}</p>
         {data.kind === "wired" && data.port && <>
           <strong>{data.switch_serial} · Port {data.port.port_id}</strong>
           <dl className="meraki-diagnostic-values">
@@ -58,7 +58,7 @@ export function MerakiDiagnostics({ observation: o }: { observation: MerakiObser
           <ol className="meraki-event-list">{events.map((e, i) => <li key={i}>
             <b>{e.type}{e.subtype ? ` · ${e.subtype}` : ""}</b>{e.severity && ` · ${e.severity}`}
             <div className="muted">Occurred {when(e.occurred_at)}{e.device_serial && ` · ${e.device_serial}`}</div>
-            <div>{[e.band && `${e.band} GHz`, e.channel != null && `Channel ${e.channel}`, e.rssi != null && `RSSI ${e.rssi} dBm`, e.duration_ms != null && `${e.duration_ms} ms`].filter(Boolean).join(" · ")}</div>
+            <div>{[e.band && `${e.band} GHz`, e.channel != null && `Channel ${e.channel}`, e.rssi != null && `RSSI ${e.rssi}`, e.duration_ms != null && `${e.duration_ms} ms`].filter(Boolean).join(" · ")}</div>
           </li>)}</ol>
           {data.events_truncated && <p className="muted">Showing one page of up to 50 events. Additional events were not fetched.</p>}
         </>}

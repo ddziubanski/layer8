@@ -56,12 +56,12 @@ test("provider error remains visible alongside the last successful read", async 
 test("wireless events retain source times and show bounded results", async () => {
   const now = new Date().toISOString();
   mockApi({ [`GET ${PATH}`]: null, [`POST ${PATH}`]: result({data:{kind:"wireless",read_at:now,window_start:now,window_end:now,events_truncated:true,events:[
-    {occurred_at:now,type:"dhcp",subtype:"timeout",severity:"bad",device_serial:"QXXX-EXAM-PLE1",rssi:-75,channel:36,band:"5",duration_ms:4000},
+    {occurred_at:now,type:"dhcp",subtype:"timeout",severity:"bad",device_serial:"QXXX-EXAM-PLE1",rssi:80,channel:36,band:"5",duration_ms:4000},
   ]}}) });
   await open();
   await userEvent.click(screen.getByRole("button", { name: "Read diagnostics" }));
   expect(await screen.findByText("dhcp · timeout")).toBeInTheDocument();
-  expect(screen.getByText(/RSSI -75 dBm/)).toBeInTheDocument();
+  expect(screen.getByText(/RSSI 80/)).toBeInTheDocument();
   expect(screen.getByText(/Additional events were not fetched/)).toBeInTheDocument();
 });
 

@@ -260,7 +260,7 @@ def test_diagnostics_do_not_modify_documented_ipam_or_discovery(client, agent, c
     monkeypatch.setattr(meraki, "from_settings", lambda: transport()[0])
     assert client.post(PATH, headers=as_user(agent)).status_code == 200
     db.refresh(address); db.refresh(observed)
-    assert address.address == "10.20.1.43" and address.hostname == "ws-0142.corp.example" and address.last_seen_at is None
+    assert str(address.address) == "10.20.1.43" and address.hostname == "ws-0142.corp.example" and address.last_seen_at is None
     assert meraki.as_dict(observed) == before
 
 
@@ -304,3 +304,28 @@ def test_enabled_diagnostics_can_authorize_exactly_the_four_read_scopes(monkeypa
     oauth.finish(7, "browser-session", dict(state=params["state"][0], code="synthetic-code"))
     assert oauth.access() == "synthetic-new" and len(calls) == 1
     assert oauth.status()["connected"]
+
+
+
+def test_positive_provider_rssi_is_retained_without_inventing_units():
+    o = item(connection="Wireless", port="")
+    client, _ = transport(o, events=[{**event(), "rssi": 80}])
+    result = diag.fetch(client, o, sla.utcnow())
+    assert result.events[0].rssi == 80
+
+
+def test_diagnostics_setting_is_admin_only_and_importable(client, admin, agent):
+    body = {"values": {"meraki_diagnostics_enabled": True}}
+    assert client.put("/api/settings/meraki", json=body, headers=as_user(agent)).status_code == 403
+    assert client.put("/api/settings/meraki", json=body, headers=as_user(admin)).status_code == 200
+    assert settings.meraki_diagnostics_enabled
+
+
+
+def test_wireless_event_times_are_returned_newest_first():
+    o = item(connection="Wireless", port="")
+    old = {**event(), "occurredAt": (sla.utcnow() - timedelta(minutes=5)).isoformat(), "type": "dhcp"}
+    recent = {**event(), "occurredAt": (sla.utcnow() - timedelta(minutes=1)).isoformat(), "type": "roam"}
+    client, _ = transport(o, events=[old, recent])
+    result = diag.fetch(client, o, sla.utcnow())
+    assert [e.type for e in result.events] == ["roam", "dhcp"]

@@ -2206,7 +2206,7 @@ class MerakiWirelessEventOut(BaseModel):
     device_serial: str | None = Field(default=None, max_length=100)
     band: str | None = Field(default=None, max_length=16)
     channel: int | None = Field(default=None, ge=1, le=1000)
-    rssi: int | None = Field(default=None, ge=-200, le=0)
+    rssi: int | None = Field(default=None, ge=-2147483648, le=2147483647)
     duration_ms: int | None = Field(default=None, ge=0, le=2147483647)
 
 

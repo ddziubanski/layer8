@@ -216,7 +216,9 @@ last fifteen minutes of connectivity events. Only one descending page of at most
 50 events is read; a visible truncation notice indicates additional pages. The
 app never follows the next-page URL. Event timestamps, type/subtype, severity, AP
 serial, band/channel, RSSI and duration are retained; arbitrary eventData, capture
-IDs and provider links are omitted. An empty result makes no health claim.
+IDs and provider links are omitted. RSSI is retained as the provider reports it;
+this endpoint does not document units, so no dBm conversion or health inference is
+made. An empty result makes no health claim.
 
 The result distinguishes the client discovery timestamp, diagnostic attempt,
 successful read, and wireless source event times. Port status has no source
