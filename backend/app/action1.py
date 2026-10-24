@@ -213,6 +213,7 @@ def sync(session: Session, client: Client, now: datetime | None = None) -> dict:
         row.missing_other = _count(missing.get("other", e.get("missing_other_updates")))
         row.vulns_critical, row.vulns_other = _count(vulns.get("critical")), _count(vulns.get("other"))
         row.organization = org_name[:200]
+        row.organization_id = org_id
         row.reboot_required = str(e.get("reboot_required") or "").strip().lower() in ("yes", "true", "1")
         row.update_status = str(e.get("update_status") or "")[:50]
         row.vulnerability_status = str(e.get("vulnerability_status") or "")[:50]
