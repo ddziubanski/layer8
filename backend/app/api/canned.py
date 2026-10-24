@@ -2,21 +2,18 @@
 """Canned replies: saved text technicians insert into a ticket's composer. Shared ones (for every
 queue, or one) are managed with the canned_replies_manage permission; anyone keeps their own."""
 
-import re
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 
-from app import numbering, permissions
+from app import permissions, placeholders
 from app.api.tickets import staff_ticket, visible_queue_ids
 from app.auth import Agent, SessionDep
-from app.config import settings
 from app.models import CannedReply, Queue, User
 
 router = APIRouter(prefix="/api/canned-replies", tags=["canned replies"])
-PLACEHOLDER = re.compile(r"\{(first_name|name|ticket|subject|technician|queue|portal)\}")
 
 
 class CannedReplyIn(BaseModel):
@@ -128,11 +125,4 @@ def render(reply_id: int, ticket_id: int, user: Agent, session: SessionDep):
     r = _get(session, reply_id, user)
     if r.queue_id is not None and r.queue_id != ticket.queue_id:
         raise HTTPException(422, "That canned reply is for another queue")
-    name = ticket.requester.display_name
-    values = {
-        "first_name": name.split()[0] if name.split() else name, "name": name,
-        "ticket": numbering.label(ticket.id, ticket.created_at), "subject": ticket.subject,
-        "technician": user.display_name, "queue": ticket.queue.name,
-        "portal": f"{settings.portal_url.rstrip('/')}/tickets/{ticket.id}" if settings.portal_url else "",
-    }
-    return {"body": PLACEHOLDER.sub(lambda m: values[m.group(1)], r.body), "to_requester": r.to_requester}
+    return {"body": placeholders.fill(r.body, placeholders.values(ticket, user)), "to_requester": r.to_requester}

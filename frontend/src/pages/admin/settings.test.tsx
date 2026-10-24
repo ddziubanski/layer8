@@ -73,6 +73,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Checklists",
     "Changes",
     "Email",
+    "Requester emails",
     "Desk hours",
     "Teams",
     "Windows sign-in",
@@ -490,4 +491,9 @@ test("Midnight can be previewed before saving and keeps custom colours", async (
   expect(calls.filter(c => c.method === "PUT")).toHaveLength(0);
   await userEvent.click(within(form).getByRole("button", { name: "Save" }));
   await waitFor(() => expect(calls.find(c => c.method === "PUT")?.body).toEqual({ values: { theme_preset: "midnight" }, clear: [] }));
+});
+
+test("requester email templates show a preview with sample values", async () => {
+  const { fillSample } = await import("./RequesterEmailsAdmin");
+  expect(fillSample("Hi {first_name}, {ticket} is resolved. {unknown}")).toBe("Hi Ana, #1042 is resolved. {unknown}");
 });

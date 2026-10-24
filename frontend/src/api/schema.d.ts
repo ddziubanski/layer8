@@ -1551,6 +1551,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/requester-emails/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Requester Email
+         * @description A requester email template with sample values, before it's saved.
+         */
+        post: operations["preview_requester_email_api_settings_requester_emails_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings/{section}": {
         parameters: {
             query?: never;
@@ -6880,6 +6900,16 @@ export interface components {
             details: {
                 [key: string]: unknown;
             }[];
+        };
+        /** EmailPreviewIn */
+        EmailPreviewIn: {
+            /** Template */
+            template: string;
+        };
+        /** EmailPreviewOut */
+        EmailPreviewOut: {
+            /** Body */
+            body: string;
         };
         /** EmailTestOut */
         EmailTestOut: {
@@ -15560,6 +15590,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MailPassOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_requester_email_api_settings_requester_emails_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailPreviewOut"];
                 };
             };
             /** @description Validation Error */

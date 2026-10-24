@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app import placeholders
 from app.mail.text import REPLY_MARKER, ticket_tag
 from app import storage
 from app.mail.types import Mailbox, OutgoingAttachment, OutgoingMessage
@@ -73,16 +74,21 @@ def _queue_staff(session: Session, ticket: Ticket, to: User | str, subject: str,
 
 
 def ticket_created(session: Session, ticket: Ticket) -> None:
-    requester = ticket.requester
-    _queue(
-        session,
-        ticket,
-        requester,
-        f"Hi {requester.display_name},\n\n"
-        f"We've received your request and logged it as ticket #{ticket.id}:\n\n"
-        f"  {ticket.subject}\n\n"
-        "We'll be in touch.",
-    )
+    _queue(session, ticket, ticket.requester, placeholders.fill(settings.email_ack_template, placeholders.values(ticket)))
+
+
+def ticket_resolved(session: Session, ticket: Ticket, actor: User | None) -> bool:
+    """Settings > Requester emails > Resolved, when it's on (not when requesters resolve their own)."""
+    if not settings.email_resolved_enabled or (actor is not None and actor.id == ticket.requester_id):
+        return False
+    return _queue(session, ticket, ticket.requester, placeholders.fill(settings.email_resolved_template, placeholders.values(ticket, actor)))
+
+
+def ticket_assigned(session: Session, ticket: Ticket) -> bool:
+    """Settings > Requester emails > Assigned, when it's on and someone other than the requester has it."""
+    if not settings.email_assigned_enabled or ticket.assignee is None or ticket.assignee_id == ticket.requester_id:
+        return False
+    return _queue(session, ticket, ticket.requester, placeholders.fill(settings.email_assigned_template, placeholders.values(ticket)))
 
 
 def agent_replied(session: Session, ticket: Ticket, comment: Comment) -> bool:
