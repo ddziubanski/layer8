@@ -1,14 +1,14 @@
 """Action1 endpoint organisation and reviewed software deployment intent.
 
 Revision ID: f52b6d10a930
-Revises: c3d58f1b7a20
+Revises: e4a27b9f1062
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "f52b6d10a930"
-down_revision = "c3d58f1b7a20"
+down_revision = "e4a27b9f1062"
 branch_labels = None
 depends_on = None
 
