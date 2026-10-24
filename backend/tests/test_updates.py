@@ -171,3 +171,20 @@ def test_backup_cli_loads_stored_passphrase(db, session_factory, tmp_path, monke
     monkeypatch.setattr(archive, "create", create)
     cli.backup_command(SimpleNamespace(action="create", to=str(tmp_path), passphrase_file=None))
     assert create.call_args.kwargs["passphrase"] == "example backup passphrase"
+
+
+
+def test_shipped_publisher_key_is_an_ed25519_public_key_with_the_documented_fingerprint():
+    """New installs trust this key; it must load like the updater loads keys, and match the docs."""
+    import base64
+    import hashlib
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    pem = (root / "install/files/layer8-update-public.pem").read_text().strip().splitlines()
+    der = base64.b64decode("".join(pem[1:-1]), validate=True)
+    assert pem[0] == "-----BEGIN PUBLIC KEY-----" and pem[-1] == "-----END PUBLIC KEY-----"
+    assert len(der) == 44 and der.startswith(bytes.fromhex("302a300506032b6570032100"))
+    fingerprint = hashlib.sha256(der).hexdigest()
+    assert fingerprint == "6ce67d9357412c7b473f5e8f8679568159ebc3464259f39e5949bceb5aa43a50"
+    assert fingerprint in (root / "docs/github-updates.md").read_text()
