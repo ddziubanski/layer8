@@ -3292,6 +3292,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meraki/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook
+         * @description Default Meraki JSON payload; authenticates with its dedicated sharedSecret, not a user cookie.
+         */
+        post: operations["webhook_api_meraki_webhooks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/webhooks/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Webhook Status */
+        get: operations["webhook_status_api_meraki_webhooks_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/meraki/status": {
         parameters: {
             query?: never;
@@ -10567,6 +10604,40 @@ export interface components {
             start?: string | null;
             /** End */
             end?: string | null;
+        };
+        /** WebhookDeliveryOut */
+        WebhookDeliveryOut: {
+            /** Network Id */
+            network_id: string;
+            /** Serial */
+            serial: string;
+            /** Alert Type */
+            alert_type: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Outcome */
+            outcome: string;
+            /** Ticket Id */
+            ticket_id: number | null;
+        };
+        /** WebhookStatusOut */
+        WebhookStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Endpoint */
+            endpoint: string | null;
+            /** Deliveries */
+            deliveries: components["schemas"]["WebhookDeliveryOut"][];
         };
         /** WindowsSignInIn */
         WindowsSignInIn: {
@@ -18436,6 +18507,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Action1TestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_api_meraki_webhooks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    sharedSecret: string;
+                    /** @description 0.1 for availability alerts */
+                    version?: string;
+                    organizationId: string;
+                    networkId: string;
+                    /** @description stopped_reporting / started_reporting; other types are ignored */
+                    alertTypeId: string;
+                    alertId?: string;
+                    deviceSerial?: string;
+                    /** Format: date-time */
+                    occurredAt?: string;
+                    /** Format: date-time */
+                    sentAt?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    webhook_status_api_meraki_webhooks_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookStatusOut"];
                 };
             };
             /** @description Validation Error */

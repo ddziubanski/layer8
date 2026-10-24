@@ -532,6 +532,7 @@ export const api = {
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
   meraki: {
+    webhooks: () => request<S["WebhookStatusOut"]>("GET", "/api/meraki/webhooks/status"),
     diagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"] | null>("GET", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
     readDiagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"]>("POST", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
     connect: () => request<S["MerakiStartOut"]>("POST", "/api/meraki/oauth/connect"),

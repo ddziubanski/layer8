@@ -13,10 +13,34 @@ const OBS = {
 };
 afterEach(() => vi.unstubAllGlobals());
 
+test("webhook setup and safe recent delivery links are visible to administrators", async () => {
+  const calls = mockApi({
+    "GET /api/meraki/status": { enabled: false, configured: false, clients: 0, networks: [] },
+    "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "GET /api/meraki/webhooks/status": { enabled: true, configured: true,
+      endpoint: "https://helpdesk.corp.example/api/meraki/webhooks", deliveries: [{ network_id: "N_123", serial: "QXXX-EXAM-PLE1",
+        alert_type: "started_reporting", occurred_at: "2026-10-23T07:00:00Z", received_at: "2026-10-23T07:02:00Z", outcome: "recovery", ticket_id: 4821 }] },
+  });
+  renderAt("/", [{ path: "/", element: <MerakiAdmin me={{ ...ME, role: "admin" }} /> }]);
+  expect(await screen.findByText("Intake enabled")).toBeInTheDocument();
+  expect(screen.getByText("https://helpdesk.corp.example/api/meraki/webhooks")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Ticket #4821" })).toHaveAttribute("href", "/tickets/4821");
+  expect(screen.getByText("Recovery · recovery")).toBeInTheDocument();
+  expect(calls.every(c => c.method === "GET")).toBe(true);
+});
+
+test("agents cannot read the administrator webhook setup", () => {
+  const calls = mockApi({});
+  renderAt("/", [{ path: "/", element: <MerakiAdmin me={ME} /> }]);
+  expect(screen.getByText("Meraki is managed by admins.")).toBeInTheDocument();
+  expect(calls).toHaveLength(0);
+});
+
 test("Meraki discovery is requested explicitly and connection results are visible", async () => {
   const calls = mockApi({
     "GET /api/meraki/status": { enabled: true, configured: true, clients: 1, networks: ["N_123"], last_sync_at: null },
     "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "GET /api/meraki/webhooks/status": { enabled: false, configured: false, endpoint: null, deliveries: [] },
     "POST /api/meraki/test": { networks: ["Example office"] },
     "POST /api/system/jobs/meraki/run": {},
   });
@@ -62,6 +86,7 @@ test("OAuth disconnect is explicit and warns when remote revocation fails", asyn
   const calls = mockApi({
     "GET /api/meraki/status": () => ({ ...OAUTH, configured: connected, oauth: { ...OAUTH.oauth, connected } }),
     "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "GET /api/meraki/webhooks/status": { enabled: false, configured: false, endpoint: null, deliveries: [] },
     "DELETE /api/meraki/oauth/connection": () => { connected = false; return { revoked: false }; },
   });
   renderAt("/", [{ path: "/", element: <MerakiAdmin me={{ ...ME, role: "admin" }} /> }]);
@@ -79,6 +104,7 @@ test("OAuth callback failure is visible and reconnect is disabled until registra
   mockApi({
     "GET /api/meraki/status": { ...OAUTH, configured: false, oauth: { configured: false, connected: false } },
     "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "GET /api/meraki/webhooks/status": { enabled: false, configured: false, endpoint: null, deliveries: [] },
   });
   renderAt("/?meraki_oauth=failed", [{ path: "/", element: <MerakiAdmin me={{ ...ME, role: "admin" }} /> }]);
   expect(await screen.findByRole("alert")).toHaveTextContent("Meraki authorization was not completed");

@@ -394,6 +394,10 @@ SECTIONS: dict[str, list[Field]] = {
         Field("survey_question", "The question", "Answered from 1 (very unhappy) to 5 (very happy), with an optional comment.", check=_length(5, 300)),
     ],
     "meraki": [
+        Field("meraki_webhook_enabled", "Create tickets from Meraki device outages", "Opt in to stopped_reporting / started_reporting webhooks. Uses the selected network IDs below, independently of discovery. Recovery adds an internal note; it never closes a ticket."),
+        Field("meraki_webhook_secret", "Webhook shared secret", "Use a separate random secret of at least 32 characters in the default Meraki payload. Stored in a secret file and never shown back.", secret=True, check=lambda v: _length(32, 256)(v) if v else None),
+        Field("meraki_webhook_organization_ids", "Webhook organization IDs", "Required for webhooks: at most 20 organization IDs, one per line. Empty accepts nothing.", check=_meraki_networks),
+        Field("meraki_webhook_queue_id", "Webhook fallback queue ID", "0 uses the default queue. Normal ticket routing rules still apply. A nonzero ID must identify an active queue.", check=_between(0, 2147483647)),
         Field("meraki_enabled", "Read Meraki client observations", "Optional, read only. Turning this off stops discovery and hides cached observations."),
         Field("meraki_diagnostics_enabled", "Allow read-only network diagnostics", "Technicians may explicitly read last-known switch port status or recent wireless events from the Meraki client view. OAuth requires switch:telemetry:read and wireless:telemetry:read in addition to discovery scopes; update the app registration and reconnect after changing this option."),
         Field("meraki_auth_mode", "Authentication", choices=(("api_key", "Dashboard API key"), ("oauth", "OAuth connection"))),

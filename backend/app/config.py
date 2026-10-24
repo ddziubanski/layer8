@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     meraki_api_key: str = ""
     meraki_network_ids: list[str] = []
     meraki_sync_minutes: int = 60
+    meraki_webhook_enabled: bool = False
+    meraki_webhook_secret: str = ""
+    meraki_webhook_organization_ids: list[str] = []
+    meraki_webhook_queue_id: int = 0
 
     # Action1 API credentials and console region (patch state is read only).
     action1_region: str = "NorthAmerica"

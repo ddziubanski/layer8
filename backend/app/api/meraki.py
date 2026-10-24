@@ -1,19 +1,66 @@
 """Meraki credentials remain admin-only; technicians can read cached network observations."""
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from app import meraki_oauth, meraki_diagnostics
 from app.auth import COOKIE, _user_from_cookie, current_user, require_admin
 from sqlalchemy import func, select
 
-from app import meraki
+from app import meraki, meraki_webhooks
 from app.auth import Admin, Agent, SessionDep
 from app.config import settings
-from app.models import MerakiClient, WorkerJob
+from app.models import MerakiClient, WorkerJob, MerakiWebhookReceipt
 from app.schemas import MerakiClientOut, MerakiStatusOut, MerakiTestOut, MerakiDiagnosticOut
 
 router = APIRouter(prefix="/api/meraki", tags=["meraki"])
+
+
+@router.post("/webhooks", status_code=204, response_class=Response, openapi_extra={
+    "requestBody": {"required": True, "content": {"application/json": {"schema": {
+        "type": "object", "required": ["sharedSecret", "organizationId", "networkId", "alertTypeId"],
+        "properties": {
+            "sharedSecret": {"type": "string", "writeOnly": True},
+            "version": {"type": "string", "description": "0.1 for availability alerts"},
+            "organizationId": {"type": "string"}, "networkId": {"type": "string"},
+            "alertTypeId": {"type": "string", "description": "stopped_reporting / started_reporting; other types are ignored"},
+            "alertId": {"type": "string"}, "deviceSerial": {"type": "string"},
+            "occurredAt": {"type": "string", "format": "date-time"},
+            "sentAt": {"type": "string", "format": "date-time"},
+        }, "additionalProperties": True,
+    }}}}
+})
+async def webhook(request: Request, session: SessionDep):
+    """Default Meraki JSON payload; authenticates with its dedicated sharedSecret, not a user cookie."""
+    raw = await meraki_webhooks.read_body(request)
+    await run_in_threadpool(meraki_webhooks.receive, session, raw)
+    return Response(status_code=204, headers={"Cache-Control": "no-store"})
+
+
+class WebhookDeliveryOut(BaseModel):
+    network_id: str
+    serial: str
+    alert_type: str
+    occurred_at: datetime
+    received_at: datetime
+    outcome: str
+    ticket_id: int | None
+
+
+class WebhookStatusOut(BaseModel):
+    enabled: bool
+    configured: bool
+    endpoint: str | None
+    deliveries: list[WebhookDeliveryOut]
+
+
+@router.get("/webhooks/status", response_model=WebhookStatusOut)
+def webhook_status(_: Admin, session: SessionDep):
+    rows = session.scalars(select(MerakiWebhookReceipt).order_by(MerakiWebhookReceipt.received_at.desc(), MerakiWebhookReceipt.alert_id).limit(20))
+    return dict(enabled=settings.meraki_webhook_enabled, configured=meraki_webhooks.configured(),
+                endpoint=meraki_webhooks.endpoint(), deliveries=[{k: getattr(row, k) for k in WebhookDeliveryOut.model_fields} for row in rows])
 
 
 @router.get("/status", response_model=MerakiStatusOut)
