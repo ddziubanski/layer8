@@ -99,13 +99,18 @@ def run(session, now: datetime | None = None) -> str:
     return out
 
 
+def _plain(text: str) -> str:
+    """Requester-written text, so it can't become a link or formatting in the Teams card."""
+    return "".join("\\" + ch if ch in "\\`*_{}[]()#+-.!<>|~" else ch for ch in text.replace("\n", " "))
+
+
 def teams_card(items: list[tuple[Ticket, int]]) -> dict:
     """One Adaptive Card for the channel: the tickets with their queue, wait and a link."""
     base = settings.portal_url.rstrip("/") if settings.portal_url else ""
     body = [{"type": "TextBlock", "text": f"Layer 8 · {len(items)} ticket{'s' if len(items) != 1 else ''} not taken", "weight": "Bolder", "wrap": True}]
     for t, m in items[:10]:
-        line = f"**{_label(t)}** {t.subject}" if not base else f"[{_label(t)}]({base}/tickets/{t.id}) {t.subject}"
-        body.append({"type": "TextBlock", "text": f"{line} · {t.queue.name} · {_waited(m)} · {t.priority.value}", "wrap": True})
+        line = f"**{_label(t)}** {_plain(t.subject)}" if not base else f"[{_label(t)}]({base}/tickets/{t.id}) {_plain(t.subject)}"
+        body.append({"type": "TextBlock", "text": f"{line} · {_plain(t.queue.name)} · {_waited(m)} · {t.priority.value}", "wrap": True})
     if len(items) > 10:
         body.append({"type": "TextBlock", "text": f"and {len(items) - 10} more", "wrap": True, "isSubtle": True})
     return {"type": "message", "attachments": [{

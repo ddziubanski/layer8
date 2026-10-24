@@ -100,3 +100,9 @@ def test_teams_channel_post_leaves_restricted_queues_to_email(db, admin, agent, 
     text = str(posts[0])
     assert f"https://helpdesk.example.com/tickets/{open_one.id}" in text and "Printer jam" in text and "Salary" not in text
     assert [m.to_address for m in _alerts(db)] == [admin.email]  # the HR one, by email only
+
+
+def test_teams_card_keeps_requester_text_plain(db, requester, service_desk, monkeypatch):
+    t = _ticket(db, requester, "Urgent [verify your account](https://evil.example) **now**")
+    card = str(unaccepted.teams_card([(t, 40)]))
+    assert "](https://evil.example)" not in card and "\\\\[verify your account\\\\]" in card
