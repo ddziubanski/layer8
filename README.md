@@ -25,6 +25,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - Silent Windows sign-in (Kerberos) to the portal.
 - Creating AD accounts from a ticket: onboarding templates, group lists, a start date, and the password shown once.
 - Finer permissions: who may delete, merge, publish or manage each area, by group.
+- A personal workspace: hide optional sidebar modules individually or choose a minimal preset in My preferences. Tickets, My preferences and sign-out stay available; hidden modules remain reachable through Ctrl+K and direct links with existing permissions. [Workspace preferences](docs/workspace-preferences.md).
 
 **Devices and network**
 - Devices from AD computer objects, with tickets, IP addresses, switch port and lifecycle on each.
@@ -43,6 +44,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - Scripts run on "runners" that pull work over HTTPS, so no inbound ports are needed.
 - Versions with diffs, approval for high-risk scripts, schedules, and every run logged on its ticket.
 - A Remote Assistance button on tickets, logged as well.
+- Optional reviewed Action1 software deployments: search available packages from a ticket-linked computer or device, choose an exact version, review the endpoint and explicitly deploy. Separate credentials and permissions; results and ticket notes track the outcome. [Setup and first-slice limits](docs/action1.md#reviewed-software-deployment-first-slice).
 
 **Everything else a desk needs**
 - Knowledge base with versions and images, suggested in the portal as people type.

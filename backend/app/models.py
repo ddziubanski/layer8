@@ -944,6 +944,7 @@ class DevicePatch(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     # Action1's endpoint id.
     action1_id: Mapped[str] = mapped_column(String(64), unique=True)
+    organization_id: Mapped[str] = mapped_column(String(64), default="", server_default="")
     name: Mapped[str] = mapped_column(String(255))
     device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="SET NULL"), unique=True)
     # Connected / Disconnected, as Action1 says.
@@ -977,6 +978,23 @@ class DevicePatch(Base):
 
 # IPAM (light): VLANs, subnets and documented IP addresses. Which subnet an address is in comes
 # from the address itself (the most specific subnet containing it), so it can't drift.
+
+
+class SoftwareDeployment(Base):
+    """Immutable reviewed target/package and durable intent before an Action1 write."""
+
+    __tablename__ = "software_deployments"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="SET NULL"), index=True)
+    ticket_id: Mapped[int | None] = mapped_column(ForeignKey("tickets.id", ondelete="SET NULL"), index=True)
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    state: Mapped[str] = mapped_column(String(24), default="review", server_default="review")
+    instance_id: Mapped[str | None] = mapped_column(String(200))
+    message: Mapped[str] = mapped_column(Text, default="", server_default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Vlan(Base):
@@ -1572,6 +1590,22 @@ class ChecklistItem(Base):
 
     checklist: Mapped[TicketChecklist] = relationship(back_populates="items")
     child_ticket: Mapped["Ticket | None"] = relationship(foreign_keys=[child_ticket_id])
+
+
+class CopilotConversation(Base):
+    """Authorization metadata only; questions and answers stay out of this table."""
+
+    __tablename__ = "copilot_conversations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[str] = mapped_column(String(200))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    account_key: Mapped[str] = mapped_column(String(64))
+    shared_ticket: Mapped[bool] = mapped_column(Boolean)
+    shared_internal: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("user_id", "conversation_id", name="uq_copilot_user_conversation"),)
 
 
 class TeamsDelivery(Base):

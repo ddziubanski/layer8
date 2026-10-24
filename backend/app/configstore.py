@@ -272,7 +272,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("teams_tenant_id", "Teams directory (tenant) ID", "Single-tenant Entra application; separate from the mailbox integration.", check=_guid),
         Field("teams_client_id", "Teams application (client) ID", "Configure a Web redirect URI: your HTTPS portal address followed by /teams/callback.", check=_guid),
         Field("teams_client_secret", "Teams application secret", "The secret value, stored server-side. See docs/teams.md for delegated permissions.", secret=True),
-        Field("copilot_enabled", "Copilot on tickets (preview)", "Technicians ask Microsoft 365 Copilot from a ticket, as themselves, with the ticket's text as context if they choose. Needs technician Teams connections (above), a Microsoft 365 Copilot licence per technician, and these delegated permissions on the Teams app registration with admin consent: Sites.Read.All, Mail.Read, People.Read.All, OnlineMeetingTranscript.Read.All, Chat.Read, ChannelMessage.Read.All, ExternalItem.Read.All. Technicians reconnect once in My preferences after it's turned on. Microsoft's Copilot Chat API is in beta (not supported for production use)."),
+        Field("copilot_enabled", "Copilot on tickets (preview)", "Technicians ask Microsoft 365 Copilot from a ticket, as themselves, with reviewed ticket text as context if they choose (internal notes require a separate choice). Needs technician Teams connections (above), a Microsoft 365 Copilot licence per technician, and these delegated permissions on the Teams app registration with admin consent: Sites.Read.All, Mail.Read, People.Read.All, OnlineMeetingTranscript.Read.All, Chat.Read, ChannelMessage.Read.All, ExternalItem.Read.All. Technicians reconnect once in My preferences after it's turned on. Microsoft's Copilot Chat API is in beta (not supported for production use)."),
         Field("teams_enabled", "Send Teams queue summaries", "Off by default. Shares aggregate counts from non-restricted queues only; no ticket subjects, people or notes."),
         Field("teams_webhook_url", "Workflows webhook URL", "A signed Teams Workflows URL. Kept as a secret and never shown back. See docs/teams.md for setup.", secret=True, check=_teams_url),
         Field("teams_summary_minutes", "Summary interval (minutes)", "Sends a periodic snapshot, including zero counts. Settings > Status can pause or run it now.", check=_between(15, 1440)),
@@ -351,9 +351,10 @@ SECTIONS: dict[str, list[Field]] = {
         Field("receiving_notify", "Also tell this address when something arrives", "E.g. the service desk mailbox. The PO's requester and approver are always told.", check=_email),
     ],
     "theme": [
-        Field("theme_brand", "Main colour", "Buttons, links, selected items and report bars. White text goes on it, so it must be dark enough.", check=_colour_under_white_text, colour=True),
-        Field("theme_sidebar", "Sidebar colour", "The console's sidebar and the portal's top bar, with white text.", check=_colour_under_white_text, colour=True),
-        Field("dark_mode", "Dark mode", choices=(("off", "Off"), ("auto", "Follow each person's device setting"), ("on", "Always dark"))),
+        Field("theme_preset", "Appearance", "Midnight uses a fixed dark navy and cyan palette. Choose Custom colours to restore your saved colours and dark-mode preference.", choices=(("custom", "Custom colours"), ("midnight", "Midnight command center"))),
+        Field("theme_brand", "Main colour", "For Custom colours: buttons, links, selected items and report bars. White text goes on it, so it must be dark enough.", check=_colour_under_white_text, colour=True),
+        Field("theme_sidebar", "Sidebar colour", "For Custom colours: the console's sidebar and the portal's top bar, with white text.", check=_colour_under_white_text, colour=True),
+        Field("dark_mode", "Dark mode", "For Custom colours. Midnight is always dark.", choices=(("off", "Off"), ("auto", "Follow each person's device setting"), ("on", "Always dark"))),
     ],
     "ticket_fields": [
         Field("require_resolution_type", "Resolution type is required when resolving or closing"),
@@ -422,6 +423,10 @@ SECTIONS: dict[str, list[Field]] = {
         Field("action1_reboot_days", "Open a ticket when a reboot is pending for (days)", "0: no tickets.", check=_between(0, 365)),
         Field("action1_change_days", "Put patch automations on the change calendar (days ahead)", "Each enabled Action1 automation that deploys updates, runs an update ring or reboots becomes a pre-approved standard change when its next run is this close; its outcome comes from Action1 after the run. 0: no changes.", check=_between(0, 60)),
         Field("action1_change_hours", "A patch change lasts (hours)", "Its window on the calendar, for overlap warnings with other changes.", check=_between(1, 48)),
+        Field("action1_deploy_enabled", "Allow reviewed software deployments", "Opt-in, separate from read-only patching. Requires separate credentials, an explicit organisation allowlist and the Action1 deployment permission."),
+        Field("action1_deploy_client_id", "Deployment client ID", "Separate Action1 API credentials with view_endpoints, view_software_repository, view_automations and run_automations. Existing patch credentials stay read-only.", check=_length(0, 200)),
+        Field("action1_deploy_client_secret", "Deployment client secret", "Stored as a write-only secret. Never included in previews or tickets.", secret=True),
+        Field("action1_deploy_org_ids", "Organizations allowed for deployment", "One ID per line. Empty permits no deployments. Refresh patch status after upgrading to record each endpoint's organisation ID.", check=_org_ids),
     ],
     "ipam": [
         Field("ipam_stale_days", "Flag addresses not seen for (days)", "A documented address that scans saw before but haven't seen for this long is flagged. Devices that ignore ping are still seen when the runner is on their LAN (ARP).", check=_between(1, 3650)),

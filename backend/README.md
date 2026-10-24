@@ -252,3 +252,9 @@ Contracts and scopes were checked against Cisco's official
 [OpenAPI specification](https://github.com/meraki/openapi/blob/master/openapi/spec3.json),
 [switch port status](https://developer.cisco.com/meraki/api-v1/get-device-switch-ports-statuses/),
 and [wireless connectivity events](https://developer.cisco.com/meraki/api-v1/get-network-wireless-client-connectivity-events/).
+
+### Midnight appearance
+
+Select **Settings > Branding > Colours > Appearance > Midnight command center**, review the live preview, then Save. This optional preset uses dark navy panels, cyan actions with dark readable text, brighter status badges and compact ticket rows. It applies to the console, portal and sign-in screen. Choose **Custom colours** to restore the saved main/sidebar colours and dark-mode preference; those values are never replaced by the preset. Existing logos and backgrounds are retained.
+
+Installer/CLI answers can set `{"theme": {"theme_preset": "midnight"}}` through `python -m app.cli settings import answers.json`. The default remains `custom`. No database migration is needed.

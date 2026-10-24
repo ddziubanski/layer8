@@ -1,6 +1,6 @@
 # Action1 (patch status, read only)
 
-Layer 8 reads each machine's patch state from Action1 and shows it where you work: on the device's page and on a ticket's **Requester's computer** and **Devices** cards. Patching itself stays in Action1; Layer 8 never changes anything there.
+Layer 8 reads each machine's patch state from Action1 and shows it where you work: on the device's page and on a ticket's **Requester's computer** and **Devices** cards. Patching itself stays in Action1; The patch integration never changes anything there. Optional software deployment uses a separate opt-in connection, described below.
 
 What's read, per machine: missing critical and other updates, open vulnerabilities (critical and other), its organization, whether a reboot is pending, when Action1 last saw it, its agent status and version, last boot and signed-in user. Layer 8 also notes since when critical updates have been missing and a reboot pending (from the first read that saw it).
 
@@ -43,3 +43,30 @@ On 2026-10-20 the API returned the counts nested (`missing_updates: {critical, o
 
 - Action1 asks for fewer than 30 API requests a minute. A read is one request per 50 machines, plus signing in.
 - Patch changes cost one request per organization, one per endpoint group an automation targets, and one per run that has started.
+
+## Reviewed software deployment (first slice)
+
+From a ticket's **Requester's computer** card or a device's **Patching (Action1)** section, authorised technicians can open **Install software through Action1**. Search the organisation's available packages, select an exact version and review the computer, Action1 endpoint ID, organisation, platform and reported installed-software matches. Search and review do not start installation. **Deploy reviewed software** is the explicit external action.
+
+### Set up deployment separately
+
+1. Keep the existing patch-reading credentials read-only. Create separate Action1 API credentials in the same region, with `view_endpoints`, `view_software_repository`, `view_automations` and `run_automations`. These names come from the official API documentation; scope that role to the organisations you intend to manage.
+2. In **Settings > Action1**, save **Deployment client ID**, **Deployment client secret** and an explicit **Organizations allowed for deployment** list. Empty permits none. Turn on **Allow reviewed software deployments**. Values are importable through the `action1` answers-file section (`action1_deploy_enabled`, `action1_deploy_client_id`, `action1_deploy_client_secret`, `action1_deploy_org_ids`). The secret is stored as a write-only file.
+3. In **Settings > Permissions**, grant **Deploy software through Action1** to the appropriate technicians/groups. It defaults to admins only; requesters and portal-only sessions cannot deploy.
+4. After upgrading, run **Read Action1 now**. Existing endpoint records need their organisation ID populated before deployment. Layer 8 checks that the endpoint is still in the allowed organisation and that its current name matches the device before reviewing and submitting.
+5. Test with a non-production endpoint and a package whose installation/licensing you have already reviewed in Action1. No live deployment has been performed by the automated tests.
+
+### Boundaries and outcomes
+
+- Windows and Mac packages only; one package/version to one endpoint, immediately. Scheduling, groups, bulk installs and onboarding bundles are later work.
+- Automatic reboot is disabled. Packages declaring additional actions are rejected in this slice; run those from Action1. A package with an unaccepted EULA must be reviewed there first. Layer 8 does not accept licences on your behalf.
+- Action1 retries disconnected endpoints for 30 minutes. **Accepted/pending is not installed**. The worker reads results once a minute, up to ten active runs per pass. Success can also mean the required software was already present; warnings require inspecting Action1. The cached inventory search is informational, not proof of absence or installation.
+- A review expires after ten minutes. Package/version settings, target identity and deployment configuration are checked again at submission. A change requires a fresh review.
+- Durable intent is saved before the external POST. Repeating that POST uses the same review record and cannot submit it again; another active/uncertain deployment of the same package to the same device is blocked.
+- If the connection fails without confirming acceptance, the state is **unknown**. **Refresh deployment result** can look up the uniquely named `Layer8 <reference>` automation and verify its exact package and endpoint without resubmitting. If none can be confirmed, an administrator must inspect Action1 manually; this first slice deliberately provides no force-resend/clear-unknown action. A process interruption while submitting follows the same recovery path.
+- On a ticket, submission and status changes add internal notes and history events without requester email. Deployments started directly from Devices are kept in deployment history and the system log. The history shows the current technician's deployments (admins may see all in the selected device/ticket context).
+- Disabling deployment stops catalogue/submission/provider refresh calls. Existing local history stays available. Rotating deployment settings requires checking older outstanding runs in Action1; Layer 8 does not query a different credential scope automatically.
+
+The optional feature does not deploy patches, change Action1 schedules or alter the existing patch-status worker. Primary contract: [Action1 REST API](https://app.action1.com/apidocs/), checked 22 October 2026: catalogue/versions, installed-software inventory, `POST /automations/instances/{orgId}` with `deploy_package`, and instance status reads. Implementation and tests are original; no PSAction1 code is copied.
+
+[View the mocked deployment screenshots](../screenshots/action1/README.md).

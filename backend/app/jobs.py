@@ -29,6 +29,7 @@ RESTART_EXIT = 75
 
 
 LABELS = {
+    "software_deployments": "Action1: software deployment results",
     "teams": "Teams: queue summary",
     "presence": "Teams: technicians' status for the portal",
     "email": "Email: check the mailbox and send",
@@ -225,7 +226,14 @@ def build_jobs(session_factory, mail) -> list[Job]:
             session.commit()
             return result
 
+    def deployment_results(forced: bool):
+        from app import software_deployment
+        with session_factory() as session:
+            count = software_deployment.poll(session)
+        return f"Checked {count} software deployment(s)", True
+
     return [
+        Job("software_deployments", "action1", _every(60), deployment_results),
         Job("teams", "worker", lambda: timedelta(minutes=max(15, settings.teams_summary_minutes)), teams_summary),
         Job("presence", "worker", _every(60), presence_refresh),
         Job("email", "email", lambda: timedelta(seconds=settings.mail_poll_seconds), email),

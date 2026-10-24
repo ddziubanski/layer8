@@ -10,6 +10,7 @@ import { NoticeBanner, NoticeDialog } from "./components/Notices";
 import { ME_KEY } from "./queryClient";
 import { RouteFocus } from "./components/RouteFocus";
 import { CommandPalette } from "./components/CommandPalette";
+import { visibleModules } from "./navigation";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
 import { QueuePage } from "./pages/QueuePage";
 import { TicketPage } from "./pages/TicketPage";
@@ -81,6 +82,8 @@ import { can, uses } from "./permissions";
 
 function Shell({ me }: { me: Me }) {
   const queryClient = useQueryClient();
+  // The router is stable for an account; subscribe to preference saves without rebuilding it.
+  const profile = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false });
   const brand = useBranding();
   const logout = useMutation({
     mutationFn: api.logout,
@@ -100,17 +103,7 @@ function Shell({ me }: { me: Me }) {
         <NavLink to="/" end>
           <span className="nav-symbol" aria-hidden="true">▦</span><span>Tickets</span>
         </NavLink>
-        <NavLink to="/dashboard"><span className="nav-symbol" aria-hidden="true">◫</span><span>Dashboard</span></NavLink>
-        <NavLink to="/devices"><span className="nav-symbol" aria-hidden="true">▣</span><span>Devices</span></NavLink>
-        <NavLink to="/changes"><span className="nav-symbol" aria-hidden="true">⇄</span><span>Changes</span></NavLink>
-        <NavLink to="/purchase-orders"><span className="nav-symbol" aria-hidden="true">▤</span><span>Purchase orders</span></NavLink>
-        <NavLink to="/vendors"><span className="nav-symbol" aria-hidden="true">◈</span><span>Vendors</span></NavLink>
-        <NavLink to="/ipam"><span className="nav-symbol" aria-hidden="true">⌗</span><span>IP addresses</span></NavLink>
-        <NavLink to="/kb"><span className="nav-symbol" aria-hidden="true">▧</span><span>Knowledge base</span></NavLink>
-        <NavLink to="/scripts"><span className="nav-symbol" aria-hidden="true">⌘</span><span>Scripts</span></NavLink>
-        <NavLink to="/reports"><span className="nav-symbol" aria-hidden="true">◫</span><span>Reports</span></NavLink>
-        <NavLink to="/settings"><span className="nav-symbol" aria-hidden="true">⚙</span><span>Settings</span></NavLink>
-        <NavLink to="/portal"><span className="nav-symbol" aria-hidden="true">↗</span><span>Self-service portal</span></NavLink>
+        {visibleModules(profile.data?.id === me.id ? profile.data : me).map(module => <NavLink key={module.id} to={module.to}><span className="nav-symbol" aria-hidden="true">{module.symbol}</span><span>{module.label}</span></NavLink>)}
         <div className="me">
           <div className="me-identity"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><span>{me.display_name}</span></div>
           <NavLink to="/preferences">My preferences</NavLink>

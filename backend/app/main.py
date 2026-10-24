@@ -69,6 +69,8 @@ app.include_router(integrations.router)
 app.include_router(wallboards_api.router)
 app.include_router(action1.router)
 app.include_router(meraki.router)
+from app.api import software_deployment as software_deployment_api
+app.include_router(software_deployment_api.router)
 app.include_router(checklists.router)
 app.include_router(changes.router)
 app.include_router(kb.router)

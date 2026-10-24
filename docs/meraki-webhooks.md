@@ -4,7 +4,7 @@ This opt-in receiver creates normal, audited tickets for `stopped_reporting` ale
 
 ## Setup
 
-1. Set the public HTTPS portal address in Settings > General. Publish the receiver through the supported HTTPS reverse proxy with a publicly trusted certificate. Do not expose the backend directly.
+1. Set the public HTTPS portal address in Settings > General. Publish the receiver through the supported HTTPS reverse proxy with a publicly trusted certificate. Do not expose the backend directly. Expose **only** `POST /api/meraki/webhooks` to the internet (for example, an edge proxy or firewall rule that forwards just that path); keep the rest of Layer 8 on your internal network.
 2. In Settings > Meraki, save a separate randomly generated shared secret of at least 32 characters, explicit webhook organization IDs and selected network IDs. Empty allowlists accept nothing. Optionally set an active fallback queue ID; 0 uses the default queue. Normal routing rules can choose another queue and priority.
 3. Enable **Create tickets from Meraki device outages**. This is off by default, independently of discovery.
 4. In Meraki Dashboard > Network-wide > Alerts, add an HTTP server using the receiver URL displayed in Layer 8 (`https://helpdesk.corp.example/api/meraki/webhooks`), the same shared secret and the **default Meraki JSON payload**. Subscribe only to device stopped/started reporting alerts for the selected networks. No custom Liquid template or HMAC signature is required or supported.
