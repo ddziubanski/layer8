@@ -20,7 +20,8 @@ import { ArrangedColumns, useArrangement } from "../components/Arrange";
 import { SystemsCard } from "./ticket/SystemsCard";
 import { KnowledgeCard } from "./ticket/KnowledgeCard";
 import { CopilotCard } from "./ticket/CopilotCard";
-import { uses } from "../permissions";
+import { GuestWifiCard } from "./ticket/GuestWifiCard";
+import { can, uses } from "../permissions";
 import { ME_KEY } from "../queryClient";
 import { ScriptsCard } from "./ticket/ScriptsCard";
 import { ActionsCard, AssignmentCard, RequesterCard, StatusCard } from "./ticket/SidePanels";
@@ -216,6 +217,7 @@ export function TicketPage({ me }: { me: User }) {
           changes: { label: "Changes", node: <ChangesCard ticket={t} /> },
           knowledge: { label: "Knowledge base", node: <KnowledgeCard ticket={t} /> },
           copilot: { label: "Copilot", node: uses(signedIn.data ?? {}, "copilot") ? <CopilotCard ticket={t} onChanged={refresh} /> : null },
+          guest_wifi: { label: "Guest Wi-Fi", node: uses(signedIn.data ?? {}, "unifi_vouchers") && can(signedIn.data ?? me, "unifi_vouchers") ? <GuestWifiCard ticket={t} onChanged={refresh} /> : null },
           status: { label: "Status", node: <StatusCard ticket={t} onChanged={refresh} /> },
           actions: { label: "Actions", node: <ActionsCard ticket={t} onChanged={refresh} /> },
         }}

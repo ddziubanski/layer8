@@ -1880,6 +1880,63 @@ class Wallboard(Base):
     created_by: Mapped["User | None"] = relationship()
 
 
+class NetworkObservation(Base):
+    """A client a vendor integration saw on the network (UniFi now, Juniper next): cached and read
+    only. It is shown beside documented IP records and never changes them."""
+
+    __tablename__ = "network_observations"
+
+    provider: Mapped[str] = mapped_column(String(16), primary_key=True)
+    # The site, console or switch it was read from.
+    source_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    mac: Mapped[str] = mapped_column(String(17), primary_key=True, index=True)
+    source_name: Mapped[str] = mapped_column(String(255), default="")
+    address: Mapped[str] = mapped_column(String(45), default="")
+    hostname: Mapped[str] = mapped_column(String(255), default="")
+    network: Mapped[str] = mapped_column(String(100), default="")
+    uplink_name: Mapped[str] = mapped_column(String(255), default="")
+    port: Mapped[str] = mapped_column(String(100), default="")
+    ssid: Mapped[str] = mapped_column(String(100), default="")
+    connection: Mapped[str] = mapped_column(String(16), default="")
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class NetworkInventory(Base):
+    """Network equipment a vendor integration reported (gateways, switches, access points)."""
+
+    __tablename__ = "network_inventory"
+
+    provider: Mapped[str] = mapped_column(String(16), primary_key=True)
+    source_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    device_key: Mapped[str] = mapped_column(String(200), primary_key=True)
+    source_name: Mapped[str] = mapped_column(String(255), default="")
+    name: Mapped[str] = mapped_column(String(255), default="")
+    model: Mapped[str] = mapped_column(String(100), default="")
+    # gateway / switch / ap / other
+    kind: Mapped[str] = mapped_column(String(16), default="other")
+    mac: Mapped[str] = mapped_column(String(17), default="")
+    address: Mapped[str] = mapped_column(String(45), default="")
+    # online / offline / other
+    state: Mapped[str] = mapped_column(String(16), default="other")
+    firmware: Mapped[str] = mapped_column(String(100), default="")
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class NetworkOutage(Base):
+    """A vendor-reported device's offline state across reads, and the ticket opened for it."""
+
+    __tablename__ = "network_outages"
+
+    provider: Mapped[str] = mapped_column(String(16), primary_key=True)
+    source_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    device_key: Mapped[str] = mapped_column(String(200), primary_key=True)
+    is_down: Mapped[bool] = mapped_column(Boolean, default=False)
+    down_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ticket_id: Mapped[int | None] = mapped_column(ForeignKey("tickets.id", ondelete="SET NULL"))
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class ServiceHeartbeat(Base):
     """A background service saying it's alive, and what its last pass did."""
 

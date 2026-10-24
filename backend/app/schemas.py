@@ -2290,6 +2290,25 @@ class MerakiTestOut(BaseModel):
     networks: list[str]
 
 
+# A client a vendor integration saw (UniFi, Juniper): cached, beside documented IP records.
+class NetworkObservationOut(BaseModel):
+    provider: str
+    provider_label: str
+    source_id: str
+    source_name: str
+    mac: str
+    address: str
+    hostname: str
+    network: str
+    uplink_name: str
+    port: str
+    ssid: str
+    connection: str
+    last_seen_at: datetime | None
+    observed_at: datetime
+    stale: bool
+
+
 class IpAddressOut(ORM):
     id: int
     address: IpText
@@ -2307,6 +2326,8 @@ class IpAddressOut(ORM):
     subnet: SubnetRef | None = None
     switch_port: SwitchPortOut | None = None
     meraki: MerakiClientOut | None = None
+    # UniFi / Juniper observations of this MAC (vendor-neutral; Meraki has its own field).
+    observations: list[NetworkObservationOut] = []
 
 
 class IpCell(BaseModel):

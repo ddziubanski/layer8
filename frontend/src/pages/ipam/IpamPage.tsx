@@ -9,6 +9,7 @@ import { DevicePicker } from "../../components/DevicePicker";
 import { SwitchPortLabel } from "../../components/SwitchPortLabel";
 import { can } from "../../permissions";
 import { MerakiClients } from "./MerakiClients";
+import { UnifiPage } from "./UnifiPage";
 import { MerakiContext } from "../../components/MerakiContext";
 import { ME_KEY } from "../../queryClient";
 import { NetworkGear } from "./NetworkGear";
@@ -32,6 +33,7 @@ export function IpamPage({ me }: { me: Me }) {
   const tab = useParams().tab ?? "subnets";
   const liveMe = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false });
   const showMeraki = (liveMe.data ?? me).features?.includes("meraki");
+  const showUnifi = (liveMe.data ?? me).features?.includes("unifi");
   return (
     <>
       <div className="page-head row-gap">
@@ -44,13 +46,14 @@ export function IpamPage({ me }: { me: Me }) {
           ["vlans", "VLANs", "/ipam/vlans"],
           ["gear", "Network gear", "/ipam/gear"],
           ...(showMeraki ? [["meraki", "Meraki clients", "/ipam/meraki"]] : []),
+          ...(showUnifi ? [["unifi", "UniFi", "/ipam/unifi"]] : []),
         ].map(([key, label, to]) => (
           <Link key={key} to={to} className={tab === key ? "active" : undefined} role="tab" aria-selected={tab === key}>
             {label}
           </Link>
         ))}
       </div>
-      {tab === "meraki" ? <MerakiClients /> : tab === "addresses" ? <AddressSearch /> : tab === "vlans" ? <Vlans me={me} /> : tab === "gear" ? <NetworkGear me={me} /> : <Subnets me={me} />}
+      {tab === "unifi" ? <UnifiPage /> : tab === "meraki" ? <MerakiClients /> : tab === "addresses" ? <AddressSearch /> : tab === "vlans" ? <Vlans me={me} /> : tab === "gear" ? <NetworkGear me={me} /> : <Subnets me={me} />}
     </>
   );
 }

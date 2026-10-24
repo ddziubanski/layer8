@@ -536,6 +536,14 @@ export const api = {
     start: (ticketId: number, body: StartChecklist) => request<TicketChecklist>("POST", `/api/tickets/${ticketId}/checklists`, body),
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
+  unifi: {
+    status: () => request<S["UnifiStatusOut"]>("GET", "/api/unifi/status"),
+    test: () => request<S["UnifiTestOut"]>("POST", "/api/unifi/test"),
+    sites: () => request<S["NetworkSiteOut"][]>("GET", "/api/unifi/sites"),
+    devices: (p: { q?: string; state?: string } = {}) => request<S["VendorDeviceOut"][]>("GET", `/api/unifi/devices${query(p)}`),
+    clients: (p: { q?: string } = {}) => request<S["NetworkObservationOut"][]>("GET", `/api/unifi/clients${query(p)}`),
+    voucher: (ticketId: number, body: S["VoucherIn"]) => request<S["VoucherOut"]>("POST", `/api/unifi/tickets/${ticketId}/vouchers`, body),
+  },
   meraki: {
     webhooks: () => request<S["WebhookStatusOut"]>("GET", "/api/meraki/webhooks/status"),
     diagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"] | null>("GET", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),

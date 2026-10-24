@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 
-from app import ipam, ipamscan, netdisco, permissions, meraki
+from app import ipam, ipamscan, meraki, netdisco, network, permissions
 from app.auth import Agent, SessionDep
 from app.models import Device, FindingStatus, IpAddress, IpFinding, IpKind, IpScan, Runner, ScanKind, Subnet, System, Vlan
 from app.schemas import (
@@ -284,7 +284,7 @@ def dismiss_finding(finding_id: int, user: Agent, session: SessionDep):
 # Addresses
 
 
-def _address_out(session, r: IpAddress, subnet: Subnet | None = None, ports: dict | None = None, contexts: dict | None = None) -> IpAddressOut:
+def _address_out(session, r: IpAddress, subnet: Subnet | None = None, ports: dict | None = None, contexts: dict | None = None, observed: dict | None = None) -> IpAddressOut:
     """`ports`: switch ports already looked up for a list (netdisco.ports_for); else looked up here."""
     out = IpAddressOut.model_validate(r)
     s = subnet if subnet is not None else ipam.subnet_of(session, r.address)
@@ -294,6 +294,8 @@ def _address_out(session, r: IpAddress, subnet: Subnet | None = None, ports: dic
         out.switch_port = SwitchPortOut(**port) if port else None
     context = (contexts if contexts is not None else meraki.context_for(session, [r.mac])).get(r.mac)
     out.meraki = MerakiClientOut(**context) if context else None
+    seen = observed if observed is not None else network.context_for(session, [r.mac], network.active_providers())
+    out.observations = seen.get(r.mac, []) if r.mac else []
     return out
 
 
@@ -301,7 +303,8 @@ def _addresses_out(session, recs, subnet: Subnet | None = None) -> list[IpAddres
     recs = list(recs)
     ports = netdisco.ports_for(session, [r.mac for r in recs])
     contexts = meraki.context_for(session, [r.mac for r in recs])
-    return [_address_out(session, r, subnet, ports, contexts) for r in recs]
+    observed = network.context_for(session, [r.mac for r in recs], network.active_providers())
+    return [_address_out(session, r, subnet, ports, contexts, observed) for r in recs]
 
 
 @router.get("/addresses", response_model=list[IpAddressOut])
