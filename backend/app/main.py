@@ -77,6 +77,8 @@ from app.api import unifi as unifi_api
 app.include_router(unifi_api.router)
 from app.api import nutanix as nutanix_api
 app.include_router(nutanix_api.router)
+from app.api import canned as canned_api
+app.include_router(canned_api.router)
 from app.api import junos as junos_api
 app.include_router(junos_api.router)
 from app.api import software_deployment as software_deployment_api

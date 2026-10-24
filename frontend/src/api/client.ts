@@ -9,6 +9,7 @@ export type SoftwareDeployment = S["DeploymentOut"];
 export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
 export type NutanixVm = S["NutanixVmOut"];
+export type CannedReply = S["CannedReplyOut"];
 export type TicketPage = S["TicketPage"];
 export type Comment = S["CommentOut"];
 export type TicketEvent = S["EventOut"];
@@ -544,6 +545,13 @@ export const api = {
     read: () => request<S["JunosReadOut"]>("POST", "/api/junos/read"),
     devices: () => request<S["VendorDeviceOut"][]>("GET", "/api/junos/devices"),
     clients: (p: { q?: string } = {}) => request<S["NetworkObservationOut"][]>("GET", `/api/junos/clients${query(p)}`),
+  },
+  canned: {
+    list: (ticketId?: number) => request<S["CannedReplyOut"][]>("GET", `/api/canned-replies${query({ ticket_id: ticketId })}`),
+    create: (body: S["CannedReplyIn"]) => request<S["CannedReplyOut"]>("POST", "/api/canned-replies", body),
+    update: (id: number, body: S["CannedReplyIn"]) => request<S["CannedReplyOut"]>("PUT", `/api/canned-replies/${id}`, body),
+    remove: (id: number) => request<void>("DELETE", `/api/canned-replies/${id}`),
+    render: (id: number, ticketId: number) => request<S["RenderedOut"]>("POST", `/api/canned-replies/${id}/render${query({ ticket_id: ticketId })}`),
   },
   nutanix: {
     status: () => request<S["NutanixStatusOut"]>("GET", "/api/nutanix/status"),

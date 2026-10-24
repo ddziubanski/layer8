@@ -2267,3 +2267,23 @@ class NutanixAction(Base):
     vm: Mapped[NutanixVm] = relationship()
     requested_by: Mapped[User | None] = relationship()
 
+
+class CannedReply(Base):
+    """A saved reply technicians insert into the composer. Shared (owner_id None, managed with the
+    canned_replies_manage permission, for every queue or one) or one technician's own."""
+
+    __tablename__ = "canned_replies"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(120))
+    # Plain text with {first_name}, {name}, {ticket}, {subject}, {technician}, {queue}, {portal}.
+    body: Mapped[str] = mapped_column(Text)
+    # Inserting it switches the composer to a reply to the requester (else an internal note).
+    to_requester: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    queue_id: Mapped[int | None] = mapped_column(ForeignKey("queues.id", ondelete="CASCADE"), index=True)
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    updated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    queue: Mapped[Queue | None] = relationship()
+

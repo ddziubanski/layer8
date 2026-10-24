@@ -54,6 +54,7 @@ const VendorsPage = named(() => import("./pages/vendors/VendorsPage"), "VendorsP
 const JunosAdmin = named(() => import("./pages/admin/JunosAdmin"), "JunosAdmin");
 const UnifiAdmin = named(() => import("./pages/admin/UnifiAdmin"), "UnifiAdmin");
 const NutanixAdmin = named(() => import("./pages/admin/NutanixAdmin"), "NutanixAdmin");
+const CannedRepliesAdmin = named(() => import("./pages/admin/CannedRepliesAdmin"), "CannedRepliesAdmin");
 const MerakiAdmin = named(() => import("./pages/admin/MerakiAdmin"), "MerakiAdmin");
 const IpamPage = named(() => import("./pages/ipam/IpamPage"), "IpamPage");
 const DevicesPage = named(() => import("./pages/devices/DevicesPage"), "DevicesPage");
@@ -159,6 +160,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "queues", label: "Queues", page: (me) => <QueuesAdmin me={me} /> },
   { path: "rules", label: "Ticket rules", adminOnly: true, permission: "rules_manage", page: (me) => <RulesAdmin me={me} /> },
   { path: "ticket-fields", label: "Ticket fields", adminOnly: true, page: (me) => <TicketFieldsAdmin me={me} /> },
+  { path: "canned-replies", label: "Canned replies", page: (me) => <CannedRepliesAdmin me={me} /> },
   { path: "users", label: "Users", page: (me) => <UsersAdmin me={me} /> },
   { path: "groups", label: "Groups", page: (me) => <GroupsAdmin me={me} /> },
   { path: "permissions", label: "Permissions", adminOnly: true, page: () => <PermissionsAdmin /> },
