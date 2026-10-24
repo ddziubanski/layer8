@@ -237,6 +237,8 @@ def assign(
         ticket.unassigned_since, ticket.unaccepted_alerted_at = sla.utcnow(), None
     elif ticket.assignee_id is not None:
         ticket.unassigned_since = None
+    if ticket.assignee_id is not None and ticket.assignee_id != before["assignee_id"]:
+        outbox.ticket_assigned(session, ticket)
     if ticket.queue_id != from_queue.id:
         _move_note(session, ticket, actor, from_queue, ticket.queue, note)
     if ticket.assignee_id is not None and ticket.status == TicketStatus.new:
@@ -314,6 +316,8 @@ def _set_status(session: Session, ticket: Ticket, status: TicketStatus, actor: U
         ticket.resolution_type = None
         ticket.closure_reason = None
     _event(session, ticket, EventType.status_changed, actor, before=old, after=status)
+    if status == TicketStatus.resolved and old not in sla.CLOSED_STATUSES:
+        outbox.ticket_resolved(session, ticket, actor)
     if status in sla.CLOSED_STATUSES and old not in sla.CLOSED_STATUSES:
         from app import surveys
 

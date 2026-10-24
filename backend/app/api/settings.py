@@ -5,6 +5,7 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import sessionmaker
 
 from app import configstore, jobs, kerberos, sla
@@ -128,6 +129,25 @@ def _section(section: str) -> SettingsSectionOut:
     if section not in configstore.SECTIONS:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such settings section")
     return SettingsSectionOut(section=section, fields=configstore.describe(section))
+
+
+class EmailPreviewIn(BaseModel):
+    template: str = Field(max_length=5000)
+
+
+class EmailPreviewOut(BaseModel):
+    body: str
+
+
+@router.post("/requester-emails/preview", response_model=EmailPreviewOut)
+def preview_requester_email(body: EmailPreviewIn, _: Admin):
+    """A requester email template with sample values, before it's saved."""
+    from app import placeholders
+
+    sample = {"first_name": "Ana", "name": "Ana Silva", "ticket": "#1042", "subject": "Laptop won't join Staff Wi-Fi",
+              "technician": "J. Park", "queue": "Service desk",
+              "portal": f"{settings.portal_url.rstrip('/')}/tickets/1042" if settings.portal_url else ""}
+    return {"body": placeholders.fill(body.template, sample)}
 
 
 @router.get("/{section}", response_model=SettingsSectionOut)

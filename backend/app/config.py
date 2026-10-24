@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     graph_tenant_id: str = ""
     graph_client_id: str = ""
     graph_client_secret: str = ""
+    # Emails to requesters (Settings > Requester emails), with app.placeholders filled in.
+    email_ack_template: str = "Hi {first_name},\n\nWe've received your request and logged it as ticket {ticket}:\n\n  {subject}\n\nWe'll be in touch."
+    email_resolved_enabled: bool = False
+    email_resolved_template: str = "Hi {first_name},\n\nWe've marked ticket {ticket} as resolved:\n\n  {subject}\n\nIf it isn't fixed, just reply to this email and it will be opened again."
+    email_assigned_enabled: bool = False
+    email_assigned_template: str = "Hi {first_name},\n\n{technician} is now looking after ticket {ticket}:\n\n  {subject}"
     # Sign-in: two-factor required for admins who sign in with a local password; Microsoft Entra ID
     # sign-in (OpenID Connect, its own app registration; the secret is a file in the secrets folder).
     totp_required_admins: bool = False

@@ -304,6 +304,13 @@ SECTIONS: dict[str, list[Field]] = {
         Field("after_hours_message", "After-hours message", "Shown on the portal for a queue that is closed. {next} becomes when someone is next expected (e.g. \"on Monday at 08:00\"), {queue} the queue's name.", multiline=True, check=_length(0, 1000)),
         Field("presence_on_portal", "Show technicians' Teams status on the portal", "Each queue's owners with their Teams status (available, busy, away, offline), status only: no chat or call links. Needs the Email tab's app registration with the application permissions Presence.Read.All and User.ReadBasic.All (admin consent); checked every minute."),
     ],
+    "requester_emails": [
+        Field("email_ack_template", "We received your request", "Sent when a ticket is opened by email or the portal. {first_name}, {name}, {ticket}, {subject}, {technician}, {queue} and {portal} are filled in. The ticket tag goes in the subject, and Settings > Branding's email footer is added.", multiline=True, check=_length(1, 5000)),
+        Field("email_resolved_enabled", "Email the requester when a ticket is resolved", "Off: they hear about it only from a technician's reply. A reply to the email reopens the ticket."),
+        Field("email_resolved_template", "Resolved", "", multiline=True, check=_length(1, 5000)),
+        Field("email_assigned_enabled", "Email the requester when someone takes their ticket", "Each time a technician is assigned, including when it moves to another technician. Not when it's unassigned."),
+        Field("email_assigned_template", "Assigned", "", multiline=True, check=_length(1, 5000)),
+    ],
     "signin": [
         Field("totp_required_admins", "Require two-factor sign-in for admins with a local password", "They set up an authenticator app (My preferences > Two-factor sign-in) the next time they sign in, before they can do anything else. Anyone can turn two-factor on for themselves either way."),
         Field("entra_sign_in_enabled", "Sign in with Microsoft (Entra ID)", "Adds a Sign in with Microsoft button. Only people who already have an account here can use it, matched by their Entra ID object or by UPN or email; accounts with a local password (the break-glass admin) can't. Entra's own MFA and Conditional Access apply. See docs/entra-sign-in.md."),

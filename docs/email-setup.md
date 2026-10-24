@@ -78,3 +78,12 @@ How commands are handled:
 - **Logging:** each email's actions are noted on the ticket ("By email: assigned to Dana Cole; priority high").
 - **Mistakes:** commands that can't be done, such as an unknown command or a missing resolution type, come back to the technician by email.
 - **Turning it off:** Settings > Email > *Technicians can work tickets by email*.
+
+## What requesters get by email
+
+**Settings > Requester emails** has the wording of the automatic emails, with a preview as you type:
+- **We received your request**: when a ticket is opened by email or the portal (not when technicians log a ticket for themselves).
+- **Resolved** (off by default): when a technician marks the ticket resolved. Replying to it reopens the ticket.
+- **Assigned** (off by default): each time a technician takes the ticket.
+
+`{first_name}`, `{name}`, `{ticket}`, `{subject}`, `{technician}`, `{queue}` and `{portal}` are filled in. The ticket tag goes in the subject, so replies land on the ticket, and Settings > Branding's email footer is added at the end. Technicians' replies go out as they write them, and satisfaction surveys have their own settings (Settings > Surveys).
