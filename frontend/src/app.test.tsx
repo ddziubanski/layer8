@@ -18,6 +18,51 @@ function mount() {
   );
 }
 
+test("global off blocks a bookmarked module before loading its page API", async () => {
+  window.history.replaceState(null, "", "/scripts");
+  const calls = mockApi({ "GET /api/auth/me": { ...ME, disabled_modules: ["scripts"] }, "GET /api/notices": [] });
+  mount();
+  expect(await screen.findByRole("heading", { name: "Scripts is turned off" })).toBeInTheDocument();
+  const nav = within(screen.getByRole("navigation", { name: "Main" }));
+  expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument();
+  expect(nav.getByRole("link", { name: "Tickets" })).toBeInTheDocument();
+  expect(calls.some(c => c.path.startsWith("/api/scripts"))).toBe(false);
+  await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
+  await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
+  expect(screen.queryByRole("option", { name: "Scripts" })).not.toBeInTheDocument();
+  await userEvent.keyboard("{Escape}");
+  window.history.replaceState(null, "", "/");
+});
+
+test("an admin can disable workspace areas and retain recovery access without reloading", async () => {
+  window.history.replaceState(null, "", "/settings/modules");
+  let profile: Me = { ...ME, role: "admin", disabled_modules: [] };
+  let fields = [
+    { name: "workspace_scripts_enabled", kind: "bool", label: "Scripts", value: true, locked: false },
+    { name: "workspace_settings_enabled", kind: "bool", label: "Settings for technicians", value: true, locked: false },
+  ];
+  mockApi({
+    "GET /api/auth/me": () => profile, "GET /api/notices": [],
+    "GET /api/settings/modules": () => ({ section: "modules", fields }),
+    "PUT /api/settings/modules": ({ body }: Call) => {
+      const values = (body as { values: Record<string, boolean> }).values;
+      fields = fields.map(f => ({ ...f, value: values[f.name] ?? f.value }));
+      profile = { ...profile, disabled_modules: ["scripts", "settings"] };
+      return { section: "modules", fields };
+    },
+  });
+  mount();
+  await screen.findByRole("heading", { name: "Global modules" });
+  await userEvent.click(await screen.findByRole("checkbox", { name: "Scripts" }));
+  await userEvent.click(screen.getByRole("checkbox", { name: "Settings for technicians" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  const nav = within(screen.getByRole("navigation", { name: "Main" }));
+  await waitFor(() => expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument());
+  expect(nav.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Global modules" })).toBeInTheDocument();
+  window.history.replaceState(null, "", "/");
+});
+
 test("signed out: shows the login page without hammering the server", async () => {
   const calls = mockApi({ "GET /api/auth/me": () => new Response(JSON.stringify({ detail: "Not signed in" }), { status: 401 }) });
   mount();
@@ -109,7 +154,7 @@ test("minimal navigation applies on save without rebuilding the route; show all 
   expect(screen.getByRole("heading", { name: "My preferences" })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
   await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
-  expect(screen.getByRole("option", { name: "Scripts" })).toBeInTheDocument();
+  expect(within(screen.getByRole("listbox")).getByRole("option", { name: "Scripts" })).toBeInTheDocument();
   await userEvent.keyboard("{Escape}");
   await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));

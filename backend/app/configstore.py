@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, settings
 from app.models import AppSetting, User
+from app.workspace import MODULES as WORKSPACE_MODULES
 
 log = logging.getLogger(__name__)
 # Fields set by the environment (or .env) when the process started: those win over stored values.
@@ -281,6 +282,7 @@ def _closed_days(v: str) -> None:
 
 
 SECTIONS: dict[str, list[Field]] = {
+    "modules": [Field(name, label, help) for _, name, label, help in WORKSPACE_MODULES],
     "hours": [
         Field("desk_hours", "Desk hours", "When technicians are in, one line per set of days, e.g. Mon-Fri 08:00-17:00 or Tue 08:00-12:00, 13:00-17:00 (24-hour clock, the server's time zone). Days not listed are closed, and a later line replaces earlier hours for its days. A queue can have its own hours in Settings > Queues.", multiline=True, check=_hours),
         Field("desk_closed_days", "Closed days", "One per line: a date and an optional name, e.g. 2026-12-25 Christmas Day. Every queue is closed on these days.", multiline=True, check=_closed_days),

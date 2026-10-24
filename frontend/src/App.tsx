@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { ModuleWorkspace } from "./components/ModuleWorkspace";
+import { ModuleAccess } from "./components/ModuleAccess";
 import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
@@ -40,6 +41,7 @@ function reloadOnce(error: unknown): never {
 const DashboardPage = named(() => import("./pages/DashboardPage"), "DashboardPage");
 const ReportsPage = named(() => import("./pages/ReportsPage"), "ReportsPage");
 const PreferencesPage = named(() => import("./pages/me/PreferencesPage"), "PreferencesPage");
+const ModulesAdmin = named(() => import("./pages/admin/ModulesAdmin"), "ModulesAdmin");
 const ScriptsPage = named(() => import("./pages/scripts/ScriptsPage"), "ScriptsPage");
 const KnowledgePage = named(() => import("./pages/kb/KnowledgePage"), "KnowledgePage");
 const PurchaseOrdersPage = named(() => import("./pages/purchasing/PurchaseOrdersPage"), "PurchaseOrdersPage");
@@ -90,6 +92,7 @@ function Shell({ me }: { me: Me }) {
   // The router is stable for an account; subscribe to preference saves without rebuilding it.
   const profile = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false });
   const brand = useBranding();
+  const activeMe = profile.data?.id === me.id ? profile.data : me;
   const logout = useMutation({
     mutationFn: api.logout,
     onSettled: () => {
@@ -120,11 +123,11 @@ function Shell({ me }: { me: Me }) {
       </nav>
       <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
         <RouteFocus mainId="console-main" />
-        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={me} /><span className="console-topbar-user">{me.display_name}</span></div>
+        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={activeMe} /><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
-          <ModuleWorkspace><Outlet /></ModuleWorkspace>
+          <ModuleAccess me={activeMe}><ModuleWorkspace><Outlet /></ModuleWorkspace></ModuleAccess>
         </Suspense>
       </main>
     </div>
@@ -149,6 +152,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
       />
     ),
   },
+  { path: "modules", label: "Modules", adminOnly: true, page: (me) => <ModulesAdmin me={me} /> },
   { path: "branding", label: "Branding", adminOnly: true, page: (me) => <BrandingAdmin me={me} /> },
   { path: "queues", label: "Queues", page: (me) => <QueuesAdmin me={me} /> },
   { path: "rules", label: "Ticket rules", adminOnly: true, permission: "rules_manage", page: (me) => <RulesAdmin me={me} /> },
@@ -258,7 +262,7 @@ const router = (me: Me) =>
       path: "purchase-orders/:poId/receiving",
       element: (
         <Suspense fallback={null}>
-          <ReceivingSheet />
+          <ModuleAccess me={me}><ReceivingSheet /></ModuleAccess>
         </Suspense>
       ),
     },
@@ -328,7 +332,7 @@ export function App() {
 }
 
 function SignedInApp() {
-  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me });
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, refetchInterval: query => query.state.data && !query.state.error ? 30000 : false });
   // Rebuild the router only when a different user signs in, not on every refetch.
   const userId = me.data?.id;
   // Windows sign-in reaches the portal only, whatever the role.

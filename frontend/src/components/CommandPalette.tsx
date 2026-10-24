@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Me } from "../api/client";
 import { can } from "../permissions";
+import { moduleEnabled, moduleForPath } from "../navigation";
 
 type Command = { label: string; to: string; keywords?: string };
 export function commandsFor(me: Me): Command[] {
@@ -24,7 +25,10 @@ export function commandsFor(me: Me): Command[] {
   ];
   if (me.role === "admin") commands.push({ label: "Settings", to: "/settings" }, { label: "Manage users", to: "/settings/users" });
   if (me.role === "admin" || can(me, "rules_manage")) commands.push({ label: "Ticket rules", to: "/settings/rules" });
-  return commands;
+  return commands.filter(command => {
+    const module = moduleForPath(command.to);
+    return !module || moduleEnabled(me, module);
+  });
 }
 
 /** Navigation only: every destination still uses its existing API authorization. */

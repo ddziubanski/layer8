@@ -8,7 +8,9 @@ import { api, type ColorRule, type Me } from "../../api/client";
 import { PALETTE, RULE_FIELDS } from "../../colors";
 import { UserPicker } from "../../components/UserPicker";
 import { ME_KEY } from "../../queryClient";
-import { MINIMAL_HIDDEN, OPTIONAL_MODULES, type SidebarModule } from "../../navigation";
+import { MINIMAL_HIDDEN, OPTIONAL_MODULES, moduleEnabled, type SidebarModule } from "../../navigation";
+
+import { DEFAULT_TICKET_WORKSPACE, TICKET_TOOLS, type TicketWorkspacePreference } from "../ticket/TicketToolsWorkspace";
 
 function Swatches({ value, onChange, label }: { value: string | null; onChange: (c: string) => void; label: string }) {
   return (
@@ -37,10 +39,12 @@ export function PreferencesPage({ me }: { me: Me }) {
   const [color, setColor] = useState<string | null>(activeMe.ticket_color ?? null);
   const [rules, setRules] = useState<ColorRule[]>(activeMe.color_rules ?? []);
   const [hidden, setHidden] = useState<SidebarModule[]>(activeMe.hidden_modules ?? []);
+  const [workspace, setWorkspace] = useState<TicketWorkspacePreference>(activeMe.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
+  const workspaceChanged = JSON.stringify(workspace) !== JSON.stringify(activeMe.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
   const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues });
   const [names, setNames] = useState<Record<string, string>>({});
   const save = useMutation({
-    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden }),
+    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden, ...(workspaceChanged ? { ticket_workspace: workspace } : {}) }),
     onSuccess: (m) => queryClient.setQueryData(ME_KEY, m),
   });
   const setRule = (i: number, over: Partial<ColorRule>) => setRules(rules.map((r, j) => (j === i ? { ...r, ...over } : r)));
@@ -51,7 +55,7 @@ export function PreferencesPage({ me }: { me: Me }) {
   };
   // What's stored now: the last save, else what the page opened with.
   const stored = save.data ?? activeMe;
-  const changed = color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
+  const changed = workspaceChanged || color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
     || JSON.stringify([...hidden].sort()) !== JSON.stringify([...(stored.hidden_modules ?? [])].sort());
   const isStaff = me.role !== "requester";
 
@@ -63,7 +67,7 @@ export function PreferencesPage({ me }: { me: Me }) {
       <div className="stack" style={{ maxWidth: 900 }}>
         {isStaff && <section className="card stack" aria-label="My workspace">
           <div className="lbl" style={{ margin: 0 }}>My workspace</div>
-          <p className="small muted">Choose what appears in your sidebar. This follows your account across browsers. Hiding a module keeps its features and permissions in place; you can still open it with Ctrl+K / ⌘K or a direct link.</p>
+          <p className="small muted">Choose what appears in your sidebar. This follows your account across browsers. Personally hidden modules remain available through Ctrl+K / ⌘K or a direct link, while globally disabled workspace modules stay unavailable.</p>
           <div className="row-gap">
             <button className="btn2" type="button" disabled={save.isPending} onClick={() => setHidden([...MINIMAL_HIDDEN])}>Use minimal workspace</button>
             <button className="btn2" type="button" disabled={save.isPending} onClick={() => setHidden([])}>Show all modules</button>
@@ -71,9 +75,17 @@ export function PreferencesPage({ me }: { me: Me }) {
           <p className="small">Minimal keeps Tickets, Dashboard, Devices and Knowledge base. Tickets, My preferences and sign-out are always available. Save below to apply.</p>
           <fieldset className="stack" style={{ gap: 6, border: 0, padding: 0, margin: 0 }}>
             <legend>Show in my sidebar</legend>
-            {OPTIONAL_MODULES.map(module => <label className="inline" key={module.id}><input type="checkbox" checked={!hidden.includes(module.id)} disabled={save.isPending}
-              onChange={e => setHidden(e.target.checked ? hidden.filter(id => id !== module.id) : [...hidden, module.id])} />{module.label}</label>)}
+            {OPTIONAL_MODULES.map(module => <label className="inline" key={module.id}><input type="checkbox" checked={moduleEnabled(activeMe, module.id) && !hidden.includes(module.id)} disabled={save.isPending || !moduleEnabled(activeMe, module.id)}
+              onChange={e => setHidden(e.target.checked ? hidden.filter(id => id !== module.id) : [...hidden, module.id])} />{module.label}{!moduleEnabled(activeMe, module.id) && <span className="muted small"> — turned off by administrator</span>}</label>)}
           </fieldset>
+        </section>}
+        {isStaff && <section className="card stack" aria-label="Ticket workspace">
+          <h2>Ticket workspace</h2>
+          <p className="muted small">Layout changes apply when you next open a ticket. Arrange this page still controls which panels are visible.</p>
+          <label className="field">Layout<select value={workspace.mode} onChange={e => setWorkspace({ ...workspace, mode: e.target.value as TicketWorkspacePreference["mode"] })}><option value="drawer">Conversation with tools drawer</option><option value="classic">Classic arranged panels</option></select></label>
+          <label className="field">Preferred tool<select value={workspace.selected_tool} onChange={e => setWorkspace({ ...workspace, selected_tool: e.target.value as TicketWorkspacePreference["selected_tool"] })}>{TICKET_TOOLS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
+          <label className="inline"><input type="checkbox" checked={workspace.keep_open} onChange={e => setWorkspace({ ...workspace, keep_open: e.target.checked })} />Keep tools open on new tickets</label>
+          <label className="field">Tools width (pixels)<input type="number" min={320} max={720} value={workspace.width} onChange={e => setWorkspace({ ...workspace, width: Math.max(320, Math.min(720, Number(e.target.value) || 440)) })} /></label>
         </section>}
         {isStaff && <TeamsConnection />}
         {isStaff && (
@@ -173,7 +185,7 @@ export function PreferencesPage({ me }: { me: Me }) {
             Save
           </button>
           {changed && (
-            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); }}>
+            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); setWorkspace(stored.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE); }}>
               Undo changes
             </button>
           )}

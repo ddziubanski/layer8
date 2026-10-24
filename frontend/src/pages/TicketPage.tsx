@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { TeamsReply } from "./ticket/TeamsReply";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 
-import { api, type User } from "../api/client";
+import { api, type Me } from "../api/client";
 import { AttachedLine, AttachmentsSection } from "../components/Attachments";
-import { PriorityChip, SourceChip, StatusChip } from "../components/Chips";
+import { PriorityChip, SourceChip, StatusChip, SlaChip } from "../components/Chips";
 import { SOURCE_LABEL, when } from "../format";
-import { Composer } from "./ticket/Composer";
+import { TicketToolsWorkspace, DEFAULT_TICKET_WORKSPACE, type TicketTool } from "./ticket/TicketToolsWorkspace";
+import { TicketNetworkContext } from "./ticket/TicketNetworkContext";
+import { Composer, useComposerDraft } from "./ticket/Composer";
 import { describe, type Names } from "./ticket/history";
 import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
@@ -36,8 +39,17 @@ const USUAL_LAYOUT = {
   fields: {},
 };
 
-export function TicketPage({ me }: { me: User }) {
+export function TicketPage({ me }: { me: Me }) {
   const id = Number(useParams().ticketId);
+  return <TicketView key={`${me.id}:${id}`} me={me} id={id} />;
+}
+
+function TicketView({ me, id }: { me: Me; id: number }) {
+  const composerDraft = useComposerDraft();
+  // Apply layout-mode changes on the next ticket navigation, never under an active draft.
+  const [drawerMode] = useState((me.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE).mode !== "classic");
+  const [toolRequest, setToolRequest] = useState<{ tool: TicketTool; sequence: number } | null>(null);
+  const openTool = (tool: TicketTool) => setToolRequest(current => ({ tool, sequence: (current?.sequence ?? 0) + 1 }));
   const queryClient = useQueryClient();
   // The signed-in user with their features (the page's `me` is the plain user record).
   const signedIn = useQuery({ queryKey: ME_KEY, queryFn: api.me });
@@ -82,47 +94,10 @@ export function TicketPage({ me }: { me: User }) {
   };
   const filesFor = (commentId: number | null) => (files.data ?? []).filter((f) => f.comment_id === commentId);
 
-  return (
-    <div className="ticket">
-      <div className="head ticket-workspace-head">
-        <nav className="ticket-breadcrumb" aria-label="Ticket breadcrumb">
-          <Link to="/">Tickets</Link>
-          <span aria-hidden="true">/</span>
-          {t.parent && (
-            <>
-              <Link to={`/tickets/${t.parent.id}`} title={t.parent.subject}>{t.parent.label}</Link>
-              <span aria-hidden="true">/</span>
-            </>
-          )}
-          <span aria-current="page">{t.label}</span>
-        </nav>
-        <div className="ticket-workspace-kicker">SERVICE DESK / TICKET DETAILS</div>
-        <div className="row-gap ticket-workspace-title">
-          <h1 className="spacer">{t.subject}</h1>
-          <PriorityChip priority={t.priority} />
-          <SourceChip source={t.source} />
-          <StatusChip status={t.status} />
-          {!arrangement.editing && (
-            <button className="linkish small" type="button" onClick={() => arrangement.setEditing(true)}>
-              Arrange this page
-            </button>
-          )}
-        </div>
-        <div className="ticket-workspace-meta">
-          <span>Requested by <strong>{t.requester.display_name}</strong></span>
-          <span>Created {when(t.created_at)}</span>
-        </div>
-      </div>
-
-      <ArrangedColumns
-        page="ticket"
-        me={me}
-        editing={arrangement.editing}
-        onDone={() => arrangement.setEditing(false)}
-        layout={arrangement.layout?.effective ?? USUAL_LAYOUT}
-        required={arrangement.layout?.required ?? ["conversation"]}
-        hasMine={!!arrangement.layout?.mine}
-        panels={{
+  const activeMe = signedIn.data ?? me;
+  const effectiveLayout = arrangement.layout?.effective ?? USUAL_LAYOUT;
+  const hidden = new Set(effectiveLayout.hidden ?? []);
+  const panels = {
           conversation: {
             label: "Conversation",
             node: (
@@ -149,7 +124,7 @@ export function TicketPage({ me }: { me: User }) {
                     <AttachedLine files={filesFor(c.id)} />
                   </div>
                 ))}
-                <Composer ticketId={t.id} onDone={refresh} />
+                <Composer ticketId={t.id} onDone={refresh} draft={composerDraft} />
                 <TeamsReply key={t.id} ticketId={t.id} onDone={refresh} />
               </div>
             ),
@@ -205,6 +180,7 @@ export function TicketPage({ me }: { me: User }) {
                 ticket={t}
                 onChanged={refresh}
                 onRunScript={() => {
+                  if (drawerMode && !arrangement.editing) { openTool("scripts"); return; }
                   const section = document.querySelector<HTMLElement>("[aria-label='Scripts']");
                   section?.scrollIntoView({ behavior: "smooth", block: "start" });
                   section?.querySelector<HTMLSelectElement>("select")?.focus();
@@ -220,8 +196,59 @@ export function TicketPage({ me }: { me: User }) {
           guest_wifi: { label: "Guest Wi-Fi", node: uses(signedIn.data ?? {}, "unifi_vouchers") && can(signedIn.data ?? me, "unifi_vouchers") ? <GuestWifiCard ticket={t} onChanged={refresh} /> : null },
           status: { label: "Status", node: <StatusCard ticket={t} onChanged={refresh} /> },
           actions: { label: "Actions", node: <ActionsCard ticket={t} onChanged={refresh} /> },
-        }}
+          network: { label: "Network context", node: (!hidden.has("computer") || !hidden.has("devices")) ? <TicketNetworkContext ticket={t} includeComputer={!hidden.has("computer")} includeDevices={!hidden.has("devices")} /> : null },
+  };
+
+  return (
+    <div className={`ticket${drawerMode && !arrangement.editing ? " ticket-drawer-page" : ""}`}>
+      <div className="head ticket-workspace-head">
+        <nav className="ticket-breadcrumb" aria-label="Ticket breadcrumb">
+          <Link to="/">Tickets</Link>
+          <span aria-hidden="true">/</span>
+          {t.parent && (
+            <>
+              <Link to={`/tickets/${t.parent.id}`} title={t.parent.subject}>{t.parent.label}</Link>
+              <span aria-hidden="true">/</span>
+            </>
+          )}
+          <span aria-current="page">{t.label}</span>
+        </nav>
+        <div className="ticket-workspace-kicker">SERVICE DESK / TICKET DETAILS</div>
+        <div className="row-gap ticket-workspace-title">
+          <h1 className="spacer">{t.subject}</h1>
+          <PriorityChip priority={t.priority} />
+          <SourceChip source={t.source} />
+          <StatusChip status={t.status} />
+          {drawerMode && !arrangement.editing && <SlaChip ticket={t} long />}
+          {drawerMode && !arrangement.editing && <button className="btn2" type="button" onClick={() => openTool("details")}>Status &amp; assignment</button>}
+          {!arrangement.editing && (
+            <button className="linkish small" type="button" onClick={() => arrangement.setEditing(true)}>
+              Arrange this page
+            </button>
+          )}
+        </div>
+        <div className="ticket-workspace-meta">
+          <span>Requested by <strong>{t.requester.display_name}</strong></span>
+          <span>Queue <strong>{t.queue.name}</strong></span>
+          <span>Assigned to <strong>{t.assignee?.display_name ?? "Unassigned"}</strong></span>
+          <span>Created {when(t.created_at)}</span>
+        </div>
+      </div>
+
+      {drawerMode && !arrangement.editing ? (
+        <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest} />
+      ) : (
+      <ArrangedColumns
+        page="ticket"
+        me={me}
+        editing={arrangement.editing}
+        onDone={() => arrangement.setEditing(false)}
+        layout={arrangement.layout?.effective ?? USUAL_LAYOUT}
+        required={arrangement.layout?.required ?? ["conversation"]}
+        hasMine={!!arrangement.layout?.mine}
+        panels={panels}
       />
+      )}
     </div>
   );
 }
