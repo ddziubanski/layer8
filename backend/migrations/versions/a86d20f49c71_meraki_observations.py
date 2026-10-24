@@ -1,13 +1,13 @@
 """Read-only Meraki client observations.
 
 Revision ID: a86d20f49c71
-Revises: c3d58f1b7a20
+Revises: f52b6d10a930
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = "a86d20f49c71"
-down_revision = "c3d58f1b7a20"
+down_revision = "f52b6d10a930"
 branch_labels = None
 depends_on = None
 
