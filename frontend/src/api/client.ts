@@ -533,6 +533,11 @@ export const api = {
     start: (ticketId: number, body: StartChecklist) => request<TicketChecklist>("POST", `/api/tickets/${ticketId}/checklists`, body),
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
+  meraki: {
+    status: () => request<S["MerakiStatusOut"]>("GET", "/api/meraki/status"),
+    test: () => request<S["MerakiTestOut"]>("POST", "/api/meraki/test"),
+    clients: (q = "") => request<S["MerakiClientOut"][]>("GET", `/api/meraki/clients${query({ q })}`),
+  },
   action1: {
     software: (deviceId: number, q: string, offset = 0, ticket_id?: number) => request<S["SoftwareCatalogOut"]>("GET", `/api/action1/devices/${deviceId}/software${query({ q, offset, ticket_id })}`),
     preview: (body: S["DeploymentPreviewIn"]) => request<SoftwareDeployment>("POST", "/api/action1/deployments/preview", body),

@@ -46,6 +46,7 @@ const ReceivingSheet = named(() => import("./pages/purchasing/Receiving"), "Rece
 const ReceivePage = named(() => import("./pages/purchasing/Receiving"), "ReceivePage");
 const SurveyPage = named(() => import("./portal/Survey"), "SurveyPage");
 const VendorsPage = named(() => import("./pages/vendors/VendorsPage"), "VendorsPage");
+const MerakiAdmin = named(() => import("./pages/admin/MerakiAdmin"), "MerakiAdmin");
 const IpamPage = named(() => import("./pages/ipam/IpamPage"), "IpamPage");
 const DevicesPage = named(() => import("./pages/devices/DevicesPage"), "DevicesPage");
 const DevicePage = named(() => import("./pages/devices/DevicesPage"), "DevicePage");
@@ -160,6 +161,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "surveys", label: "Surveys", adminOnly: true, page: (me) => <SurveysAdmin me={me} /> },
   { path: "notices", label: "Notices", adminOnly: true, permission: "notices_manage", page: (me) => <NoticesAdmin me={me} /> },
   { path: "runners", label: "Runners", adminOnly: true, page: (me) => <RunnersAdmin me={me} /> },
+  { path: "meraki", label: "Meraki", adminOnly: true, page: (me) => <MerakiAdmin me={me} /> },
   { path: "action1", label: "Action1", adminOnly: true, feature: "action1", page: (me) => <Action1Admin me={me} /> },
   { path: "api-keys", label: "API keys", adminOnly: true, page: (me) => <ApiKeysAdmin me={me} /> },
   { path: "wallboards", label: "Wallboards", adminOnly: true, page: (me) => <WallboardsAdmin me={me} /> },

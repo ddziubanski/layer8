@@ -40,6 +40,7 @@ LABELS = {
     "housekeeping": "Housekeeping",
     "backup": "Backup",
     "ipam": "IP address scans (scheduled)",
+    "meraki": "Meraki: read client observations",
     "action1": "Action1: read patch status",
     "sweeps": "Device sweep (weekly ticket)",
     "warranty": "Warranty lookups (Dell, Lenovo)",
@@ -151,6 +152,20 @@ def build_jobs(session_factory, mail) -> list[Job]:
             session.commit()
         return (f"Queued {made} subnet scan(s)" if made else "No scans due"), bool(made)
 
+    def meraki_sync(forced: bool):
+        from app import meraki
+
+        if not meraki.on():
+            return "Off: enable and configure Settings > Meraki", False
+        client = meraki.from_settings()
+        try:
+            with session_factory() as session:
+                count = meraki.sync(session, client)
+                session.commit()
+            return f"Read {count} Meraki client observations", True
+        finally:
+            client.close()
+
     def action1_sync(forced: bool):
         from app import action1
 
@@ -231,6 +246,7 @@ def build_jobs(session_factory, mail) -> list[Job]:
         # Daily at backup_time: the next due time is worked out after each run.
         Job("backup", "backup", until_backup, backup),
         Job("ipam", "ipam", _every(300), ipam_scans),
+        Job("meraki", "meraki", lambda: timedelta(minutes=settings.meraki_sync_minutes), meraki_sync),
         Job("action1", "action1", lambda: timedelta(minutes=settings.action1_sync_minutes), action1_sync),
         Job("sweeps", "worker", _every(7 * 86400), device_sweep),
         Job("warranty", "devices", _every(6 * 3600), warranty_lookups),

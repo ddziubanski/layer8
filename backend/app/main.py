@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import IntegrityError
 
-from app.api import action1, admin, attachments, auth, branding, changes, checklists, devices, directory, fields, integrations, ipam, kb, network, notices, portal, reports, rules, surveys, system, tickets, vendors
+from app.api import action1, admin, attachments, auth, branding, changes, checklists, devices, directory, fields, integrations, ipam, kb, meraki, network, notices, portal, reports, rules, surveys, system, tickets, vendors
 from app.api import adchanges as adchanges_api
 from app.api import layouts as layouts_api
 from app.api import permissions as permissions_api
@@ -67,6 +67,8 @@ app.include_router(wallboards_api.router)
 app.include_router(action1.router)
 from app.api import software_deployment as software_deployment_api
 app.include_router(software_deployment_api.router)
+
+app.include_router(meraki.router)
 app.include_router(checklists.router)
 app.include_router(changes.router)
 app.include_router(kb.router)

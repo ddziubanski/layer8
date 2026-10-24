@@ -32,6 +32,7 @@ SOURCES = {
     "scripts": "Scripts",
     "ipam": "IP addresses",
     "action1": "Action1",
+    "meraki": "Meraki",
     "devices": "Devices",
     "changes": "Changes",
     "tickets": "Tickets",

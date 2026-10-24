@@ -864,3 +864,7 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 
 :root[data-preset="midnight"] input::placeholder,
 :root[data-preset="midnight"] textarea::placeholder { color: #9ab1c7; opacity: 1; }
+
+.meraki-context { border-left: 3px solid var(--teal, #0f766e); padding: 6px 10px; margin-top: 6px; overflow-wrap: anywhere; }
+.meraki-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.meraki-client { border: 1px solid var(--border, #dbe3e8); border-radius: 8px; padding: 14px; }

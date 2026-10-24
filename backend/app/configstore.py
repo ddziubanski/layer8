@@ -86,6 +86,11 @@ def _org_ids(v: list[str]) -> None:
             raise SettingsError(f"{o!r} isn't an Action1 organization ID (Test connection lists them)")
 
 
+def _meraki_networks(v: list[str]) -> None:
+    if len(v) > 20 or any(not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", n) for n in v):
+        raise SettingsError("Choose at most 20 network IDs, one per line (e.g. N_123456)")
+
+
 def _domain(v: str) -> None:
     if v:
         _domains([v])
@@ -388,6 +393,12 @@ SECTIONS: dict[str, list[Field]] = {
             check=_between(0, 4),
         ),
         Field("survey_question", "The question", "Answered from 1 (very unhappy) to 5 (very happy), with an optional comment.", check=_length(5, 300)),
+    ],
+    "meraki": [
+        Field("meraki_enabled", "Read Meraki client observations", "Optional, read only. Turning this off stops discovery and hides cached observations."),
+        Field("meraki_api_key", "Dashboard API key", "Use a dedicated Dashboard administrator with read-only access to the selected networks. This key is written to a secret file and never shown back.", secret=True, check=_length(0, 256)),
+        Field("meraki_network_ids", "Networks to read", "Required: one network ID per line, at most 20. Empty reads nothing. Test selected networks after saving.", check=_meraki_networks),
+        Field("meraki_sync_minutes", "Read Meraki every (minutes)", "Reads the last 24 hours of clients. Failed reads keep the last complete snapshot; older observations are marked stale.", check=_between(15, 1440)),
     ],
     "action1": [
         Field(

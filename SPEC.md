@@ -113,3 +113,7 @@ A robust, self-hosted service desk that takes the best of ManageEngine (process 
 - Where will it be hosted (Linux VM, Docker)? - response: it will be a self contained bootable iso - installation
 
 - Optional Midnight appearance (issue #41): Settings > Branding > Appearance selects a fixed dark navy/cyan command center palette. Custom colours remains the default and restores saved custom colours/dark-mode preference. The preset applies to console, sign-in and portal through existing branding; layouts, logos and permissions stay intact. CLI import: theme.theme_preset = midnight or custom; no schema migration.
+
+### Meraki client observations (issue #38)
+
+Optional read-only Dashboard discovery, configured in Settings > Meraki or installer section `meraki`. A dedicated read-only API key and explicit network IDs are required; an empty selection reads nothing. The worker reads a complete 24-hour client snapshot and replaces its separate observation cache atomically. IP addresses > Meraki clients lists and searches the observations; exact, unique MAC matches enrich documented addresses, device IP cards and ticket computer/device cards. Hostnames and IP addresses alone never establish identity. Ambiguous MACs do not enrich records; observed IPs and stale timestamps stay visible without editing documented IPAM fields. No Meraki configuration writes or automatic ticket creation. OAuth, diagnostic actions and webhook alerts are future slices.
