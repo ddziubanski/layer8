@@ -86,6 +86,9 @@ class UserOut(ORM):
         return self.password_hash is not None
 
 
+SidebarModule = Literal["dashboard", "devices", "changes", "purchase-orders", "vendors", "ipam", "kb", "scripts", "reports", "settings", "portal"]
+
+
 class MeOut(UserOut):
     """The signed-in user. portal_only: signed in by single sign-on, so the portal only;
     the console asks for a password. must_change_password: change it before anything else
@@ -99,6 +102,8 @@ class MeOut(UserOut):
     permissions: list[str] = []
     # Optional parts in use (Settings > General): "action1".
     features: list[str] = []
+    # Personal navigation only; never changes permissions, routes or global features.
+    hidden_modules: list[SidebarModule] = []
 
 
 HexColor = Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]
@@ -117,6 +122,13 @@ class ColorRule(BaseModel):
 class PreferencesIn(BaseModel):
     ticket_color: HexColor | None = None
     color_rules: list[ColorRule] = Field(default_factory=list, max_length=30)
+    # Omitted: preserve it, including when an older client saves colours. Null/[]: show all.
+    hidden_modules: list[SidebarModule] | None = Field(default=None, max_length=11)
+
+    @field_validator("hidden_modules")
+    @classmethod
+    def unique_modules(cls, value):
+        return sorted(set(value)) if value is not None else None
 
 
 MeOut.model_rebuild()
