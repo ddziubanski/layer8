@@ -64,6 +64,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Queues",
     "Ticket rules",
     "Ticket fields",
+    "Canned replies",
     "Users",
     "Groups",
     "Permissions",
@@ -101,7 +102,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
   mountApp("/admin/groups"); // an old bookmark
   await waitFor(() => expect(window.location.pathname).toBe("/settings/groups"));
   const agentTabs = await screen.findByRole("navigation", { name: "Settings" });
-  expect([...agentTabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Users", "Groups"]);
+  expect([...agentTabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Canned replies", "Users", "Groups"]);
 });
 
 test("upload a keytab, then turn Windows sign-in on", async () => {
@@ -439,7 +440,7 @@ test("a technician who was handed areas sees their tabs", async () => {
   mockApi({ "GET /api/auth/me": { ...ME, permissions: [...(ME.permissions ?? []), "rules_manage", "notices_manage"] }, "GET /api/notices/all": [] });
   mountApp("/settings/groups");
   const tabs = await screen.findByRole("navigation", { name: "Settings" });
-  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Ticket rules", "Users", "Groups", "Notices"]);
+  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Ticket rules", "Canned replies", "Users", "Groups", "Notices"]);
 });
 
 test("Action1's tab shows only while Action1 is in use", async () => {

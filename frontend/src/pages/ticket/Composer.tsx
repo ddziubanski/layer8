@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
 import { api } from "../../api/client";
@@ -45,6 +45,14 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
   });
 
   const action = !toRequester ? "Add internal note" : email ? "Send to requester" : "Post to portal";
+  const canned = useQuery({ queryKey: ["canned-replies", ticketId], queryFn: () => api.canned.list(ticketId) });
+  const insert = useMutation({
+    mutationFn: (id: number) => api.canned.render(id, ticketId),
+    onSuccess: (r) => {
+      setBody(body.trim() ? `${body.replace(/\s+$/, "")}\n\n${r.body}` : r.body);
+      if (r.to_requester) setToRequester(true);
+    },
+  });
 
   return (
     <div className={`card composer${toRequester ? "" : " internal"}${drop.dragging ? " dropping" : ""}`} {...drop.props}>
@@ -80,6 +88,7 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
         </ul>
       )}
       {drop.dragging && <div className="drop-hint">Drop files to attach them</div>}
+      {insert.error && <p className="error" role="alert">{insert.error.message}</p>}
       {send.error && (
         <p className="error" role="alert">
           {send.error.message}
@@ -101,6 +110,14 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
           Attach file
         </button>
         <span className="muted small">or drag files here</span>
+        {!!canned.data?.length && (
+          <select aria-label="Insert a canned reply" value="" disabled={insert.isPending} onChange={(e) => e.target.value && insert.mutate(Number(e.target.value))} style={{ width: "auto" }}>
+            <option value="">Canned reply…</option>
+            {canned.data.map((r) => (
+              <option key={r.id} value={r.id}>{r.personal ? r.title : `${r.title} (shared)`}</option>
+            ))}
+          </select>
+        )}
         <span className="spacer" />
         <button className={toRequester ? "btn" : "btn2"} type="button" disabled={!body.trim() || send.isPending} onClick={() => send.mutate()}>
           {action}

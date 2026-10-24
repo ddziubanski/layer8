@@ -37,6 +37,7 @@ CATALOG = [
     Permission("unifi_vouchers", "Assets", "Make UniFi guest Wi-Fi vouchers", "admins", "From a ticket, when Settings > UniFi > Guest Wi-Fi vouchers is on. Each voucher is noted on the ticket."),
     Permission("ticket_delete", "Tickets", "Delete tickets", "admins", "For the odd ticket that should never have existed (spam, a test). Gone for good, with its replies and files; the system log keeps who and what."),
     Permission("ticket_merge", "Tickets", "Merge tickets", "agents"),
+    Permission("canned_replies_manage", "Tickets", "Manage shared canned replies", "admins", "Everyone can insert shared replies and keep their own; this is for adding, changing and removing the shared ones."),
     Permission("ticket_bulk", "Tickets", "Change many tickets at once from the queue", "agents"),
     Permission("ad_create_accounts", "Accounts", "Create AD accounts", "agents", "New account on a ticket's AD account card."),
     Permission("kb_publish", "Knowledge base", "Publish articles (and change published ones)", "agents", "Others can still write drafts for someone to publish."),

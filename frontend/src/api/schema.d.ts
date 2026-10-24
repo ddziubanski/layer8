@@ -3778,6 +3778,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/canned-replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Replies
+         * @description Your own and the shared ones; with ticket_id, only those for that ticket's queue (or every queue).
+         */
+        get: operations["list_replies_api_canned_replies_get"];
+        put?: never;
+        /** Create Reply */
+        post: operations["create_reply_api_canned_replies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canned-replies/{reply_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Reply */
+        put: operations["update_reply_api_canned_replies__reply_id__put"];
+        post?: never;
+        /** Delete Reply */
+        delete: operations["delete_reply_api_canned_replies__reply_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canned-replies/{reply_id}/render": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Render
+         * @description The reply with this ticket's details filled in, ready for the composer.
+         */
+        post: operations["render_api_canned_replies__reply_id__render_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/junos/status": {
         parameters: {
             query?: never;
@@ -5560,6 +5619,49 @@ export interface components {
             code?: string | null;
             /** Error */
             error?: string | null;
+        };
+        /** CannedReplyIn */
+        CannedReplyIn: {
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            /**
+             * To Requester
+             * @default true
+             */
+            to_requester: boolean;
+            /** Queue Id */
+            queue_id?: number | null;
+            /**
+             * Personal
+             * @default true
+             */
+            personal: boolean;
+        };
+        /** CannedReplyOut */
+        CannedReplyOut: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            /** To Requester */
+            to_requester: boolean;
+            /** Queue Id */
+            queue_id: number | null;
+            /** Queue Name */
+            queue_name: string | null;
+            /** Personal */
+            personal: boolean;
+            /** May Edit */
+            may_edit: boolean;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** ChangeActionIn */
         ChangeActionIn: {
@@ -9015,6 +9117,13 @@ export interface components {
             started_at: string;
             /** Ended At */
             ended_at: string | null;
+        };
+        /** RenderedOut */
+        RenderedOut: {
+            /** Body */
+            body: string;
+            /** To Requester */
+            to_requester: boolean;
         };
         /** ReportChoiceOut */
         ReportChoiceOut: {
@@ -20571,6 +20680,177 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NutanixActionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_replies_api_canned_replies_get: {
+        parameters: {
+            query?: {
+                ticket_id?: number | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CannedReplyOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_reply_api_canned_replies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CannedReplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CannedReplyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_reply_api_canned_replies__reply_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                reply_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CannedReplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CannedReplyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_reply_api_canned_replies__reply_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                reply_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    render_api_canned_replies__reply_id__render_post: {
+        parameters: {
+            query: {
+                ticket_id: number;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                reply_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenderedOut"];
                 };
             };
             /** @description Validation Error */

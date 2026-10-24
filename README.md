@@ -34,6 +34,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Alerts when nobody takes a ticket: an email to everyone who could, or a post in a Teams channel, and a counter in the console ([docs/desk-hours.md](docs/desk-hours.md#tickets-nobody-has-taken)).
 - KACE-style ticket rules: on save, on a schedule, or in SQL.
 - Merge, parent and child tickets, bulk changes, and a page layout each technician can arrange.
+- Canned replies, shared or personal and per queue, with the ticket's details filled in ([docs/canned-replies.md](docs/canned-replies.md)).
 - A ticket page that puts the conversation first, with Work and History tabs and a drawer of tools (details, devices, directory, scripts, network…); the classic arranged layout is still there ([docs/ticket-workspace.md](docs/ticket-workspace.md)).
 - "Tickets Anywhere": technicians act on tickets by replying to email (`#close`, `#assign`, `#priority`).
 - Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
