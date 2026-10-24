@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { api, type Me } from "../../api/client";
 import { ME_KEY } from "../../queryClient";
 import { when } from "../../format";
@@ -7,6 +7,9 @@ import { SettingsForm } from "./SettingsForm";
 
 export function MerakiAdmin({ me }: { me: Me }) {
   const queryClient = useQueryClient();
+  const [params] = useSearchParams();
+  const connect = useMutation({ mutationFn: api.meraki.connect, onSuccess: ({ url }) => window.location.assign(url) });
+  const disconnect = useMutation({ mutationFn: api.meraki.disconnect, onSuccess: () => { void status.refetch(); void queryClient.invalidateQueries({ queryKey: ME_KEY }); } });
   const status = useQuery({ queryKey: ["meraki-status"], queryFn: api.meraki.status, refetchInterval: 10000, enabled: me.role === "admin" });
   const test = useMutation({ mutationFn: api.meraki.test });
   const sync = useMutation({ mutationFn: () => api.system.runJob("meraki") });
@@ -29,6 +32,20 @@ export function MerakiAdmin({ me }: { me: Me }) {
       {sync.isSuccess && <p role="status">Discovery requested. Follow progress in <Link to="/settings/status">worker status</Link>.</p>}
       {(test.error || sync.error) && <p role="alert" className="error">{(test.error || sync.error)?.message}</p>}
     </section>
-    <SettingsForm me={me} section="meraki" title="Connection and discovery" embedded onSaved={() => { test.reset(); sync.reset(); void status.refetch(); void queryClient.invalidateQueries({ queryKey: ME_KEY }); }} intro="Save a dedicated read-only Dashboard API key and explicit network IDs. OAuth authorization is planned as a separate connection option." />
+    {s?.auth_mode === "oauth" && <section className="card stack" aria-label="Meraki OAuth connection">
+      <h2>OAuth connection</h2>
+      <p className="muted">Authorize this server to read network configuration and client telemetry. Discovery reads only the network IDs you save below. OAuth is currently available for the meraki.com region.</p>
+      {s.oauth?.redirect_uri && <p>Register this exact redirect URI: <code>{s.oauth.redirect_uri}</code></p>}
+      <p>{s.oauth?.connected ? "Meraki OAuth connected." : "Save the application credentials and HTTPS portal address, then connect with a Meraki organization administrator."}</p>
+      {params.get("meraki_oauth") === "failed" && <p role="alert" className="error">Meraki authorization was not completed. Check your application registration, sign in to Layer 8, and connect again.</p>}
+      {params.get("meraki_oauth") === "connected" && s.oauth?.connected && <p role="status">Meraki authorization completed.</p>}
+      <div className="row-gap">
+        <button type="button" className="btn" disabled={!s.oauth?.configured || !s.networks.length || connect.isPending || disconnect.isPending} onClick={() => connect.mutate()}>{s.oauth?.connected ? "Reconnect Meraki" : "Connect Meraki"}</button>
+        <button type="button" className="btn2" disabled={disconnect.isPending || connect.isPending} onClick={() => disconnect.mutate()}>Disconnect Meraki</button>
+      </div>
+      {disconnect.data && <p role="status">{disconnect.data.revoked ? "Meraki connection removed. Remote access tokens can take up to 10 minutes to expire." : "Local connection removed. Remove this integration in Meraki Dashboard to revoke remote access."}</p>}
+      {(connect.error || disconnect.error) && <p role="alert" className="error">{(connect.error || disconnect.error)?.message}</p>}
+    </section>}
+    <SettingsForm me={me} section="meraki" title="Connection and discovery" embedded onSaved={() => { test.reset(); sync.reset(); connect.reset(); disconnect.reset(); void status.refetch(); void queryClient.invalidateQueries({ queryKey: ME_KEY }); }} intro="Save a dedicated read-only Dashboard API key and explicit network IDs. Or choose OAuth, save your application credentials, and connect above. Existing API keys remain available." />
   </div>;
 }

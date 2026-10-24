@@ -30,13 +30,13 @@ def network_ids():
 
 
 def on():
-    return bool(settings.meraki_enabled and settings.meraki_api_key and network_ids())
+    return bool(settings.meraki_enabled and configured() and network_ids())
 
 
 class Client:
-    def __init__(self, key, http=None, sleep=time.sleep):
+    def __init__(self, key, http=None, sleep=time.sleep, *, bearer=False):
         self.http = http or httpx.Client(timeout=20, follow_redirects=False)
-        self.key, self.sleep = key, sleep
+        self.key, self.sleep, self.bearer = key, sleep, bearer
 
     def close(self):
         self.http.close()
@@ -44,7 +44,7 @@ class Client:
     def get(self, path, params=None):
         for attempt in range(3):
             try:
-                response = self.http.get(BASE + path, params=params, headers={"X-Cisco-Meraki-API-Key": self.key}, follow_redirects=False)
+                response = self.http.get(BASE + path, params=params, headers={"Authorization": "Bearer " + self.key} if self.bearer else {"X-Cisco-Meraki-API-Key": self.key}, follow_redirects=False)
             except httpx.HTTPError:
                 raise MerakiError("Cannot reach Meraki Dashboard; the previous observations were kept") from None
             if response.status_code == 429 and attempt < 2:
@@ -55,7 +55,7 @@ class Client:
                 self.sleep(min(max(delay, 1), 5))
                 continue
             if response.status_code in (401, 403):
-                raise MerakiError("Meraki refused access; check the read-only API key and network access")
+                raise MerakiError("Meraki refused access; check the connection and selected network access")
             if response.status_code != 200:
                 raise MerakiError(f"Meraki returned HTTP {response.status_code}; the previous observations were kept")
             try:
@@ -93,8 +93,25 @@ class Client:
         raise MerakiError("Meraki discovery exceeded the page limit; select fewer networks")
 
 
+def configured():
+    if settings.meraki_auth_mode == "oauth":
+        from app import meraki_oauth
+        return meraki_oauth.status()["connected"]
+    return bool(settings.meraki_auth_mode == "api_key" and settings.meraki_api_key)
+
+
 def from_settings():
-    if not settings.meraki_api_key or not network_ids():
+    if settings.meraki_auth_mode == "oauth":
+        from app import meraki_oauth
+        from app.db import get_session_factory
+        from app import configstore
+        with get_session_factory()() as session:
+            meraki_oauth.lock(session)
+            configstore.refresh(session, force=True)
+            if settings.meraki_auth_mode != "oauth" or not network_ids():
+                raise MerakiError("Save OAuth authentication and explicit network IDs first")
+            return Client(meraki_oauth.access(), bearer=True)
+    if settings.meraki_auth_mode != "api_key" or not settings.meraki_api_key or not network_ids():
         raise MerakiError("Save a read-only API key and explicit network IDs in Settings > Meraki")
     return Client(settings.meraki_api_key)
 

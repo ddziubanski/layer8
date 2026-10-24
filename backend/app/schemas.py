@@ -2203,7 +2203,15 @@ class MerakiClientOut(BaseModel):
     stale: bool
 
 
+class MerakiOAuthOut(BaseModel):
+    configured: bool
+    connected: bool
+    redirect_uri: str | None = None
+
+
 class MerakiStatusOut(BaseModel):
+    auth_mode: str = "api_key"
+    oauth: MerakiOAuthOut | None = None
     enabled: bool
     configured: bool
     clients: int

@@ -40,7 +40,10 @@ async def lifespan(_: FastAPI):
     yield
 
 
+from app.meraki_oauth import RedactCallbackQuery
+
 app = FastAPI(title="Layer 8", version="0.1.0", lifespan=lifespan)
+app.add_middleware(RedactCallbackQuery)
 app.include_router(auth.router)
 app.include_router(teams_chat_api.router)
 app.include_router(tickets.router)

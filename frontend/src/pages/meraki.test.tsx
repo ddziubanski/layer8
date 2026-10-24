@@ -51,3 +51,36 @@ test("device context preserves documented IP and calls out Meraki's observed IP"
   expect(screen.getByText(/Observed IP 10.20.1.42/)).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Link" })).not.toBeInTheDocument();
 });
+
+const OAUTH = {
+  enabled: true, configured: true, clients: 2, networks: ["N_123"], auth_mode: "oauth",
+  oauth: { configured: true, connected: true, redirect_uri: "https://helpdesk.corp.example/api/meraki/oauth/callback" },
+};
+
+test("OAuth disconnect is explicit and warns when remote revocation fails", async () => {
+  let connected = true;
+  const calls = mockApi({
+    "GET /api/meraki/status": () => ({ ...OAUTH, configured: connected, oauth: { ...OAUTH.oauth, connected } }),
+    "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "DELETE /api/meraki/oauth/connection": () => { connected = false; return { revoked: false }; },
+  });
+  renderAt("/", [{ path: "/", element: <MerakiAdmin me={{ ...ME, role: "admin" }} /> }]);
+  expect(await screen.findByText("Meraki OAuth connected.")).toBeInTheDocument();
+  expect(screen.getByText(OAUTH.oauth.redirect_uri)).toBeInTheDocument();
+  expect(calls.filter(c => c.method !== "GET")).toHaveLength(0);
+  await userEvent.click(screen.getByRole("button", { name: "Disconnect Meraki" }));
+  expect(await screen.findByText(/Local connection removed/)).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Connect Meraki" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Read Meraki now" })).toBeDisabled();
+  expect(calls.filter(c => c.method === "DELETE")).toHaveLength(1);
+});
+
+test("OAuth callback failure is visible and reconnect is disabled until registration is saved", async () => {
+  mockApi({
+    "GET /api/meraki/status": { ...OAUTH, configured: false, oauth: { configured: false, connected: false } },
+    "GET /api/settings/meraki": { section: "meraki", fields: [] },
+  });
+  renderAt("/?meraki_oauth=failed", [{ path: "/", element: <MerakiAdmin me={{ ...ME, role: "admin" }} /> }]);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Meraki authorization was not completed");
+  expect(screen.getByRole("button", { name: "Connect Meraki" })).toBeDisabled();
+});

@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     presence_on_portal: bool = False
     # Optional read-only Meraki Dashboard client observations.
     meraki_enabled: bool = False
+    meraki_auth_mode: str = "api_key"
+    meraki_client_id: str = ""
+    meraki_client_secret: str = ""
     meraki_api_key: str = ""
     meraki_network_ids: list[str] = []
     meraki_sync_minutes: int = 60

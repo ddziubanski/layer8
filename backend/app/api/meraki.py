@@ -1,5 +1,10 @@
 """Meraki credentials remain admin-only; technicians can read cached network observations."""
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
+
+from app import meraki_oauth
+from app.auth import COOKIE, current_user, require_admin
 from sqlalchemy import func, select
 
 from app import meraki
@@ -15,7 +20,8 @@ router = APIRouter(prefix="/api/meraki", tags=["meraki"])
 def status(_: Admin, session: SessionDep):
     job = session.get(WorkerJob, "meraki")
     count = session.scalar(select(func.count()).select_from(meraki.visible(session).subquery())) if meraki.on() else 0
-    return dict(enabled=settings.meraki_enabled, configured=bool(settings.meraki_api_key and meraki.network_ids()),
+    return dict(enabled=settings.meraki_enabled, configured=bool(meraki.configured() and meraki.network_ids()),
+                auth_mode=settings.meraki_auth_mode, oauth=meraki_oauth.status(),
                 clients=count, networks=meraki.network_ids(), last_sync_at=job.last_finished_at if job else None,
                 last_sync_ok=job.last_ok if job else None, last_sync_error=job.last_error if job else None,
                 last_sync_summary=job.last_summary if job else None)
@@ -45,3 +51,44 @@ def clients(_: Agent, session: SessionDep, q: str = Query("", max_length=100), l
                           MerakiClient.mac.icontains(q.strip(), autoescape=True) |
                           MerakiClient.network_name.icontains(q.strip(), autoescape=True))
     return [meraki.as_dict(item) for item in session.scalars(stmt.order_by(MerakiClient.network_id, MerakiClient.mac).limit(limit))]
+
+
+class MerakiStartOut(BaseModel):
+    url: str
+
+
+class MerakiDisconnectOut(BaseModel):
+    revoked: bool
+
+
+@router.post("/oauth/connect", response_model=MerakiStartOut)
+def connect(user: Admin, request: Request, session: SessionDep):
+    meraki_oauth.lock(session)
+    try:
+        return {"url": meraki_oauth.begin(user.id, request.cookies.get(COOKIE))}
+    except meraki.MerakiError as exc:
+        raise HTTPException(409, str(exc)) from None
+
+
+@router.get("/oauth/callback", include_in_schema=False)
+def callback(request: Request, session: SessionDep):
+    # Always leave the authorization URL, including if the Layer 8 session expired.
+    result = "failed"
+    try:
+        user = require_admin(current_user(request, session))
+        meraki_oauth.lock(session)
+        meraki_oauth.finish(user.id, request.cookies.get(COOKIE), request.state.meraki_callback)
+        result = "connected"
+    except (meraki.MerakiError, HTTPException):
+        pass
+    return RedirectResponse("/settings/meraki?meraki_oauth=" + result, status_code=303,
+                            headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"})
+
+
+@router.delete("/oauth/connection", response_model=MerakiDisconnectOut)
+def disconnect(_: Admin, session: SessionDep):
+    meraki_oauth.lock(session)
+    try:
+        return {"revoked": meraki_oauth.disconnect()}
+    except meraki.MerakiError as exc:
+        raise HTTPException(409, str(exc)) from None

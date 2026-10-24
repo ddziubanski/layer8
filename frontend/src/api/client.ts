@@ -531,6 +531,8 @@ export const api = {
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
   meraki: {
+    connect: () => request<S["MerakiStartOut"]>("POST", "/api/meraki/oauth/connect"),
+    disconnect: () => request<S["MerakiDisconnectOut"]>("DELETE", "/api/meraki/oauth/connection"),
     status: () => request<S["MerakiStatusOut"]>("GET", "/api/meraki/status"),
     test: () => request<S["MerakiTestOut"]>("POST", "/api/meraki/test"),
     clients: (q = "") => request<S["MerakiClientOut"][]>("GET", `/api/meraki/clients${query({ q })}`),

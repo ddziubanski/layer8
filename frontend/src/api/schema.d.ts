@@ -3343,6 +3343,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meraki/oauth/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect */
+        post: operations["connect_api_meraki_oauth_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/oauth/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Disconnect */
+        delete: operations["disconnect_api_meraki_oauth_connection_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/checklist-templates": {
         parameters: {
             query?: never;
@@ -6736,8 +6770,33 @@ export interface components {
             /** Stale */
             stale: boolean;
         };
+        /** MerakiDisconnectOut */
+        MerakiDisconnectOut: {
+            /** Revoked */
+            revoked: boolean;
+        };
+        /** MerakiOAuthOut */
+        MerakiOAuthOut: {
+            /** Configured */
+            configured: boolean;
+            /** Connected */
+            connected: boolean;
+            /** Redirect Uri */
+            redirect_uri?: string | null;
+        };
+        /** MerakiStartOut */
+        MerakiStartOut: {
+            /** Url */
+            url: string;
+        };
         /** MerakiStatusOut */
         MerakiStatusOut: {
+            /**
+             * Auth Mode
+             * @default api_key
+             */
+            auth_mode: string;
+            oauth?: components["schemas"]["MerakiOAuthOut"] | null;
             /** Enabled */
             enabled: boolean;
             /** Configured */
@@ -18343,6 +18402,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MerakiClientOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_api_meraki_oauth_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_meraki_oauth_connection_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDisconnectOut"];
                 };
             };
             /** @description Validation Error */

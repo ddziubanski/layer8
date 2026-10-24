@@ -123,3 +123,66 @@ Public API: `GET /api/meraki/status` and `POST /api/meraki/test` require an admi
 Schema migration `a86d20f49c71` adds only `meraki_clients`. Reconcile its parent revision when rebasing after other pending migration PRs.
 
 Contracts: [Get network](https://developer.cisco.com/meraki/api-v1/get-network/), [Get network clients](https://developer.cisco.com/meraki/api-v1/get-network-clients/), [OAuth follow-up reference](https://developer.cisco.com/meraki/api-v1/oauth-overview/).
+
+
+### Optional Meraki OAuth connection
+
+The Meraki settings also support OAuth instead of an API key. This is one
+administrator-authorized connection for this Layer 8 installation, shared by the
+API and discovery worker; it does not change technician sign-in or permissions.
+API-key authentication remains the default and continues to work unchanged.
+
+1. Use an HTTPS portal base address in Settings > General (for example,
+   `https://helpdesk.corp.example`). OAuth currently supports the `meraki.com`
+   region only.
+2. Register a confidential integration at <https://integrate.cisco.com>. Register
+   the exact redirect URI `https://helpdesk.corp.example/api/meraki/oauth/callback`.
+   Grant only `dashboard:general:config:read` and
+   `dashboard:general:telemetry:read`. These are the documented scopes for the
+   network-details and client-list GET endpoints; no write scope is requested.
+3. Before connecting, deploy the callback location from
+   `install/files/nginx-helpdesk.conf`. It suppresses query-bearing access/error
+   logs for this exact endpoint. Existing installations must apply that location
+   and reload Nginx; custom proxies, WAFs and request tracing must likewise omit
+   this callback's query parameters. The application redacts the query from
+   Uvicorn logs before authentication and returns a no-store, no-referrer redirect.
+4. In Settings > Meraki, choose OAuth, save the client ID and client secret, and
+   enter the explicit network IDs to read. Click **Connect Meraki** and authorize
+   with a Meraki organization administrator. Then test the selected networks and
+   enable discovery. OAuth scopes authorize organization data; Layer 8's explicit
+   network list limits which of that data its discovery reads.
+
+All four settings (`meraki_auth_mode`, `meraki_client_id`,
+`meraki_client_secret`, existing `meraki_network_ids`) are also available through
+`PUT /api/settings/meraki` and the CLI settings answers-file import. The client
+secret and token/pending-state files live under `HELPDESK_SECRETS_DIR` with mode
+0600, never in the database or API responses. Do not copy these files between
+installations. Treat backups containing them as credentials.
+
+The admin API is `POST /api/meraki/oauth/connect` (returns the authorization URL),
+`GET /api/meraki/oauth/callback` (provider callback), and
+`DELETE /api/meraki/oauth/connection` (forgets locally and attempts provider
+revocation). Cookie-authenticated mutations require the usual CSRF header. A
+callback must match the initiating admin, browser session, configuration and
+single-use state within ten minutes. Only the latest connection attempt is kept.
+Changing credentials or the portal address requires reconnecting.
+
+API processes and the worker serialize refresh/disconnect using a PostgreSQL
+transaction advisory lock. A durable marker is saved before submitting a rotating
+refresh token. A crash, timeout, rejected response or failed token write requires
+reconnecting; the old refresh token is never retried automatically. A successful
+rotation is persisted before any discovery read, including reads that later fail.
+No Meraki network configuration is changed. Cached observation matching and
+atomic snapshot replacement follow the existing discovery behavior.
+
+Disconnect removes local tokens and pending authorization before attempting
+remote revocation. If revocation cannot be verified (including an interrupted
+refresh), the screen instructs the administrator to remove the integration in
+Meraki Dashboard under Organization > Integrations. Meraki says revoked access
+tokens can take up to ten minutes to stop working. Meraki does not notify this
+application when an administrator revokes access remotely; failed reads retain
+the previous observation snapshot.
+
+Protocol reference: [Meraki OAuth overview](https://developer.cisco.com/meraki/api-v1/oauth-overview/).
+Endpoint scopes were checked against Cisco's
+[OpenAPI specification](https://github.com/meraki/openapi/blob/master/openapi/spec3.json).
