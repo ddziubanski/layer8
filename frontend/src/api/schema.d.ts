@@ -122,7 +122,7 @@ export interface paths {
         get?: never;
         /**
          * Save Preferences
-         * @description My colour in the queue and my own colour rules.
+         * @description My colours and sidebar; omitted fields preserve independently saved preferences.
          */
         put: operations["save_preferences_api_auth_me_preferences_put"];
         post?: never;
@@ -218,6 +218,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/copilot/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview Copilot Context */
+        get: operations["preview_copilot_context_api_tickets__ticket_id__copilot_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/copilot": {
         parameters: {
             query?: never;
@@ -229,7 +246,7 @@ export interface paths {
         put?: never;
         /**
          * Ask Copilot
-         * @description Ask Microsoft 365 Copilot as yourself. The question (not the answer) is noted in the ticket's history.
+         * @description Ask as yourself; bind follow-ups and review the bounded context before sharing it.
          */
         post: operations["ask_copilot_api_tickets__ticket_id__copilot_post"];
         delete?: never;
@@ -3292,6 +3309,248 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meraki/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook
+         * @description Default Meraki JSON payload; authenticates with its dedicated sharedSecret, not a user cookie.
+         */
+        post: operations["webhook_api_meraki_webhooks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/webhooks/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Webhook Status */
+        get: operations["webhook_status_api_meraki_webhooks_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_meraki_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test */
+        post: operations["test_api_meraki_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clients */
+        get: operations["clients_api_meraki_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/oauth/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect */
+        post: operations["connect_api_meraki_oauth_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/oauth/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Disconnect */
+        delete: operations["disconnect_api_meraki_oauth_connection_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meraki/clients/{network_id}/{mac}/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diagnostic Cache */
+        get: operations["diagnostic_cache_api_meraki_clients__network_id___mac__diagnostics_get"];
+        put?: never;
+        /** Read Diagnostics */
+        post: operations["read_diagnostics_api_meraki_clients__network_id___mac__diagnostics_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/devices/{device_id}/software": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_action1_devices__device_id__software_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["preview_api_action1_deployments_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit */
+        post: operations["submit_api_action1_deployments__id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_action1_deployments__id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/deployments/{id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh */
+        post: operations["refresh_api_action1_deployments__id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/action1/devices/{device_id}/deployments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History */
+        get: operations["history_api_action1_devices__device_id__deployments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/checklist-templates": {
         parameters: {
             query?: never;
@@ -4801,6 +5060,12 @@ export interface components {
             background_in_console: boolean;
             /** Portal Welcome */
             portal_welcome: string;
+            /**
+             * Theme Preset
+             * @default custom
+             * @enum {string}
+             */
+            theme_preset: "custom" | "midnight";
             /** Theme Brand */
             theme_brand: string;
             /** Theme Sidebar */
@@ -5390,6 +5655,17 @@ export interface components {
              */
             copilot: boolean;
         };
+        /** CopilotContextOut */
+        CopilotContextOut: {
+            /** Sections */
+            sections: string[];
+            /** Characters */
+            characters: number;
+            /** Limit */
+            limit: number;
+            /** Digest */
+            digest: string;
+        };
         /** CopilotIn */
         CopilotIn: {
             /** Question */
@@ -5399,6 +5675,13 @@ export interface components {
              * @default true
              */
             include_ticket: boolean;
+            /**
+             * Include Internal
+             * @default false
+             */
+            include_internal: boolean;
+            /** Context Digest */
+            context_digest?: string | null;
             /** Conversation Id */
             conversation_id?: string | null;
         };
@@ -5410,6 +5693,67 @@ export interface components {
             answer: string;
             /** Citations */
             citations: components["schemas"]["CitationOut"][];
+        };
+        /** DeploymentDetailsOut */
+        DeploymentDetailsOut: {
+            /** Organization Id */
+            organization_id: string;
+            /** Organization */
+            organization: string;
+            /** Endpoint Id */
+            endpoint_id: string;
+            /** Endpoint Name */
+            endpoint_name: string;
+            /** Device Name */
+            device_name: string;
+            /** Platform */
+            platform: string;
+            /** Connection */
+            connection: string;
+            /** Package Id */
+            package_id: string;
+            /** Package Name */
+            package_name: string;
+            /** Vendor */
+            vendor: string;
+            /** Version Id */
+            version_id: string;
+            /** Version */
+            version: string;
+            /** Installed */
+            installed: components["schemas"]["InstalledSoftwareMatchOut"][];
+        };
+        /** DeploymentOut */
+        DeploymentOut: {
+            /** Id */
+            id: string;
+            /** Device Id */
+            device_id: number | null;
+            /** Ticket Id */
+            ticket_id: number | null;
+            /** State */
+            state: string;
+            /** Message */
+            message: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Instance Id */
+            instance_id: string | null;
+            details: components["schemas"]["DeploymentDetailsOut"];
+        };
+        /** DeploymentPreviewIn */
+        DeploymentPreviewIn: {
+            /** Device Id */
+            device_id: number;
+            /** Ticket Id */
+            ticket_id?: number | null;
+            /** Package Id */
+            package_id: string;
+            /** Version Id */
+            version_id: string;
         };
         /** DeviceDetailOut */
         DeviceDetailOut: {
@@ -6034,6 +6378,13 @@ export interface components {
             /** Guid */
             guid: string;
         };
+        /** InstalledSoftwareMatchOut */
+        InstalledSoftwareMatchOut: {
+            /** Name */
+            name: string;
+            /** Version */
+            version: string;
+        };
         /** IntegrationNoteIn */
         IntegrationNoteIn: {
             /** Text */
@@ -6144,6 +6495,7 @@ export interface components {
             updated_at: string;
             subnet?: components["schemas"]["SubnetRef"] | null;
             switch_port?: components["schemas"]["SwitchPortOut"] | null;
+            meraki?: components["schemas"]["MerakiClientOut"] | null;
         };
         /** IpCell */
         IpCell: {
@@ -6638,6 +6990,11 @@ export interface components {
              * @default []
              */
             features: string[];
+            /**
+             * Hidden Modules
+             * @default []
+             */
+            hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             /** Has Password */
             readonly has_password: boolean;
         };
@@ -6645,6 +7002,205 @@ export interface components {
         MembersIn: {
             /** User Ids */
             user_ids: number[];
+        };
+        /** MerakiClientOut */
+        MerakiClientOut: {
+            /**
+             * Diagnostics Available
+             * @default false
+             */
+            diagnostics_available: boolean;
+            /** Network Id */
+            network_id: string;
+            /** Network Name */
+            network_name: string;
+            /** Client Id */
+            client_id: string;
+            /** Mac */
+            mac: string;
+            /** Address */
+            address: string;
+            /** Description */
+            description: string;
+            /** Status */
+            status: string;
+            /** Vlan */
+            vlan: string;
+            /** Switch Name */
+            switch_name: string;
+            /** Switch Serial */
+            switch_serial: string;
+            /** Port */
+            port: string;
+            /** Connection */
+            connection: string;
+            /** Ssid */
+            ssid: string;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Stale */
+            stale: boolean;
+        };
+        /** MerakiDiagnosticData */
+        MerakiDiagnosticData: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "wired" | "wireless";
+            /**
+             * Read At
+             * Format: date-time
+             */
+            read_at: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /** Switch Serial */
+            switch_serial?: string | null;
+            port?: components["schemas"]["MerakiPortOut"] | null;
+            /** Events */
+            events?: components["schemas"]["MerakiWirelessEventOut"][];
+            /**
+             * Events Truncated
+             * @default false
+             */
+            events_truncated: boolean;
+        };
+        /** MerakiDiagnosticOut */
+        MerakiDiagnosticOut: {
+            /** Network Id */
+            network_id: string;
+            /** Mac */
+            mac: string;
+            /** Client Id */
+            client_id: string;
+            /**
+             * Client Observed At
+             * Format: date-time
+             */
+            client_observed_at: string;
+            /**
+             * Attempted At
+             * Format: date-time
+             */
+            attempted_at: string;
+            /**
+             * Retry At
+             * Format: date-time
+             */
+            retry_at: string;
+            /** Cached */
+            cached: boolean;
+            /** Error */
+            error: string | null;
+            data: components["schemas"]["MerakiDiagnosticData"] | null;
+        };
+        /** MerakiDisconnectOut */
+        MerakiDisconnectOut: {
+            /** Revoked */
+            revoked: boolean;
+        };
+        /** MerakiOAuthOut */
+        MerakiOAuthOut: {
+            /** Configured */
+            configured: boolean;
+            /** Connected */
+            connected: boolean;
+            /** Redirect Uri */
+            redirect_uri?: string | null;
+        };
+        /** MerakiPortOut */
+        MerakiPortOut: {
+            /** Port Id */
+            port_id: string;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Status */
+            status?: string | null;
+            /** Speed */
+            speed?: string | null;
+            /** Duplex */
+            duplex?: string | null;
+            /** Is Uplink */
+            is_uplink?: boolean | null;
+            /** Client Count */
+            client_count?: number | null;
+            /** Errors */
+            errors?: string[];
+            /** Warnings */
+            warnings?: string[];
+        };
+        /** MerakiStartOut */
+        MerakiStartOut: {
+            /** Url */
+            url: string;
+        };
+        /** MerakiStatusOut */
+        MerakiStatusOut: {
+            /**
+             * Auth Mode
+             * @default api_key
+             */
+            auth_mode: string;
+            oauth?: components["schemas"]["MerakiOAuthOut"] | null;
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Clients */
+            clients: number;
+            /** Networks */
+            networks: string[];
+            /** Last Sync At */
+            last_sync_at: string | null;
+            /** Last Sync Ok */
+            last_sync_ok: boolean | null;
+            /** Last Sync Error */
+            last_sync_error: string | null;
+            /** Last Sync Summary */
+            last_sync_summary: string | null;
+        };
+        /** MerakiTestOut */
+        MerakiTestOut: {
+            /** Networks */
+            networks: string[];
+        };
+        /** MerakiWirelessEventOut */
+        MerakiWirelessEventOut: {
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Type */
+            type: string;
+            /** Subtype */
+            subtype?: string | null;
+            /** Severity */
+            severity?: string | null;
+            /** Device Serial */
+            device_serial?: string | null;
+            /** Band */
+            band?: string | null;
+            /** Channel */
+            channel?: number | null;
+            /** Rssi */
+            rssi?: number | null;
+            /** Duration Ms */
+            duration_ms?: number | null;
         };
         /** MergeIn */
         MergeIn: {
@@ -7536,6 +8092,8 @@ export interface components {
             ticket_color?: string | null;
             /** Color Rules */
             color_rules?: components["schemas"]["ColorRule"][];
+            /** Hidden Modules */
+            hidden_modules?: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
         };
         /**
          * Priority
@@ -9045,6 +9603,35 @@ export interface components {
          * @enum {string}
          */
         SlaState: "none" | "ok" | "at_risk" | "breached" | "met";
+        /** SoftwareCatalogOut */
+        SoftwareCatalogOut: {
+            /** Items */
+            items: components["schemas"]["SoftwarePackageOut"][];
+            /** More */
+            more: boolean;
+            /** Offset */
+            offset: number;
+        };
+        /** SoftwarePackageOut */
+        SoftwarePackageOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Vendor */
+            vendor: string;
+            /** Platform */
+            platform: string;
+            /** Versions */
+            versions: components["schemas"]["SoftwareVersionOut"][];
+        };
+        /** SoftwareVersionOut */
+        SoftwareVersionOut: {
+            /** Id */
+            id: string;
+            /** Version */
+            version: string;
+        };
         /** StaleDeviceOut */
         StaleDeviceOut: {
             device: components["schemas"]["DeviceOut"];
@@ -10265,6 +10852,40 @@ export interface components {
             /** End */
             end?: string | null;
         };
+        /** WebhookDeliveryOut */
+        WebhookDeliveryOut: {
+            /** Network Id */
+            network_id: string;
+            /** Serial */
+            serial: string;
+            /** Alert Type */
+            alert_type: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Outcome */
+            outcome: string;
+            /** Ticket Id */
+            ticket_id: number | null;
+        };
+        /** WebhookStatusOut */
+        WebhookStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Endpoint */
+            endpoint: string | null;
+            /** Deliveries */
+            deliveries: components["schemas"]["WebhookDeliveryOut"][];
+        };
         /** WindowsSignInIn */
         WindowsSignInIn: {
             /** Enabled */
@@ -10714,6 +11335,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_copilot_context_api_tickets__ticket_id__copilot_context_get: {
+        parameters: {
+            query?: {
+                include_internal?: boolean;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotContextOut"];
                 };
             };
             /** @description Validation Error */
@@ -18133,6 +18789,507 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Action1TestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_api_meraki_webhooks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    sharedSecret: string;
+                    /** @description 0.1 for availability alerts */
+                    version?: string;
+                    organizationId: string;
+                    networkId: string;
+                    /** @description stopped_reporting / started_reporting; other types are ignored */
+                    alertTypeId: string;
+                    alertId?: string;
+                    deviceSerial?: string;
+                    /** Format: date-time */
+                    occurredAt?: string;
+                    /** Format: date-time */
+                    sentAt?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    webhook_status_api_meraki_webhooks_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_meraki_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_api_meraki_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiTestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clients_api_meraki_clients_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiClientOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_api_meraki_oauth_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_meraki_oauth_connection_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDisconnectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    diagnostic_cache_api_meraki_clients__network_id___mac__diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                network_id: string;
+                mac: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDiagnosticOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_diagnostics_api_meraki_clients__network_id___mac__diagnostics_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                network_id: string;
+                mac: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerakiDiagnosticOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_api_action1_devices__device_id__software_get: {
+        parameters: {
+            query: {
+                q: string;
+                offset?: number;
+                ticket_id?: number | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareCatalogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_action1_deployments_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeploymentPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_api_action1_deployments__id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_action1_deployments__id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_action1_deployments__id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    history_api_action1_devices__device_id__deployments_get: {
+        parameters: {
+            query?: {
+                ticket_id?: number | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentOut"][];
                 };
             };
             /** @description Validation Error */

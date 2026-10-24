@@ -30,6 +30,7 @@ class Permission:
 
 
 CATALOG = [
+    Permission("action1_deploy", "Assets", "Deploy software through Action1", "admins", "Search packages, review a single device deployment and submit it. Separate opt-in credentials are required; existing patch status stays read-only."),
     Permission("ticket_delete", "Tickets", "Delete tickets", "admins", "For the odd ticket that should never have existed (spam, a test). Gone for good, with its replies and files; the system log keeps who and what."),
     Permission("ticket_merge", "Tickets", "Merge tickets", "agents"),
     Permission("ticket_bulk", "Tickets", "Change many tickets at once from the queue", "agents"),

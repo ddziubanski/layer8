@@ -33,3 +33,7 @@ curl -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
      -d '{"text": "Server room: J. Park in 09:14, out 09:52"}' \
      https://helpdesk.corp.example/api/integrations/tickets/HD-1042/notes
 ```
+
+## Meraki availability webhooks
+
+The optional [Meraki device availability receiver](meraki-webhooks.md) uses a separate shared secret in the default Meraki JSON payload. Configure it in Settings > Meraki; integration API keys do not authorize webhook delivery. Device outages create normal routed tickets, and recovery adds an internal note for technician review.

@@ -94,6 +94,7 @@ def public(session: Session) -> dict:
         "sign_in_message": settings.sign_in_message,
         "background_in_console": settings.background_in_console,
         "portal_welcome": settings.portal_welcome,
+        "theme_preset": settings.theme_preset,
         "theme_brand": settings.theme_brand,
         "theme_sidebar": settings.theme_sidebar,
         "dark_mode": settings.dark_mode,

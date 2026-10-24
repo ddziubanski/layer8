@@ -11,6 +11,7 @@ const DEFAULT: Branding = {
   sign_in_message: "",
   background_in_console: false,
   portal_welcome: "",
+  theme_preset: "custom",
   theme_brand: "#0f6b5c",
   theme_sidebar: "#14211e",
   dark_mode: "off",
@@ -52,10 +53,22 @@ function lightOn(colour: string, background: string, ratio: number): string {
 const DARK_SURFACE = "#1a2321";
 
 /** The CSS tokens a theme sets (see styles.css), for the page or a preview box. */
-export function themeTokens(brand: string, sidebar: string): Record<string, string> {
+export const MIDNIGHT = {
+  brand: "#00b7d6", onBrand: "#031b28", sidebar: "#07131f", ink: "#e6f0fa", muted: "#acc2d5",
+  surface: "#101f2d", link: "#55dbf3", greenBg: "#134d41", green: "#a0f4d2",
+  amberBg: "#624600", amber: "#ffe1a2", redBg: "#702932", red: "#ffe3e6",
+};
+
+export function themeTokens(brand: string, sidebar: string, preset = "custom"): Record<string, string> {
+  if (preset === "midnight") return {
+    "--brand": MIDNIGHT.brand, "--on-brand": MIDNIGHT.onBrand, "--brand-dark": "#36d1e9",
+    "--side": MIDNIGHT.sidebar, "--side-on": "#102d43", "--side-ink": MIDNIGHT.muted,
+    "--accent": "#26d8f0", "--dark-link": MIDNIGHT.link,
+  };
   const light = lightOn(brand, DARK_SURFACE, 4.5);
   return {
     "--brand": brand,
+    "--on-brand": "#ffffff",
     "--brand-dark": mix(brand, "#000000", 0.3),
     "--side": sidebar,
     "--side-on": mix(sidebar, "#ffffff", 0.08),
@@ -82,15 +95,17 @@ function useDark(mode: string): boolean {
 export function useBranding(): Branding {
   const q = useQuery({ queryKey: ["branding"], queryFn: api.branding, staleTime: 5 * 60_000 });
   const b = { ...DEFAULT, ...q.data };
-  const dark = useDark(b.dark_mode);
+  const customDark = useDark(b.dark_mode);
+  const dark = b.theme_preset === "midnight" || customDark;
   useEffect(() => {
     document.title = b.product_name;
   }, [b.product_name]);
   useEffect(() => {
     const root = document.documentElement;
-    for (const [k, v] of Object.entries(themeTokens(b.theme_brand, b.theme_sidebar))) root.style.setProperty(k, v);
+    for (const [k, v] of Object.entries(themeTokens(b.theme_brand, b.theme_sidebar, b.theme_preset))) root.style.setProperty(k, v);
     root.dataset.theme = dark ? "dark" : "light";
-  }, [b.theme_brand, b.theme_sidebar, dark]);
+    root.dataset.preset = b.theme_preset ?? "custom";
+  }, [b.theme_brand, b.theme_sidebar, b.theme_preset, dark]);
   useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
     if (!link) {

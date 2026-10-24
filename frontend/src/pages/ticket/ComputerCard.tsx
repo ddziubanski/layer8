@@ -6,11 +6,14 @@ import { api, type Ticket } from "../../api/client";
 import { DeviceIps } from "../../components/DeviceIps";
 import { DevicePicker } from "../../components/DevicePicker";
 import { PatchStatus } from "../../components/PatchStatus";
+import { SoftwareDeployment } from "../../components/SoftwareDeployment";
+import { ME_KEY } from "../../queryClient";
 import { when } from "../../format";
 
 /** The requester's computer, and quick actions on it: Remote Assistance, scripts, its device page. */
 export function ComputerCard({ ticket, onChanged, onRunScript }: { ticket: Ticket; onChanged: () => void; onRunScript: () => void }) {
   const queryClient = useQueryClient();
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me });
   const pc = ticket.computer;
   const [changing, setChanging] = useState(false);
   const theirs = useQuery({
@@ -74,6 +77,7 @@ export function ComputerCard({ ticket, onChanged, onRunScript }: { ticket: Ticke
               Run a script…
             </button>
           </div>
+          <SoftwareDeployment me={me.data} deviceId={pc.id} ticketId={ticket.id} onChanged={onChanged} />
           {open.map((s) => (
             <div key={s.id} className="small row-gap">
               <span className="spacer">

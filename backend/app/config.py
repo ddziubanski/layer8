@@ -42,11 +42,29 @@ class Settings(BaseSettings):
     after_hours_message: str = "No one is in right now. A technician is next expected {next}."
     # Technicians' Teams status (status only) on the portal, read through the Email tab's app registration.
     presence_on_portal: bool = False
-    # Action1 (patching, read-only): API credentials from Action1 > API credentials, the organization
-    # to read, and the region its console is in.
+    # Optional read-only Meraki Dashboard client observations.
+    meraki_enabled: bool = False
+    meraki_diagnostics_enabled: bool = False
+    meraki_auth_mode: str = "api_key"
+    meraki_client_id: str = ""
+    meraki_client_secret: str = ""
+    meraki_api_key: str = ""
+    meraki_network_ids: list[str] = []
+    meraki_sync_minutes: int = 60
+    meraki_webhook_enabled: bool = False
+    meraki_webhook_secret: str = ""
+    meraki_webhook_organization_ids: list[str] = []
+    meraki_webhook_queue_id: int = 0
+
+    # Action1 API credentials and console region (patch state is read only).
     action1_region: str = "NorthAmerica"
     action1_client_id: str = ""
     action1_client_secret: str = ""
+    # Explicitly opt in with separate write-capable credentials and organisation allowlist.
+    action1_deploy_enabled: bool = False
+    action1_deploy_client_id: str = ""
+    action1_deploy_client_secret: str = ""
+    action1_deploy_org_ids: list[str] = []
     # Whether Action1 is in use at all (asked at install): off hides Settings > Action1 and patch
     # status everywhere, and nothing is read.
     action1_enabled: bool = False
@@ -138,6 +156,7 @@ class Settings(BaseSettings):
     portal_welcome: str = ""
     email_footer: str = ""
     # Theme: buttons and links, and the sidebar; dark mode off / auto (each device's setting) / on.
+    theme_preset: str = "custom"
     theme_brand: str = "#0f6b5c"
     theme_sidebar: str = "#14211e"
     dark_mode: str = "off"

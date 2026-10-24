@@ -3,6 +3,8 @@
 import type { components } from "./schema";
 
 type S = components["schemas"];
+export type SoftwareDeployment = S["DeploymentOut"];
+export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
 export type TicketPage = S["TicketPage"];
 export type Comment = S["CommentOut"];
@@ -12,6 +14,7 @@ export type Queue = S["QueueOut"];
 export type User = S["UserOut"];
 /** The signed-in user; portal_only after Windows sign-in (the console needs a password). */
 export type Me = S["MeOut"];
+export type MerakiObservation = S["MerakiClientOut"];
 export type SignInOptions = S["SignInOptionsOut"];
 export type UserRef = S["UserRef"];
 export type SavedView = S["SavedView"];
@@ -229,6 +232,7 @@ export const api = {
     disconnect: () => request<void>("DELETE", "/api/teams/connection"),
     chats: (id: number) => request<S["ChatOut"][]>("GET", `/api/tickets/${id}/teams/chats`),
     send: (id: number, body: S["SendIn"]) => request<S["SentOut"]>("POST", `/api/tickets/${id}/teams/messages`, body),
+    copilotContext: (id: number, internal: boolean) => request<S["CopilotContextOut"]>("GET", `/api/tickets/${id}/copilot/context?include_internal=${internal}`),
     copilot: (id: number, body: S["CopilotIn"]) => request<S["CopilotOut"]>("POST", `/api/tickets/${id}/copilot`, body),
   },
   me: () => request<Me>("GET", "/api/auth/me"),
@@ -530,7 +534,22 @@ export const api = {
     start: (ticketId: number, body: StartChecklist) => request<TicketChecklist>("POST", `/api/tickets/${ticketId}/checklists`, body),
     setDate: (ticketId: number, checklistId: number, keyDate: string) => request<TicketChecklist>("PUT", `/api/tickets/${ticketId}/checklists/${checklistId}/date`, { key_date: keyDate }),
   },
+  meraki: {
+    webhooks: () => request<S["WebhookStatusOut"]>("GET", "/api/meraki/webhooks/status"),
+    diagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"] | null>("GET", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
+    readDiagnostics: (network: string, mac: string) => request<S["MerakiDiagnosticOut"]>("POST", `/api/meraki/clients/${encodeURIComponent(network)}/${encodeURIComponent(mac)}/diagnostics`),
+    connect: () => request<S["MerakiStartOut"]>("POST", "/api/meraki/oauth/connect"),
+    disconnect: () => request<S["MerakiDisconnectOut"]>("DELETE", "/api/meraki/oauth/connection"),
+    status: () => request<S["MerakiStatusOut"]>("GET", "/api/meraki/status"),
+    test: () => request<S["MerakiTestOut"]>("POST", "/api/meraki/test"),
+    clients: (q = "") => request<S["MerakiClientOut"][]>("GET", `/api/meraki/clients${query({ q })}`),
+  },
   action1: {
+    software: (deviceId: number, q: string, offset = 0, ticket_id?: number) => request<S["SoftwareCatalogOut"]>("GET", `/api/action1/devices/${deviceId}/software${query({ q, offset, ticket_id })}`),
+    preview: (body: S["DeploymentPreviewIn"]) => request<SoftwareDeployment>("POST", "/api/action1/deployments/preview", body),
+    submit: (id: string) => request<SoftwareDeployment>("POST", `/api/action1/deployments/${id}/submit`, {}),
+    refreshDeployment: (id: string) => request<SoftwareDeployment>("POST", `/api/action1/deployments/${id}/refresh`, {}),
+    deployments: (deviceId: number, ticket_id?: number) => request<SoftwareDeployment[]>("GET", `/api/action1/devices/${deviceId}/deployments${query({ ticket_id })}`),
     status: () => request<Action1Status>("GET", "/api/action1/status"),
     machines: (problem?: string) => request<DevicePatch[]>("GET", `/api/action1/machines${query({ problem })}`),
     forDevice: (deviceId: number) => request<DevicePatch | null>("GET", `/api/action1/devices/${deviceId}`),

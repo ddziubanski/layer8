@@ -2,20 +2,25 @@ import base64
 import logging
 import time
 from collections import defaultdict, deque
-from typing import Annotated
+from typing import Annotated, get_args
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
+from sqlalchemy import select
 
 from app import auth, kerberos, permissions, sla
 from app.auth import CurrentUser, SessionDep
 from app.config import settings
-from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SignInOptionsOut
+from app.schemas import LoginIn, MeOut, PasswordChangeIn, PreferencesIn, SidebarModule, SignInOptionsOut
+from app.models import AppSetting, User
 
 
 def me_out(session, user) -> MeOut:
     out = MeOut.model_validate(user)
     out.permissions = permissions.granted(session, user)
-    out.features = [name for name, on in (("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
+    out.features = [name for name, on in (("meraki", settings.meraki_enabled), ("action1", settings.action1_enabled), ("copilot", settings.copilot_enabled and settings.teams_chat_enabled)) if on]
+    navigation = session.get(AppSetting, f"personal_navigation:{user.id}")
+    hidden = navigation.value.get("hidden_modules", []) if navigation else []
+    out.hidden_modules = sorted({m for m in hidden if isinstance(m, str) and m in get_args(SidebarModule)}) if isinstance(hidden, list) else []
     return out
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -112,8 +117,19 @@ def change_password(body: PasswordChangeIn, user: CurrentUser, request: Request,
 
 @router.put("/me/preferences", response_model=MeOut)
 def save_preferences(body: PreferencesIn, user: CurrentUser, session: SessionDep):
-    """My colour in the queue and my own colour rules."""
-    user.ticket_color = body.ticket_color.lower() if body.ticket_color else None
-    user.color_rules = [r.model_dump() for r in body.color_rules]
+    """My colours and sidebar; omitted fields preserve independently saved preferences."""
+    session.scalar(select(User).where(User.id == user.id).with_for_update())
+    if "ticket_color" in body.model_fields_set:
+        user.ticket_color = body.ticket_color.lower() if body.ticket_color else None
+    if "color_rules" in body.model_fields_set:
+        user.color_rules = [r.model_dump() for r in body.color_rules]
+    if "hidden_modules" in body.model_fields_set:
+        key = f"personal_navigation:{user.id}"
+        row = session.get(AppSetting, key)
+        if row is None:
+            row = AppSetting(key=key)
+            session.add(row)
+        row.value = {"hidden_modules": body.hidden_modules or []}
+        row.updated_by_id, row.updated_at = user.id, sla.utcnow()
     session.commit()
     return me_out(session, user)

@@ -86,6 +86,9 @@ class UserOut(ORM):
         return self.password_hash is not None
 
 
+SidebarModule = Literal["dashboard", "devices", "changes", "purchase-orders", "vendors", "ipam", "kb", "scripts", "reports", "settings", "portal"]
+
+
 class MeOut(UserOut):
     """The signed-in user. portal_only: signed in by single sign-on, so the portal only;
     the console asks for a password. must_change_password: change it before anything else
@@ -99,6 +102,8 @@ class MeOut(UserOut):
     permissions: list[str] = []
     # Optional parts in use (Settings > General): "action1".
     features: list[str] = []
+    # Personal navigation only; never changes permissions, routes or global features.
+    hidden_modules: list[SidebarModule] = []
 
 
 HexColor = Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]
@@ -117,6 +122,13 @@ class ColorRule(BaseModel):
 class PreferencesIn(BaseModel):
     ticket_color: HexColor | None = None
     color_rules: list[ColorRule] = Field(default_factory=list, max_length=30)
+    # Omitted: preserve it, including when an older client saves colours. Null/[]: show all.
+    hidden_modules: list[SidebarModule] | None = Field(default=None, max_length=11)
+
+    @field_validator("hidden_modules")
+    @classmethod
+    def unique_modules(cls, value):
+        return sorted(set(value)) if value is not None else None
 
 
 MeOut.model_rebuild()
@@ -417,6 +429,7 @@ class BrandingOut(BaseModel):
     sign_in_message: str
     background_in_console: bool
     portal_welcome: str
+    theme_preset: Literal["custom", "midnight"] = "custom"
     theme_brand: str
     theme_sidebar: str
     dark_mode: str
@@ -2184,6 +2197,98 @@ class SwitchPortOut(BaseModel):
     shared: bool
 
 
+class MerakiPortOut(BaseModel):
+    model_config = ConfigDict(strict=True)
+    port_id: str = Field(min_length=1, max_length=100)
+    enabled: bool | None = None
+    status: str | None = Field(default=None, max_length=64)
+    speed: str | None = Field(default=None, max_length=64)
+    duplex: str | None = Field(default=None, max_length=32)
+    is_uplink: bool | None = None
+    client_count: int | None = Field(default=None, ge=0, le=1000000)
+    errors: list[Annotated[str, Field(max_length=256)]] = Field(default_factory=list, max_length=32)
+    warnings: list[Annotated[str, Field(max_length=256)]] = Field(default_factory=list, max_length=32)
+
+
+class MerakiWirelessEventOut(BaseModel):
+    model_config = ConfigDict(strict=True)
+    occurred_at: datetime
+    type: str = Field(min_length=1, max_length=64)
+    subtype: str | None = Field(default=None, max_length=128)
+    severity: str | None = Field(default=None, max_length=32)
+    device_serial: str | None = Field(default=None, max_length=100)
+    band: str | None = Field(default=None, max_length=16)
+    channel: int | None = Field(default=None, ge=1, le=1000)
+    rssi: int | None = Field(default=None, ge=-2147483648, le=2147483647)
+    duration_ms: int | None = Field(default=None, ge=0, le=2147483647)
+
+
+class MerakiDiagnosticData(BaseModel):
+    kind: Literal["wired", "wireless"]
+    read_at: datetime
+    window_start: datetime
+    window_end: datetime
+    switch_serial: str | None = None
+    port: MerakiPortOut | None = None
+    events: list[MerakiWirelessEventOut] = Field(default_factory=list, max_length=50)
+    events_truncated: bool = False
+
+
+class MerakiDiagnosticOut(BaseModel):
+    network_id: str
+    mac: str
+    client_id: str
+    client_observed_at: datetime
+    attempted_at: datetime
+    retry_at: datetime
+    cached: bool
+    error: str | None
+    data: MerakiDiagnosticData | None
+
+
+class MerakiClientOut(BaseModel):
+    diagnostics_available: bool = False
+    network_id: str
+    network_name: str
+    client_id: str
+    mac: str
+    address: str
+    description: str
+    status: str
+    vlan: str
+    switch_name: str
+    switch_serial: str
+    port: str
+    connection: str
+    ssid: str
+    last_seen_at: datetime | None
+    observed_at: datetime
+    stale: bool
+
+
+class MerakiOAuthOut(BaseModel):
+    configured: bool
+    connected: bool
+    redirect_uri: str | None = None
+
+
+class MerakiStatusOut(BaseModel):
+    auth_mode: str = "api_key"
+    oauth: MerakiOAuthOut | None = None
+    enabled: bool
+    configured: bool
+    clients: int
+    networks: list[str]
+    last_sync_at: datetime | None
+    last_sync_ok: bool | None
+    last_sync_error: str | None
+    last_sync_summary: str | None
+
+
+class MerakiTestOut(BaseModel):
+    networks: list[str]
+
+
 class IpAddressOut(ORM):
     id: int
     address: IpText
@@ -2200,6 +2305,7 @@ class IpAddressOut(ORM):
     # The most specific subnet it's in.
     subnet: SubnetRef | None = None
     switch_port: SwitchPortOut | None = None
+    meraki: MerakiClientOut | None = None
 
 
 class IpCell(BaseModel):

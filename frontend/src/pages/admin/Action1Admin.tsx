@@ -74,7 +74,7 @@ export function Action1Admin({ me }: { me: User }) {
             </details>
           )}
         </section>
-        <SettingsForm me={me} section="action1" title="Connection, tickets and changes" intro="Save the client ID and secret, then use Test connection above: it lists the organizations to put below." embedded onSaved={() => test.reset()} />
+        <SettingsForm me={me} section="action1" title="Connection, tickets, changes and software deployment" intro="Test connection above uses the read-only patch credentials. Optional software deployment has separate credentials and an explicit organization allowlist below; grant technicians access in Settings > Permissions." embedded onSaved={() => test.reset()} />
       </div>
     </>
   );

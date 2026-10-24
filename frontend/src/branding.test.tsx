@@ -19,3 +19,35 @@ test("uploaded customer logos keep their original presentation", () => {
   expect(logo).toHaveAttribute("src", "/api/branding/logo");
   expect(logo).not.toHaveClass("brand-logo-default");
 });
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { waitFor } from "@testing-library/react";
+import { contrast, MIDNIGHT, themeTokens, useBranding } from "./branding";
+import { mockApi } from "./test/util";
+
+afterEach(() => vi.unstubAllGlobals());
+
+test("Midnight text, links and status badges meet AA contrast", () => {
+  for (const [foreground, background] of [
+    [MIDNIGHT.onBrand, MIDNIGHT.brand], [MIDNIGHT.ink, MIDNIGHT.surface],
+    [MIDNIGHT.muted, MIDNIGHT.surface], [MIDNIGHT.link, MIDNIGHT.surface],
+    [MIDNIGHT.green, MIDNIGHT.greenBg], [MIDNIGHT.amber, MIDNIGHT.amberBg], [MIDNIGHT.red, MIDNIGHT.redBg],
+  ]) expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
+});
+
+test("switching back from Midnight restores custom colours and light mode", async () => {
+  const custom = { theme_preset: "custom", theme_brand: "#1d4ed8", theme_sidebar: "#111827", dark_mode: "off" };
+  mockApi({ "GET /api/branding": custom });
+  const client = new QueryClient();
+  client.setQueryData(["branding"], { ...custom, theme_preset: "midnight" });
+  function Probe() { useBranding(); return null; }
+  render(<QueryClientProvider client={client}><Probe /></QueryClientProvider>);
+  expect(document.documentElement.dataset.theme).toBe("dark");
+  expect(document.documentElement.dataset.preset).toBe("midnight");
+  expect(document.documentElement.style.getPropertyValue("--brand")).toBe(MIDNIGHT.brand);
+  await client.invalidateQueries({ queryKey: ["branding"] });
+  await waitFor(() => expect(document.documentElement.dataset.preset).toBe("custom"));
+  expect(document.documentElement.dataset.theme).toBe("light");
+  expect(document.documentElement.style.getPropertyValue("--brand")).toBe(custom.theme_brand);
+  expect(document.documentElement.style.getPropertyValue("--on-brand")).toBe("#ffffff");
+  expect(themeTokens(custom.theme_brand, custom.theme_sidebar)["--side"]).toBe(custom.theme_sidebar);
+});

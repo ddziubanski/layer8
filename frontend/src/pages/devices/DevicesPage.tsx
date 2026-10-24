@@ -7,6 +7,7 @@ import { api, type DeviceDetail, type DeviceIn, type Me } from "../../api/client
 import { StatusChip } from "../../components/Chips";
 import { DeviceIps } from "../../components/DeviceIps";
 import { PatchStatus } from "../../components/PatchStatus";
+import { SoftwareDeployment } from "../../components/SoftwareDeployment";
 import { UserPicker } from "../../components/UserPicker";
 import { when } from "../../format";
 import { can, uses } from "../../permissions";
@@ -633,6 +634,7 @@ export function DevicePage({ me }: { me: Me }) {
                 Patching (Action1)
               </div>
               <PatchStatus deviceId={d.id} />
+              <SoftwareDeployment me={me} deviceId={d.id} />
             </section>
           )}
           <section className="card stack" aria-label="IP addresses" style={{ gap: 8 }}>

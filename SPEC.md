@@ -38,6 +38,7 @@ A robust, self-hosted service desk that takes the best of ManageEngine (process 
 - Agent queue: scope (My tickets / My groups, i.e. queues I own directly or through a group / All tickets, remembered per browser) combined with saved views (All open, Unassigned, SLA at risk, Waiting on user, From email, From portal). Only the ticket list scrolls (heading, scope and views stay; column headings stick). Select tickets to move them to another queue and/or assign them together (each change noted on its ticket; per-ticket failures reported). Colour coding: each technician picks a colour (My preferences), shown as a stripe on tickets assigned to them in everyone's queue; personal colour rules (priority, status, SLA, assignee, source, queue, requester; first match wins) tint rows in their own view only. Moving one ticket: the Queue dropdown on the ticket, with the move noted.
 - Ticket detail: conversation, attachments, auto-diagnosis panel, assignment, linked assets, one-click actions, reply or internal note.
 - Self-service portal.
+- Personal navigation (issue #36): My preferences offers a minimal sidebar preset, individual optional-module checkboxes and Show all modules. Tickets, My preferences and sign-out cannot be hidden. The preference follows the technician account across browsers and never changes permissions, direct routes, Ctrl+K destinations, background jobs or global module configuration. Defaults remain the full sidebar. Stored per user in the existing app_settings table under personal_navigation:<user id>; no schema migration.
 - Settings: all configuration and setup in one area with a tab per topic (General, Queues, Ticket rules, Users, Groups, Directory, Email, Windows sign-in, Log; more to come, e.g. priority matrix, SLA, branding). The Status tab shows each part at a glance (database, worker heartbeat, directory sync, email, Windows sign-in, disk space), the server processes, and the worker's jobs (email, directory sync, scheduled rules, housekeeping) with last run, result and next run; admins can run a job now, pause it, or restart the worker (gracefully, or force-restart through a server-configured command such as systemctl). The Log tab shows the system log (directory, email, sign-in, settings changes by name only, errors with details), kept 90 days. Tabs show by role; admin-only areas are hidden from agents. Every stored setting is editable here, including credentials (kept as secret files, never shown back); a server environment variable overrides and locks a field.
 
 ## 4. Should-haves
@@ -114,3 +115,22 @@ Tracked in [issue #33](https://github.com/ddziubanski/layer8/issues/33). Planned
 - Attachment size limit and retention period? - we can do 3M not sure withat 365 exchange limits are atm
 - How many agents and tickets per month (sizing)?
 - Where will it be hosted (Linux VM, Docker)? - response: it will be a self contained bootable iso - installation
+
+### Meraki client observations (issue #38)
+
+Optional read-only Dashboard discovery, configured in Settings > Meraki or installer section `meraki`. A dedicated read-only API key and explicit network IDs are required; an empty selection reads nothing. The worker reads a complete 24-hour client snapshot and replaces its separate observation cache atomically. IP addresses > Meraki clients lists and searches the observations; exact, unique MAC matches enrich documented addresses, device IP cards and ticket computer/device cards. Hostnames and IP addresses alone never establish identity. Ambiguous MACs do not enrich records; observed IPs and stale timestamps stay visible without editing documented IPAM fields. No Meraki configuration writes or automatic ticket creation. OAuth, diagnostic actions and webhook alerts are future slices.
+
+
+### Meraki diagnostics (issue #40)
+
+Opt-in read-only diagnostics in the Meraki client view: an explicit technician read
+checks current client identity/attachment and switch network membership before
+showing last-known switch-port status or a bounded fifteen-minute wireless event
+window. Results, source timestamps and failures are separate from authoritative
+IPAM/discovery data, with cross-process serialization, per-client/global request
+limits and bounded retention. OAuth adds only switch/wireless telemetry read
+scopes when enabled, requiring reconnection; API keys remain supported. Ticket
+cards remain observation-only. Webhook intake and any audited ticket action remain
+future slices; network configuration writes are not included.
+
+- Optional Midnight appearance (issue #41): Settings > Branding > Appearance selects a fixed dark navy/cyan command center palette. Custom colours remains the default and restores saved custom colours/dark-mode preference. The preset applies to console, sign-in and portal through existing branding; layouts, logos and permissions stay intact. CLI import: theme.theme_preset = midnight or custom; no schema migration.
