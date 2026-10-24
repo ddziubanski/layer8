@@ -59,6 +59,8 @@ The installer:
 - **Settings:** applies the answers with `python -m app.cli setup`: settings, the first admin and, for a demo, sample data.
 - **Web server and services:** writes the nginx site, the systemd units and a sudoers rule that lets the app restart its worker (Settings > Status).
 
+For signed, reviewed GitHub application updates and progress during downtime, see [GitHub updates](github-updates.md). The first updater-enabled release still needs a manual installation/bootstrap; no production signing key is trusted automatically.
+
 Running it again **updates the app** and keeps the database, settings, files, secrets and passwords. It also runs any new migrations. Take a backup first (Settings > Backup > Back up now).
 
 Other distributions aren't tested. The installer warns and carries on, but expect to adjust package names.

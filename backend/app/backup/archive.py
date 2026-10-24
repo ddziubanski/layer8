@@ -303,7 +303,7 @@ def _swap_folder(new: Path, current: Path, stamp: str) -> Path | None:
     return kept
 
 
-def restore(path: Path, passphrase: str, *, database_url: str | None = None) -> tuple[Manifest, list[str]]:
+def restore(path: Path, passphrase: str, *, database_url: str | None = None, replace_public_schema: bool = False) -> tuple[Manifest, list[str]]:
     """Replace the database, file store and secrets with the backup's. The services must be stopped.
 
     Everything is checked before anything is changed; the database is restored in one
@@ -319,11 +319,34 @@ def restore(path: Path, passphrase: str, *, database_url: str | None = None) -> 
         os.chmod(work, 0o700)
         manifest = read_archive(path, passphrase, "backup", work)
         _run(["pg_restore", "--list", str(work / "database.dump")], env, "Reading the database dump")
-        _run(
-            ["pg_restore", "--clean", "--if-exists", "--no-owner", "--single-transaction", "--exit-on-error", f"--dbname={url}", str(work / "database.dump")],
-            env,
-            "Database restore",
-        )
+        if replace_public_schema:
+            # Updater rollback can follow a migration that introduced tables/FKs
+            # absent from the old dump. pg_restore --clean alone leaves those
+            # behind (or fails dropping referenced old tables). Reset and restore
+            # the dedicated app's public schema in ONE transaction instead.
+            sql = work / "database.sql"
+            _run(["pg_restore", "--no-owner", f"--file={sql}", str(work / "database.dump")], env, "Preparing database rollback")
+            prepared = work / "rollback.sql"
+            # PostgreSQL versions differ on whether the standard public schema
+            # has an explicit CREATE statement in a dump.
+            creates_public = False
+            with sql.open("r", encoding="utf-8") as source:
+                for line in source:
+                    if line.strip() in ('CREATE SCHEMA public;', 'CREATE SCHEMA "public";'):
+                        creates_public = True
+                        break
+            with prepared.open("wb") as output, sql.open("rb") as source:
+                output.write(b"DROP SCHEMA IF EXISTS public CASCADE;\n")
+                if not creates_public:
+                    output.write(b"CREATE SCHEMA public;\n")
+                shutil.copyfileobj(source, output)
+            _run(["psql", "--no-psqlrc", "--single-transaction", "--set=ON_ERROR_STOP=1", f"--dbname={url}", f"--file={prepared}"], env, "Atomic database rollback")
+        else:
+            _run(
+                ["pg_restore", "--clean", "--if-exists", "--no-owner", "--single-transaction", "--exit-on-error", f"--dbname={url}", str(work / "database.dump")],
+                env,
+                "Database restore",
+            )
         done.append(f"Database restored (schema revision {manifest.revision})")
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         for name, current in (("storage", settings.storage_dir.resolve()), ("secrets", settings.secrets_dir.resolve())):

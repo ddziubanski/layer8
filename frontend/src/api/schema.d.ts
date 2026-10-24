@@ -4,6 +4,80 @@
  */
 
 export interface paths {
+    "/api/system/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Updates */
+        get: operations["get_updates_api_system_updates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/updates/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Updates */
+        post: operations["check_updates_api_system_updates_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/updates/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Update */
+        post: operations["apply_update_api_system_updates_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/update-progress/{request_id}.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Update Progress
+         * @description Opaque capability URL returned only after admin review. Sanitized progress only.
+         *
+         *     Nginx serves the identical root-owned file during API downtime. No directory
+         *     listings, paths, usernames, counts, secrets or raw command output are exposed.
+         */
+        get: operations["get_update_progress_api_update_progress__request_id__json_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/options": {
         parameters: {
             query?: never;
@@ -5087,6 +5161,15 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** ApplyIn */
+        ApplyIn: {
+            /** Version */
+            version: string;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** Confirm */
+            confirm: boolean;
+        };
         /** AssignIn */
         AssignIn: {
             /** Queue Id */
@@ -8625,6 +8708,30 @@ export interface components {
             /** Hours */
             hours?: string | null;
         };
+        /** ReleaseOut */
+        ReleaseOut: {
+            /** Version */
+            version: string;
+            /** Url */
+            url: string;
+            /** Notes */
+            notes: string;
+            /** Published At */
+            published_at?: string | null;
+            /** Newer */
+            newer: boolean;
+            /**
+             * Verified
+             * @default false
+             */
+            verified: boolean;
+            /** Manifest Sha256 */
+            manifest_sha256?: string | null;
+            /** Package Size */
+            package_size?: number | null;
+            /** Problem */
+            problem?: string | null;
+        };
         /** RemoteLaunchOut */
         RemoteLaunchOut: {
             session: components["schemas"]["RemoteSessionOut"];
@@ -10832,6 +10939,32 @@ export interface components {
             /** Notes */
             notes: string[];
         };
+        /** UpdateStatusOut */
+        UpdateStatusOut: {
+            /** Current Version */
+            current_version: string;
+            /** Repository */
+            repository: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Installer Ready */
+            installer_ready: boolean;
+            /** Backup Ready */
+            backup_ready: boolean;
+            /** Checked At */
+            checked_at?: string | null;
+            release?: components["schemas"]["ReleaseOut"] | null;
+            /** Problem */
+            problem?: string | null;
+            /** Busy */
+            busy: boolean;
+            /** Operation */
+            operation?: {
+                [key: string]: unknown;
+            };
+            /** Progress Url */
+            progress_url?: string | null;
+        };
         /**
          * Urgency
          * @enum {string}
@@ -11360,6 +11493,134 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_updates_api_system_updates_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_updates_api_system_updates_check_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_update_api_system_updates_apply_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_update_progress_api_update_progress__request_id__json_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     sign_in_options_api_auth_options_get: {
         parameters: {
             query?: never;

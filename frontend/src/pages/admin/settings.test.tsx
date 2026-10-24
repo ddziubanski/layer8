@@ -88,6 +88,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Warranty lookups",
     "Purchasing",
     "IP addresses",
+    "Updates",
     "Backup",
     "Status",
     "Log",

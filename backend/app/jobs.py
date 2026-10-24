@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import sla, syslog
+from app import VERSION, sla, syslog
 from app.config import settings
 from app.models import ServiceRequest, WorkerJob
 
@@ -351,7 +351,7 @@ class Worker:
     def beat(self) -> None:
         with self.session_factory() as session:
             now = sla.utcnow()
-            syslog.beat(session, "worker", now, pid=os.getpid(), host=socket.gethostname(), started_at=self.started_at.isoformat(), tick_seconds=TICK_SECONDS)
+            syslog.beat(session, "worker", now, pid=os.getpid(), host=socket.gethostname(), started_at=self.started_at.isoformat(), tick_seconds=TICK_SECONDS, version=VERSION)
             session.commit()
         self.last_beat = now
 

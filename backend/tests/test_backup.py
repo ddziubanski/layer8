@@ -126,6 +126,42 @@ def test_restore_into_a_fresh_install(db, setup, scratch_db):
     assert secret.read_text() == "s3cret" and secret.stat().st_mode & 0o777 == 0o600
 
 
+@pytest.mark.parametrize("fail_restore", [False, True])
+def test_updater_rollback_removes_new_foreign_keys_atomically(db, setup, scratch_db, monkeypatch, fail_restore):
+    made = archive.create(db)
+    eng = create_engine(scratch_db)
+    with eng.begin() as connection:
+        connection.execute(text("CREATE TABLE tickets (id integer PRIMARY KEY)"))
+        connection.execute(text("INSERT INTO tickets VALUES (99)"))
+        connection.execute(text("CREATE TABLE added_by_failed_upgrade (id integer REFERENCES tickets(id))"))
+        connection.execute(text("INSERT INTO added_by_failed_upgrade VALUES (99)"))
+    original_run = archive._run
+
+    def run(command, env, what):
+        if fail_restore and command[0] == "psql":
+            sql = next(arg.removeprefix("--file=") for arg in command if arg.startswith("--file="))
+            with open(sql, "a", encoding="utf-8") as output:
+                output.write("\nSELECT layer8_intentionally_missing_function();\n")
+        return original_run(command, env, what)
+
+    monkeypatch.setattr(archive, "_run", run)
+    if fail_restore:
+        with pytest.raises(archive.BackupError, match="Atomic database rollback"):
+            archive.restore(made.path, PASS, database_url=scratch_db, replace_public_schema=True)
+    else:
+        archive.restore(made.path, PASS, database_url=scratch_db, replace_public_schema=True)
+    with eng.connect() as connection:
+        if fail_restore:
+            # Even the schema reset was rolled back: pre-attempt data/FKs remain.
+            assert connection.execute(text("SELECT id FROM tickets")).scalar() == 99
+            assert connection.execute(text("SELECT id FROM added_by_failed_upgrade")).scalar() == 99
+        else:
+            assert connection.execute(text("SELECT subject FROM tickets")).scalar() == "Backed up"
+            assert connection.execute(text("SELECT to_regclass('public.added_by_failed_upgrade')")).scalar() is None
+            assert connection.execute(text("SELECT has_table_privilege('helpdesk_rules', 'tickets', 'SELECT')")).scalar()
+    eng.dispose()
+
+
 def test_backup_job_runs_daily_at_the_set_time(db, setup, session_factory, monkeypatch):
     monkeypatch.setattr(settings, "backup_time", "02:30")
     now = datetime(2026, 10, 19, 1, 0).astimezone()

@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     # AGPL section 13: the source of this installation, packed by the ISO build (iso/build.sh), served
     # at /api/source; and the public repository shown beside it (Settings > General).
     source_archive: Path = Path(__file__).resolve().parents[2] / "layer8-source.tar.gz"
+    updates_enabled: bool = False
     source_repository: str = "https://github.com/ddziubanski/layer8"
     # Development only: trust an X-Dev-User header holding an email, no password.
     # Never enable in production.

@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify update progress during API downtime
+        run: sh install/tests/check-update-progress.sh
       - name: Verify OAuth callback headers and log redaction through Nginx
         run: sh install/tests/check-oauth-proxy.sh
   wizard:
@@ -25,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check shell syntax
         run: |
-          for file in install/wizard.sh install/files/layer8-console iso/*.sh dev/iso-test.sh; do sh -n "$file"; done
+          for file in install/install.sh install/install-updater.sh install/wizard.sh install/files/layer8-console install/tests/*.sh iso/*.sh dev/iso-test.sh; do sh -n "$file"; done
       - name: Exercise wizard flows without provisioning
         run: python3 -m unittest discover -s install/tests -v
       - name: Check boot media contracts
@@ -52,6 +54,12 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y qemu-system-x86 ovmf python3-pil
       - name: Build offline appliance ISO
         run: sh iso/build.sh
+      - name: Exercise real database, backup, upgrade and recovery in an offline disposable appliance
+        run: |
+          docker run --rm --network none \
+            -e LAYER8_DISPOSABLE_UPDATE_TEST=1 \
+            -v "$PWD:/src:ro" -v "$PWD/iso/build/bundle:/bundle:ro" \
+            debian:trixie sh -c 'set -eu; export DEBIAN_FRONTEND=noninteractive; apt-get install -y -qq --no-install-recommends /bundle/debs/*.deb >/dev/null; python3 /src/install/tests/update_integration.py'
       - name: Boot both firmware menus without a disk
         run: python3 iso/tests/boot_smoke.py "$(find iso/build -maxdepth 1 -name 'layer8-*.iso' -print -quit)" iso/build/previews
       - uses: actions/upload-artifact@v4

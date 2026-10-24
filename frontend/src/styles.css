@@ -930,3 +930,16 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .portal-source { margin: 32px 0 8px; text-align: center; }
 .login-source { text-align: center; margin-top: 14px; }
 .login .login-source { color: var(--muted); }
+
+/* Release update status stays readable during maintenance. */
+.updates-page .card { gap:14px; }
+.updates-page .card p, .updates-page .card h2, .updates-page .card h3 { margin-block:0; }
+.update-progress { border-top:1px solid var(--line); padding-top:18px; gap:14px; }
+.update-phase { display:inline-block; font-size:20px; margin-bottom:8px; }
+.update-progress progress { width:100%; height:8px; accent-color:var(--link); }
+.update-checks { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+.update-checks li { display:flex; align-items:flex-start; gap:10px; border:1px solid var(--line); border-radius:8px; padding:12px; }
+.update-checks .chip { flex-shrink:0; }
+.update-checks p { color:var(--muted); font-size:13px; line-height:1.5; margin-top:4px !important; }
+.update-progress details { border-top:1px solid var(--line); padding-top:14px; }
+.update-progress details ol { display:grid; gap:8px; font-size:13px; color:var(--muted); }

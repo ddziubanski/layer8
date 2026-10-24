@@ -76,6 +76,7 @@ const RulesAdmin = named(() => import("./pages/admin/RulesAdmin"), "RulesAdmin")
 const SettingsForm = named(() => import("./pages/admin/SettingsForm"), "SettingsForm");
 const OnboardingAdmin = named(() => import("./pages/admin/OnboardingAdmin"), "OnboardingAdmin");
 const RunnersAdmin = named(() => import("./pages/admin/RunnersAdmin"), "RunnersAdmin");
+const UpdatesAdmin = named(() => import("./pages/admin/UpdatesAdmin"), "UpdatesAdmin");
 const BackupAdmin = named(() => import("./pages/admin/BackupAdmin"), "BackupAdmin");
 const StatusAdmin = named(() => import("./pages/admin/StatusAdmin"), "StatusAdmin");
 const SystemLogAdmin = named(() => import("./pages/admin/SystemLogAdmin"), "SystemLogAdmin");
@@ -207,6 +208,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
     adminOnly: true,
     page: (me) => <SettingsForm me={me} section="ipam" title="IP addresses" intro="Scans: when a documented address counts as gone, and which unknown hosts are flagged. Each subnet's schedule and runner are set on the subnet." />,
   },
+  { path: "updates", label: "Updates", adminOnly: true, page: (me) => <UpdatesAdmin me={me} /> },
   { path: "backup", label: "Backup", adminOnly: true, page: (me) => <BackupAdmin me={me} /> },
   { path: "status", label: "Status", adminOnly: true, page: (me) => <StatusAdmin me={me} /> },
   { path: "log", label: "Log", adminOnly: true, page: (me) => <SystemLogAdmin me={me} /> },

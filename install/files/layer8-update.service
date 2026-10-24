@@ -1,0 +1,21 @@
+[Unit]
+Description=Layer 8: install one reviewed, signed GitHub release
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/python3 -I /usr/local/lib/layer8-updater/layer8-update.py
+WorkingDirectory=/usr/local/lib/layer8-updater
+Environment=PYTHONPATH=
+Environment=PATH=/usr/sbin:/usr/bin:/sbin:/bin
+UMask=0077
+TimeoutStartSec=45min
+KillMode=control-group
+ProtectHome=true
+ProtectSystem=full
+PrivateTmp=true
+# Intentionally not enabled at boot. An interrupted update stays in maintenance
+# for local recovery rather than guessing whether a database restore is safe.

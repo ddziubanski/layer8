@@ -230,6 +230,14 @@ nginx -t 2>&1 | tail -1
 # --- Services
 
 say "Services"
+# Root-owned updater and trust boundary. No release key is downloaded or trusted automatically.
+install -d -m 755 -o root -g root /usr/local/lib/layer8-updater /etc/helpdesk/update-keys /var/lib/layer8-updater
+install -d -m 711 -o root -g root /var/lib/layer8-updater/work
+install -d -m 755 -o root -g root /var/lib/layer8-updater/progress
+install -d -m 770 -o root -g helpdesk /var/lib/layer8-updater/inbox
+install -m 644 -o root -g root "$BUNDLE/backend/app/update_protocol.py" /usr/local/lib/layer8-updater/protocol.py
+install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.py" /usr/local/lib/layer8-updater/
+install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.service" /etc/systemd/system/
 install -m 644 "$BUNDLE/install/files/helpdesk-api.service" "$BUNDLE/install/files/helpdesk-worker.service" /etc/systemd/system/
 install -m 440 "$BUNDLE/install/files/sudoers-helpdesk" /etc/sudoers.d/helpdesk
 if [ "$SERVICES" = 1 ]; then

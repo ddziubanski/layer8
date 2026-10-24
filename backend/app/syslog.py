@@ -22,6 +22,7 @@ from app.models import DirectorySyncRun, ServiceHeartbeat, SystemEvent, WorkerJo
 
 LOG_DAYS = 90
 SOURCES = {
+    "updates": "Release updates",
     "directory": "Directory",
     "email": "Email",
     "sign_in": "Sign-in",
