@@ -56,3 +56,12 @@ SLA chips show the business time left and a small meter of how much of the windo
 - grey *Paused* while the clock is stopped.
 
 The clock's settings apply to new tickets and to priority changes. Tickets already open keep the due dates they have.
+
+## Tickets nobody has taken
+
+Turn on **Settings > Desk hours > Alert when nobody takes a ticket**. A new or open ticket with nobody assigned for **Not taken for (minutes)** (30 by default, counted in desk hours like the SLA) alerts everyone who could take it, once:
+- **Email:** each of the queue's owners, or, for a queue without owners, every technician who can see it. Reply **#assign me** to take the ticket (needs **Settings > Email > Technicians can work tickets by email**). A backlog of more than three at once arrives as one list per person.
+- **Teams channel:** one post in the channel of the Settings > Teams workflow, listing the tickets with links. Tickets in restricted queues are never posted there; they're emailed instead.
+- **Both.**
+
+The console's top bar shows a red *N not taken* while any are waiting, linking to Unassigned. Each alert is in the ticket's history. Unassigning a ticket starts its wait over.

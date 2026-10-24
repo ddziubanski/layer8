@@ -563,6 +563,7 @@ label.inline input { width: auto; min-height: 0; }
 .console-topbar-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--muted); }
 .console-topbar-label span { margin: 0 7px; color: var(--brand); }
 .console-topbar-user { color: var(--muted); font-size: 12px; }
+.unaccepted-counter { text-decoration: none; font-size: 13px; padding: 5px 10px; }
 .shell .card { border-radius: var(--console-radius); box-shadow: var(--console-shadow); }
 .shell .btn, .shell .btn2 { border-radius: 9px; }
 .shell .page-head h1 { letter-spacing: -.035em; font-size: 27px; }

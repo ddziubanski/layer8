@@ -350,6 +350,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/unaccepted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Unaccepted Count
+         * @description How many tickets this technician can see have waited past Settings > Desk hours > Not taken for.
+         */
+        get: operations["unaccepted_count_api_tickets_unaccepted_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/views": {
         parameters: {
             query?: never;
@@ -11174,6 +11194,15 @@ export interface components {
              */
             width: number;
         };
+        /** UnacceptedOut */
+        UnacceptedOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Count */
+            count: number;
+            /** Minutes */
+            minutes: number;
+        };
         /** UnifiStatusOut */
         UnifiStatusOut: {
             /** Enabled */
@@ -12445,6 +12474,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unaccepted_count_api_tickets_unaccepted_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnacceptedOut"];
                 };
             };
             /** @description Validation Error */

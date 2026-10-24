@@ -35,6 +35,7 @@ from app.models import (
 )
 from app.schemas import (
     AssignIn,
+    UnacceptedOut,
     BulkAssignIn,
     BulkResultOut,
     ChildTicketOut,
@@ -290,6 +291,14 @@ def list_tickets(
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
     rows = session.scalars(sorted_by(stmt, sort, dir).limit(limit).offset(offset)).all()
     return TicketPage(items=rows, total=total, limit=limit, offset=offset)
+
+
+@router.get("/unaccepted", response_model=UnacceptedOut)
+def unaccepted_count(user: Agent, session: SessionDep):
+    """How many tickets this technician can see have waited past Settings > Desk hours > Not taken for."""
+    from app import unaccepted
+
+    return unaccepted.count_for(session, user, visible_queue_ids(user))
 
 
 @router.get("/views", response_model=dict[SavedView, int])

@@ -168,6 +168,7 @@ def create_ticket(
     )
     fields.fill_contact(session, ticket, requester)
     sla.apply_policy(ticket, _policy_for(session, final_priority), created)
+    ticket.unassigned_since = created
     session.add(ticket)
     session.flush()
     if parent is not None:
@@ -231,6 +232,11 @@ def assign(
         return ticket
 
     _event(session, ticket, EventType.assigned, actor, before=before, after=after)
+    if ticket.assignee_id is None and before["assignee_id"] is not None:
+        # Unassigned again: the wait for someone to take it starts over.
+        ticket.unassigned_since, ticket.unaccepted_alerted_at = sla.utcnow(), None
+    elif ticket.assignee_id is not None:
+        ticket.unassigned_since = None
     if ticket.queue_id != from_queue.id:
         _move_note(session, ticket, actor, from_queue, ticket.queue, note)
     if ticket.assignee_id is not None and ticket.status == TicketStatus.new:
