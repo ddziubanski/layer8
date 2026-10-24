@@ -58,45 +58,22 @@ test("configuration lives under Settings, with tabs by role", async () => {
   expect(await screen.findByRole("heading", { name: "Windows sign-in" })).toBeInTheDocument();
   const tabs = screen.getByRole("navigation", { name: "Settings" });
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
-    "General",
-    "Modules",
-    "Branding",
-    "Queues",
-    "Ticket rules",
-    "Ticket fields",
-    "Canned replies",
-    "Users",
-    "Groups",
-    "Permissions",
-    "Directory",
-    "Onboarding templates",
-    "Checklists",
-    "Changes",
-    "Email",
-    "Requester emails",
-    "Desk hours",
-    "Teams",
-    "Windows sign-in",
-    "Sign-in",
-    "Surveys",
-    "Notices",
-    "Relays",
-    "Meraki",
-    "UniFi",
-    "Nutanix",
-    "Juniper",
-    "Action1",
-    "API keys",
-    "Remote displays",
-    "Device sweeps",
-    "Warranty lookups",
-    "Purchasing",
-    "IP addresses",
-    "Updates",
-    "Backup",
-    "Status",
-    "Log",
+    "Queues", "Ticket rules", "Ticket fields", "Canned replies", "Requester emails", "Desk hours and SLA", "Surveys", "Notices",
+    "Checklists", "Onboarding templates", "Changes", "Purchasing",
+    "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps",
+    "API keys", "Relays", "Mailbox (Microsoft 365)", "Teams", "Action1", "Warranty lookups",
+    "Users", "Groups", "Permissions", "Directory (AD)", "Sign-in", "Windows sign-in",
+    "Branding", "Modules", "Remote displays",
+    "General", "Updates", "Backup", "Status", "Log",
   ]);
+  expect([...tabs.querySelectorAll("[role=group]")].map((g) => g.getAttribute("aria-label"))).toEqual(
+    ["Helpdesk", "Workflows", "Monitoring", "API / Integrations", "People and access", "Look and feel", "System"]);
+  // Finding a page narrows the menu; a category's name keeps its pages.
+  await userEvent.type(within(tabs).getByLabelText("Find a setting"), "uni");
+  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["UniFi", "Juniper"]);
+  await userEvent.clear(within(tabs).getByLabelText("Find a setting"));
+  await userEvent.type(within(tabs).getByLabelText("Find a setting"), "monitoring");
+  expect(tabs.querySelectorAll("a")).toHaveLength(6);
   expect(screen.getByRole("link", { name: "Settings" })).toHaveClass("active");
   view.unmount();
 
@@ -442,7 +419,7 @@ test("a technician who was handed areas sees their tabs", async () => {
   mockApi({ "GET /api/auth/me": { ...ME, permissions: [...(ME.permissions ?? []), "rules_manage", "notices_manage"] }, "GET /api/notices/all": [] });
   mountApp("/settings/groups");
   const tabs = await screen.findByRole("navigation", { name: "Settings" });
-  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Ticket rules", "Canned replies", "Users", "Groups", "Notices"]);
+  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Ticket rules", "Canned replies", "Notices", "Users", "Groups"]);
 });
 
 test("Action1's tab shows only while Action1 is in use", async () => {
