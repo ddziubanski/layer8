@@ -1,6 +1,6 @@
 # Screenshots
 
-From the dev app, 2026-10-23. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-10-24. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 
@@ -21,6 +21,10 @@ From the dev app, 2026-10-23. Regenerate with `backend/.venv/bin/python dev/scre
 ## Arrange this page: drag panels between columns or across the top or bottom (full width), hide them, save for yourself or as everyone's default
 
 ![Arrange this page: drag panels between columns or across the top or bottom (full width), hide them, save for yourself or as everyone's default](03d-ticket-arrange.png)
+
+## Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket
+
+![Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket](03f-ticket-vms.png)
 
 ## Ticket: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress
 
@@ -45,6 +49,10 @@ From the dev app, 2026-10-23. Regenerate with `backend/.venv/bin/python dev/scre
 ## Devices > Unknown on the network: seen by scans or in Action1, but not a device here
 
 ![Devices > Unknown on the network: seen by scans or in Action1, but not a device here](04c-devices-unknown.png)
+
+## Devices > Virtual machines: VMs read from Nutanix Prism Central, with host, size, addresses and the device each matches
+
+![Devices > Virtual machines: VMs read from Nutanix Prism Central, with host, size, addresses and the device each matches](04d-devices-vms.png)
 
 ## A device: details, patching from Action1, IP addresses, notes and linked tickets
 
@@ -229,6 +237,18 @@ From the dev app, 2026-10-23. Regenerate with `backend/.venv/bin/python dev/scre
 ## Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal
 
 ![Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal](09f-settings-desk-hours.png)
+
+## Settings > Nutanix: Prism Central connection, power actions from tickets, critical VMs with outage tickets and a wallboard tile
+
+![Settings > Nutanix: Prism Central connection, power actions from tickets, critical VMs with outage tickets and a wallboard tile](09h-settings-nutanix.png)
+
+## Settings > UniFi: cloud or local console, what's read, outage tickets and guest Wi-Fi vouchers
+
+![Settings > UniFi: cloud or local console, what's read, outage tickets and guest Wi-Fi vouchers](09i-settings-unifi.png)
+
+## Settings > Juniper: EX switches read over Junos REST through a runner
+
+![Settings > Juniper: EX switches read over Junos REST through a runner](09j-settings-juniper.png)
 
 ## Settings > Meraki: read-only discovery by API key or OAuth, diagnostics and outage alerts, each opt-in
 

@@ -52,7 +52,7 @@ export function NutanixVmList() {
     <div className="stack">
       <div className="row-gap">
         <input className="spacer" style={{ maxWidth: 420 }} type="search" placeholder="Search name, host, cluster or IP" aria-label="Search VMs" value={q} onChange={(e) => setQ(e.target.value)} />
-        <select aria-label="Power state" value={state} onChange={(e) => setState(e.target.value)}>
+        <select aria-label="Power state" style={{ width: "auto" }} value={state} onChange={(e) => setState(e.target.value)}>
           <option value="">All VMs</option>
           <option value="on">Running</option>
           <option value="off">Not running</option>

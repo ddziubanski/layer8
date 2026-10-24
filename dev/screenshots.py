@@ -314,8 +314,12 @@ def nutanix_demo(session, token: str, ticket_id: int | None, device_id: int | No
     from app import sla
     from app.models import NutanixVm, TicketNutanixVm
 
+    from app.models import AppSetting
+
     client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
-    was = {f["name"]: f["value"] for f in client.get("/api/settings/nutanix").raise_for_status().json()["fields"] if "is_set" not in f and not f["locked"]}
+    # From the database, not the API: the server's copy of the settings can lag behind it.
+    stored = session.get(AppSetting, "nutanix")
+    was = dict(stored.value) if stored else {}
     client.put("/api/settings/nutanix", json={"values": {
         "nutanix_enabled": True, "nutanix_url": "https://prism.corp.example:9440", "nutanix_username": "layer8-read", "nutanix_password": "not-a-real-password",
         "nutanix_power_enabled": True, "nutanix_critical_vms": ["sql01", "print01"], "nutanix_outage_tickets": True, "nutanix_wallboard": True}}).raise_for_status()
@@ -345,7 +349,8 @@ def nutanix_undo(session, token: str, was: dict) -> None:
     session.execute(delete(NutanixVm).where(NutanixVm.ext_id.like("screenshot-%")))
     session.commit()
     client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
-    client.put("/api/settings/nutanix", json={"values": was, "clear": ["nutanix_password"]}).raise_for_status()
+    demo = ["nutanix_enabled", "nutanix_url", "nutanix_username", "nutanix_password", "nutanix_power_enabled", "nutanix_critical_vms", "nutanix_outage_tickets", "nutanix_wallboard"]
+    client.put("/api/settings/nutanix", json={"values": was, "clear": [n for n in demo if n not in was]}).raise_for_status()
 
 
 def theme_preset(token: str, value: str | None = None) -> str:
