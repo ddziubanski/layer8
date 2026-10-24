@@ -65,6 +65,9 @@ def isolated_settings(monkeypatch, tmp_path):
     # The test client talks plain http.
     monkeypatch.setattr(settings, "cookie_secure", False)
     monkeypatch.setattr(settings, "rules_database_url", RULES_URL)
+    # SLA times in wall-clock time, so tests don't depend on the day they run; test_sla_hours.py
+    # covers the desk-hours clock.
+    monkeypatch.setattr(settings, "sla_clock", "always")
     yield
     # Stored settings a test saved were laid over settings; take them off again.
     configstore.reset()

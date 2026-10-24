@@ -2423,7 +2423,7 @@ export interface paths {
         put?: never;
         /**
          * Preview Run
-         * @description What a run would do: its targets, its parameter values, whether it needs approval and a runner is about. Nothing runs.
+         * @description What a run would do: its targets, its parameter values, whether it needs approval and a relay is about. Nothing runs.
          */
         post: operations["preview_run_api_scripts__script_id__preview_post"];
         delete?: never;
@@ -2871,9 +2871,9 @@ export interface paths {
         put?: never;
         /**
          * Scan Subnet
-         * @description Queue a scan. network: on the subnet's runner, ping sweep, reverse DNS and the runner's ARP
-         *     table. dhcp_dns: on the Windows runner, the DHCP server's leases and reservations and the DNS
-         *     server's A records (Settings > IP addresses). snmp: on the subnet's runner, network gear's
+         * @description Queue a scan. network: on the subnet's relay, ping sweep, reverse DNS and the relay's ARP
+         *     table. dhcp_dns: on the Windows relay, the DHCP server's leases and reservations and the DNS
+         *     server's A records (Settings > IP addresses). snmp: on the subnet's relay, network gear's
          *     identity, LLDP neighbours and MAC tables (see /api/network).
          */
         post: operations["scan_subnet_api_ipam_subnets__subnet_id__scan_post"];
@@ -2892,7 +2892,7 @@ export interface paths {
         };
         /**
          * Scan Runners
-         * @description Runners that can scan (they take Python), to choose one per subnet.
+         * @description Relays that can scan (they take Python), to choose one per subnet.
          */
         get: operations["scan_runners_api_ipam_runners_get"];
         put?: never;
@@ -4846,7 +4846,7 @@ export interface paths {
         put?: never;
         /**
          * Apply Change
-         * @description Queue the change on a PowerShell runner (noted on the ticket; its run shows the result).
+         * @description Queue the change on a PowerShell relay (noted on the ticket; its run shows the result).
          */
         post: operations["apply_change_api_tickets__ticket_id__ad_changes_post"];
         delete?: never;
@@ -4886,7 +4886,7 @@ export interface paths {
         put?: never;
         /**
          * Create New Account
-         * @description Queue the new account on a PowerShell runner (noted on the ticket). The first password is in
+         * @description Queue the new account on a PowerShell relay (noted on the ticket). The first password is in
          *     this response only: Layer 8 keeps no copy.
          */
         post: operations["create_new_account_api_tickets__ticket_id__ad_account_new_post"];
@@ -5432,6 +5432,8 @@ export interface components {
             created_at: string;
             /** Due At */
             due_at: string | null;
+            /** Minutes Left */
+            minutes_left?: number | null;
             /** Breached */
             breached: boolean;
         };
@@ -10236,7 +10238,7 @@ export interface components {
          * SlaState
          * @enum {string}
          */
-        SlaState: "none" | "ok" | "at_risk" | "breached" | "met";
+        SlaState: "none" | "paused" | "ok" | "at_risk" | "breached" | "met";
         /** SoftwareCatalogOut */
         SoftwareCatalogOut: {
             /** Items */
@@ -10912,6 +10914,12 @@ export interface components {
             closed_at: string | null;
             /** Sla At Risk At */
             sla_at_risk_at: string | null;
+            /** Sla Paused At */
+            sla_paused_at?: string | null;
+            /** Sla Minutes Left */
+            sla_minutes_left?: number | null;
+            /** Sla Resolution Minutes */
+            sla_resolution_minutes?: number | null;
             /**
              * Attachment Count
              * @default 0

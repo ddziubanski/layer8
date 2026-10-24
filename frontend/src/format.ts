@@ -42,25 +42,38 @@ export function duration(ms: number): string {
   return `${hours}h ${String(mins).padStart(2, "0")}m`;
 }
 
-export type SlaInfo = { tone: Tone; short: string; long: string };
+export type SlaInfo = { tone: Tone; short: string; long: string; left: number | null };
 
-export function slaInfo(t: Pick<Ticket, "sla_state" | "resolution_due_at">, now: number): SlaInfo {
+type SlaFields = Pick<Ticket, "sla_state" | "resolution_due_at"> & Partial<Pick<Ticket, "sla_minutes_left" | "sla_resolution_minutes">>;
+
+/** Where a ticket stands against its SLA. Time left is business time when the server counts it
+ *  (Settings > Desk hours > SLA clock); `left` is the share of the window still to go, for a meter. */
+export function slaInfo(t: SlaFields, now: number): SlaInfo {
   const due = t.resolution_due_at ? Date.parse(t.resolution_due_at) : null;
+  const minutesLeft = t.sla_minutes_left ?? (due !== null ? (due - now) / 60000 : null);
+  const window = t.sla_resolution_minutes ?? null;
+  const share = minutesLeft !== null && window ? Math.max(0, Math.min(1, minutesLeft / window)) : null;
   switch (t.sla_state) {
     case "none":
-      return { tone: "n", short: "None", long: "No SLA" };
+      return { tone: "n", short: "None", long: "No SLA", left: null };
     case "met":
-      return { tone: "g", short: "Met", long: "SLA met" };
+      return { tone: "g", short: "Met", long: "SLA met", left: null };
+    case "paused": {
+      const left = minutesLeft !== null ? duration(minutesLeft * 60000) : "";
+      return { tone: "n", short: "Paused", long: `SLA paused while waiting on the user${left ? ` (${left} left)` : ""}`, left: share };
+    }
     case "breached":
       if (due !== null && now > due) {
         const ago = duration(now - due);
-        return { tone: "r", short: `-${ago}`, long: `SLA breached ${ago} ago` };
+        return { tone: "r", short: `-${ago}`, long: `SLA breached ${ago} ago`, left: 0 };
       }
-      return { tone: "r", short: "Breached", long: "SLA breached" };
+      return { tone: "r", short: "Breached", long: "SLA breached", left: 0 };
     case "at_risk":
     case "ok": {
-      const left = due !== null ? duration(due - now) : "";
-      return { tone: t.sla_state === "at_risk" ? "a" : "g", short: left, long: `SLA breach in ${left}` };
+      const left = minutesLeft !== null ? duration(minutesLeft * 60000) : "";
+      // The last tenth of the window is red before it's breached.
+      const tone: Tone = share !== null && share <= 0.1 ? "r" : t.sla_state === "at_risk" ? "a" : "g";
+      return { tone, short: left, long: `${left} left on the SLA`, left: share };
     }
   }
 }

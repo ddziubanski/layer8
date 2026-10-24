@@ -95,6 +95,10 @@ h2 { margin: 0; font-size: 18px; }
 .a { background: var(--chip-a-bg); color: var(--chip-a); }
 .r { background: var(--chip-r-bg); color: var(--chip-r); }
 .n { background: var(--chip-n-bg); color: var(--muted); }
+/* SLA chips: a thin meter of the time left, in the chip's own colour. */
+.sla-chip { display: inline-flex; flex-direction: column; gap: 2px; padding-bottom: 4px; }
+.sla-meter { display: block; height: 3px; border-radius: 2px; background: color-mix(in srgb, currentColor 22%, transparent); overflow: hidden; min-width: 36px; }
+.sla-meter > span { display: block; height: 100%; background: currentColor; border-radius: 2px; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
 .card.note { background: var(--note-bg); border-color: var(--note-line); }

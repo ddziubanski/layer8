@@ -443,6 +443,13 @@ class Ticket(Base):
     resolution_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # When the ticket turns "at risk"; stored so saved views are a plain query.
     sla_at_risk_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # The SLA clock stopped while waiting on the user (app.sla): since when, the business minutes
+    # each deadline had left then, and the business minutes of earlier pauses.
+    sla_paused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sla_left: Mapped[dict | None] = mapped_column(JSONB)
+    sla_paused_minutes: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    # The policy's resolution window (business minutes), for how much of it is left.
+    sla_resolution_minutes: Mapped[int | None] = mapped_column(Integer)
     first_responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # For "time in status" rule conditions.
     status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -472,6 +479,13 @@ class Ticket(Base):
     requester: Mapped[User] = relationship(foreign_keys=[requester_id])
     assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
     queue: Mapped[Queue] = relationship(foreign_keys=[queue_id])
+
+    @property
+    def sla_minutes_left(self) -> int | None:
+        from app import sla
+
+        left = sla.minutes_left(self, sla.utcnow())
+        return None if left is None else round(left)
     resolution_type: Mapped[FieldOption | None] = relationship(foreign_keys=[resolution_type_id])
     closure_reason: Mapped[FieldOption | None] = relationship(foreign_keys=[closure_reason_id])
     department: Mapped[FieldOption | None] = relationship(foreign_keys=[department_id])

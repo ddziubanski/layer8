@@ -42,3 +42,17 @@ It reads Microsoft Graph with the app registration on **Settings > Email** (tena
 The worker job **Teams: technicians' status for the portal** (Settings > Status) reads everyone's status every minute while the setting is on. The portal shows what it last read; a status older than ten minutes shows as *status unknown*. Teams' finer states fold into four: Available; Busy (including Do not disturb and In a meeting); Away (including Be right back); Offline. A technician with no Microsoft 365 account found shows as unknown.
 
 If Graph refuses, the job's line on Settings > Status says which permission is missing.
+
+## The SLA clock
+
+By default SLA times count only while the ticket's queue is open: its own hours (Settings > Queues), or the desk hours, skipping closed days. A 4-hour SLA on a ticket logged on Friday at 16:00, with Mon-Fri 08:00-17:00, is due on Monday at 11:00. **Settings > Desk hours > SLA clock > Around the clock** makes every minute count instead. With no desk hours set, the clock runs around the clock too.
+
+While a ticket is **Waiting on user**, its SLA clock stops (**Stop the SLA clock while waiting on the user**, on by default). Its due dates are cleared, so the queue, rules, reports and remote displays never count it as at risk or breached. When it's worked again, the time it had left comes back. A change of priority while it waits is taken into account.
+
+SLA chips show the business time left and a small meter of how much of the window is left:
+- green while there's time;
+- amber once the ticket is at risk (the policy's at-risk percentage);
+- red in the last tenth of the window, and once it's breached;
+- grey *Paused* while the clock is stopped.
+
+The clock's settings apply to new tickets and to priority changes. Tickets already open keep the due dates they have.

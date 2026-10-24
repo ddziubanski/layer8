@@ -898,6 +898,10 @@ class TicketOut(ORM, Labelled):
     resolved_at: datetime | None
     closed_at: datetime | None
     sla_at_risk_at: datetime | None
+    sla_paused_at: datetime | None = None
+    # Business minutes left on the resolution deadline (negative: past it), and the policy's window.
+    sla_minutes_left: int | None = None
+    sla_resolution_minutes: int | None = None
     attachment_count: int = 0
     created_at: datetime
     updated_at: datetime
