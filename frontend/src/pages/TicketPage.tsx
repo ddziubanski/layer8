@@ -2,6 +2,15 @@
 import { TeamsReply } from "./ticket/TeamsReply";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+
+/** The sticky header's height, as --ticket-head-height on the page, so the tools drawer sits just below it. */
+function measureHead(head: HTMLDivElement | null) {
+  const page = head?.parentElement;
+  if (!head || !page || typeof ResizeObserver === "undefined") return;
+  const observer = new ResizeObserver(() => page.style.setProperty("--ticket-head-height", `${Math.ceil(head.getBoundingClientRect().height)}px`));
+  observer.observe(head);
+  return () => observer.disconnect();
+}
 import { Link, useParams } from "react-router";
 
 import { api, type Me } from "../api/client";
@@ -205,7 +214,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
 
   return (
     <div className={`ticket${drawerMode && !arrangement.editing ? " ticket-drawer-page" : ""}`}>
-      <div className="head ticket-workspace-head">
+      <div className="head ticket-workspace-head" ref={measureHead}>
         <nav className="ticket-breadcrumb" aria-label="Ticket breadcrumb">
           <Link to="/">Tickets</Link>
           <span aria-hidden="true">/</span>

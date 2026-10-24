@@ -124,7 +124,7 @@ class TicketWorkspacePreferences(BaseModel):
     mode: Literal["drawer", "classic"] = "drawer"
     selected_tool: Literal["details", "devices", "directory", "scripts", "network", "copilot", "knowledge", "files", "guest_wifi"] = "details"
     keep_open: bool = False
-    width: int = Field(default=440, ge=320, le=720)
+    width: int = Field(default=440, ge=320, le=1200)
 
 
 class MeOut(UserOut):

@@ -26,7 +26,7 @@ def test_workspace_personal_and_backward_compatible(client, db, agent, admin):
     assert db.get(AppSetting, f"personal_ticket_workspace:{agent.id}").updated_by_id == agent.id
 
 
-@pytest.mark.parametrize("value", [{"width": 319}, {"width": 721}, {"mode": "unknown"}, {"selected_tool": "admin"}, {"secret": "never"}, []])
+@pytest.mark.parametrize("value", [{"width": 319}, {"width": 1201}, {"mode": "unknown"}, {"selected_tool": "admin"}, {"secret": "never"}, []])
 def test_workspace_validated(client, agent, value):
     assert client.put("/api/auth/me/preferences", headers=as_user(agent), json={"ticket_workspace": value}).status_code == 422
 
