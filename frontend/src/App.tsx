@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { ModuleWorkspace } from "./components/ModuleWorkspace";
 import { ModuleAccess } from "./components/ModuleAccess";
-import { UnacceptedCounter } from "./components/UnacceptedCounter";
+import { ConsoleLayout } from "./components/ConsoleLayout";
 import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
 import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider, useParams } from "react-router";
 
 import { ApiError, api, type Me } from "./api/client";
-import { Brand, backgroundStyle, useBranding } from "./branding";
+import { useBranding } from "./branding";
 import { NoticeBanner, NoticeDialog } from "./components/Notices";
 import { ME_KEY } from "./queryClient";
 import { RouteFocus } from "./components/RouteFocus";
-import { SourceNotice } from "./components/SourceNotice";
-import { CommandPalette } from "./components/CommandPalette";
-import { visibleModules } from "./navigation";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
 import { TwoFactorFirst } from "./components/TwoFactor";
 import { QueuePage } from "./pages/QueuePage";
@@ -107,35 +104,14 @@ function Shell({ me }: { me: Me }) {
     },
   });
   return (
-    <div className="shell">
-      <a className="skip-link" href="#console-main">Skip to workspace</a>
-      <nav className="side" aria-label="Main">
-        <div className="brand">
-          <Brand b={brand} className="" />
-        </div>
-        <NavLink to="/" end>
-          <span className="nav-symbol" aria-hidden="true">▦</span><span>Tickets</span>
-        </NavLink>
-        {visibleModules(profile.data?.id === me.id ? profile.data : me).map(module => <NavLink key={module.id} to={module.to}><span className="nav-symbol" aria-hidden="true">{module.symbol}</span><span>{module.label}</span></NavLink>)}
-        <div className="me">
-          <div className="me-identity"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><span>{me.display_name}</span></div>
-          <NavLink to="/preferences">My preferences</NavLink>
-          <button type="button" onClick={() => logout.mutate()}>
-            Sign out
-          </button>
-          <SourceNotice className="source-notice side-source" compact />
-        </div>
-      </nav>
-      <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
+    <ConsoleLayout me={activeMe} brand={brand} onLogout={() => logout.mutate()} logoutPending={logout.isPending}>
         <RouteFocus mainId="console-main" />
-        <div className="console-topbar"><span className="console-topbar-label">IT OPERATIONS <span aria-hidden="true">/</span> SERVICE DESK</span><CommandPalette me={activeMe} /><UnacceptedCounter /><span className="console-topbar-user">{me.display_name}</span></div>
         <NoticeBanner />
         <NoticeDialog />
         <Suspense fallback={<p className="muted">Loading…</p>}>
           <ModuleAccess me={activeMe}><ModuleWorkspace><Outlet /></ModuleWorkspace></ModuleAccess>
         </Suspense>
-      </main>
-    </div>
+    </ConsoleLayout>
   );
 }
 
