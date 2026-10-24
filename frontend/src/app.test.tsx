@@ -1,10 +1,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { App } from "./App";
 import { createQueryClient } from "./queryClient";
-import { ME, mockApi } from "./test/util";
+import { ME, mockApi, type Call } from "./test/util";
+import type { Me } from "./api/client";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -82,4 +83,35 @@ test("the first-run admin/admin must choose a new password before anything else"
   await userEvent.click(screen.getByRole("button", { name: "Save password" }));
   await waitFor(() => expect(screen.getByRole("heading", { name: "Ticket queue" })).toBeInTheDocument());
   expect(calls.find((c) => c.path === "/api/auth/password")?.body).toEqual({ current_password: "admin", new_password: "a-much-better-one" });
+});
+
+test("minimal navigation applies on save without rebuilding the route; show all restores it", async () => {
+  window.history.replaceState(null, "", "/preferences");
+  let profile: Me = { ...ME, hidden_modules: [] };
+  mockApi({
+    "GET /api/auth/me": () => profile,
+    "GET /api/queues": [], "GET /api/notices": [],
+    "GET /api/teams/connection": { configured: false, connected: false },
+    "PUT /api/auth/me/preferences": ({ body }: Call) => { profile = { ...profile, ...(body as object) }; return profile; },
+  });
+  mount();
+  await screen.findByRole("heading", { name: "My preferences" });
+  const nav = within(screen.getByRole("navigation", { name: "Main" }));
+  expect(nav.getByRole("link", { name: "Scripts" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Use minimal workspace" }));
+  expect(nav.getByRole("link", { name: "Scripts" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument());
+  for (const name of ["Tickets", "Dashboard", "Devices", "Knowledge base", "My preferences"])
+    expect(nav.getByRole("link", { name })).toBeInTheDocument();
+  expect(nav.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "My preferences" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
+  await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
+  expect(screen.getByRole("option", { name: "Scripts" })).toBeInTheDocument();
+  await userEvent.keyboard("{Escape}");
+  await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(nav.getByRole("link", { name: "Scripts" })).toBeInTheDocument());
+  window.history.replaceState(null, "", "/");
 });

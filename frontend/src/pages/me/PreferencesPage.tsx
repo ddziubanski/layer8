@@ -7,6 +7,7 @@ import { api, type ColorRule, type Me } from "../../api/client";
 import { PALETTE, RULE_FIELDS } from "../../colors";
 import { UserPicker } from "../../components/UserPicker";
 import { ME_KEY } from "../../queryClient";
+import { MINIMAL_HIDDEN, OPTIONAL_MODULES, type SidebarModule } from "../../navigation";
 
 function Swatches({ value, onChange, label }: { value: string | null; onChange: (c: string) => void; label: string }) {
   return (
@@ -30,12 +31,15 @@ function Swatches({ value, onChange, label }: { value: string | null; onChange: 
 /** My preferences: my colour in the queue (everyone sees it), and my own colour rules (only I do). */
 export function PreferencesPage({ me }: { me: Me }) {
   const queryClient = useQueryClient();
-  const [color, setColor] = useState<string | null>(me.ticket_color ?? null);
-  const [rules, setRules] = useState<ColorRule[]>(me.color_rules ?? []);
+  const profile = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false });
+  const activeMe = profile.data?.id === me.id ? profile.data : me;
+  const [color, setColor] = useState<string | null>(activeMe.ticket_color ?? null);
+  const [rules, setRules] = useState<ColorRule[]>(activeMe.color_rules ?? []);
+  const [hidden, setHidden] = useState<SidebarModule[]>(activeMe.hidden_modules ?? []);
   const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues });
   const [names, setNames] = useState<Record<string, string>>({});
   const save = useMutation({
-    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules }),
+    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden }),
     onSuccess: (m) => queryClient.setQueryData(ME_KEY, m),
   });
   const setRule = (i: number, over: Partial<ColorRule>) => setRules(rules.map((r, j) => (j === i ? { ...r, ...over } : r)));
@@ -45,8 +49,9 @@ export function PreferencesPage({ me }: { me: Me }) {
     setRules(next);
   };
   // What's stored now: the last save, else what the page opened with.
-  const stored = save.data ?? me;
-  const changed = color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? []);
+  const stored = save.data ?? activeMe;
+  const changed = color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
+    || JSON.stringify([...hidden].sort()) !== JSON.stringify([...(stored.hidden_modules ?? [])].sort());
   const isStaff = me.role !== "requester";
 
   return (
@@ -55,6 +60,20 @@ export function PreferencesPage({ me }: { me: Me }) {
         <WorkspaceTitle title="My preferences" area="YOUR WORKSPACE" />
       </div>
       <div className="stack" style={{ maxWidth: 900 }}>
+        {isStaff && <section className="card stack" aria-label="My workspace">
+          <div className="lbl" style={{ margin: 0 }}>My workspace</div>
+          <p className="small muted">Choose what appears in your sidebar. This follows your account across browsers. Hiding a module keeps its features and permissions in place; you can still open it with Ctrl+K / ⌘K or a direct link.</p>
+          <div className="row-gap">
+            <button className="btn2" type="button" disabled={save.isPending} onClick={() => setHidden([...MINIMAL_HIDDEN])}>Use minimal workspace</button>
+            <button className="btn2" type="button" disabled={save.isPending} onClick={() => setHidden([])}>Show all modules</button>
+          </div>
+          <p className="small">Minimal keeps Tickets, Dashboard, Devices and Knowledge base. Tickets, My preferences and sign-out are always available. Save below to apply.</p>
+          <fieldset className="stack" style={{ gap: 6, border: 0, padding: 0, margin: 0 }}>
+            <legend>Show in my sidebar</legend>
+            {OPTIONAL_MODULES.map(module => <label className="inline" key={module.id}><input type="checkbox" checked={!hidden.includes(module.id)} disabled={save.isPending}
+              onChange={e => setHidden(e.target.checked ? hidden.filter(id => id !== module.id) : [...hidden, module.id])} />{module.label}</label>)}
+          </fieldset>
+        </section>}
         {isStaff && <TeamsConnection />}
         {isStaff && (
           <section className="card stack" aria-label="My colour">
@@ -153,7 +172,7 @@ export function PreferencesPage({ me }: { me: Me }) {
             Save
           </button>
           {changed && (
-            <button className="btn2" type="button" onClick={() => (setColor(stored.ticket_color ?? null), setRules(stored.color_rules ?? []))}>
+            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); }}>
               Undo changes
             </button>
           )}
