@@ -32,7 +32,8 @@ echo "wheels: $(ls "$B/wheels" | wc -l)"
 # The app (install.sh copies from here).
 rsync -a --exclude .venv --exclude storage --exclude secrets --exclude __pycache__ --exclude '*.egg-info' --exclude tests /src/backend/ "$B/backend/"
 mkdir -p "$B/frontend" && rsync -a /src/frontend/dist/ "$B/frontend/dist/"
-for d in runner tools docs install; do rsync -a "/src/$d/" "$B/$d/"; done
+# Never local caches from test runs (tools/build-update.py refuses them too).
+for d in runner tools docs install; do rsync -a --exclude __pycache__ --exclude '*.pyc' "/src/$d/" "$B/$d/"; done
 cp /src/LICENSE "$B/"
 [ -f /out/layer8-source.tar.gz ] && cp /out/layer8-source.tar.gz "$B/"
 cp /out/VERSION "$B/VERSION" 2>/dev/null || date +%Y%m%d > "$B/VERSION"
