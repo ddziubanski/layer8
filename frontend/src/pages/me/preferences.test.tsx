@@ -5,6 +5,16 @@ import userEvent from "@testing-library/user-event";
 import { ME, mockApi, renderAt, type Call } from "../../test/util";
 import { PreferencesPage } from "./PreferencesPage";
 
+test("personal show-all leaves global-off modules disabled", async () => {
+  mockApi({ "GET /api/queues": [], "GET /api/teams/connection": { configured: false, connected: false } });
+  renderAt("/", [{ path: "/", element: <PreferencesPage me={{ ...ME, hidden_modules: ["reports"], disabled_modules: ["ipam"] }} /> }]);
+  const ipam = screen.getByRole("checkbox", { name: /IP addresses.*turned off by administrator/ });
+  expect(ipam).toBeDisabled(); expect(ipam).not.toBeChecked();
+  await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
+  expect(ipam).toBeDisabled(); expect(ipam).not.toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "Reports", exact: true })).toBeChecked();
+});
+
 afterEach(() => vi.unstubAllGlobals());
 
 test("pick my colour and add a rule; saved together", async () => {

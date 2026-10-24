@@ -7242,6 +7242,11 @@ export interface components {
              * @default []
              */
             hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
+            /**
+             * Disabled Modules
+             * @default []
+             */
+            disabled_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             /** Has Password */
             readonly has_password: boolean;
         };
