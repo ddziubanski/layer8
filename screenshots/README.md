@@ -238,6 +238,22 @@ From the dev app, 2026-10-24. Regenerate with `backend/.venv/bin/python dev/scre
 
 ![Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal](09f-settings-desk-hours.png)
 
+## Settings > Canned replies: your own and shared replies, per queue, with placeholders filled in from the ticket
+
+![Settings > Canned replies: your own and shared replies, per queue, with placeholders filled in from the ticket](09k-settings-canned.png)
+
+## Settings > Requester emails: the acknowledgement, resolved and assigned emails, with a preview as you type
+
+![Settings > Requester emails: the acknowledgement, resolved and assigned emails, with a preview as you type](09l-settings-requester-emails.png)
+
+## Settings > Sign-in: two-factor for local admins, and Sign in with Microsoft (Entra ID)
+
+![Settings > Sign-in: two-factor for local admins, and Sign in with Microsoft (Entra ID)](09m-settings-sign-in.png)
+
+## My preferences > Two-factor sign-in: scan the QR code with an authenticator app, then confirm a code
+
+![My preferences > Two-factor sign-in: scan the QR code with an authenticator app, then confirm a code](12e-two-factor.png)
+
 ## Settings > Nutanix: Prism Central connection, power actions from tickets, critical VMs with outage tickets and a wallboard tile
 
 ![Settings > Nutanix: Prism Central connection, power actions from tickets, critical VMs with outage tickets and a wallboard tile](09h-settings-nutanix.png)

@@ -4,17 +4,18 @@
 
 Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one queue for tickets from email and a self-service portal, with the tools a desk actually uses day to day, all in one install you control. It borrows the best ideas from ManageEngine, Track-It!, KACE and Spiceworks, runs on a single Linux box (an appliance ISO installs it offline), and works standalone or with Active Directory and Microsoft 365.
 
-> **Version 1.2.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
+> **Version 1.3.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
 ![The technician's queue](screenshots/02-queue.png)
 
 **At a glance**
 
-- **One queue** for tickets from email and the self-service portal, with queues, SLAs, routing rules, checklists and an arrangeable ticket page.
+- **One queue** for tickets from email and the self-service portal, with queues, SLAs in desk hours, routing rules, checklists, canned replies, time tracking, alerts for tickets nobody takes, and an arrangeable ticket page.
 - **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with relays.
 - **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
 - **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
 - **For the room:** a remote display for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
+- **Sign-in your way:** local accounts with two-factor, AD, Windows sign-in to the portal, and Sign in with Microsoft.
 - **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, signed updates from GitHub releases, and no cloud required.
 
 <p>
