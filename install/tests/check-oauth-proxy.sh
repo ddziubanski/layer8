@@ -14,9 +14,14 @@ docker run --detach --name layer8-oauth-proxy-test \
     --volume "$qa_dir/nginx.conf:/etc/nginx/nginx.conf:ro" nginx:stable
 # No backend is running. Even an upstream failure must not leak callback query
 # parameters through access/error logs or inherited same-origin referrer headers.
-curl --silent --show-error --insecure --retry 12 --retry-connrefused --retry-delay 1 \
+attempt=0
+until curl --silent --show-error --insecure --connect-timeout 1 \
     --output /dev/null --dump-header "$qa_dir/headers" \
-    'https://127.0.0.1:8443/api/meraki/oauth/callback?code=synthetic-proxy-code&state=example-state'
+    'https://127.0.0.1:8443/api/meraki/oauth/callback?code=synthetic-proxy-code&state=example-state'; do
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 12 ]
+    sleep 1
+done
 docker logs layer8-oauth-proxy-test > "$qa_dir/proxy.log" 2>&1
 python3 - "$qa_dir" <<'PY'
 from pathlib import Path
