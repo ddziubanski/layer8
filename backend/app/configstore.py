@@ -108,6 +108,11 @@ def _prism_url(v: str) -> None:
         raise SettingsError("Prism Central's address, e.g. https://prism.corp.example:9440 (https, no path)")
 
 
+def _vm_names(v: list[str]) -> None:
+    if len(v) > 200 or any(not 0 < len(n) <= 255 or any(ord(c) < 32 for c in n) for n in v):
+        raise SettingsError("At most 200 VM names, one per line, as Prism Central shows them")
+
+
 def _junos_switches(v: str) -> None:
     from app.junos import JunosError, parse_switches
 
@@ -434,6 +439,11 @@ SECTIONS: dict[str, list[Field]] = {
         Field("nutanix_verify_tls", "Check Prism Central's certificate", "Leave on. Turn off only to try Prism Central with its self-signed certificate on a network you trust."),
         Field("nutanix_sync_minutes", "Read Nutanix every (minutes)", "A failed read keeps the last complete one; older data is marked stale.", check=_between(5, 1440)),
         Field("nutanix_power_enabled", "Power actions from tickets", "Lets people with the permissions restart, power on or power-cycle a VM linked to a ticket (a write to Nutanix). Every action is noted on the ticket with who asked and how it ended."),
+        Field("nutanix_critical_vms", "Critical VMs", "VM names, one per line (not case-sensitive), at most 200. Each is followed: not running, or gone from Prism Central, counts as down.", check=_vm_names),
+        Field("nutanix_outage_tickets", "Open tickets for critical VMs that are down", "A critical VM down for the time below gets one high-priority ticket; when it runs again, an internal note is added for review (the ticket isn't closed). Follows each read."),
+        Field("nutanix_outage_minutes", "Down for (minutes) before a ticket", "Rides out planned restarts. A VM shut down on purpose still gets a ticket after this long.", check=_between(1, 1440)),
+        Field("nutanix_outage_queue_id", "Queue for outage tickets (ID)", "0: the default queue. Routing rules still apply.", check=_between(0, 2_000_000_000)),
+        Field("nutanix_wallboard", "Show critical VMs on wallboards", "A tile with how many critical VMs are down, and an alert naming each one. Off by default: wallboards are often on screens anyone walking by can read."),
     ],
     "unifi": [
         Field("unifi_enabled", "Read UniFi networks", "Optional, read only: clients (MAC, IP, access point or switch, network) on IP records, devices and tickets, and UniFi gateways, switches and access points with their state. Turning it off stops reading and hides cached data."),

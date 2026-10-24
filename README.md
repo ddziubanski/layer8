@@ -4,7 +4,7 @@
 
 Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one queue for tickets from email and a self-service portal, with the tools a desk actually uses day to day, all in one install you control. It borrows the best ideas from ManageEngine, Track-It!, KACE and Spiceworks, runs on a single Linux box (an appliance ISO installs it offline), and works standalone or with Active Directory and Microsoft 365.
 
-> **Version 1.1.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
+> **Version 1.2.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
 ![The technician's queue](screenshots/02-queue.png)
 
@@ -13,7 +13,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - **One queue** for tickets from email and the self-service portal, with queues, SLAs, routing rules, checklists and an arrangeable ticket page.
 - **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with runners.
 - **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
-- **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
+- **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
 - **For the room:** a wallboard for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
 - **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, and no cloud required.
 
@@ -55,7 +55,7 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Cisco Meraki, read-only and opt-in: client discovery (switch port, VLAN, SSID) on IP records, devices and tickets; port and wireless diagnostics; and device outage tickets from Meraki alerts.
 - Ubiquiti UniFi, opt-in, through the cloud or a local console: equipment with its state, client discovery on IP records, devices and tickets, outage tickets for offline equipment, and guest Wi-Fi vouchers from a ticket ([docs/unifi.md](docs/unifi.md)).
 - Juniper EX switches (configured one by one), opt-in and read-only: a runner on the LAN reads each switch's Junos REST API, so clients show with their switch, port and VLAN; outage tickets for switches that stop answering ([docs/juniper.md](docs/juniper.md)).
-- Nutanix AHV through Prism Central, opt-in: VMs with their power state, host and addresses, matched to devices and linked to tickets; optional restart, power on and power cycle from a ticket, each noted on it ([docs/nutanix.md](docs/nutanix.md)).
+- Nutanix AHV through Prism Central, opt-in: VMs with their power state, host and addresses, matched to devices and linked to tickets; optional restart, power on and power cycle from a ticket, each noted on it; outage tickets and a wallboard tile for critical VMs ([docs/nutanix.md](docs/nutanix.md)).
 - Dell and Lenovo warranty lookups through their official APIs.
 - IP address management:
   - subnets and VLANs, with a used/free map

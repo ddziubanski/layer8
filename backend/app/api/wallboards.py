@@ -18,8 +18,9 @@ from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
-from app import numbering, sla
+from app import numbering, nutanix, sla
 from app.auth import Admin, SessionDep
+from app.config import settings
 from app.models import Priority, Queue, ServiceHeartbeat, Ticket, TicketStatus, User, Wallboard
 
 router = APIRouter(tags=["wallboards"])
@@ -268,6 +269,14 @@ def board_data(session, board: Wallboard, now: datetime | None = None) -> BoardD
     if totals["sla_at_risk"]:
         n = totals["sla_at_risk"]
         alerts.append(Alert(level="warning", text=f"{n} ticket{'s' if n != 1 else ''} at risk of missing {'their' if n != 1 else 'its'} SLA"))
+
+    if settings.nutanix_wallboard and nutanix.on():
+        down = nutanix.critical_down(session)
+        totals["critical_vms_down"] = len(down)
+        for name in down[:5]:
+            alerts.insert(0, Alert(level="critical", text=f"Critical VM {name} is down"))
+        if len(down) > 5:
+            alerts.insert(5, Alert(level="critical", text=f"{len(down) - 5} more critical VMs are down"))
 
     return BoardData(
         name=board.name, generated_at=now, unassigned_alert_minutes=board.unassigned_alert_minutes, totals=totals, alerts=alerts,

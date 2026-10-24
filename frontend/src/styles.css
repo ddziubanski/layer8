@@ -661,7 +661,7 @@ label.inline input { width: auto; min-height: 0; }
 .wb-alert.ok { background: var(--wb-ok-bg); border-color: var(--wb-ok); color: #d4f7e2; }
 @media (prefers-reduced-motion: no-preference) { .wb-alert.critical { animation: wb-pulse 2.4s ease-in-out infinite; } }
 @keyframes wb-pulse { 50% { background: #521a1d; } }
-.wb-tiles { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .8vw; }
+.wb-tiles { display: grid; grid-template-columns: repeat(var(--wb-tiles, 7), minmax(0, 1fr)); gap: .8vw; }
 .wb-tile { background: var(--wb-panel); border: 1px solid var(--wb-line); border-radius: .6em; padding: .8em 1em; display: flex; flex-direction: column; gap: .2em; }
 .wb-tile strong { font-size: 3.4em; line-height: 1; }
 .wb-tile span { color: var(--wb-muted); text-transform: uppercase; letter-spacing: .06em; font-size: .8em; font-weight: 600; }

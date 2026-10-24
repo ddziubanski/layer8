@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 import { ApiError, type WallboardData } from "../api/client";
 import { Brand, useBranding } from "../branding";
@@ -8,7 +8,8 @@ type Ticket = WallboardData["unassigned"][number];
 
 const REFRESH_MS = 30_000;
 
-const TILES: { key: string; label: string; alarm?: boolean; warn?: boolean }[] = [
+type Tile = { key: string; label: string; alarm?: boolean; warn?: boolean };
+const TILES: Tile[] = [
   { key: "open", label: "Open" },
   { key: "unassigned", label: "Unassigned", warn: true },
   { key: "sla_breached", label: "SLA breached", alarm: true },
@@ -17,6 +18,8 @@ const TILES: { key: string; label: string; alarm?: boolean; warn?: boolean }[] =
   { key: "new_today", label: "New today" },
   { key: "resolved_today", label: "Resolved today" },
 ];
+// Shown when the server sends it (Settings > Nutanix > Show critical VMs on wallboards).
+const VM_TILE: Tile = { key: "critical_vms_down", label: "Critical VMs down", alarm: true };
 
 /** The board's data, fetched with the link's token (from the URL fragment, never sent as part of a URL). */
 async function fetchBoard(token: string): Promise<WallboardData> {
@@ -90,6 +93,7 @@ export function WallboardPage() {
   }
 
   const clock = new Date(now);
+  const tiles = VM_TILE.key in data.totals ? [...TILES, VM_TILE] : TILES;
   const busy = data.queues.filter((q) => q.open > 0);
   const quiet = data.queues.length - busy.length;
   const stale = error !== null;
@@ -121,8 +125,8 @@ export function WallboardPage() {
         )}
       </section>
 
-      <section className="wb-tiles" aria-label="Counts">
-        {TILES.map((t) => {
+      <section className="wb-tiles" aria-label="Counts" style={{ "--wb-tiles": tiles.length } as CSSProperties}>
+        {tiles.map((t) => {
           const n = data.totals[t.key] ?? 0;
           const tone = n > 0 && t.alarm ? " alarm" : n > 0 && t.warn ? " warn" : "";
           return (
