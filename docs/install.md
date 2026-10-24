@@ -14,6 +14,8 @@ Every option the setup asks for can be changed later in the app (Settings), exce
 
 The ISO is Debian 13 plus the service desk and everything it needs, so the OS and every dependency are the versions it was tested with.
 
+**Download it** from the [latest release](https://github.com/ddziubanski/layer8/releases/latest): `layer8-v<version>.iso` and `SHA256SUMS`. Check it before use: `sha256sum -c SHA256SUMS --ignore-missing` (on Windows: `Get-FileHash layer8-v<version>.iso` and compare). To build it yourself instead, see [Building the ISO](#building-the-iso).
+
 1. **Create the VM**: 2 vCPU, 4 GB RAM, 40 GB disk, one network card. On Hyper-V use a Generation 2 VM; disable Secure Boot, or set its template to "Microsoft UEFI Certificate Authority". BIOS and UEFI both work.
 2. **Boot the ISO.** The navy/teal menu waits for your choice on BIOS and UEFI; there is no automatic countdown.
    - **Install Layer 8 - choose disk and partitioning** (default): Debian offers its guided and manual partitioning choices. Select the disk/layout and review the proposed changes before confirming writes. This still installs the complete offline appliance and first-boot wizard. Existing partitions are not guaranteed safe: review Debian's changes carefully.
