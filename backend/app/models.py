@@ -1532,6 +1532,22 @@ class ChecklistItem(Base):
     child_ticket: Mapped["Ticket | None"] = relationship(foreign_keys=[child_ticket_id])
 
 
+class CopilotConversation(Base):
+    """Authorization metadata only; questions and answers stay out of this table."""
+
+    __tablename__ = "copilot_conversations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[str] = mapped_column(String(200))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    account_key: Mapped[str] = mapped_column(String(64))
+    shared_ticket: Mapped[bool] = mapped_column(Boolean)
+    shared_internal: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("user_id", "conversation_id", name="uq_copilot_user_conversation"),)
+
+
 class TeamsDelivery(Base):
     """Durable send intent; an uncertain external side effect must not be replayed."""
 
