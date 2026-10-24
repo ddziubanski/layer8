@@ -116,7 +116,7 @@ Each technician links their own Microsoft work account. They can then send the r
 
 ## 5. Copilot on tickets (preview)
 
-Technicians ask Microsoft 365 Copilot from a ticket's **Copilot** panel, as themselves. They can include the ticket's text (subject, description, latest replies and notes) as context. Copilot answers from what that technician can already see in Microsoft 365, with links to its sources. An answer can be saved as an internal note. Each question is noted in the ticket's history; the answer is saved only if the technician chooses.
+Technicians ask Microsoft 365 Copilot from a ticket's **Copilot** panel, as themselves. They can review and include the ticket's subject, description and latest public replies as context. Internal notes require the separate **Also include internal notes** choice. Copilot answers from what that technician can already see in Microsoft 365, with links to its sources. For each answer, **Include this response on the ticket** prepares an editable internal note. **Send to requester** instead prepares an editable public reply; a separate **Send reply** button uses the existing ticket/email workflow. Nothing is saved or sent automatically. Each question is noted in the ticket's history; the answer is saved only if the technician chooses.
 
 > Microsoft's Copilot Chat API is in **beta**. Microsoft says it isn't supported for production use, and it may change without notice. Treat this part as a preview.
 
@@ -142,7 +142,7 @@ Steps:
    Grant admin consent. These are delegated permissions, so Copilot never sees more than the technician could already open themselves.
 2. **Layer 8: Settings > Teams**: tick **Copilot on tickets (preview)**. Save.
 3. **Each technician: My preferences > Microsoft Teams > Disconnect, then Connect** once, to pick up the new permissions. Until they do, the Copilot panel says *Reconnect your Microsoft account*.
-4. **Test.** On a ticket, in the **Copilot** panel, ask "Summarize this ticket" with *Include this ticket's text* ticked. You should get an answer, and the history shows "Asked Copilot, with this ticket's text".
+4. **Test.** On a ticket, in the **Copilot** panel, ask "Summarize this ticket" with *Include this ticket's text* ticked. Choose **Review ticket context** and inspect the exact bounded text, then click **Ask**. You should get an answer, and the history shows "Asked Copilot, with this ticket's text".
 
 | Problem | Meaning |
 | --- | --- |
@@ -150,7 +150,13 @@ Steps:
 | "Reconnect your Microsoft account…" | The technician connected before Copilot was turned on: disconnect and connect again. |
 | "Copilot is busy" | Microsoft is throttling: try again in a minute. |
 
-**What leaves Layer 8:** only the question, plus the ticket's text when the box is ticked, capped at about 12,000 characters. It goes to Microsoft 365 Copilot in your own tenant, under the technician's identity. Untick the box to ask without the ticket's text.
+**What leaves Layer 8:** the question, plus the reviewed ticket context when included, capped at 12,000 characters. Context includes the subject, status, priority, requester's name, description and latest ten public replies by default. Internal notes are included only through their separate choice; attachments are never included. The preview is generated locally and makes no Microsoft call. The UI supplies its preview digest; if the source text changes before sending, the API refuses the stale preview and asks you to refresh it. Existing API callers can omit the optional digest, but internal notes now default to excluded.
+
+A conversation is bound server-side to the technician, ticket, Microsoft account and app registration. Follow-ups recheck ticket access. Changing sharing choices starts a new conversation because removing a checkbox cannot erase context Microsoft already received. Switching ticket/account clears the visible conversation. **Start over** clears this view; it does not delete Microsoft 365 conversation history.
+
+**Save or send an answer.** After reviewing an answer, select **Include this response on the ticket** and edit the response. Without **Send to requester**, **Add as an internal note** saves it privately to staff, including its source links. With **Send to requester** selected, **Send reply** creates a public reply and requests email delivery through the existing workflow. Only the edited reply is sent, without automatically appending the Copilot question or its source list. The UI distinguishes email queued from portal-only saving; queued email is not proof of delivery. Check the ticket before retrying an uncertain save. No response is auto-saved, emailed or posted to Teams.
+
+**Upgrade note.** A migration adds conversation authorization metadata only, not questions, answers or tokens. Conversations started before this upgrade have no binding record: start a new conversation once. Existing saved ticket notes/replies are unaffected.
 
 ---
 

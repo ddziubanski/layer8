@@ -229,6 +229,7 @@ export const api = {
     disconnect: () => request<void>("DELETE", "/api/teams/connection"),
     chats: (id: number) => request<S["ChatOut"][]>("GET", `/api/tickets/${id}/teams/chats`),
     send: (id: number, body: S["SendIn"]) => request<S["SentOut"]>("POST", `/api/tickets/${id}/teams/messages`, body),
+    copilotContext: (id: number, internal: boolean) => request<S["CopilotContextOut"]>("GET", `/api/tickets/${id}/copilot/context?include_internal=${internal}`),
     copilot: (id: number, body: S["CopilotIn"]) => request<S["CopilotOut"]>("POST", `/api/tickets/${id}/copilot`, body),
   },
   me: () => request<Me>("GET", "/api/auth/me"),
