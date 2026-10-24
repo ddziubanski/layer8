@@ -83,8 +83,8 @@ export function PreferencesPage({ me }: { me: Me }) {
         </section>}
         {isStaff && <section className="card stack" aria-label="Ticket workspace">
           <h2>Ticket workspace</h2>
-          <p className="muted small">Layout changes apply when you next open a ticket. Arrange this page still controls which panels are visible.</p>
-          <label className="field">Layout<select value={workspace.mode} onChange={e => setWorkspace({ ...workspace, mode: e.target.value as TicketWorkspacePreference["mode"] })}><option value="drawer">Conversation with tools drawer</option><option value="classic">Classic arranged panels</option></select></label>
+          <p className="muted small">Layout changes apply when you next open a ticket. Use Arrange this page to choose widgets. Widget canvas uses your saved columns and full-width rows; the tools drawer groups selected widgets into tabs.</p>
+          <label className="field">Layout<select value={workspace.mode} onChange={e => setWorkspace({ ...workspace, mode: e.target.value as TicketWorkspacePreference["mode"] })}><option value="drawer">Conversation with tools drawer</option><option value="classic">Widget canvas (arranged panels)</option></select></label>
           <label className="field">Preferred tool<select value={workspace.selected_tool} onChange={e => setWorkspace({ ...workspace, selected_tool: e.target.value as TicketWorkspacePreference["selected_tool"] })}>{TICKET_TOOLS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
           <label className="inline"><input type="checkbox" checked={workspace.keep_open} onChange={e => setWorkspace({ ...workspace, keep_open: e.target.checked })} />Keep tools open on new tickets</label>
         </section>}

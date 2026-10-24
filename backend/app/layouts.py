@@ -4,7 +4,7 @@ or side column, across the bottom, or hidden.
 
 An admin sets the default for everyone (app_settings "layouts"); each technician may keep their
 own (users.layouts), or go back to the default. Panels the app adds later appear in their usual
-place, so a saved layout never hides something new.
+place for legacy layouts; widget-mode layouts keep new optional panels in their library.
 """
 
 from typing import Any
@@ -48,7 +48,7 @@ class LayoutError(ValueError):
 
 def usual(page: str) -> dict[str, Any]:
     cols = PANELS[page]
-    return {"top": [], "main": list(cols["main"]), "side": list(cols["side"]), "bottom": [], "hidden": [], "fields": _fields(page, None)}
+    return {"widget_mode": False, "top": [], "main": list(cols["main"]), "side": list(cols["side"]), "bottom": [], "hidden": [], "fields": _fields(page, None)}
 
 
 def _fields(page: str, given: dict | None) -> dict[str, dict[str, list[str]]]:
@@ -82,6 +82,13 @@ def normalise(page: str, layout: dict[str, Any] | None) -> dict[str, Any]:
     for p, col in known.items():
         if p not in seen:
             out[col].append(p)
+    out["widget_mode"] = layout.get("widget_mode") is True
+    if out["widget_mode"]:
+        # Missing optional widgets are opt-in; required ones always stay on the canvas.
+        for p, col in known.items():
+            if p not in seen and p not in REQUIRED.get(page, set()):
+                out[col].remove(p)
+                out["hidden"].append(p)
     out["fields"] = _fields(page, layout.get("fields"))
     return out
 

@@ -2124,6 +2124,8 @@ class FieldLayout(BaseModel):
 
 
 class LayoutIn(BaseModel):
+    # Customized widget layouts keep newly introduced optional widgets in the library.
+    widget_mode: bool = False
     # Full width, above the columns.
     top: list[str] = Field(default_factory=list, max_length=50)
     main: list[str] = Field(default_factory=list, max_length=50)
@@ -2136,6 +2138,7 @@ class LayoutIn(BaseModel):
 
 
 class LayoutOut(BaseModel):
+    widget_mode: bool = False
     top: list[str]
     main: list[str]
     side: list[str]

@@ -7672,6 +7672,11 @@ export interface components {
         };
         /** LayoutIn */
         LayoutIn: {
+            /**
+             * Widget Mode
+             * @default false
+             */
+            widget_mode: boolean;
             /** Top */
             top?: string[];
             /** Main */
@@ -7689,6 +7694,11 @@ export interface components {
         };
         /** LayoutOut */
         LayoutOut: {
+            /**
+             * Widget Mode
+             * @default false
+             */
+            widget_mode: boolean;
             /** Top */
             top: string[];
             /** Main */

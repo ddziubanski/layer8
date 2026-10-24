@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { api, type Layout, type User } from "../api/client";
+
+import { widgetInfo } from "./widgetCatalog";
 
 export type Panel = { label: string; node: ReactNode };
 export type FieldLayout = { order?: string[]; hidden?: string[]; wide?: string[] };
@@ -32,7 +34,14 @@ const ZONES: [Zone, string][] = [
 export function useArrangement(page: string) {
   const layout = useQuery({ queryKey: ["layout", page], queryFn: () => api.layouts.get(page), staleTime: 5 * 60_000 });
   const [editing, setEditing] = useState(false);
-  return { layout: layout.data, editing, setEditing };
+  const restoreFocus = useRef(false);
+  useEffect(() => {
+    if (!editing && restoreFocus.current) {
+      document.querySelector<HTMLElement>(`[data-arrange-page="${page}"]`)?.focus();
+      restoreFocus.current = false;
+    }
+  }, [editing, page]);
+  return { layout: layout.data, editing, setEditing: (value: boolean) => { if (value) restoreFocus.current = true; setEditing(value); } };
 }
 
 function move(l: Layout, id: string, to: Zone | "hidden", before: string | null): Layout {
@@ -54,6 +63,7 @@ export function ArrangedColumns({
   layout,
   required,
   hasMine,
+  editorOnly = false,
 }: {
   page: string;
   // Or made from the layout being arranged, so field changes show as they're made.
@@ -65,9 +75,13 @@ export function ArrangedColumns({
   layout: Layout;
   required: string[];
   hasMine: boolean;
+  // Drawer mode keeps its existing live workspace mounted separately.
+  editorOnly?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Layout | null>(null);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
   const [dragging, setDragging] = useState<string | null>(null);
   const shown = editing ? (draft ?? layout) : layout;
   const built = typeof panels === "function" ? panels(shown) : panels;
@@ -76,12 +90,34 @@ export function ArrangedColumns({
     setDraft(null);
     onDone();
   };
-  const saveMine = useMutation({ mutationFn: () => api.layouts.saveMine(page, shown), onSuccess: finish });
-  const saveDefault = useMutation({ mutationFn: () => api.layouts.saveDefault(page, shown), onSuccess: finish });
+  const saveMine = useMutation({ mutationFn: () => api.layouts.saveMine(page, { ...shown, widget_mode: true }), onSuccess: finish });
+  const saveDefault = useMutation({ mutationFn: () => api.layouts.saveDefault(page, { ...shown, widget_mode: true }), onSuccess: finish });
   const resetMine = useMutation({ mutationFn: () => api.layouts.resetMine(page), onSuccess: finish });
+  const busy = saveMine.isPending || saveDefault.isPending || resetMine.isPending;
+  useEffect(() => {
+    if (!editing) { setDraft(null); setDragging(null); setSearch(""); setCategory("all"); saveMine.reset(); saveDefault.reset(); resetMine.reset(); }
+  }, [editing]);
   const error = saveMine.error ?? saveDefault.error ?? resetMine.error;
   // From the latest draft, so quick changes in a row all count.
-  const change = (id: string, to: Zone | "hidden", before: string | null) => setDraft((d) => move(d ?? layout, id, to, before));
+  const available = (id: string) => built[id]?.node != null && built[id]?.node !== false;
+  const change = (id: string, to: Zone | "hidden", before: string | null) => {
+    if (busy || !built[id] || (to === "hidden" && required.includes(id))) return;
+    // A hidden, unavailable widget cannot be activated by a drag or keyboard shortcut.
+    if (to !== "hidden" && (shown.hidden ?? []).includes(id) && !available(id)) return;
+    setDraft(d => move(d ?? layout, id, to, before));
+  };
+  const essentials = () => setDraft(d => {
+    const next = d ?? layout;
+    return { ...next, ...Object.fromEntries(ZONES.map(([zone]) => [zone, (next[zone] ?? []).filter(id => required.includes(id))])),
+      hidden: [...new Set([...(next.hidden ?? []), ...ZONES.flatMap(([zone]) => next[zone] ?? [])])].filter(id => !required.includes(id)) };
+  });
+  const catalog = Object.entries(built).filter(([id]) => ZONES.some(([zone]) => (shown[zone] ?? []).includes(id)) || (shown.hidden ?? []).includes(id));
+  const categories = [...new Set(catalog.map(([id]) => widgetInfo(page, id).category))];
+  const needle = search.trim().toLowerCase();
+  const matches = catalog.filter(([id, panel]) => {
+    const info = widgetInfo(page, id);
+    return (category === "all" || info.category === category) && `${panel.label} ${info.description} ${info.category}`.toLowerCase().includes(needle);
+  });
 
   const frame = (id: string, col: Zone) => {
     const p = built[id];
@@ -135,27 +171,16 @@ export function ArrangedColumns({
           .map(([group, g]) => (
             <FieldsEditor key={group} title={g.title} labels={g.labels} value={shown.fields?.[group]} onChange={(v) => setDraft((d) => ({ ...(d ?? layout), fields: { ...(d ?? layout).fields, [group]: v } }))} />
           ))}
-        <div className="arrange-body">{p.node ?? <p className="muted small" style={{ margin: 8 }}>Not shown right now; it appears here when it applies.</p>}</div>
+        <div className="arrange-body widget-placeholder"><p>{widgetInfo(page, id).description}</p><span className="muted small">{required.includes(id) ? "Required widget" : available(id) ? "Widget selected. Live tools stay in your workspace while you arrange." : "Currently unavailable; it will appear when applicable and permitted."}</span></div>
       </div>
     );
   };
   const arrangeBar = editing && (
     <div className="card note stack" style={{ margin: 0, gap: 8 }} role="region" aria-label="Arrange this page">
       <strong>Arrange this page</strong>
-      <span className="small">Drag panels by their bar, or use Up, Down and the menu: a column, or across the top or bottom at full width. Hidden panels wait here until you bring them back.</span>
-      {shown.hidden.length > 0 && (
-        <div className="row-gap" role="list" aria-label="Hidden panels">
-          {shown.hidden.map((id) => (
-            <span key={id} role="listitem" className="chip n">
-              {built[id]?.label ?? id}{" "}
-              <button type="button" className="linkish small" onClick={() => change(id, "main", null)} aria-label={`Show ${built[id]?.label ?? id}`}>
-                Show
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      {error && <p className="error small">{error.message}</p>}
+      {editorOnly && <span className="muted small">This ticket uses Conversation / Work and the tools drawer. Widget choices apply here; column positions apply in Widget canvas mode, selected in My preferences for the next ticket.</span>}
+      <span className="small">Build your workspace from widgets. Add only what you need, then drag or use Up, Down and the placement menu. This editor does not load live tools or enable integrations. Changes apply when saved.</span>
+      <div className="row-gap"><strong>Widget builder</strong><span className="muted small">{catalog.filter(([id]) => !(shown.hidden ?? []).includes(id)).length} selected · {(shown.hidden ?? []).length} hidden</span><button type="button" className="btn2" onClick={essentials}>Start with essentials</button></div>
       <div className="row-gap">
         <button className="btn" type="button" onClick={() => saveMine.mutate()}>
           Save for me
@@ -174,6 +199,31 @@ export function ArrangedColumns({
           Cancel
         </button>
       </div>
+      <details className="widget-library" open>
+        <summary>Widget library</summary>
+        <div className="widget-library-filters"><label>Find a widget<input autoFocus type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search tools, devices, knowledge…" /></label><label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="all">All categories</option>{categories.map(name => <option key={name}>{name}</option>)}</select></label></div>
+        <div className="widget-catalog" role="list" aria-label="Widget library">
+          {matches.map(([id, panel]) => {
+            const selected = !(shown.hidden ?? []).includes(id);
+            return <div key={id} role="listitem" className="widget-catalog-item"><div><strong>{panel.label}</strong><span className="muted small">{widgetInfo(page, id).category}</span></div><p className="small">{widgetInfo(page, id).description}</p><div className="row-gap"><span className="muted small spacer">{required.includes(id) ? "Required" : !available(id) ? "Currently unavailable" : selected ? "Added" : "Hidden"}</span><button type="button" className="btn2" disabled={required.includes(id) || (!selected && !available(id))} aria-label={`${selected ? "Remove" : "Add"} ${panel.label} widget`} onClick={() => change(id, selected ? "hidden" : "main", null)}>{selected ? "Remove" : "Add"}</button></div></div>;
+          })}
+          {!matches.length && <p className="muted small" role="status">No widgets match your search.</p>}
+        </div>
+      </details>
+      {(shown.hidden ?? []).length > 0 && (
+        <div className="row-gap" role="list" aria-label="Hidden panels">
+          {shown.hidden.map((id) => (
+            <span key={id} role="listitem" className="chip n">
+              {built[id]?.label ?? id}{" "}
+              <button type="button" className="linkish small" disabled={!available(id)} onClick={() => change(id, "main", null)} aria-label={`Show ${built[id]?.label ?? id}`}>
+                Show
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {error && <p className="error small" role="alert">Layout was not saved: {error.message}</p>}
+
     </div>
   );
   const zone = (col: Zone) => {
@@ -204,14 +254,15 @@ export function ArrangedColumns({
       </div>
     );
   };
-  return (
-    <>
-      {zone("top")}
-      {zone("main")}
-      {zone("side")}
-      {zone("bottom")}
-    </>
-  );
+  return <>
+    {editing && <fieldset className="widget-editor" disabled={busy} aria-label="Widget builder">{zone("top")}{zone("main")}{zone("side")}{zone("bottom")}</fieldset>}
+    {!editorOnly && <div className="arrange-live" hidden={editing}>{ZONES.map(([col]) => {
+      const wide = col === "top" || col === "bottom";
+      const ids = layout[col] ?? [];
+      if (wide && !ids.length) return null;
+      return <div key={col} className="stack" style={wide ? { gridColumn: "1 / -1" } : undefined}>{ids.map(id => built[id] ? <div key={id}>{built[id].node}</div> : null)}</div>;
+    })}</div>}
+  </>;
 }
 
 /** A field group while arranging: move fields up and down, make them full width, hide them. */

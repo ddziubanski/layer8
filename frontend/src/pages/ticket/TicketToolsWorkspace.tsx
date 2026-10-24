@@ -130,7 +130,7 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
           aria-selected={activeSection === item.id} aria-controls={`${prefix}-section-panel-${item.id}`} tabIndex={activeSection === item.id ? 0 : -1}
           onKeyDown={event => tabKey(event, sections.map(s => s.id), activeSection, chooseSection, `${prefix}-section`)} onClick={() => chooseSection(item.id)}>{item.label}</button>)}
       </div>
-      <button ref={toggle} className={open ? "btn" : "btn2"} type="button" aria-expanded={open} aria-controls={`${prefix}-drawer`} onClick={() => { if (open) close(); else setOpen(true); }}>▥ Tools</button>
+      {tools.length > 0 && <button ref={toggle} className={open ? "btn" : "btn2"} type="button" aria-expanded={open} aria-controls={`${prefix}-drawer`} onClick={() => { if (open) close(); else setOpen(true); }}>▥ Tools</button>}
     </div>
     <div ref={columns} className={`ticket-workspace-columns${open && tools.length ? " drawer-open" : ""}`}>
       <div className="ticket-primary-panels">

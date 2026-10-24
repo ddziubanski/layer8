@@ -64,3 +64,27 @@ def test_field_groups(client, agent):
     # Groups not given keep their usual arrangement.
     assert got["order_bottom"] == usual["order_bottom"]
     assert client.get("/api/layouts/ticket", headers=as_user(agent)).json()["effective"]["fields"] == {}
+
+
+def test_widget_mode_makes_missing_optional_panels_opt_in():
+    explicit = layouts.normalise("ticket", {"widget_mode": True, "main": ["conversation", "history"]})
+    assert explicit["widget_mode"] is True
+    assert explicit["main"] == ["conversation", "history"] and explicit["side"] == []
+    assert "scripts" in explicit["hidden"] and "copilot" in explicit["hidden"]
+    # Legacy arrangements keep their existing normalization and new-panel behavior.
+    legacy = layouts.normalise("ticket", {"main": ["conversation", "history"]})
+    assert legacy["widget_mode"] is False and "scripts" in legacy["main"]
+    assert "conversation" not in layouts.normalise("ticket", {"widget_mode": True, "hidden": ["conversation"]})["hidden"]
+
+
+def test_widget_mode_survives_api_save_reset_and_import(client, db, admin, agent):
+    body = {"widget_mode": True, "main": ["conversation"], "side": ["status"]}
+    mine = client.put("/api/layouts/ticket/mine", headers=as_user(agent), json=body)
+    assert mine.status_code == 200 and mine.json()["effective"]["widget_mode"] is True
+    assert mine.json()["effective"]["main"] == ["conversation"]
+    assert client.put("/api/layouts/ticket/default", headers=as_user(agent), json=body).status_code == 403
+    client.put("/api/layouts/ticket/default", headers=as_user(admin), json=body)
+    assert client.delete("/api/layouts/ticket/mine", headers=as_user(agent)).json()["effective"]["widget_mode"] is True
+    cli.import_settings(db, {"layouts": {"po": {"widget_mode": True, "main": ["order"]}}})
+    saved = layouts.default(db, "po")
+    assert saved["widget_mode"] is True and saved["side"] == [] and "files" in saved["hidden"]
