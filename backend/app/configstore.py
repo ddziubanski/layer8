@@ -304,6 +304,13 @@ SECTIONS: dict[str, list[Field]] = {
         Field("after_hours_message", "After-hours message", "Shown on the portal for a queue that is closed. {next} becomes when someone is next expected (e.g. \"on Monday at 08:00\"), {queue} the queue's name.", multiline=True, check=_length(0, 1000)),
         Field("presence_on_portal", "Show technicians' Teams status on the portal", "Each queue's owners with their Teams status (available, busy, away, offline), status only: no chat or call links. Needs the Email tab's app registration with the application permissions Presence.Read.All and User.ReadBasic.All (admin consent); checked every minute."),
     ],
+    "signin": [
+        Field("totp_required_admins", "Require two-factor sign-in for admins with a local password", "They set up an authenticator app (My preferences > Two-factor sign-in) the next time they sign in, before they can do anything else. Anyone can turn two-factor on for themselves either way."),
+        Field("entra_sign_in_enabled", "Sign in with Microsoft (Entra ID)", "Adds a Sign in with Microsoft button. Only people who already have an account here can use it, matched by their Entra ID object or by UPN or email; accounts with a local password (the break-glass admin) can't. Entra's own MFA and Conditional Access apply. See docs/entra-sign-in.md."),
+        Field("entra_tenant_id", "Tenant ID", "Your Microsoft Entra tenant (directory) ID.", check=_guid),
+        Field("entra_client_id", "Application (client) ID", "A separate app registration for sign-in, with the redirect URI https://<portal address>/api/auth/entra/callback (Web).", check=_guid),
+        Field("entra_client_secret", "Client secret", "Written to a secret file and never shown back.", secret=True, check=_length(0, 512)),
+    ],
     "teams": [
         Field("teams_chat_enabled", "Allow technician Teams connections", "Optional delegated Microsoft sign-in. Technicians connect their own account under My preferences."),
         Field("teams_tenant_id", "Teams directory (tenant) ID", "Single-tenant Entra application; separate from the mailbox integration.", check=_guid),

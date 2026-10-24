@@ -14,6 +14,22 @@ function source(u: User): string {
   return `via ${u.role_source.replace("group:", "")}`;
 }
 
+/** An admin turns off someone's two-factor sign-in (a lost phone); they set it up again. */
+function TwoFactorReset({ user }: { user: User }) {
+  const queryClient = useQueryClient();
+  const reset = useMutation({ mutationFn: () => api.twoFactor.reset(user.id), onSettled: () => queryClient.invalidateQueries({ queryKey: ["users"] }) });
+  if (!user.two_factor) return null;
+  return (
+    <>
+      <span className="chip g small">Two-factor</span>{" "}
+      <button className="linkish small" type="button" disabled={reset.isPending} onClick={() => reset.mutate()} aria-label={`Reset two-factor sign-in for ${user.display_name}`}>
+        Reset two-factor
+      </button>
+      {reset.error && <span className="error small"> {reset.error.message}</span>}
+    </>
+  );
+}
+
 function LocalControls({ user }: { user: User }) {
   const queryClient = useQueryClient();
   const [pw, setPw] = useState<string | null>(null);
@@ -189,6 +205,7 @@ export function UsersAdmin({ me }: { me: User }) {
                 <td className="small muted">{u.last_synced_at ? when(u.last_synced_at) : ""}</td>
                 {isAdmin && (
                   <td>
+                    <TwoFactorReset user={u} />
                     {u.auth_source === "local" ? (
                       <LocalControls user={u} />
                     ) : u.role !== "requester" ? (

@@ -175,6 +175,17 @@ class User(Base):
     # Argon2 hash. Null means no local password set: the user can't sign in
     # locally (e.g. a requester created by email intake).
     password_hash: Mapped[str | None] = mapped_column(String(255))
+    # Two-factor sign-in (app.totp): the encrypted secret once confirmed (pending until then), the
+    # last time step used (a code works once), and hashes of the unused recovery codes.
+    totp_secret: Mapped[str | None] = mapped_column(Text)
+    totp_pending: Mapped[str | None] = mapped_column(Text)
+    totp_enabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    totp_last_step: Mapped[int | None] = mapped_column(BigInteger)
+    totp_recovery: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
+
+    @property
+    def two_factor(self) -> bool:
+        return self.totp_enabled_at is not None
     # Directory agents/admins only: a local password that works when the directory can't be
     # reached (never instead of a wrong directory password). Stored in password_hash.
     local_fallback: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))

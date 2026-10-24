@@ -4,6 +4,8 @@
 Queue managers can also edit their own queues and set their owners.
 """
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 
@@ -33,6 +35,7 @@ from app.schemas import (
     UserUpdate,
 )
 
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
 
 
@@ -109,6 +112,20 @@ def set_sign_in(user_id: int, body: SignInModeIn, _: Admin, session: SessionDep)
 def set_user_password(user_id: int, body: PasswordSetIn, _: Admin, session: SessionDep):
     """Set or reset a local password. Signs the user out everywhere."""
     _set_password(session, get_or_404(session, User, user_id), body.password)
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/users/{user_id}/two-factor", status_code=status.HTTP_204_NO_CONTENT, tags=["users"])
+def reset_two_factor(user_id: int, admin: Admin, session: SessionDep):
+    """Turn off someone's two-factor sign-in (a lost phone). They set it up again; if Settings >
+    Sign-in requires it, at their next sign-in. Signs them out everywhere."""
+    from app.api.auth import clear_two_factor
+
+    user = get_or_404(session, User, user_id)
+    clear_two_factor(user)
+    auth.end_sessions(session, user)
+    log.warning("Two-factor sign-in for %s reset by %s", user.email, admin.display_name, extra={"source": "auth"})
     session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

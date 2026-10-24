@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     graph_tenant_id: str = ""
     graph_client_id: str = ""
     graph_client_secret: str = ""
+    # Sign-in: two-factor required for admins who sign in with a local password; Microsoft Entra ID
+    # sign-in (OpenID Connect, its own app registration; the secret is a file in the secrets folder).
+    totp_required_admins: bool = False
+    entra_sign_in_enabled: bool = False
+    entra_tenant_id: str = ""
+    entra_client_id: str = ""
+    entra_client_secret: str = ""
     # Optional Teams digest. Configstore keeps the webhook as a write-only secret.
     teams_chat_enabled: bool = False
     teams_tenant_id: str = ""

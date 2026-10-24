@@ -45,6 +45,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 **People and access**
 - Local accounts that need nothing else, or AD/LDAP sign-in with roles from AD groups.
 - Silent Windows sign-in (Kerberos) to the portal.
+- Two-factor sign-in with an authenticator app (required for local admins if you choose), and Sign in with Microsoft (Entra ID) for existing accounts ([docs/entra-sign-in.md](docs/entra-sign-in.md)).
 - Creating AD accounts from a ticket: onboarding templates, group lists, a start date, and the password shown once.
 - Finer permissions: who may delete, merge, publish or manage each area, by group.
 - Admins choose which areas the organization uses (Settings > Modules), and each technician can trim their own sidebar further ([docs/workspace-preferences.md](docs/workspace-preferences.md)).
@@ -109,6 +110,7 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Email intake and notifications (Microsoft Entra app, Graph) | [docs/email-setup.md](docs/email-setup.md) |
 | Technician Teams messages and queue summaries | [docs/teams.md](docs/teams.md) |
 | Windows sign-in (Kerberos SSO) | [docs/windows-sign-in.md](docs/windows-sign-in.md) |
+| Two-factor sign-in and Sign in with Microsoft (Entra ID) | [docs/entra-sign-in.md](docs/entra-sign-in.md) |
 | Relays: scripts, AD changes, IP scans, DHCP/DNS, SNMP | [docs/runner.md](docs/runner.md) |
 | Remote Assistance from tickets | [docs/remote-assistance.md](docs/remote-assistance.md) |
 | Action1 patch status and patch automation calendar (read-only) | [docs/action1.md](docs/action1.md) |

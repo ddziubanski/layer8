@@ -206,6 +206,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Two Factor Status */
+        get: operations["two_factor_status_api_auth_two_factor_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/two-factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Two Factor Setup
+         * @description A new secret to add to an authenticator app; it's on once a code from it is confirmed.
+         */
+        post: operations["two_factor_setup_api_auth_two_factor_setup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/two-factor/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two Factor Confirm */
+        post: operations["two_factor_confirm_api_auth_two_factor_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/two-factor/off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two Factor Off */
+        post: operations["two_factor_off_api_auth_two_factor_off_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/entra/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entra Start */
+        get: operations["entra_start_api_auth_entra_start_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/entra/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entra Callback */
+        get: operations["entra_callback_api_auth_entra_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/teams/connection": {
         parameters: {
             query?: never;
@@ -620,6 +725,27 @@ export interface paths {
         put: operations["set_user_password_api_users__user_id__password_put"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{user_id}/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Reset Two Factor
+         * @description Turn off someone's two-factor sign-in (a lost phone). They set it up again; if Settings >
+         *     Sign-in requires it, at their next sign-in. Signs them out everywhere.
+         */
+        delete: operations["reset_two_factor_api_users__user_id__two_factor_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7527,6 +7653,8 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+            /** Code */
+            code?: string | null;
         };
         /** MailPassItemOut */
         MailPassItemOut: {
@@ -7585,6 +7713,11 @@ export interface components {
             /** Last Synced At */
             last_synced_at?: string | null;
             /**
+             * Two Factor
+             * @default false
+             */
+            two_factor: boolean;
+            /**
              * Portal Only
              * @default false
              */
@@ -7594,6 +7727,11 @@ export interface components {
              * @default false
              */
             must_change_password: boolean;
+            /**
+             * Must Set Up Two Factor
+             * @default false
+             */
+            must_set_up_two_factor: boolean;
             /** Ticket Color */
             ticket_color?: string | null;
             /**
@@ -10358,6 +10496,11 @@ export interface components {
             windows_sign_in: boolean;
             /** Windows Sign In Silent */
             windows_sign_in_silent: boolean;
+            /**
+             * Entra Sign In
+             * @default false
+             */
+            entra_sign_in: boolean;
         };
         /** SimilarTicketOut */
         SimilarTicketOut: {
@@ -11386,6 +11529,39 @@ export interface components {
             /** May Delete */
             may_delete: boolean;
         };
+        /** TwoFactorConfirmIn */
+        TwoFactorConfirmIn: {
+            /** Code */
+            code: string;
+        };
+        /** TwoFactorOffIn */
+        TwoFactorOffIn: {
+            /** Password */
+            password: string;
+            /** Code */
+            code: string;
+        };
+        /** TwoFactorRecoveryOut */
+        TwoFactorRecoveryOut: {
+            /** Recovery Codes */
+            recovery_codes: string[];
+        };
+        /** TwoFactorSetupOut */
+        TwoFactorSetupOut: {
+            /** Secret */
+            secret: string;
+            /** Uri */
+            uri: string;
+        };
+        /** TwoFactorStatusOut */
+        TwoFactorStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Recovery Codes Left */
+            recovery_codes_left: number;
+            /** Required */
+            required: boolean;
+        };
         /** UnacceptedOut */
         UnacceptedOut: {
             /** Enabled */
@@ -11526,6 +11702,11 @@ export interface components {
             phone?: string | null;
             /** Last Synced At */
             last_synced_at?: string | null;
+            /**
+             * Two Factor
+             * @default false
+             */
+            two_factor: boolean;
             /** Has Password */
             readonly has_password: boolean;
         };
@@ -12330,6 +12511,176 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_status_api_auth_two_factor_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_setup_api_auth_two_factor_setup_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_confirm_api_auth_two_factor_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorConfirmIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorRecoveryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_off_api_auth_two_factor_off_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorOffIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    entra_start_api_auth_entra_start_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    entra_callback_api_auth_entra_callback_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -13288,6 +13639,37 @@ export interface operations {
                 "application/json": components["schemas"]["PasswordSetIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_two_factor_api_users__user_id__two_factor_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             204: {

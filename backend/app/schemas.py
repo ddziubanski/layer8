@@ -31,6 +31,32 @@ class ORM(BaseModel):
 class LoginIn(BaseModel):
     email: str = Field(min_length=1, max_length=320)
     password: str = Field(min_length=1, max_length=1024)
+    # The authenticator app's 6-digit code, or a recovery code, when two-factor sign-in is on.
+    code: str | None = Field(default=None, max_length=32)
+
+
+class TwoFactorStatusOut(BaseModel):
+    enabled: bool
+    recovery_codes_left: int
+    required: bool
+
+
+class TwoFactorSetupOut(BaseModel):
+    secret: str
+    uri: str
+
+
+class TwoFactorConfirmIn(BaseModel):
+    code: str = Field(min_length=6, max_length=32)
+
+
+class TwoFactorRecoveryOut(BaseModel):
+    recovery_codes: list[str]
+
+
+class TwoFactorOffIn(BaseModel):
+    password: str = Field(min_length=1, max_length=1024)
+    code: str = Field(min_length=6, max_length=32)
 
 
 class PasswordChangeIn(BaseModel):
@@ -80,6 +106,8 @@ class UserOut(ORM):
     phone: str | None = None
     last_synced_at: datetime | None = None
     password_hash: str | None = Field(default=None, exclude=True)
+    # Two-factor sign-in (authenticator app) is on.
+    two_factor: bool = False
 
     @computed_field
     @property
@@ -106,6 +134,8 @@ class MeOut(UserOut):
 
     portal_only: bool = False
     must_change_password: bool = False
+    # Two-factor sign-in must be set up before anything else (Settings > Sign-in).
+    must_set_up_two_factor: bool = False
     ticket_color: str | None = None
     color_rules: list["ColorRule"] = []
     # Settings > Permissions: the actions this person may take (app.permissions.CATALOG keys).
@@ -155,6 +185,8 @@ class SignInOptionsOut(BaseModel):
     windows_sign_in: bool
     # Try Windows sign-in straight away, without waiting for a click.
     windows_sign_in_silent: bool
+    # Sign in with Microsoft (Entra ID) is set up.
+    entra_sign_in: bool = False
 
 
 class WindowsSignInOut(BaseModel):

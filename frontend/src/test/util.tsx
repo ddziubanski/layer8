@@ -49,6 +49,8 @@ export const ME: Me = {
   has_password: true,
   portal_only: false,
   must_change_password: false,
+  two_factor: false,
+  must_set_up_two_factor: false,
   ticket_color: null,
   color_rules: [],
   hidden_modules: [],
