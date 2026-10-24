@@ -79,6 +79,9 @@ export function TicketToolsWorkspace({ me, panels, layout, request }: {
     if (open && !previousOpen.current) document.getElementById(`${prefix}-tool-${selected}`)?.focus();
     previousOpen.current = open;
   }, [open, selected, prefix]);
+  useEffect(() => {
+    if (request && open && selected === request.tool) document.getElementById(`${prefix}-tool-${selected}`)?.focus();
+  }, [request?.sequence, open, selected, prefix]);
   function close() { setOpen(false); toggle.current?.focus(); }
   function chooseSection(id: string) { setSection(id); setVisited(old => new Set([...old, id])); }
   function saveWidth() { if (width !== latest.current.width) save({ ...latest.current, width }); }

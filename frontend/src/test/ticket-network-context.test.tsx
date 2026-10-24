@@ -19,4 +19,3 @@ test("hiding both device panels avoids their requests", async () => {
   expect(await screen.findByText("Link a computer or device to see network context.")).toBeInTheDocument();
   expect(calls).toHaveLength(0);
 });
-
