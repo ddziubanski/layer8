@@ -2287,3 +2287,21 @@ class CannedReply(Base):
 
     queue: Mapped[Queue | None] = relationship()
 
+
+class TimeEntry(Base):
+    """Time a technician spent on a ticket (its Time panel; the Time spent report)."""
+
+    __tablename__ = "time_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    minutes: Mapped[int] = mapped_column(Integer)
+    worked_on: Mapped[date] = mapped_column(Date, index=True)
+    note: Mapped[str] = mapped_column(String(500), default="", server_default="")
+    # Logged with this reply or note, when it was.
+    comment_id: Mapped[int | None] = mapped_column(ForeignKey("comments.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User | None] = relationship()
+

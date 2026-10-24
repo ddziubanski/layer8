@@ -546,6 +546,11 @@ export const api = {
     devices: () => request<S["VendorDeviceOut"][]>("GET", "/api/junos/devices"),
     clients: (p: { q?: string } = {}) => request<S["NetworkObservationOut"][]>("GET", `/api/junos/clients${query(p)}`),
   },
+  time: {
+    forTicket: (ticketId: number) => request<S["TicketTimeOut"]>("GET", `/api/tickets/${ticketId}/time`),
+    log: (ticketId: number, body: S["TimeEntryIn"]) => request<S["TimeEntryOut"]>("POST", `/api/tickets/${ticketId}/time`, body),
+    remove: (ticketId: number, entryId: number) => request<void>("DELETE", `/api/tickets/${ticketId}/time/${entryId}`),
+  },
   canned: {
     list: (ticketId?: number) => request<S["CannedReplyOut"][]>("GET", `/api/canned-replies${query({ ticket_id: ticketId })}`),
     create: (body: S["CannedReplyIn"]) => request<S["CannedReplyOut"]>("POST", "/api/canned-replies", body),

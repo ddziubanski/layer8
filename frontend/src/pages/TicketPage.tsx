@@ -24,6 +24,7 @@ import { SystemsCard } from "./ticket/SystemsCard";
 import { KnowledgeCard } from "./ticket/KnowledgeCard";
 import { CopilotCard } from "./ticket/CopilotCard";
 import { GuestWifiCard } from "./ticket/GuestWifiCard";
+import { TimeCard } from "./ticket/TimeCard";
 import { TicketVmsCard } from "../components/Nutanix";
 import { can, uses } from "../permissions";
 import { ME_KEY } from "../queryClient";
@@ -151,6 +152,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           children: { label: "Child tickets", node: <ChildTickets ticket={t} onChanged={refresh} /> },
           checklists: { label: "Checklists", node: <ChecklistsCard ticket={t} onChanged={refresh} /> },
           expenses: { label: "Expenses", node: <ExpensesCard ticket={t} /> },
+          time: { label: "Time", node: <TimeCard ticketId={t.id} /> },
           ad_account: { label: "AD account", node: <ADAccountCard ticket={t} onChanged={refresh} /> },
           scripts: { label: "Scripts", node: <ScriptsCard ticket={t} onChanged={refresh} /> },
           history: {

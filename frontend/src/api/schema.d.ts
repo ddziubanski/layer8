@@ -3837,6 +3837,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ticket Time */
+        get: operations["ticket_time_api_tickets__ticket_id__time_get"];
+        put?: never;
+        /** Log Time */
+        post: operations["log_time_api_tickets__ticket_id__time_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/time/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Time */
+        delete: operations["delete_time_api_tickets__ticket_id__time__entry_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/junos/status": {
         parameters: {
             query?: never;
@@ -11197,6 +11232,13 @@ export interface components {
             linked_at: string;
             linked_by: components["schemas"]["UserRef"] | null;
         };
+        /** TicketTimeOut */
+        TicketTimeOut: {
+            /** Total Minutes */
+            total_minutes: number;
+            /** Entries */
+            entries: components["schemas"]["TimeEntryOut"][];
+        };
         /** TicketUpdate */
         TicketUpdate: {
             /** Subject */
@@ -11302,6 +11344,47 @@ export interface components {
              * @default 440
              */
             width: number;
+        };
+        /** TimeEntryIn */
+        TimeEntryIn: {
+            /** Minutes */
+            minutes: number;
+            /** Worked On */
+            worked_on?: string | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Comment Id */
+            comment_id?: number | null;
+        };
+        /** TimeEntryOut */
+        TimeEntryOut: {
+            /** Id */
+            id: number;
+            /** Minutes */
+            minutes: number;
+            /**
+             * Worked On
+             * Format: date
+             */
+            worked_on: string;
+            /** Note */
+            note: string;
+            /** User Id */
+            user_id: number | null;
+            /** User Name */
+            user_name: string | null;
+            /** Comment Id */
+            comment_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** May Delete */
+            may_delete: boolean;
         };
         /** UnacceptedOut */
         UnacceptedOut: {
@@ -20852,6 +20935,108 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RenderedOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ticket_time_api_tickets__ticket_id__time_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketTimeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    log_time_api_tickets__ticket_id__time_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_time_api_tickets__ticket_id__time__entry_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

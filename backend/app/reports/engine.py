@@ -17,7 +17,7 @@ from sqlalchemy import ColumnElement, Select, and_, case, extract, false, func, 
 from sqlalchemy.orm import Session, aliased, join
 
 from app import sla
-from app.models import Comment, FieldOption, InboundEmail, OutboundEmail, POLine, POStatus, PurchaseOrder, Queue, Ticket, TicketStatus, TicketSurvey, User, UserRole, Vendor
+from app.models import Comment, FieldOption, TimeEntry, InboundEmail, OutboundEmail, POLine, POStatus, PurchaseOrder, Queue, Ticket, TicketStatus, TicketSurvey, User, UserRole, Vendor
 
 MAX_ROWS = 1000
 
@@ -503,6 +503,45 @@ def surveys_dataset() -> Dataset:
     )
 
 
+# Time spent
+
+
+def _time_base():
+    who = aliased(User, name="who")
+    q = aliased(Queue, name="q")
+    frm = join(TimeEntry, Ticket, Ticket.id == TimeEntry.ticket_id).join(q, q.id == Ticket.queue_id).outerjoin(who, who.id == TimeEntry.user_id)
+    return frm, {"who": who, "q": q}
+
+
+def time_dataset() -> Dataset:
+    return Dataset(
+        name="time",
+        label="Time spent",
+        base=_time_base,
+        dimensions={
+            "who": Dimension("Who", lambda a: a["who"].display_name, empty="(removed user)"),
+            "queue": Dimension("Queue", lambda a: a["q"].name),
+            "category": Dimension("Category", lambda a: Ticket.category, empty="(no category)"),
+            "ticket": Dimension("Ticket", lambda a: func.concat("#", Ticket.id, " ", Ticket.subject)),
+            "day": Dimension("Day", lambda a: func.date_trunc("day", TimeEntry.worked_on), "time"),
+            "week": Dimension("Week", lambda a: func.date_trunc("week", TimeEntry.worked_on), "time"),
+            "month": Dimension("Month", lambda a: func.date_trunc("month", TimeEntry.worked_on), "time"),
+        },
+        measures={
+            "hours": Measure("Hours", lambda a: func.coalesce(func.sum(TimeEntry.minutes), 0) / 60.0, "hours"),
+            "tickets": Measure("Tickets", lambda a: func.count(func.distinct(TimeEntry.ticket_id))),
+            "entries": Measure("Entries", lambda a: func.count()),
+        },
+        filters={
+            "who": Filter("Who", lambda a: TimeEntry.user_id, "agents"),
+            "queue": Filter("Queue", lambda a: Ticket.queue_id, "queues"),
+        },
+        dates={"worked": ("Worked on", lambda a: TimeEntry.worked_on)},
+        access=_ticket_access_via,
+        default_measures=["hours", "tickets"],
+    )
+
+
 DATASETS: dict[str, Callable[[], Dataset]] = {
     "tickets": tickets_dataset,
     "activity": activity_dataset,
@@ -511,6 +550,7 @@ DATASETS: dict[str, Callable[[], Dataset]] = {
     "email_out": email_out_dataset,
     "purchase_orders": purchase_orders_dataset,
     "surveys": surveys_dataset,
+    "time": time_dataset,
     "sql": sql_dataset,
 }
 

@@ -21,7 +21,7 @@ export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; pane
 ];
 const SECTIONS = [
   { id: "conversation", label: "Conversation", panels: ["conversation"] },
-  { id: "work", label: "Work", panels: ["children", "checklists", "expenses", "changes"] },
+  { id: "work", label: "Work", panels: ["children", "checklists", "expenses", "time", "changes"] },
   { id: "history", label: "History", panels: ["history"] },
 ];
 
