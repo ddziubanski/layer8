@@ -13,18 +13,20 @@ export function useComposerDraft() {
   const [files, setFiles] = useState<File[]>([]);
   const [toRequester, setToRequester] = useState(false);
   const [email, setEmail] = useState(true);
-  return { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail };
+  const [minutes, setMinutes] = useState("");
+  return { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail, minutes, setMinutes };
 }
 
 export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone: () => void; draft?: ReturnType<typeof useComposerDraft> }) {
   const local = useComposerDraft();
-  const { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail } = draft ?? local;
+  const { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail, minutes, setMinutes } = draft ?? local;
   const picker = useRef<HTMLInputElement>(null);
   const drop = useDropFiles((dropped) => setFiles((f) => [...f, ...dropped]));
 
   const send = useMutation({
     mutationFn: async () => {
       const comment = await api.addComment(ticketId, body, !toRequester, toRequester && email);
+      if (Number(minutes) > 0) await api.time.log(ticketId, { minutes: Number(minutes), note: "", comment_id: comment.id });
       // Upload one at a time so a failure says which file it was.
       for (const file of files) {
         try {
@@ -37,6 +39,7 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
     onSuccess: () => {
       setBody("");
       setFiles([]);
+      setMinutes("");
       // Back to the safe default: the next note is internal.
       setToRequester(false);
       setEmail(true);
@@ -119,6 +122,10 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
           </select>
         )}
         <span className="spacer" />
+        <label className="inline small">
+          Time (min)
+          <input type="number" min={1} max={1440} value={minutes} onChange={(e) => setMinutes(e.target.value)} style={{ width: 72 }} aria-label="Time spent, minutes" />
+        </label>
         <button className={toRequester ? "btn" : "btn2"} type="button" disabled={!body.trim() || send.isPending} onClick={() => send.mutate()}>
           {action}
         </button>
