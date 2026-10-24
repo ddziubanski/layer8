@@ -5,6 +5,11 @@ import { ME_KEY } from "../../queryClient";
 import { when } from "../../format";
 import { SettingsForm } from "./SettingsForm";
 
+const DELIVERY_OUTCOMES: Record<string, string> = {
+  created: "Ticket created", ongoing: "Existing ticket", recovery: "Recovery noted",
+  stale: "Older alert ignored", unmatched_recovery: "Recovery without an active ticket",
+};
+
 export function MerakiAdmin({ me }: { me: Me }) {
   const queryClient = useQueryClient();
   const [params] = useSearchParams();
@@ -48,14 +53,14 @@ export function MerakiAdmin({ me }: { me: Me }) {
       {(connect.error || disconnect.error) && <p role="alert" className="error">{(connect.error || disconnect.error)?.message}</p>}
     </section>}
     <section className="card stack" aria-label="Meraki webhook intake">
-      <div className="page-head"><h2>Device outage alerts</h2><span className="muted">{webhooks.data?.enabled ? (webhooks.data.configured ? "Intake enabled" : "Setup incomplete") : "Intake off"}</span></div>
+      <div className="page-head"><h2>Device outage alerts</h2><span className="muted">{webhooks.isError ? "Status unavailable" : !webhooks.data ? "Checking intake…" : webhooks.data.enabled ? (webhooks.data.configured ? "Intake enabled" : "Setup incomplete") : "Intake off"}</span></div>
       <p className="muted">Create a ticket when a selected device stops reporting. Recovery adds an internal note for technician review. Configure the default Meraki webhook payload, a separate shared secret, organization IDs and selected networks below. Discovery credentials are independent.</p>
       {webhooks.data?.endpoint && <p>Webhook receiver: <code style={{ overflowWrap: "anywhere" }}>{webhooks.data.endpoint}</code></p>}
       {webhooks.error && <p role="alert" className="error">Could not read webhook delivery history.</p>}
       {webhooks.data && !webhooks.data.endpoint && <p className="muted">Save an HTTPS portal address in General settings to show the receiver URL.</p>}
       <p className="muted">Supported alerts: stopped_reporting and started_reporting. Duplicate deliveries are ignored. Other alert types do not create tickets.</p>
       {webhooks.data && (webhooks.data.deliveries.length ? <div className="stack" aria-label="Recent webhook deliveries">{webhooks.data.deliveries.map((d, i) => <div key={i} className="row-gap">
-        <strong>{d.serial}</strong><span>{d.alert_type === "started_reporting" ? "Recovery" : "Outage"} · {d.outcome.replaceAll("_", " ")}</span>
+        <strong>{d.serial}</strong><span>{DELIVERY_OUTCOMES[d.outcome] ?? d.outcome}</span>
         <span className="muted">{d.network_id} · occurred {when(d.occurred_at)} · received {when(d.received_at)}</span>
         {d.ticket_id && <Link to={`/tickets/${d.ticket_id}`}>Ticket #{d.ticket_id}</Link>}
       </div>)}</div> : <p className="muted">No accepted availability alerts yet.</p>)}

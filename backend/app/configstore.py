@@ -404,7 +404,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("meraki_client_id", "OAuth client ID", "Register a confidential application at integrate.cisco.com. The exact redirect URI is shown above after saving.", check=_length(0, 256)),
         Field("meraki_client_secret", "OAuth client secret", "Written to a secret file and never shown back. Changing the registration requires reconnecting.", secret=True, check=_length(0, 1024)),
         Field("meraki_api_key", "Dashboard API key", "Use a dedicated Dashboard administrator with read-only access to the selected networks. This key is written to a secret file and never shown back.", secret=True, check=_length(0, 256)),
-        Field("meraki_network_ids", "Networks to read", "Required: one network ID per line, at most 20. Empty reads nothing. Test selected networks after saving.", check=_meraki_networks),
+        Field("meraki_network_ids", "Selected Meraki networks", "Required for discovery and webhook intake: one network ID per line, at most 20. Empty reads and accepts nothing. Test selected networks after saving.", check=_meraki_networks),
         Field("meraki_sync_minutes", "Read Meraki every (minutes)", "Reads the last 24 hours of clients. Failed reads keep the last complete snapshot; older observations are marked stale.", check=_between(15, 1440)),
     ],
     "action1": [

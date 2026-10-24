@@ -23,7 +23,7 @@ def upgrade():
         sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("received_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("outcome", sa.String(32), nullable=False),
-        sa.Column("ticket_id", sa.Integer(), nullable=True),
+        sa.Column("ticket_id", sa.BigInteger(), nullable=True),
         sa.ForeignKeyConstraint(["ticket_id"], ["tickets.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("organization_id", "alert_id"))
     op.create_index("ix_meraki_webhook_receipts_received_at", "meraki_webhook_receipts", ["received_at"])
@@ -34,7 +34,7 @@ def upgrade():
         sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("received_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("is_down", sa.Boolean(), nullable=False),
-        sa.Column("ticket_id", sa.Integer(), nullable=True),
+        sa.Column("ticket_id", sa.BigInteger(), nullable=True),
         sa.ForeignKeyConstraint(["ticket_id"], ["tickets.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("organization_id", "network_id", "serial"))
     op.create_index("ix_meraki_webhook_incidents_received_at", "meraki_webhook_incidents", ["received_at"])

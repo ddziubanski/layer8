@@ -25,7 +25,7 @@ test("webhook setup and safe recent delivery links are visible to administrators
   expect(await screen.findByText("Intake enabled")).toBeInTheDocument();
   expect(screen.getByText("https://helpdesk.corp.example/api/meraki/webhooks")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Ticket #4821" })).toHaveAttribute("href", "/tickets/4821");
-  expect(screen.getByText("Recovery · recovery")).toBeInTheDocument();
+  expect(screen.getByText("Recovery noted")).toBeInTheDocument();
   expect(calls.every(c => c.method === "GET")).toBe(true);
 });
 
@@ -34,6 +34,19 @@ test("agents cannot read the administrator webhook setup", () => {
   renderAt("/", [{ path: "/", element: <MerakiAdmin me={ME} /> }]);
   expect(screen.getByText("Meraki is managed by admins.")).toBeInTheDocument();
   expect(calls).toHaveLength(0);
+});
+
+test("a failed webhook status read does not claim intake is off", async () => {
+  mockApi({
+    "GET /api/meraki/status": { enabled: false, configured: false, clients: 0, networks: [] },
+    "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "GET /api/meraki/webhooks/status": new Response(JSON.stringify({ detail: "synthetic private provider error" }), { status: 503 }),
+  });
+  renderAt("/", [{ path: "/", element: <MerakiAdmin me={{ ...ME, role: "admin" }} /> }]);
+  expect(await screen.findByText("Status unavailable")).toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent("Could not read webhook delivery history.");
+  expect(screen.queryByText("Intake off")).not.toBeInTheDocument();
+  expect(screen.queryByText("synthetic private provider error")).not.toBeInTheDocument();
 });
 
 test("Meraki discovery is requested explicitly and connection results are visible", async () => {
