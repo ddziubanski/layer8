@@ -23,3 +23,10 @@ test("without a packed archive the repository is the source link", async () => {
   wrap();
   expect(await screen.findByRole("link", { name: "Source code" })).toHaveAttribute("href", "https://github.com/example/layer8");
 });
+
+test("the sidebar gets one short line", async () => {
+  mockApi({ "GET /api/about": { product: "Layer 8", version: "1.0.0", license: "AGPL-3.0-or-later", source_download: "/api/source", source_repository: "https://github.com/example/layer8" } });
+  render(<QueryClientProvider client={new QueryClient()}><SourceNotice compact /></QueryClientProvider>);
+  expect(await screen.findByRole("link", { name: "Source" })).toHaveAttribute("href", "/api/source");
+  expect(screen.queryByRole("link", { name: "Repository" })).not.toBeInTheDocument();
+});

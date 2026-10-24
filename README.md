@@ -4,30 +4,27 @@
 
 Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one queue for tickets from email and a self-service portal, with the tools a desk actually uses day to day, all in one install you control. It borrows the best ideas from ManageEngine, Track-It!, KACE and Spiceworks, runs on a single Linux box (an appliance ISO installs it offline), and works standalone or with Active Directory and Microsoft 365.
 
-> **Status: alpha.** It's being tested on real desks now. Expect rough edges, and back up before upgrading.
+> **Version 1.0.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
-![Layer 8 operations dashboard](screenshots/command-center/01-dashboard.jpg)
+![The technician's queue](screenshots/02-queue.png)
 
-[View the current GUI gallery](screenshots/command-center/README.md) · [Feature screenshots](screenshots/README.md)
+**At a glance**
 
-## The workspace
-
-The Hybrid Command Center interface brings a persistent sidebar, a light workspace, teal accents, clearer tables and consistent forms across the application. Sidebar and accent colours follow **Settings > Branding**, including a navy sidebar when configured; dark mode can be off, always on, or follow the device.
-
-- **Ticket workspace:** a conversation and work-note composer beside assignment, requester, SLA and asset context; clear public-reply and internal-note choices; attachments and arrangeable panels.
-- **Operations dashboard:** open, unassigned, SLA-risk and waiting-on-user counts, filtered by workload and queue. The attention list links to tickets approaching an SLA breach; data refreshes every 30 seconds.
-- **Ctrl+K / ⌘K:** find a page or jump to a ticket number. Arrow keys select a destination, Enter opens it and Escape closes the palette; destinations still enforce existing permissions.
-- **Keyboard access:** skip links, visible focus and focus moved to the workspace heading after page navigation, including the portal. Keyboard controls also support arranging ticket panels.
-- **Module refresh:** Devices, Changes, Purchase orders, Vendors, IP addresses, Knowledge base, Scripts, Reports, My preferences and Settings share the updated workspace presentation. Existing routes, APIs, permissions and workflows remain in place.
-- **Self-service portal:** a clearer request flow, knowledge suggestions, per-queue opening hours and optional technician Teams availability. The portal remains usable outside desk hours.
-- **Desktop and tablet:** the console is designed for technicians at desks, with layouts that adapt for tablet use. Phones are not the primary target.
+- **One queue** for tickets from email and the self-service portal, with queues, SLAs, routing rules, checklists and an arrangeable ticket page.
+- **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with runners.
+- **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
+- **Your network and tools:** Cisco Meraki discovery and outage tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
+- **For the room:** a wallboard for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and a Midnight theme, and a sidebar each technician can trim.
+- **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, and no cloud required.
 
 <p>
-  <img src="screenshots/command-center/03-ticket-workspace.jpg" width="49%" alt="Ticket conversation, work notes, assignment and requester context">
-  <img src="screenshots/command-center/02-command-palette.jpg" width="49%" alt="Keyboard command palette for pages and ticket numbers">
-  <img src="screenshots/command-center/04-dashboard-dark.jpg" width="49%" alt="Operations dashboard in dark mode">
-  <img src="screenshots/command-center/06-self-service-portal.jpg" width="49%" alt="Self-service portal with queue hours and technician availability">
+  <img src="screenshots/03-ticket.png" width="49%" alt="A ticket: conversation, assignment, requester and devices">
+  <img src="screenshots/17-wallboard.png" width="49%" alt="The wallboard for a big screen">
+  <img src="screenshots/13-portal.png" width="49%" alt="The self-service portal with each team's hours">
+  <img src="screenshots/dark/02-queue.png" width="49%" alt="The queue in dark mode">
 </p>
+
+All screenshots, from the demo data: [screenshots/](screenshots/README.md). A gallery of the refreshed interface: [screenshots/command-center/](screenshots/command-center/README.md).
 
 ## What it does
 
@@ -50,7 +47,9 @@ The Hybrid Command Center interface brings a persistent sidebar, a light workspa
 
 **Devices and network**
 - Devices from AD computer objects, with tickets, IP addresses, switch port and lifecycle on each.
-- Patch status read from Action1, and Dell and Lenovo warranty lookups through their official APIs.
+- Patch status read from Action1, and opt-in software deployment through Action1: one reviewed package to one ticket-linked computer, logged on the ticket ([docs/action1.md](docs/action1.md)).
+- Cisco Meraki, read-only and opt-in: client discovery (switch port, VLAN, SSID) on IP records, devices and tickets; port and wireless diagnostics; and device outage tickets from Meraki alerts.
+- Dell and Lenovo warranty lookups through their official APIs.
 - IP address management:
   - subnets and VLANs, with a used/free map
   - scans by a runner on the LAN (ping, reverse DNS, ARP)
@@ -70,7 +69,7 @@ The Hybrid Command Center interface brings a persistent sidebar, a light workspa
 **Microsoft 365 and Teams**
 - Optional Teams Workflows summaries with queue counts; restricted queues are excluded.
 - Technicians connect their own Microsoft work accounts in My preferences and send a requester a message in an existing one-to-one Teams chat from a ticket. The message is recorded as a public ticket reply.
-- Optional **Microsoft 365 Copilot on tickets (preview)**: ask questions as the connected technician, optionally include ticket text, follow up, view source links and choose to save an answer as an internal note. Each technician using it needs a Microsoft 365 Copilot licence and the configured delegated permissions. Microsoft's Chat API is a preview; live-tenant validation is still required. See the [Microsoft 365 setup guide](docs/microsoft-365.md).
+- Optional **Microsoft 365 Copilot on tickets (preview)**: ask as the connected technician, after reviewing exactly which ticket text is shared (internal notes only by a separate choice); follow up, see sources, and save an edited answer as an internal note or send it to the requester as a reviewed reply. Each technician needs a Microsoft 365 Copilot licence; Microsoft's Chat API is a preview. See the [Microsoft 365 setup guide](docs/microsoft-365.md).
 
 **Everything else a desk needs**
 - Knowledge base with versions and images, suggested in the portal as people type.

@@ -1,8 +1,6 @@
 # Screenshots
 
-For the refreshed GUI, start with the [Command Center gallery (22 October 2026)](command-center/README.md). The images below are older feature examples and may show the previous layout.
-
-From the dev app, 2026-10-21. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-10-23. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 
@@ -219,6 +217,26 @@ From the dev app, 2026-10-21. Regenerate with `backend/.venv/bin/python dev/scre
 ## Satisfaction survey: one click in the email answers; a comment can follow (no sign-in needed)
 
 ![Satisfaction survey: one click in the email answers; a comment can follow (no sign-in needed)](16-survey.png)
+
+## Wallboard for a big screen: alerts, counts, the oldest unassigned tickets, SLA due soonest, queues and technicians (a secret link, no sign-in)
+
+![Wallboard for a big screen: alerts, counts, the oldest unassigned tickets, SLA due soonest, queues and technicians (a secret link, no sign-in)](17-wallboard.png)
+
+## Settings > Wallboards: boards for big screens, by queue, each with its own secret link
+
+![Settings > Wallboards: boards for big screens, by queue, each with its own secret link](09e-settings-wallboards.png)
+
+## Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal
+
+![Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal](09f-settings-desk-hours.png)
+
+## Settings > Meraki: read-only discovery by API key or OAuth, diagnostics and outage alerts, each opt-in
+
+![Settings > Meraki: read-only discovery by API key or OAuth, diagnostics and outage alerts, each opt-in](09g-settings-meraki.png)
+
+## My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)
+
+![My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)](12c-workspace.png)
 
 # Dark mode
 

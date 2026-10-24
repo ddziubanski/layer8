@@ -37,6 +37,8 @@ OUT = ROOT / "screenshots"
 DARK = ["01-sign-in", "02-queue", "03-ticket", "05-device", "05f-kb", "05k-ipam-subnet", "05o-network-gear", "06-reports", "13-portal"]
 PORT = 9333
 WIDTH, HEIGHT = 1440, 900
+# A wallboard made for the run (and removed after), so its link is known.
+WALLBOARD_TOKEN = "l8w_screenshot-wallboard-token-for-dev-only"
 
 
 
@@ -162,6 +164,11 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         ("15-portal-help", "requester", "/help", "Portal: help articles, searchable"),
         ("15b-portal-article", "requester", "/help/2", "Portal: an article, and whether it helped"),
         ("16-survey", "requester", "/survey/screenshot-survey-token?r=4", "Satisfaction survey: one click in the email answers; a comment can follow (no sign-in needed)"),
+        ("17-wallboard", "none", f"/wallboard#{WALLBOARD_TOKEN}", "Wallboard for a big screen: alerts, counts, the oldest unassigned tickets, SLA due soonest, queues and technicians (a secret link, no sign-in)"),
+        ("09e-settings-wallboards", "admin", "/settings/wallboards", "Settings > Wallboards: boards for big screens, by queue, each with its own secret link"),
+        ("09f-settings-desk-hours", "admin", "/settings/desk-hours", "Settings > Desk hours: opening hours, closed days, the after-hours message and technicians' Teams status on the portal"),
+        ("09g-settings-meraki", "admin", "/settings/meraki", "Settings > Meraki: read-only discovery by API key or OAuth, diagnostics and outage alerts, each opt-in"),
+        ("12c-workspace", "admin", "/preferences", "My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)"),
     ]
     return out
 
@@ -284,6 +291,12 @@ def main() -> None:
         # A ticket from an AD account, for the AD account card.
         ad_ticket = session.scalar(select(Ticket.id).join(User, Ticket.requester_id == User.id).where(User.directory_dn.is_not(None), Ticket.parent_id.is_(None)).order_by(Ticket.id.desc()))
         tokens = make_sessions(session)
+        from app.api.wallboards import _hash
+        from app.models import Wallboard
+
+        session.execute(delete(Wallboard).where(Wallboard.token_hash == _hash(WALLBOARD_TOKEN)))
+        session.add(Wallboard(name="Service desk TV", token_hash=_hash(WALLBOARD_TOKEN), prefix=WALLBOARD_TOKEN[:8]))
+        session.commit()
     try:
         plan = shots(ticket_id, device_id, ad_ticket)
         done = asyncio.run(capture(tokens, plan))
@@ -296,6 +309,7 @@ def main() -> None:
     finally:
         with SessionLocal() as session:
             session.execute(delete(UserSession).where(UserSession.token_hash.in_([_hash_token(t) for t in tokens.values()])))
+            session.execute(delete(Wallboard).where(Wallboard.token_hash == _hash(WALLBOARD_TOKEN)))
             session.commit()
     lines = ["# Screenshots", "", f"From the dev app, {datetime.now():%Y-%m-%d}. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.", ""]
     for name, caption in done:

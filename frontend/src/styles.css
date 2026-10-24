@@ -881,7 +881,8 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 /* AGPL section 13: where to get the source of this installation. */
 .source-notice { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
 .source-notice a { color: inherit; text-decoration: underline; }
-.side-source { color: var(--side-ink); opacity: .75; margin-top: 12px; line-height: 1.5; }
+.side-source { color: var(--side-ink); opacity: .75; margin-top: 10px; white-space: nowrap; }
+.side .side-source a { display: inline; padding: 0; border: 0; color: inherit; }
 .portal-source { margin: 32px 0 8px; text-align: center; }
 .login-source { text-align: center; margin-top: 14px; }
 .login .login-source { color: var(--muted); }
