@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The offline demo's sample data, and the installer's setup command."""
 
 import json

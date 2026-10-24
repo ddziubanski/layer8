@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import type { TicketEvent } from "../../api/client";
 import { PRIORITY_LABEL, SOURCE_LABEL, STATUS_LABEL } from "../../format";
 

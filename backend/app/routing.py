@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Routing engine: picks a queue and priority for a new ticket.
 
 Pure functions over plain data so the rules can be tested without a database.

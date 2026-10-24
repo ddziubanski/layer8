@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import type { ColorRule, Ticket } from "./api/client";
 
 /** The fields a personal colour rule can test, with the values to offer. */

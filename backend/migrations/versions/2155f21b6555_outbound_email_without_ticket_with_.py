@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """outbound email without ticket, with attachments
 
 Revision ID: 2155f21b6555

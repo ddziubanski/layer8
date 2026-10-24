@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { api, type Me } from "../api/client";
 import { Brand, backgroundStyle, useBranding } from "../branding";
+import { SourceNotice } from "../components/SourceNotice";
 import { ME_KEY } from "../queryClient";
 
 // Per-browser memory, so Windows sign-in is tried by itself only when it can help.
@@ -145,6 +147,7 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
         )}
         {brand.sign_in_message && !forConsole && <p className="muted small sign-in-message">{brand.sign_in_message}</p>}
       </form>
+      <SourceNotice className="source-notice login-source" />
     </div>
   );
 }

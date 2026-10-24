@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Explicit, reviewed single-device software deployments through Action1."""
 from contextlib import contextmanager
 from datetime import datetime

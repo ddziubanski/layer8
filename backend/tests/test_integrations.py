@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """API keys and the integration API (for apps such as a server-room sign-in log)."""
 
 from sqlalchemy import select

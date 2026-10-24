@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Synthetic webhook payloads only; no Dashboard calls or live credentials."""
 import asyncio
 import json

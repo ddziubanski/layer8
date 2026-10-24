@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Vendors, their contacts, the systems they support, and linking systems to tickets."""
 
 from app.models import Device, Queue, Ticket, TicketEvent, TicketSource

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Durable Meraki availability alert receipts and device state.
 
 Revision ID: c08f42b61e93

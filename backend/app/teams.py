@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Optional Teams Workflows digest. Only aggregate, non-restricted ticket counts leave the app."""
 
 import logging

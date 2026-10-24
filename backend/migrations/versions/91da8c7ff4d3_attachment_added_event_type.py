@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """attachment_added event type
 
 Revision ID: 91da8c7ff4d3

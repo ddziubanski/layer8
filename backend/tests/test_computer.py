@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The requester's computer on a ticket, and remote sessions to it."""
 
 from urllib.parse import parse_qs, urlparse

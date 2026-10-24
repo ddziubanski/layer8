@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Checklists: templates, starting one on a ticket (child tickets, due dates, queues, technicians), and the offboarding disable."""
 
 from datetime import date, timedelta

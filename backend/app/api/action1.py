@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Action1 (patching, read-only): machines' patch state, matched to devices; status and a connection test."""
 
 import logging

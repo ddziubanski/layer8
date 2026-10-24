@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The public receiving page's API (/receive): no sign-in, for the receiving clerk.
 
 The PO number alone isn't enough: each PO has a receiving code, printed on its receiving sheet

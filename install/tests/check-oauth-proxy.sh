@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Exercise the shipped proxy configuration with a synthetic callback, no provider.
 set -eu
 qa_dir=$(mktemp -d)

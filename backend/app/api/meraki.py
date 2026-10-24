@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Meraki credentials remain admin-only; technicians can read cached network observations."""
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, Request

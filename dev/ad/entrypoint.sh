@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Provision CORP.LOCAL on first start, with our own test CA so LDAPS can be verified.
 set -eu
 TLS=/var/lib/samba/tls-dev

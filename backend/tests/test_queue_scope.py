@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Queue: scope (mine / my groups / all), bulk move and assign, technicians' colours."""
 
 import pytest

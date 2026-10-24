@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """LdapDirectory without a server: TLS rules, empty passwords, AD attribute parsing, filter escaping."""
 
 import uuid

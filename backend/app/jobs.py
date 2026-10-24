@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The background worker's jobs, and the controls admins use on Settings > Status.
 
 The worker ticks every TICK_SECONDS: it runs each job that is due (or that an admin asked

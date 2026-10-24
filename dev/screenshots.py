@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Development only: screenshots of each feature into screenshots/, from the running dev app.
 
     dev/serve.sh &                                   # the app on http://localhost:8000

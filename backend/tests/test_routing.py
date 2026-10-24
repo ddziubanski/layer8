@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Routing engine rules, without a database."""
 
 from app.models import Priority, RoutingRule, TicketSource

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Ticket dropdown fields: resolution type, closure reason, department (Settings > Ticket fields),
 plus the contact details a ticket starts with from its requester's AD record."""
 

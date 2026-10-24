@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Turns mailbox messages into tickets and comments.
 
 Mail goes through the same services as the portal and API, so routing, SLA and

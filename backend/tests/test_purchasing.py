@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Purchase orders: numbering, totals, approval, receiving (notes on tickets), files; ticket expenses."""
 
 import pytest

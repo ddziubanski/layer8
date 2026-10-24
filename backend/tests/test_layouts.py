@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Screen layouts: everyone's default (admins), each technician's own, and new panels never lost."""
 
 import pytest

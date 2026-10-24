@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Portal single sign-on as the logged-on Windows user: Kerberos (HTTP Negotiate / SPNEGO).
 
 The browser sends "Authorization: Negotiate <token>" when the portal URL is trusted

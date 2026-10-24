@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Changes: risk-scored, planned, approved when the risk calls for it; and change templates."""
 
 import logging

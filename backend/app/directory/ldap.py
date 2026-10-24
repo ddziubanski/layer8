@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Active Directory / LDAP over ldap3.
 
 Security choices:

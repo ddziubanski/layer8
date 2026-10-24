@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Purchase orders (the Purchase Orders page) and ticket expenses (a ticket's Expenses tab).
 
 Technicians create and edit POs and receive deliveries; approving needs the PO's approver or an

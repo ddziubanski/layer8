@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """local accounts and sessions
 
 Revision ID: ea787ad0f754

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """import refs
 
 Revision ID: b3865eea5b69

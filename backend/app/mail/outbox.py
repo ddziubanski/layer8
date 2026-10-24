@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Outgoing ticket email: queued by the services layer, sent by the worker."""
 
 import logging

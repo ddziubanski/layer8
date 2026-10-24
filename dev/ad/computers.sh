@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Test computers (become devices through directory sync). Runs once, separately from seed.sh
 # so domains seeded before computers existed get them too.
 set -eu

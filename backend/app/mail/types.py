@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """What intake and the outbox need from a mailbox. Graph implements it; tests use a fake."""
 
 import enum

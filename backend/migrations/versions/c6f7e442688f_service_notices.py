@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """service notices
 
 Revision ID: c6f7e442688f

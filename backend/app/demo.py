@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The offline demo: sample people, tickets, devices and scripts, so the suite can be tried
 without AD, email or anything outside the box. Installed by the setup wizard's "Offline demo"
 choice (python -m app.cli setup with "install": {"demo": true}); never on a real install.

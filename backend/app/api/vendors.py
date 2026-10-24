@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Vendors (who we call, and how) and the systems they support; linking systems to tickets.
 
 Technicians keep vendors and systems up to date; only admins delete them.

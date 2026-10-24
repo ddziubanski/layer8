@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Screen layouts: which panels a page shows, where and in which order: across the top, in the main
 or side column, across the bottom, or hidden.
 

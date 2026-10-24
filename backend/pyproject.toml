@@ -1,7 +1,7 @@
 [project]
 name = "helpdesk"
-version = "0.1.0"
-license = "MIT"
+version = "1.0.0"
+license = "AGPL-3.0-or-later"
 license-files = ["../LICENSE"]
 description = "Self-hosted IT service desk"
 requires-python = ">=3.12"

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Regenerate the original boot artwork: python render.py (requires Pillow)."""
 from pathlib import Path
 import os

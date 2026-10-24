@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Devices: AD computers (kept by directory sync) and devices added by hand, and linking them to tickets."""
 
 import logging

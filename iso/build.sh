@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Build the Layer 8 appliance ISO: Debian 13 netinst + the service desk (offline bundle) +
 # an automated install that sets up the service desk on first boot.
 #
@@ -26,6 +27,11 @@ done
 
 VERSION=$(git -C "$ROOT" describe --always --dirty 2>/dev/null || date +%Y%m%d)
 echo "$VERSION" > "$OUT/VERSION"
+
+# AGPL section 13: the appliance offers its own source at /api/source. Pack exactly the tracked
+# files as they are on disk now (local changes included), so the download matches what's installed.
+(cd "$ROOT" && git ls-files -z | tar --null -T - --transform "s,^,layer8-$VERSION/," -czf "$OUT/layer8-source.tar.gz")
+echo "source archive: $(du -h "$OUT/layer8-source.tar.gz" | cut -f1)"
 
 # Debian's netinst ISO (the current 13.x point release), once.
 if ! ls "$OUT"/debian-13.*-amd64-netinst.iso >/dev/null 2>&1; then

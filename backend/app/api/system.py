@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Status and Settings > Log: how each part of the system is doing, the background
 worker and its jobs (run now, pause, restart), and the system log. Admins only."""
 
@@ -11,7 +12,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app import jobs, sla, syslog
+from app import VERSION, jobs, sla, syslog
 from app.auth import Admin, SessionDep
 from app.config import settings
 from app.models import ServiceHeartbeat, WorkerJob
@@ -64,7 +65,7 @@ def _services(session) -> ServicesOut:
                 last_summary=r.last_summary, last_error=r.last_error, next_due_at=r.next_due_at,
             )
         )
-    api = ApiServiceOut(host=socket.gethostname(), pid=os.getpid(), started_at=STARTED_AT, version="0.1.0")
+    api = ApiServiceOut(host=socket.gethostname(), pid=os.getpid(), started_at=STARTED_AT, version=VERSION)
     return ServicesOut(api=api, worker=worker, jobs=out)
 
 

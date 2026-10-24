@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Teams delivery intents, separate from append-only ticket history.
 
 Revision ID: a36d82c9e114

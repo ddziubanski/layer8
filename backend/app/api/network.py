@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Network gear found by SNMP discovery (IP addresses > a subnet > Discover (SNMP)): identity,
 LLDP neighbours and switch MAC tables. Discovery keeps it up to date; technicians link gear to
 an asset, and those who may delete subnets may forget gear that's gone.

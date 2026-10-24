@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Capture real whiptail welcome dialogs in an 80x24 PTY, without provisioning."""
 import os
 from pathlib import Path

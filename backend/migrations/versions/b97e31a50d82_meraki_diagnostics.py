@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Bounded cache for explicit read-only network diagnostics.
 
 Revision ID: b97e31a50d82

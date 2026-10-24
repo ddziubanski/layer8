@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Layer 8 runner: runs action scripts for the service desk, on this machine or from it.
 
 Copy this one file to the runner host (Python 3.10+, standard library only) and run it as a

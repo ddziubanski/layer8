@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { createContext, useContext } from "react";
 
 /** Where the portal lives: "" for requesters, "/portal" when agents and admins use it. */

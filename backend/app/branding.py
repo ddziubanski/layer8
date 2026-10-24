@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Branding: product name, texts, theme, and the background, logo and favicon images.
 
 Images are public (the sign-in page shows them before anyone signs in), kept in

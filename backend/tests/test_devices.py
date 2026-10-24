@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Devices: AD computers from directory sync, devices added by hand, and linking them to tickets."""
 
 from datetime import UTC, datetime

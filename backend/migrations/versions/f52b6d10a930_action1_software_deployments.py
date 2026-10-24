@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Action1 endpoint organisation and reviewed software deployment intent.
 
 Revision ID: f52b6d10a930

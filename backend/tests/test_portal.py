@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Self-service portal: queue choice, categories, my tickets, resolve; and requester linking."""
 
 import pytest

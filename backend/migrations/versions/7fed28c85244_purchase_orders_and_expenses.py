@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """purchase orders and expenses
 
 Revision ID: 7fed28c85244

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Custom ticket rules (KACE-style). Admins only: SQL rules can read every ticket."""
 
 from fastapi import APIRouter, HTTPException, Query, Response, status

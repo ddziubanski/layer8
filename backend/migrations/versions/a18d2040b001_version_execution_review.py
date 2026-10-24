@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Save interpreter and first administrator review with each script version."""
 from alembic import op
 import sqlalchemy as sa

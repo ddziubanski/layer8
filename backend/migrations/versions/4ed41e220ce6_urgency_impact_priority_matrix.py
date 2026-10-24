@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """urgency impact priority matrix
 
 Revision ID: 4ed41e220ce6

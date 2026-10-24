@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tickets Anywhere: technicians work tickets by email.
 
 In a reply to a ticket's email (or a new email to the service desk), a technician's lines that

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """SQL reports: an admin's own SELECT, run on the restricted rules login (like SQL ticket rules).
 
 The query is wrapped as ``SELECT * FROM (<query>) AS report LIMIT n``, so it must be one

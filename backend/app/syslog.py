@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The Log tab's data: app log records kept in the database, the worker's heartbeat, and
 a status summary (database, worker, directory, email, Windows sign-in, disk).
 

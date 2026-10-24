@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The script library: definitions, versions and diffs, running queries, who may do what."""
 
 from app.models import Device, Queue, Ticket, TicketSource

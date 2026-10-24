@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """ticket imported fields
 
 Revision ID: 87fb44a8410e

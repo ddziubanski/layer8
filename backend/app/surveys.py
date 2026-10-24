@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Satisfaction surveys: when a ticket is first solved, a random share of them (Settings > Surveys)
 ask the requester how it went, 1 to 5 with an optional comment.
 

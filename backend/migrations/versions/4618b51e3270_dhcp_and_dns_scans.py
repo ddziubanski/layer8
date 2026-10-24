@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """dhcp and dns scans
 
 Revision ID: 4618b51e3270

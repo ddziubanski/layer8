@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Import from Track-It! (Ivanti/BMC): reads an export bundle made on the Track-It! server by
 tools/trackit-export.ps1 and brings its history into Layer 8.
 

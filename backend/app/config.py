@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,6 +13,10 @@ class Settings(BaseSettings):
     storage_dir: Path = Path("./storage")
     # Built agent UI (frontend/dist). Served at / when it exists.
     frontend_dir: Path = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+    # AGPL section 13: the source of this installation, packed by the ISO build (iso/build.sh), served
+    # at /api/source; and the public repository shown beside it (Settings > General).
+    source_archive: Path = Path(__file__).resolve().parents[2] / "layer8-source.tar.gz"
+    source_repository: str = "https://github.com/ddziubanski/layer8"
     # Development only: trust an X-Dev-User header holding an email, no password.
     # Never enable in production.
     dev_auth: bool = False

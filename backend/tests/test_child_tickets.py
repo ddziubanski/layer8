@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Child tickets: create, list, re-parent without loops, block closing the parent, notes."""
 
 import pytest

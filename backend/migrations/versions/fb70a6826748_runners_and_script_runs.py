@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """runners and script runs
 
 Revision ID: fb70a6826748

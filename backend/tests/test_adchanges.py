@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The ticket's AD account card: the requester's groups and OU, changed through a PowerShell runner;
 onboarding templates with a preview and the nested-group warning for hybrid (Entra) sites."""
 

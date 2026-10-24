@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """checklists
 
 Revision ID: 15d5c543ee77

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The published code and sample data must name no real organisation: examples use example.com
 and corp.example (reserved for documentation). Names that must never appear are kept here
 ROT13-encoded, so this file doesn't trip itself."""

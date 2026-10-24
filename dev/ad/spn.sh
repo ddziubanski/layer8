@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # The portal's Kerberos service account and SPN, and its keytab in /out for the app.
 # Runs on every start (idempotent), so existing dev domains pick it up too.
 set -eu

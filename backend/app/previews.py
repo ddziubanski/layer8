@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Which attachments the browser may show inline, and as what.
 
 Only formats that can't run script in our origin are previewed: raster images,

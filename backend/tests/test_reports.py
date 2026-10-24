@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Reports: the engine, ready-made reports, access by queue, and CSV export."""
 
 from datetime import datetime, timedelta, timezone

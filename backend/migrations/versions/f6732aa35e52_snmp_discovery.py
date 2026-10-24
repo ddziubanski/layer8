@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """snmp discovery
 
 Revision ID: f6732aa35e52

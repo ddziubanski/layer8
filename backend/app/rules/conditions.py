@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Builder conditions: a list of {"field", "op", "value"}, all of which must match.
 
 Ticket conditions become SQL, so scheduled rules and test runs are one query.

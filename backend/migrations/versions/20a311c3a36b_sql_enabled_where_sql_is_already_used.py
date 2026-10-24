@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """sql enabled where sql is already used
 
 Revision ID: 20a311c3a36b

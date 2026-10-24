@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """ticket fields: resolution, closure, department, phone
 
 Revision ID: 09f9c67c1acb

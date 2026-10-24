@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Action1 (patching, read-only): reads each machine's patch state over Action1's REST API and
 matches it to a device by name. Patching itself stays in Action1; Layer 8 shows it on devices and
 tickets, and can open a ticket when patching is overdue.

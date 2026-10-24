@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Optional dedicated integration runners."""
 from alembic import op
 import sqlalchemy as sa

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Delegated authors must never inherit the execution policy of reviewed code."""
 import pytest
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tickets Anywhere: technicians act on tickets with #commands in email."""
 
 import pytest

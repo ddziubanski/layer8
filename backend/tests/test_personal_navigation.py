@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from app.models import AppSetting
 from tests.conftest import as_user
 

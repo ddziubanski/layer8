@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Execution stays tied to the reviewed version and live authorization."""
 import pytest
 

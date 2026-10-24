@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """app settings
 
 Revision ID: c08d7dc40f7d

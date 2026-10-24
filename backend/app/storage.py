@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Local-disk file store for attachments and raw emails.
 
 Files are stored by an opaque key, never by their original name, so uploaded

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 <#
 .SYNOPSIS
   Export Track-It! (Ivanti/BMC) data into a bundle for Layer 8's import (python -m app.cli import-trackit).

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings: Windows sign-in (keytab upload, on/off), admins only."""
 
 import base64

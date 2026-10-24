@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Development only: install an appliance ISO into a throwaway QEMU/KVM VM and wait until the
 # service desk answers on https://localhost:8443 (the VM's 443).
 #

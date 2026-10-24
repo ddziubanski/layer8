@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Rule actions, applied through the normal services so history, SLA and notifications
 behave exactly as if a person had done it.
 

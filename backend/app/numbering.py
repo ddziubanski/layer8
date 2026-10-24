@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Ticket numbers and labels (Settings > General).
 
 The number is the ticket's id: a plain, unique, increasing integer. Admins choose where it

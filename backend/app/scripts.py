@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The script library: parameter definitions and values, versions and diffs, and running queries.
 
 A query is read-only SQL on the restricted rules login (as SQL reports are), with its parameters

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Export and import: move configuration and data from one install to another (a new server, a
 test copy), across app versions.
 

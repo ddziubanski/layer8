@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """IPAM: VLANs, subnets, documented IP addresses, and scans with their findings.
 
 Technicians keep addresses up to date, scan and deal with findings; only admins delete subnets

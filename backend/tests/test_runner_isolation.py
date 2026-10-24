@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Privileged integration runners never consume general or unpinned work."""
 from app import adchanges
 from app.models import ScriptRun

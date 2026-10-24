@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """One mail pass: read the intake mailbox, then send queued email. The worker runs it on a
 timer; admins can run it on demand (Settings > Email > Check mailbox now).
 

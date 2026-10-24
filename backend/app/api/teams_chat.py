@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Technician-owned Microsoft connections and explicit ticket messages."""
 import hashlib
 from uuid import UUID

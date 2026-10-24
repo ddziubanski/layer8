@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Finer permissions (Settings > Permissions): for each action below, who may do it beyond the
 agent/admin roles: every technician, admins only, or admins plus technicians in chosen groups
 (local or synced from AD). Admins may always; requesters never.

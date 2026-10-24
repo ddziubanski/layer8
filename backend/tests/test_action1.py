@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Action1 (patching, read-only): reading machines' patch state, matching devices, overdue tickets."""
 
 from datetime import timedelta

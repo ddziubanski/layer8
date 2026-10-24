@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Directory sync: users (with aliases), groups (nested membership), group-based roles, and
 computers (as devices).
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """po receiving code
 
 Revision ID: c6d0126098cf

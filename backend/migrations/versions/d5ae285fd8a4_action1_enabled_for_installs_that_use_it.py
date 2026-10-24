@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """action1 enabled for installs that use it
 
 Revision ID: d5ae285fd8a4

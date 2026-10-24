@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Single-package Action1 deployments. No automatic retries of external writes.
 
 Original implementation from https://app.action1.com/apidocs/ (API 3.1.0,

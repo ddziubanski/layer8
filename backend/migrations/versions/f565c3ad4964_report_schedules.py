@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """report schedules
 
 Revision ID: f565c3ad4964

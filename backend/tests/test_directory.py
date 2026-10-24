@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """AD/LDAP: sync, nested groups, group-based roles, sign-in, and the admin API."""
 
 import pytest

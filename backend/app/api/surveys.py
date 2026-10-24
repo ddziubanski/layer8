@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Satisfaction surveys: answering by the emailed link (no sign-in; the link is the key) or on the
 ticket in the portal, and the results for staff."""
 

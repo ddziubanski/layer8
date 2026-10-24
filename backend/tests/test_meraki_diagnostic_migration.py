@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Upgrade/downgrade preserves authoritative and discovery data; cache schema matches the model."""
 import uuid
 from alembic import command

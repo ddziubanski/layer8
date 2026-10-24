@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from app.mail.text import REPLY_MARKER, clean_subject, find_ticket_id, strip_quoted
 
 

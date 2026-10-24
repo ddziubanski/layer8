@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Technicians' Teams status for the portal (status only: no chat or call links anywhere).
 
 Read through Microsoft Graph with the Email tab's app registration (client credentials). It needs

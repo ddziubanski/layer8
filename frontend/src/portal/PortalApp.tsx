@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBrowserRouter, Link, NavLink, Outlet, type RouteObject } from "react-router";
 
 import { api, type Me } from "../api/client";
 import { Brand, backgroundStyle, useBranding } from "../branding";
 import { RouteFocus } from "../components/RouteFocus";
+import { SourceNotice } from "../components/SourceNotice";
 import { NoticeBanner, NoticeDialog } from "../components/Notices";
 import { skipSilentWindowsSignIn } from "../pages/Login";
 import { PortalBase, usePortalPath } from "./base";
@@ -60,6 +62,7 @@ function PortalShell({ me }: { me: Me }) {
         <NoticeBanner />
         <NoticeDialog />
         <Outlet />
+        <SourceNotice className="source-notice portal-source" />
       </main>
     </div>
   );

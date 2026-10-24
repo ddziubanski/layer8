@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """GraphMailbox against a mocked Graph API (no tenant needed)."""
 
 import json

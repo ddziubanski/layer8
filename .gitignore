@@ -30,3 +30,6 @@ dev/.iso-test-run.sh
 
 # Customer data (TrackIT backup): never commit
 db/
+
+# The AGPL source archive the ISO build packs (served at /api/source)
+/layer8-source.tar.gz

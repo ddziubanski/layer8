@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The script library: queries and actions, with versions. Admins write scripts; who may run each is set on it."""
 
 import logging

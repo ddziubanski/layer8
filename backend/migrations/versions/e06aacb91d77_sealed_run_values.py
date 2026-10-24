@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """sealed run values
 
 Revision ID: e06aacb91d77

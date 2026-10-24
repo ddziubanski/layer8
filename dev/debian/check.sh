@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Development only: run the backend tests on Debian 13's own Python and PostgreSQL, the
 # versions the appliance ships, in a throwaway container:
 #   docker run --rm -v "$PWD":/src:ro debian:trixie sh /src/dev/debian/check.sh

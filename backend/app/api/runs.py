@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Runners (Settings > Runners), running action scripts, and the API runners poll.
 
 Runners authenticate with their own bearer token (Authorization: Bearer hdr_...), never a

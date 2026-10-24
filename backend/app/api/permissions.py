@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Permissions: who may take each action in app.permissions.CATALOG."""
 
 import logging

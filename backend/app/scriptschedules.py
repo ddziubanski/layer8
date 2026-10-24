@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Script schedules (Scripts > Schedules): a script run on a timetable, as its owner.
 
 An action is queued on its devices, its dynamic group's devices (worked out at each run, so the

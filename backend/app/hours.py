@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Service desk opening hours: when someone is in, and when someone is next expected.
 
 Hours are kept as plain lines (Settings > Desk hours, and per queue in Settings > Queues), so they

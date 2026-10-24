@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Knowledge base: articles (staff write them; requesters read published ones for everyone), and on a
 ticket: matching articles, similar solved tickets, linking an article, drafting one from the ticket."""
 

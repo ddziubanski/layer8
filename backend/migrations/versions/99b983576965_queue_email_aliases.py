@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """queue email aliases
 
 Revision ID: 99b983576965

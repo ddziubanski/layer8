@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Settings > Ticket fields: resolution types, closure reasons, departments, contact phone."""
 
 import pytest

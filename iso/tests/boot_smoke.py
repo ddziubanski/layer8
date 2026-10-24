@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Boot the real ISO without a hard disk; capture BIOS/UEFI menus with QMP.
 
 Requires QEMU, OVMF and Pillow. This checks menus, not an installed appliance.

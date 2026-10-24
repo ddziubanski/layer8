@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { ModuleWorkspace } from "./components/ModuleWorkspace";
 import { TeamsCallback } from "./components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { Brand, backgroundStyle, useBranding } from "./branding";
 import { NoticeBanner, NoticeDialog } from "./components/Notices";
 import { ME_KEY } from "./queryClient";
 import { RouteFocus } from "./components/RouteFocus";
+import { SourceNotice } from "./components/SourceNotice";
 import { CommandPalette } from "./components/CommandPalette";
 import { visibleModules } from "./navigation";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
@@ -110,6 +112,7 @@ function Shell({ me }: { me: Me }) {
           <button type="button" onClick={() => logout.mutate()}>
             Sign out
           </button>
+          <SourceNotice className="source-notice side-source" />
         </div>
       </nav>
       <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>

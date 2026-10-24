@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Screen layouts (app.layouts): everyone's default (admins) and each technician's own."""
 
 import logging

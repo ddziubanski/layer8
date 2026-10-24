@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Knowledge base: articles and who sees them, search and suggestions, and the ticket side."""
 
 from app import kb

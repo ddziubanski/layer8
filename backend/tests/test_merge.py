@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Merging tickets: what moves, the reason, the closed duplicate, email threading, and the rules."""
 
 import pytest

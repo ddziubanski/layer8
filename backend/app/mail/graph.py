@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Exchange Online mailbox over Microsoft Graph (app-only, client credentials).
 
 The app registration needs application permissions Mail.ReadWrite and Mail.Send,
