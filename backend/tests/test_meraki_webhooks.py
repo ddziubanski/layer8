@@ -237,13 +237,19 @@ def test_db_http_body_rejections(client, configured, headers, body, code):
     assert client.post(PATH, content=body, headers=headers).status_code == code
 
 
-def test_db_migration_roundtrip_matches_metadata(engine):
+def test_db_migration_roundtrip_matches_metadata_and_preserves_tickets(db, engine, service_desk, configured):
     from alembic import command
     from alembic.autogenerate import compare_metadata
     from alembic.migration import MigrationContext
     from app.models import Base
     from tests.conftest import alembic_config
-    command.downgrade(alembic_config(), "b97e31a50d82")
-    command.upgrade(alembic_config(), "head")
+    hooks.receive(db, raw(payload()))
+    db.commit()
+    try:
+        command.downgrade(alembic_config(), "b97e31a50d82")
+        with engine.connect() as connection:
+            assert connection.scalar(select(func.count()).select_from(Ticket)) == 1
+    finally:
+        command.upgrade(alembic_config(), "head")
     with engine.connect() as connection:
         assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
