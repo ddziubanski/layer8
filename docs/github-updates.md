@@ -6,7 +6,15 @@ Settings > Updates checks **published stable releases** of `ddziubanski/layer8`,
 
 This is an application updater for the **Debian 13 amd64 appliance with Python 3.13**, not an OS/package-manager updater. Existing installations need the first updater-enabled application release installed manually once. From that reviewed release, `sudo sh install/install-updater.sh` provisions the root service and maintenance gate without changing application settings or credentials. New full installs provision those files automatically. The bootstrap checks Nginx before reloading it; an unfamiliar configuration requires a local administrator to install/review the gate manually.
 
-The administrator must independently authenticate the publisher's **Ed25519 public key** and install its PEM public-key file under `/etc/helpdesk/update-keys/` as root:root, mode 0644 (directory root-owned, not group/other writable). Compare its fingerprint through a trusted channel. Never download and trust a key from the same unverified update being installed. No production key is invented, generated or provisioned by this PR. For rotation, authenticate and install the replacement key before releases switch signatures; at most 20 PEM keys are considered.
+**The Layer 8 publisher key.** Releases from 1.2.0 ship the publisher's Ed25519 public key (`install/files/layer8-update-public.pem`). New installs and `install-updater.sh` put it in `/etc/helpdesk/update-keys/layer8.pem` and print its fingerprint. Compare it with this one, which is also in each release's notes:
+
+```
+6ce67d9357412c7b473f5e8f8679568159ebc3464259f39e5949bceb5aa43a50
+```
+
+Check it on an appliance with `openssl pkey -pubin -in /etc/helpdesk/update-keys/layer8.pem -outform DER | sha256sum`.
+
+For a key you provide yourself (your own builds), the administrator must independently authenticate the publisher's **Ed25519 public key** and install its PEM public-key file under `/etc/helpdesk/update-keys/` as root:root, mode 0644 (directory root-owned, not group/other writable). Compare its fingerprint through a trusted channel. Never download and trust a key from the same unverified update being installed. No production key is invented, generated or provisioned by this PR. For rotation, authenticate and install the replacement key before releases switch signatures; at most 20 PEM keys are considered.
 
 Set a backup passphrase under Settings > Backup and keep it off the appliance too. Enable GitHub release updates under Settings > Updates (or import `{"updates":{"updates_enabled":true}}` in an answers file). The service creates a separate local encrypted recovery backup under `/var/lib/layer8-updater/work/<request>/backup/`; this does not replace regular off-server backups. It requires at least 4.5 GiB free on the application disk, plus enough room for the encrypted backup on `/var/lib`.
 

@@ -14,6 +14,11 @@ install -d -m 770 -o root -g helpdesk /var/lib/layer8-updater/inbox
 install -m 644 -o root -g root "$BUNDLE/backend/app/update_protocol.py" /usr/local/lib/layer8-updater/protocol.py
 install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.py" /usr/local/lib/layer8-updater/
 install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.service" /etc/systemd/system/
+# The Layer 8 publisher's public key for signed updates (not a secret), shipped with this release.
+if [ -f "$BUNDLE/install/files/layer8-update-public.pem" ]; then
+  install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update-public.pem" /etc/helpdesk/update-keys/layer8.pem
+  echo "Update signing key: $(openssl pkey -pubin -in /etc/helpdesk/update-keys/layer8.pem -outform DER | sha256sum | cut -d' ' -f1)"
+fi
 printf '%s\n' 'helpdesk ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block layer8-update.service' > /etc/sudoers.d/layer8-update
 chmod 440 /etc/sudoers.d/layer8-update
 visudo -cf /etc/sudoers.d/layer8-update >/dev/null
@@ -50,4 +55,4 @@ if ! nginx -t; then
 fi
 systemctl daemon-reload
 systemctl reload nginx
-echo 'Updater installed. Provision an authenticated Ed25519 public key locally; then enable Settings > Updates.'
+echo 'Updater installed. Compare the signing key fingerprint above with docs/github-updates.md; then set a backup passphrase and enable Settings > Updates.'

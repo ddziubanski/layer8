@@ -238,6 +238,11 @@ install -d -m 770 -o root -g helpdesk /var/lib/layer8-updater/inbox
 install -m 644 -o root -g root "$BUNDLE/backend/app/update_protocol.py" /usr/local/lib/layer8-updater/protocol.py
 install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.py" /usr/local/lib/layer8-updater/
 install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.service" /etc/systemd/system/
+# The Layer 8 publisher's public key for signed updates (not a secret), shipped with this release.
+if [ -f "$BUNDLE/install/files/layer8-update-public.pem" ]; then
+  install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update-public.pem" /etc/helpdesk/update-keys/layer8.pem
+  echo "Update signing key: $(openssl pkey -pubin -in /etc/helpdesk/update-keys/layer8.pem -outform DER | sha256sum | cut -d' ' -f1)"
+fi
 install -m 644 "$BUNDLE/install/files/helpdesk-api.service" "$BUNDLE/install/files/helpdesk-worker.service" /etc/systemd/system/
 install -m 440 "$BUNDLE/install/files/sudoers-helpdesk" /etc/sudoers.d/helpdesk
 if [ "$SERVICES" = 1 ]; then
