@@ -277,3 +277,39 @@ Settings > Branding > Dark mode: off, always, or following each person's device 
 ## Self-service portal: welcome text and the guided request form (dark)
 
 ![Self-service portal: welcome text and the guided request form, dark](dark/13-portal.png)
+
+# Dark themes
+
+Settings > Branding > Appearance: fixed dark palettes, alongside Midnight ([midnight/](midnight/README.md)).
+
+## Sign-in page with branding (product name, message) (Ember)
+
+![Sign-in page with branding (product name, message), Ember](themes/ember/01-sign-in.png)
+
+## Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls (Ember)
+
+![Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls, Ember](themes/ember/02-queue.png)
+
+## Ticket: conversation, attachments, assignment, requester, devices, status (Ember)
+
+![Ticket: conversation, attachments, assignment, requester, devices, status, Ember](themes/ember/03-ticket.png)
+
+## Self-service portal: welcome text and the guided request form (Ember)
+
+![Self-service portal: welcome text and the guided request form, Ember](themes/ember/13-portal.png)
+
+## Sign-in page with branding (product name, message) (Ultraviolet)
+
+![Sign-in page with branding (product name, message), Ultraviolet](themes/ultraviolet/01-sign-in.png)
+
+## Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls (Ultraviolet)
+
+![Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls, Ultraviolet](themes/ultraviolet/02-queue.png)
+
+## Ticket: conversation, attachments, assignment, requester, devices, status (Ultraviolet)
+
+![Ticket: conversation, attachments, assignment, requester, devices, status, Ultraviolet](themes/ultraviolet/03-ticket.png)
+
+## Self-service portal: welcome text and the guided request form (Ultraviolet)
+
+![Self-service portal: welcome text and the guided request form, Ultraviolet](themes/ultraviolet/13-portal.png)
