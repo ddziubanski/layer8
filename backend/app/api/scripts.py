@@ -220,7 +220,7 @@ def restore_version(script_id: int, number: int, admin: ScriptsManager, session:
 def _run_query(session, script_id: int, body: ScriptQueryRunIn, user: User) -> engine.ReportResult:
     script = _script(session, script_id, user)
     if script.kind != ScriptKind.query:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Actions run on devices through a runner, not here")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Actions run on devices through a relay, not here")
     if not _can_run(script, user):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You can't run this script")
     v = _current(script)

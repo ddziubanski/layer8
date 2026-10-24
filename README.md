@@ -11,15 +11,15 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 **At a glance**
 
 - **One queue** for tickets from email and the self-service portal, with queues, SLAs, routing rules, checklists and an arrangeable ticket page.
-- **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with runners.
+- **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with relays.
 - **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
 - **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
-- **For the room:** a wallboard for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
+- **For the room:** a remote display for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
 - **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, and no cloud required.
 
 <p>
   <img src="screenshots/03-ticket.png" width="49%" alt="A ticket: conversation, assignment, requester and devices">
-  <img src="screenshots/17-wallboard.png" width="49%" alt="The wallboard for a big screen">
+  <img src="screenshots/17-wallboard.png" width="49%" alt="The remote display for a big screen">
   <img src="screenshots/13-portal.png" width="49%" alt="The self-service portal with each team's hours">
   <img src="screenshots/dark/02-queue.png" width="49%" alt="The queue in dark mode">
 </p>
@@ -39,7 +39,7 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Conversation-first ticket workspace: Conversation, Work and History tabs, with a closable tools drawer. Personal preferences keep a preferred tool, width and open state; classic arranged panels remain available. See [ticket workspace](docs/ticket-workspace.md).
 - "Tickets Anywhere": technicians act on tickets by replying to email (`#close`, `#assign`, `#priority`).
 - Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
-- A wallboard for a big screen in the IT office: live counts, alerts (SLA breaches, unassigned tickets) and the tickets that need someone, opened by a secret link.
+- A remote display for a big screen in the IT office: live counts, alerts (SLA breaches, unassigned tickets) and the tickets that need someone, opened by a secret link.
 - Desk hours per queue on the portal, with an after-hours message saying when someone is next in, and technicians' Teams status (status only).
 
 **People and access**
@@ -54,12 +54,12 @@ Administrators can check GitHub stable releases and review signed appliance upda
 - Patch status read from Action1, and opt-in software deployment through Action1: one reviewed package to one ticket-linked computer, logged on the ticket ([docs/action1.md](docs/action1.md)).
 - Cisco Meraki, read-only and opt-in: client discovery (switch port, VLAN, SSID) on IP records, devices and tickets; port and wireless diagnostics; and device outage tickets from Meraki alerts.
 - Ubiquiti UniFi, opt-in, through the cloud or a local console: equipment with its state, client discovery on IP records, devices and tickets, outage tickets for offline equipment, and guest Wi-Fi vouchers from a ticket ([docs/unifi.md](docs/unifi.md)).
-- Juniper EX switches (configured one by one), opt-in and read-only: a runner on the LAN reads each switch's Junos REST API, so clients show with their switch, port and VLAN; outage tickets for switches that stop answering ([docs/juniper.md](docs/juniper.md)).
-- Nutanix AHV through Prism Central, opt-in: VMs with their power state, host and addresses, matched to devices and linked to tickets; optional restart, power on and power cycle from a ticket, each noted on it; outage tickets and a wallboard tile for critical VMs ([docs/nutanix.md](docs/nutanix.md)).
+- Juniper EX switches (configured one by one), opt-in and read-only: a relay on the LAN reads each switch's Junos REST API, so clients show with their switch, port and VLAN; outage tickets for switches that stop answering ([docs/juniper.md](docs/juniper.md)).
+- Nutanix AHV through Prism Central, opt-in: VMs with their power state, host and addresses, matched to devices and linked to tickets; optional restart, power on and power cycle from a ticket, each noted on it; outage tickets and a remote display tile for critical VMs ([docs/nutanix.md](docs/nutanix.md)).
 - Dell and Lenovo warranty lookups through their official APIs.
 - IP address management:
   - subnets and VLANs, with a used/free map
-  - scans by a runner on the LAN (ping, reverse DNS, ARP)
+  - scans by a relay on the LAN (ping, reverse DNS, ARP)
   - Windows DHCP leases and DNS records
   - SNMP discovery with LLDP neighbours and switch MAC tables
 
@@ -69,7 +69,7 @@ Administrators can check GitHub stable releases and review signed appliance upda
 **Automation**
 - A script library: PowerShell (locally or over WinRM), bash, Python and Arista EOS.
 - 27 ready-made SQL queries to add from the Scripts page: ticket throughput and ageing, reopened and moved tickets, first-response and resolution times, busiest requesters and hours, warranties, replacements, duplicate serials and more. Device and people queries double as dynamic groups.
-- Scripts run on "runners" that pull work over HTTPS, so no inbound ports are needed.
+- Scripts run on "relays" that pull work over HTTPS, so no inbound ports are needed.
 - Versions with diffs, approval for high-risk scripts, schedules, and every run logged on its ticket.
 - A Remote Assistance button on tickets, logged as well.
 - Optional reviewed Action1 software deployments: search available packages from a ticket-linked computer or device, choose an exact version, review the endpoint and explicitly deploy. Separate credentials and permissions; results and ticket notes track the outcome. [Setup and first-slice limits](docs/action1.md#reviewed-software-deployment-first-slice).
@@ -109,23 +109,23 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Email intake and notifications (Microsoft Entra app, Graph) | [docs/email-setup.md](docs/email-setup.md) |
 | Technician Teams messages and queue summaries | [docs/teams.md](docs/teams.md) |
 | Windows sign-in (Kerberos SSO) | [docs/windows-sign-in.md](docs/windows-sign-in.md) |
-| Runners: scripts, AD changes, IP scans, DHCP/DNS, SNMP | [docs/runner.md](docs/runner.md) |
+| Relays: scripts, AD changes, IP scans, DHCP/DNS, SNMP | [docs/runner.md](docs/runner.md) |
 | Remote Assistance from tickets | [docs/remote-assistance.md](docs/remote-assistance.md) |
 | Action1 patch status and patch automation calendar (read-only) | [docs/action1.md](docs/action1.md) |
 | Dell and Lenovo warranty lookups | [docs/warranty.md](docs/warranty.md) |
 | Moving from Track-It! | [docs/trackit-import.md](docs/trackit-import.md) |
 | Recovery console | [docs/recovery-console.md](docs/recovery-console.md) |
 | Other apps (API keys: look up tickets, add notes) | [docs/integrations.md](docs/integrations.md) |
-| Wallboards (live board for a big screen, secret link) | [docs/wallboard.md](docs/wallboard.md) |
+| Remote displays (live board for a big screen, secret link) | [docs/wallboard.md](docs/wallboard.md) |
 | Ubiquiti UniFi (cloud or local console) | [docs/unifi.md](docs/unifi.md) |
-| Juniper EX switches (Junos REST, through a runner) | [docs/juniper.md](docs/juniper.md) |
+| Juniper EX switches (Junos REST, through a relay) | [docs/juniper.md](docs/juniper.md) |
 | Nutanix AHV (Prism Central v4 API) | [docs/nutanix.md](docs/nutanix.md) |
 | Desk hours and technicians' Teams status on the portal | [docs/desk-hours.md](docs/desk-hours.md) |
 | **Microsoft 365, step by step** (email, Teams, technician connections, Copilot) | [docs/microsoft-365.md](docs/microsoft-365.md) |
 
 ## Built with
 
-Python and FastAPI, PostgreSQL, React and TypeScript. The runner is a single Python file using only the standard library. The appliance is Debian 13 with nginx.
+Python and FastAPI, PostgreSQL, React and TypeScript. The relay is a single Python file using only the standard library. The appliance is Debian 13 with nginx.
 
 ## Contributing and security
 

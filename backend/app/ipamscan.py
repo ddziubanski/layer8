@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""IPAM scans: a runner pings a subnet, looks up reverse DNS and reads its ARP table; another
+"""IPAM scans: a relay pings a subnet, looks up reverse DNS and reads its ARP table; another
 (on Windows) reads the DHCP server's leases and reservations and the DNS server's A records. What
 they find updates last-seen, fills empty host names and MACs, and raises findings for everything
 else. Findings change nothing until someone applies them.
@@ -194,14 +194,14 @@ DHCP_DNS_PARAMETERS = [
 ]
 # Per kind of scan: the built-in script's name, language, body, parameters and description.
 SCRIPTS = {
-    ScanKind.network: (SCRIPT_NAME, ScriptLanguage.python, SCRIPT_BODY, PARAMETERS, "Built in: scans a subnet for IP addresses > Scan now and scheduled scans. Needs a runner that takes Python."),
+    ScanKind.network: (SCRIPT_NAME, ScriptLanguage.python, SCRIPT_BODY, PARAMETERS, "Built in: scans a subnet for IP addresses > Scan now and scheduled scans. Needs a relay that takes Python."),
     ScanKind.dhcp_dns: (
         DHCP_DNS_NAME, ScriptLanguage.powershell, DHCP_DNS_BODY, DHCP_DNS_PARAMETERS,
-        "Built in: reads Windows DHCP leases and reservations and DNS records for IP addresses. Needs a Windows runner with RSAT (DhcpServer, DnsServer).",
+        "Built in: reads Windows DHCP leases and reservations and DNS records for IP addresses. Needs a Windows relay with RSAT (DhcpServer, DnsServer).",
     ),
     ScanKind.snmp: (
         netdisco.SCRIPT_NAME, ScriptLanguage.python, netdisco.SCRIPT_BODY, PARAMETERS,
-        "Built in: SNMP discovery of network gear for IP addresses > Discover (SNMP). Needs a runner that takes Python, version 1.2 or later.",
+        "Built in: SNMP discovery of network gear for IP addresses > Discover (SNMP). Needs a relay that takes Python, version 1.2 or later.",
     ),
 }
 # What each kind is called in messages.
@@ -237,8 +237,8 @@ def pending(session: Session, subnet: Subnet, kind: ScanKind = ScanKind.network)
 
 
 def request(session: Session, subnet: Subnet, user: User, scheduled: bool = False, kind: ScanKind = ScanKind.network) -> IpScan:
-    """Queue a scan: the network scan on the subnet's runner (or any that takes Python), the DHCP and
-    DNS read on the runner named in Settings (or any that takes PowerShell). Doesn't commit."""
+    """Queue a scan: the network scan on the subnet's relay (or any that takes Python), the DHCP and
+    DNS read on the relay named in Settings (or any that takes PowerShell). Doesn't commit."""
     net = ipam.network(subnet.network)
     values = {"network": str(net)}
     sealed = None
@@ -264,7 +264,7 @@ def request(session: Session, subnet: Subnet, user: User, scheduled: bool = Fals
         if name := settings.ipam_windows_runner.strip():
             runner = session.scalar(select(Runner).where(Runner.name == name, Runner.is_active))
             if runner is None:
-                raise ScanError(f"There's no active runner called {name!r} (Settings > IP addresses)")
+                raise ScanError(f"There's no active relay called {name!r} (Settings > IP addresses)")
             runner_id = runner.id
         values |= {"dhcp_server": settings.ipam_dhcp_server.strip(), "dns_server": settings.ipam_dns_server.strip(), "dns_zones": settings.ipam_dns_zones.strip()}
     if pending(session, subnet, kind) is not None:

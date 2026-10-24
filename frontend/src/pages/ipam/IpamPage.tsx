@@ -145,8 +145,8 @@ function ScanLine({ scan, every, kind = "network" }: { scan: IpScan | null; ever
     );
   const when = new Date(scan.created_at).toLocaleString();
   let text: string;
-  if (scan.status === "queued" || scan.status === "awaiting_approval") text = `${words.what[0].toUpperCase()}${words.what.slice(1)} waiting for a runner (asked ${when})…`;
-  else if (scan.status === "running") text = `${words.doing} on ${scan.runner ?? "a runner"}…`;
+  if (scan.status === "queued" || scan.status === "awaiting_approval") text = `${words.what[0].toUpperCase()}${words.what.slice(1)} waiting for a relay (asked ${when})…`;
+  else if (scan.status === "running") text = `${words.doing} on ${scan.runner ?? "a relay"}…`;
   else if (scan.error) text = `Last ${words.what} ${when} failed: ${scan.error}`;
   else
     text = `Last ${words.what} ${when}${scan.runner ? ` by ${scan.runner}` : ""}: ${scan.hosts_seen} ${words.found}${kind === "snmp" ? "" : `, ${scan.new_findings} new finding(s)`}`;
@@ -493,7 +493,7 @@ function SubnetForm({ subnet, me, onDone }: { subnet: Subnet | null; me: Me; onD
         <label className="field">
           Scanned by
           <select value={s.scan_runner_id ?? ""} onChange={(e) => setS({ ...s, scan_runner_id: e.target.value ? Number(e.target.value) : null })}>
-            <option value="">Any runner that takes Python</option>
+            <option value="">Any relay that takes Python</option>
             {runners.data?.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -503,7 +503,7 @@ function SubnetForm({ subnet, me, onDone }: { subnet: Subnet | null; me: Me; onD
         </label>
       </div>
       <p className="small muted" style={{ margin: 0 }}>
-        Scans ping every address, look up reverse DNS and read the runner's ARP table. Pick a runner on this subnet's LAN: it then also finds devices that ignore ping, with their MAC addresses.
+        Scans ping every address, look up reverse DNS and read the relay's ARP table. Pick a relay on this subnet's LAN: it then also finds devices that ignore ping, with their MAC addresses.
         When a Windows DHCP or DNS server is set under Settings &gt; IP addresses, scheduled scans also read its leases, reservations and A records for the subnet; when an SNMP community is set, they also discover the subnet's network gear (on the same runner).
       </p>
       <label className="field">

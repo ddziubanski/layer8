@@ -32,7 +32,7 @@ export function ChecklistsAdmin({ me }: { me: Me }) {
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
         Steps for a new starter, a leaver, an office move... Started on a ticket, each step becomes a child ticket, due a number of days from the start date or last
-        day, in its own queue or with its own technician. An offboarding step can disable the leaver&apos;s AD account on its day (on a PowerShell runner).
+        day, in its own queue or with its own technician. An offboarding step can disable the leaver&apos;s AD account on its day (on a PowerShell relay).
       </p>
       <div className="admin">
         <nav className="admin-list report-list" aria-label="Checklists">

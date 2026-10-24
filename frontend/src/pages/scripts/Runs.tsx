@@ -47,7 +47,7 @@ export function TargetFields({ value, onChange, groupNote }: { value: Targets; o
           [
             ["devices", "Devices"],
             ["group", "A device group (query)"],
-            ["runner", "The runner itself"],
+            ["runner", "The relay itself"],
           ] as [Where, string][]
         ).map(([v, label]) => (
           <label key={v} className="inline small">
@@ -221,7 +221,7 @@ export function RunList({ filter, showScript = false }: { filter: { script_id?: 
             <RunStatusChip status={r.status} notBefore={r.not_before} />
             <span className="spacer">
               {showScript && <strong>{r.script_name} · </strong>}
-              {r.target ?? "on the runner"}
+              {r.target ?? "on the relay"}
               <span className="muted small">
                 {" "}
                 · #{r.id} · v{r.version} · {r.requested_by?.display_name ?? "?"}, {when(r.created_at)}
@@ -285,7 +285,7 @@ function RunOutput({ id }: { id: number }) {
   return (
     <div className="stack" style={{ gap: 6, marginTop: 8 }}>
       <span className="muted small">
-        {r.runner_name && `Runner ${r.runner_name}. `}
+        {r.runner_name && `Relay ${r.runner_name}. `}
         {r.decided_by && `${r.status === "rejected" ? "Rejected" : r.status === "cancelled" ? "Cancelled" : "Approved"} by ${r.decided_by.display_name}. `}
         {r.exit_code !== null && `Exit code ${r.exit_code}. `}
         {Object.keys(r.values).length > 0 && `Values: ${Object.entries(r.values).map(([k, v]) => `${k}=${String(v)}`).join(", ")}.`}

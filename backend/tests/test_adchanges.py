@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The ticket's AD account card: the requester's groups and OU, changed through a PowerShell runner;
+"""The ticket's AD account card: the requester's groups and OU, changed through a PowerShell relay;
 onboarding templates with a preview and the nested-group warning for hybrid (Entra) sites."""
 
 import json
@@ -78,9 +78,9 @@ def test_ad_changes_pin_the_selected_dedicated_runner(client, db, admin, agent, 
     assert run.only_runner_id == made["runner"]["id"]
     job = client.post("/api/runner/claim", json={}, headers={"Authorization": f"Bearer {made['token']}"})
     assert job.status_code == 200 and job.json()["run_id"] == run.id
-    monkeypatch.setattr(settings, "ad_runner_name", "Missing runner")
+    monkeypatch.setattr(settings, "ad_runner_name", "Missing relay")
     failed = client.post(f"/api/tickets/{ad['ticket'].id}/ad-changes", json={"add": [ad["vpn"].dn]}, headers=as_user(agent))
-    assert failed.status_code == 422 and "No active PowerShell runner" in failed.json()["detail"]
+    assert failed.status_code == 422 and "No active PowerShell relay" in failed.json()["detail"]
 
 
 def test_allow_lists_are_enforced(client, agent, ad):

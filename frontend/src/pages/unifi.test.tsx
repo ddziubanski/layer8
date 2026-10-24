@@ -58,7 +58,7 @@ test("IP addresses > Juniper shows switches (not answering first) and clients wi
   expect(screen.getByLabelText("Search Juniper clients")).toBeInTheDocument();
 });
 
-test("Settings > Juniper asks a runner to read the switches", async () => {
+test("Settings > Juniper asks a relay to read the switches", async () => {
   const { JunosAdmin } = await import("./admin/JunosAdmin");
   const { ME } = await import("../test/util");
   const calls = mockApi({

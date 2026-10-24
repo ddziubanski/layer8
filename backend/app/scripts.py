@@ -3,7 +3,7 @@
 
 A query is read-only SQL on the restricted rules login (as SQL reports are), with its parameters
 bound by name (:days). A query that returns a device_id or user_id column can serve as a dynamic
-group. Actions (PowerShell, bash, Python, Arista EOS) run on a runner; see runs in a later slice.
+group. Actions (PowerShell, bash, Python, Arista EOS) run on a relay; see runs in a later slice.
 """
 
 import difflib

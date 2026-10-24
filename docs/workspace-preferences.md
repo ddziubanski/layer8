@@ -8,7 +8,7 @@ Global-off areas disappear from the sidebar and Ctrl+K, and direct console links
 
 **Tickets, My preferences and sign-out remain available.** Admins always retain Settings access to restore modules. **Settings for technicians** affects staff console settings pages, not administrator recovery access. **Self-service portal shortcut** affects staff navigation only: requester self-service and public helpdesk links remain available. Knowledge base controls staff pages; requester articles remain part of the portal. Source code links remain available regardless of module choices.
 
-These controls govern the console workspace, not authorization or a service shutdown. Data, embedded ticket context and existing API permissions are preserved. Use the existing integration and worker settings to stop background reads, scheduled reports/scripts or other jobs. Public receiving links, wallboards, surveys and the requester portal keep their existing controls. No database migration is needed.
+These controls govern the console workspace, not authorization or a service shutdown. Data, embedded ticket context and existing API permissions are preserved. Use the existing integration and worker settings to stop background reads, scheduled reports/scripts or other jobs. Public receiving links, remote displays, surveys and the requester portal keep their existing controls. No database migration is needed.
 
 The settings API is admin-only: `GET/PUT /api/settings/modules`, using `{"values": {...}}` for updates. `GET /api/auth/me` returns the effective `disabled_modules` list alongside personal `hidden_modules`; clients must apply the global list first. The admin Settings exception is intentional. `HELPDESK_WORKSPACE_*` environment overrides show as locked in the form.
 

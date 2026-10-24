@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Juniper switches: the switch list, sealed credentials, the runner script against a fake Junos
+"""Juniper switches: the switch list, sealed credentials, the relay script against a fake Junos
 REST API over HTTPS, storing what it read, uplinks, unreachable switches and the scheduled path."""
 import datetime as dt
 import json

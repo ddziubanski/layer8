@@ -2,7 +2,7 @@
 """Script schedules (Scripts > Schedules): a script run on a timetable, as its owner.
 
 An action is queued on its devices, its dynamic group's devices (worked out at each run, so the
-group's membership on the day counts) or the runner itself, through app.runs like a person's run:
+group's membership on the day counts) or the relay itself, through app.runs like a person's run:
 a high-risk script still waits for an admin's approval each time (not the owner's own). A query
 runs at once and its result is emailed as CSV. The timetable works as a report schedule's
 (app.reports.delivery.next_run).
@@ -46,7 +46,7 @@ def check(session: Session, s: ScriptSchedule) -> None:
         raise ScheduleError("Pick the day of the month")
     if script.kind == ScriptKind.action:
         if s.on_runner == bool(s.device_ids or s.group_script_id):
-            raise ScheduleError("Pick the devices (or a device group) to run it on, or run it on the runner itself")
+            raise ScheduleError("Pick the devices (or a device group) to run it on, or run it on the relay itself")
         if len(s.device_ids) > runs.MAX_TARGETS:
             raise ScheduleError(f"At most {runs.MAX_TARGETS} devices")
     else:
@@ -73,7 +73,7 @@ def run_schedule(session: Session, s: ScriptSchedule, now: datetime) -> str:
             made = runs.request(session, script, owner, device_ids=ids, on_runner=s.on_runner, values=s.values, ticket=None, schedule_id=s.id)
         except runs.RunError as exc:
             raise ScheduleError(str(exc)) from None
-        where = "on the runner" if s.on_runner else f"on {len(made)} device(s)"
+        where = "on the relay" if s.on_runner else f"on {len(made)} device(s)"
         return f"Queued {where}" + (", waiting for an admin's approval" if script.high_risk else "")
     version = next(v for v in script.versions if v.number == script.current_version)
     date_from, date_to = delivery.period_range(s.period, now.astimezone().date()) if s.period else (None, None)

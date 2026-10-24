@@ -189,7 +189,7 @@ export function ADAccountCard({ ticket, onChanged }: { ticket: Ticket; onChanged
               )}
               {preview.data.department && <div className="small">department: {preview.data.department}</div>}
               {preview.data.title && <div className="small">title: {preview.data.title}</div>}
-              <span className="muted small">It runs on a PowerShell runner and is noted on this ticket; its result shows under Scripts below.</span>
+              <span className="muted small">It runs on a PowerShell relay and is noted on this ticket; its result shows under Scripts below.</span>
               <div className="row-gap">
                 <button className="btn" type="button" disabled={apply.isPending} onClick={() => apply.mutate()}>
                   Make these changes

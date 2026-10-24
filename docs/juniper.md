@@ -1,6 +1,6 @@
 # Juniper EX switches
 
-For Juniper EX switches configured one by one (not managed in Juniper Mist). A runner on your LAN reads each switch's **Junos REST API** for its MAC and ARP tables. Each client (a MAC and its IP) then shows with the switch, port and VLAN it's on: beside matching IP records, on devices and tickets, and under **IP addresses > Juniper**.
+For Juniper EX switches configured one by one (not managed in Juniper Mist). A relay on your LAN reads each switch's **Junos REST API** for its MAC and ARP tables. Each client (a MAC and its IP) then shows with the switch, port and VLAN it's on: beside matching IP records, on devices and tickets, and under **IP addresses > Juniper**.
 
 It only reads, and it never changes your documented IP records. It's off by default. **Settings > Juniper** has every option.
 
@@ -22,20 +22,20 @@ Switches managed in Mist would be read through Mist's cloud API instead. That is
    set system services rest control allowed-sources <the runner's address>
    ```
 
-   `allowed-sources` keeps the API to the runner only. Commit.
+   `allowed-sources` keeps the API to the relay only. Commit.
 
 ## In Layer 8
 
-1. A **runner** that can reach the switches over HTTPS and runs Python (runner 1.2 or later, so secrets reach the script sealed). See [runner.md](runner.md).
+1. A **relay** that can reach the switches over HTTPS and runs Python (relay 1.2 or later, so secrets reach the script sealed). See [runner.md](runner.md).
 2. **Settings > Juniper:**
    - **Switches:** one per line, a name and the address, plus the port if it isn't 3443:
      ```
      core-1 10.0.0.2
      idf2-sw idf2-sw.corp.example:8443
      ```
-   - **Login** and **Password:** the read-only login above. The password is stored as a secret and reaches the runner sealed for each read; it's never in the run's values or output.
+   - **Login** and **Password:** the read-only login above. The password is stored as a secret and reaches the relay sealed for each read; it's never in the run's values or output.
    - **Switches' CA certificate:** the CA that signed the switches' REST certificates, if it isn't publicly trusted. For a quick test with self-signed certificates on a network you trust, untick **Check the switches' certificates** (leave it ticked otherwise).
-   - **Runner:** the runner that reaches the switches. Empty: any runner that takes Python.
+   - **Relay:** the relay that reaches the switches. Empty: any relay that takes Python.
    - Tick **Read Juniper switches** and save.
 3. Press **Read the switches now**. Scripts > All runs shows the run; Settings > Juniper shows the result, e.g. "2 of 2 switches answered, 140 clients". From then on it reads every **Read every** minutes (30 by default).
 

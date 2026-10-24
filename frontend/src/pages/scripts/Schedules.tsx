@@ -19,7 +19,7 @@ function startValues(params: ScriptParam[], given?: Record<string, unknown>): Re
 
 function where(s: ScriptSchedule): string {
   if (s.script_kind === "query") return `to ${s.recipients.join(", ")}`;
-  if (s.on_runner) return "on the runner";
+  if (s.on_runner) return "on the relay";
   const parts = [];
   if (s.devices.length) parts.push(s.devices.map((d) => d.name).join(", "));
   if (s.group_name) parts.push(`the devices in "${s.group_name}" on the day`);
@@ -55,7 +55,7 @@ export function SchedulesPane({ script }: { script: Script }) {
       <p className="muted small" style={{ margin: 0 }}>
         {script.kind === "query"
           ? "Run this query on a timetable and email the result as CSV."
-          : "Run this action on a timetable, as you: on devices, a device group (worked out at each run) or the runner."}
+          : "Run this action on a timetable, as you: on devices, a device group (worked out at each run) or the relay."}
         {script.high_risk && " It's high risk, so each scheduled run still waits for another admin's approval."}
       </p>
       {error && (

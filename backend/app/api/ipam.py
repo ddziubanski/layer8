@@ -180,7 +180,7 @@ def _apply_subnet(session, s: Subnet, body: SubnetIn) -> None:
     if body.vlan_id is not None and session.get(Vlan, body.vlan_id) is None:
         raise _bad("No such VLAN")
     if body.scan_runner_id is not None and session.get(Runner, body.scan_runner_id) is None:
-        raise _bad("No such runner")
+        raise _bad("No such relay")
     s.scan_every_hours, s.scan_runner_id = body.scan_every_hours, body.scan_runner_id
     s.network, s.vlan_id = net, body.vlan_id
     s.gateway, s.dhcp_start, s.dhcp_end = points["gateway"], points["dhcp_start"], points["dhcp_end"]
@@ -220,9 +220,9 @@ def delete_subnet(subnet_id: int, admin: IpamDeleter, session: SessionDep):
 
 @router.post("/subnets/{subnet_id}/scan", response_model=IpScanOut, status_code=status.HTTP_201_CREATED)
 def scan_subnet(subnet_id: int, user: Agent, session: SessionDep, kind: ScanKind = ScanKind.network):
-    """Queue a scan. network: on the subnet's runner, ping sweep, reverse DNS and the runner's ARP
-    table. dhcp_dns: on the Windows runner, the DHCP server's leases and reservations and the DNS
-    server's A records (Settings > IP addresses). snmp: on the subnet's runner, network gear's
+    """Queue a scan. network: on the subnet's relay, ping sweep, reverse DNS and the relay's ARP
+    table. dhcp_dns: on the Windows relay, the DHCP server's leases and reservations and the DNS
+    server's A records (Settings > IP addresses). snmp: on the subnet's relay, network gear's
     identity, LLDP neighbours and MAC tables (see /api/network)."""
     s = _get(session, Subnet, subnet_id, "Subnet")
     try:
@@ -237,7 +237,7 @@ def scan_subnet(subnet_id: int, user: Agent, session: SessionDep, kind: ScanKind
 
 @router.get("/runners", response_model=list[ScanRunnerOut])
 def scan_runners(_: Agent, session: SessionDep):
-    """Runners that can scan (they take Python), to choose one per subnet."""
+    """Relays that can scan (they take Python), to choose one per subnet."""
     return [r for r in session.scalars(select(Runner).where(Runner.is_active).order_by(Runner.name)) if "python" in (r.languages or [])]
 
 

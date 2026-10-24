@@ -255,7 +255,7 @@ def test_dhcp_dns_read(client, db, agent, admin, monkeypatch):
     monkeypatch.setattr(settings, "ipam_dns_server", "dc01.corp.example")
     monkeypatch.setattr(settings, "ipam_dns_zones", "corp.example")
     monkeypatch.setattr(settings, "ipam_windows_runner", "win1")
-    assert client.post(f"/api/ipam/subnets/{s['id']}/scan", params={"kind": "dhcp_dns"}, headers=as_user(agent)).json()["detail"] == "There's no active runner called 'win1' (Settings > IP addresses)"
+    assert client.post(f"/api/ipam/subnets/{s['id']}/scan", params={"kind": "dhcp_dns"}, headers=as_user(agent)).json()["detail"] == "There's no active relay called 'win1' (Settings > IP addresses)"
     _, py_auth = _runner(client, admin, "lan9")
     win1, win_auth = _runner(client, admin, "win1", ("powershell",))
 

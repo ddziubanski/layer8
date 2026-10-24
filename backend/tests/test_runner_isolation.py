@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Privileged integration runners never consume general or unpinned work."""
+"""Privileged integration relays never consume general or unpinned work."""
 from app import adchanges
 from app.models import ScriptRun
 from tests.conftest import as_user
@@ -77,7 +77,7 @@ def test_naming_the_ad_runner_moves_pending_ad_jobs_to_it(client, db, admin):
     job = client.post("/api/runner/claim", json={}, headers=bearer(made["token"]))
     assert job.status_code == 200 and job.json()["run_id"] == run.id
     missing = client.put("/api/settings/directory", json={"values": {"ad_runner_name": "Nowhere"}}, headers=as_user(admin))
-    assert missing.status_code == 422 and "No active PowerShell runner" in missing.json()["detail"]
+    assert missing.status_code == 422 and "No active PowerShell relay" in missing.json()["detail"]
 
 
 def test_removing_a_runner_keeps_the_original_approver(client, db, admin):

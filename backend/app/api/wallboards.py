@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Wallboards: a read-only page for a big screen in the IT office (live counts, alerts, and the
+"""Remote displays: a read-only page for a big screen in the IT office (live counts, alerts, and the
 tickets that need someone), opened by a secret link with no sign-in.
 
-Admins make them in Settings > Wallboards. The link is /wallboard#l8w_...: the token sits in the
+Admins make them in Settings > Remote displays. The link is /wallboard#l8w_...: the token sits in the
 URL fragment, so browsers never send it in a request line, a Referer or a server log; the page sends
 it as "Authorization: Bearer l8w_..." to /api/public/wallboard. Only a hash of it is stored.
 Revoking a board, or making it a new link, stops the old link at once.
@@ -78,7 +78,7 @@ def _out(b: Wallboard, model=WallboardOut, **extra):
 def _board(session, board_id: int) -> Wallboard:
     board = session.get(Wallboard, board_id)
     if board is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Wallboard not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Remote display not found")
     return board
 
 
@@ -105,7 +105,7 @@ def create_board(body: WallboardIn, admin: Admin, session: SessionDep):
     )
     session.add(board)
     session.commit()
-    log.info("Wallboard %r made by %s", board.name, admin.display_name, extra={"source": "settings"})
+    log.info("Remote display %r made by %s", board.name, admin.display_name, extra={"source": "settings"})
     return _out(board, WallboardMadeOut, token=token)
 
 
@@ -115,7 +115,7 @@ def update_board(board_id: int, body: WallboardIn, admin: Admin, session: Sessio
     board.name, board.queue_ids = body.name.strip(), _queues_exist(session, body.queue_ids)
     board.unassigned_alert_minutes = body.unassigned_alert_minutes
     session.commit()
-    log.info("Wallboard %r changed by %s", board.name, admin.display_name, extra={"source": "settings"})
+    log.info("Remote display %r changed by %s", board.name, admin.display_name, extra={"source": "settings"})
     return _out(board)
 
 
@@ -126,7 +126,7 @@ def new_link(board_id: int, admin: Admin, session: SessionDep):
     token = _new_token()
     board.token_hash, board.prefix, board.is_active = _hash(token), token[: len(PREFIX) + 4], True
     session.commit()
-    log.warning("Wallboard %r given a new link by %s", board.name, admin.display_name, extra={"source": "settings"})
+    log.warning("Remote display %r given a new link by %s", board.name, admin.display_name, extra={"source": "settings"})
     return _out(board, WallboardMadeOut, token=token)
 
 
@@ -136,7 +136,7 @@ def revoke_board(board_id: int, admin: Admin, session: SessionDep):
     board = _board(session, board_id)
     board.is_active = False
     session.commit()
-    log.info("Wallboard %r revoked by %s", board.name, admin.display_name, extra={"source": "settings"})
+    log.info("Remote display %r revoked by %s", board.name, admin.display_name, extra={"source": "settings"})
     return _out(board)
 
 
@@ -190,7 +190,7 @@ def _board_by_token(session, authorization: str | None) -> Wallboard:
     token = (authorization or "").removeprefix("Bearer ").strip()
     board = session.scalar(select(Wallboard).where(Wallboard.token_hash == _hash(token))) if token.startswith(PREFIX) else None
     if board is None or not board.is_active:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "This wallboard link was switched off or replaced. Ask an admin for the new one.", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "This remote display link was switched off or replaced. Ask an admin for the new one.", headers={"WWW-Authenticate": "Bearer"})
     return board
 
 

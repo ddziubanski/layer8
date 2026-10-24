@@ -21,19 +21,19 @@ export function RunnersAdmin({ me }: { me: User }) {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["runners"] });
   const newToken = useMutation({ mutationFn: api.runners.newToken, onSuccess: setToken, onSettled: refresh });
   const remove = useMutation({ mutationFn: api.runners.remove, onSettled: refresh });
-  if (me.role !== "admin") return <p>Runners are managed by admins.</p>;
+  if (me.role !== "admin") return <p>Relays are managed by admins.</p>;
 
   return (
     <>
       <div className="page-head row-gap">
-        <h1 className="spacer">Runners</h1>
+        <h1 className="spacer">Relays</h1>
         <button className="btn" type="button" onClick={() => (setEditing("new"), setToken(null))}>
-          Add a runner
+          Add a relay
         </button>
       </div>
       <div className="stack">
         <p className="muted" style={{ margin: 0 }}>
-          A runner runs action scripts: for PowerShell, a domain-joined Windows machine whose service account may use WinRM on the PCs. It checks in over HTTPS
+          A relay runs action scripts: for PowerShell, a domain-joined Windows machine whose service account may use WinRM on the PCs. It checks in over HTTPS
           (no inbound ports) with its own token.
         </p>
         {token && <TokenCard token={token} onDone={() => setToken(null)} />}
@@ -52,7 +52,7 @@ export function RunnersAdmin({ me }: { me: User }) {
           <table className="grid">
             <thead>
               <tr>
-                <th>Runner</th>
+                <th>Relay</th>
                 <th>Runs</th>
                 <th>Last check-in</th>
                 <th />
@@ -73,7 +73,7 @@ export function RunnersAdmin({ me }: { me: User }) {
                         <>
                           <span className={`chip ${online ? "g" : "a"}`}>{online ? "Online" : "Quiet"}</span> {when(r.last_seen_at)}
                           <div className="muted small">
-                            {r.last_host} · runner {r.last_version}
+                            {r.last_host} · relay {r.last_version}
                           </div>
                         </>
                       ) : (
@@ -109,7 +109,7 @@ export function RunnersAdmin({ me }: { me: User }) {
               {runners.data?.length === 0 && (
                 <tr>
                   <td colSpan={4} className="muted">
-                    No runners yet: action scripts wait until one is added and running.
+                    No relays yet: action scripts wait until one is added and running.
                   </td>
                 </tr>
               )}
@@ -132,13 +132,13 @@ function RunnerForm({ runner, onDone }: { runner: Runner | null; onDone: (made?:
     <form
       className="card stack settings-form"
       style={{ margin: 0 }}
-      aria-label={runner ? `Edit ${runner.name}` : "Add a runner"}
+      aria-label={runner ? `Edit ${runner.name}` : "Add a relay"}
       onSubmit={(e) => {
         e.preventDefault();
         save.mutate();
       }}
     >
-      <div className="lbl">{runner ? `Edit ${runner.name}` : "Add a runner"}</div>
+      <div className="lbl">{runner ? `Edit ${runner.name}` : "Add a relay"}</div>
       <label className="field">
         Name
         <input required maxLength={100} value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} placeholder="e.g. RUNNER01" />
@@ -163,16 +163,16 @@ function RunnerForm({ runner, onDone }: { runner: Runner | null; onDone: (made?:
         </div>
       </fieldset>
       <label className="inline">
-        <input type="checkbox" checked={r.builtins_only ?? false} onChange={(e) => setR({ ...r, builtins_only: e.target.checked })} /> Dedicated integration runner
+        <input type="checkbox" checked={r.builtins_only ?? false} onChange={(e) => setR({ ...r, builtins_only: e.target.checked })} /> Dedicated integration relay
       </label>
-      <p className="muted small">Only built-in integration jobs explicitly assigned to this runner can run here. Use for privileged AD or discovery hosts; run general scripts on a separate, less privileged runner.</p>
+      <p className="muted small">Only built-in integration jobs explicitly assigned to this relay can run here. Use for privileged AD or discovery hosts; run general scripts on a separate, less privileged relay.</p>
       <label className="inline">
         <input type="checkbox" checked={r.is_active ?? true} onChange={(e) => setR({ ...r, is_active: e.target.checked })} /> In use
       </label>
       {save.error && <p className="error">{save.error.message}</p>}
       <div className="row-gap">
         <button className="btn" type="submit" disabled={save.isPending || r.languages.length === 0}>
-          {runner ? "Save" : "Add runner"}
+          {runner ? "Save" : "Add relay"}
         </button>
         <button className="btn2" type="button" onClick={() => onDone()}>
           Cancel
@@ -186,7 +186,7 @@ function RunnerForm({ runner, onDone }: { runner: Runner | null; onDone: (made?:
 function TokenCard({ token, onDone }: { token: RunnerToken; onDone: () => void }) {
   const url = window.location.origin;
   return (
-    <section className="card note stack" style={{ margin: 0 }} aria-label="Runner token">
+    <section className="card note stack" style={{ margin: 0 }} aria-label="Relay token">
       <strong>Token for {token.runner.name}: copy it now, it isn't shown again.</strong>
       <pre className="log-details code" style={{ margin: 0 }}>
         {token.token}

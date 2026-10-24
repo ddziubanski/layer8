@@ -1,12 +1,14 @@
-# Wallboards
+# Remote displays
 
-A wallboard is a live page for a big screen in the IT office: how many tickets are open, unassigned, past or close to their SLA, waiting on the user, new and resolved today; alerts for what needs someone now; the oldest unassigned tickets; the tickets closest to (or past) their SLA; and per-queue and per-technician bars. It refreshes every 30 seconds and shows a clock.
+Remote displays were called *wallboards* before version 1.2. Only the name on screen changed: links already on screens (`/wallboard#…`) keep working.
+
+A remote display is a live page for a big screen in the IT office: how many tickets are open, unassigned, past or close to their SLA, waiting on the user, new and resolved today; alerts for what needs someone now; the oldest unassigned tickets; the tickets closest to (or past) their SLA; and per-queue and per-technician bars. It refreshes every 30 seconds and shows a clock.
 
 It opens from a secret link with no sign-in, so a TV, a small PC or a stick computer only needs a browser.
 
 ## Make one
 
-**Settings > Wallboards > New wallboard** (admins):
+**Settings > Remote displays > New remote display** (admins):
 
 - **Name**: shown on the board, e.g. *Service desk TV*.
 - **Queues**: none ticked shows every active queue that isn't restricted. A restricted queue shows only when it is ticked here.

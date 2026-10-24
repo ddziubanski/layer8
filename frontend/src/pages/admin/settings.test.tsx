@@ -77,14 +77,14 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "Windows sign-in",
     "Surveys",
     "Notices",
-    "Runners",
+    "Relays",
     "Meraki",
     "UniFi",
     "Nutanix",
     "Juniper",
     "Action1",
     "API keys",
-    "Wallboards",
+    "Remote displays",
     "Device sweeps",
     "Warranty lookups",
     "Purchasing",
@@ -417,20 +417,20 @@ test("backup: list backups, back up now, verify one", async () => {
   expect(calls.some((c) => c.method === "POST" && c.path === "/api/system/jobs/backup/run")).toBe(true);
 });
 
-test("runners: add one and see its token once", async () => {
+test("relays: add one and see its token once", async () => {
   const R = { id: 1, name: "RUNNER01", description: "", languages: ["powershell", "eos"], is_active: true, last_seen_at: null, last_host: null, last_version: null, created_at: "2026-10-19T00:00:00Z" };
   const calls = mockApi({
     "GET /api/runners": [],
     "POST /api/runners": { runner: R, token: "hdr_secret-token" },
   });
   renderAt("/", [{ path: "/", element: <RunnersAdmin me={ADMIN} /> }]);
-  await userEvent.click(await screen.findByRole("button", { name: "Add a runner" }));
-  const form = screen.getByRole("form", { name: "Add a runner" });
+  await userEvent.click(await screen.findByRole("button", { name: "Add a relay" }));
+  const form = screen.getByRole("form", { name: "Add a relay" });
   await userEvent.type(within(form).getByLabelText("Name"), "RUNNER01");
   await userEvent.click(within(form).getByLabelText("Arista EOS"));
-  await userEvent.click(within(form).getByLabelText("Dedicated integration runner"));
-  await userEvent.click(within(form).getByRole("button", { name: "Add runner" }));
-  const card = await screen.findByRole("region", { name: "Runner token" });
+  await userEvent.click(within(form).getByLabelText("Dedicated integration relay"));
+  await userEvent.click(within(form).getByRole("button", { name: "Add relay" }));
+  const card = await screen.findByRole("region", { name: "Relay token" });
   expect(within(card).getByText("hdr_secret-token")).toBeInTheDocument();
   expect(calls.find((c) => c.method === "POST")!.body).toMatchObject({ name: "RUNNER01", languages: ["powershell", "eos"], builtins_only: true });
 });

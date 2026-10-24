@@ -129,7 +129,7 @@ def preview_change(ticket_id: int, body: ADChangeIn, user: Agent, session: Sessi
 
 @router.post("/api/tickets/{ticket_id}/ad-changes", response_model=list[RunOut], status_code=status.HTTP_201_CREATED)
 def apply_change(ticket_id: int, body: ADChangeIn, user: Agent, session: SessionDep):
-    """Queue the change on a PowerShell runner (noted on the ticket; its run shows the result)."""
+    """Queue the change on a PowerShell relay (noted on the ticket; its run shows the result)."""
     ticket = staff_ticket(session, ticket_id, user)
     p, template = _plan(session, ticket, body)
     try:
@@ -173,7 +173,7 @@ def preview_new_account(ticket_id: int, body: NewADAccountIn, user: Agent, sessi
 
 @router.post("/api/tickets/{ticket_id}/ad-account/new", response_model=NewADAccountOut, status_code=status.HTTP_201_CREATED)
 def create_new_account(ticket_id: int, body: NewADAccountIn, user: Agent, session: SessionDep):
-    """Queue the new account on a PowerShell runner (noted on the ticket). The first password is in
+    """Queue the new account on a PowerShell relay (noted on the ticket). The first password is in
     this response only: Layer 8 keeps no copy."""
     ticket = staff_ticket(session, ticket_id, user)
     a, template = _plan_new(session, body, user)
