@@ -2189,3 +2189,64 @@ class TicketSurvey(Base):
     ticket: Mapped["Ticket"] = relationship()
     requester: Mapped["User | None"] = relationship(foreign_keys=[requester_id])
     assignee: Mapped["User | None"] = relationship(foreign_keys=[assignee_id])
+
+
+class NutanixVm(Base):
+    """A VM as Prism Central last reported it. Kept when it disappears (present=False), so ticket links
+    and action history stay readable."""
+
+    __tablename__ = "nutanix_vms"
+
+    ext_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    power_state: Mapped[str] = mapped_column(String(20), default="", server_default="")
+    cluster_name: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    host_name: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    vcpus: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    memory_mb: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    ips: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
+    macs: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
+    guest_tools: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    guest_tools_reachable: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # The device it was matched to by name (AD computer or one added by hand), if any.
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="SET NULL"), index=True)
+    present: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    device: Mapped[Device | None] = relationship()
+
+
+class TicketNutanixVm(Base):
+    """A VM linked to a ticket (the ticket's history notes who linked it and when)."""
+
+    __tablename__ = "ticket_nutanix_vms"
+
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True)
+    vm_id: Mapped[str] = mapped_column(ForeignKey("nutanix_vms.ext_id", ondelete="CASCADE"), primary_key=True, index=True)
+    linked_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    linked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    vm: Mapped[NutanixVm] = relationship()
+
+
+class NutanixAction(Base):
+    """A power action asked for from a ticket, and the Prism Central task that carries it out."""
+
+    __tablename__ = "nutanix_actions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    vm_id: Mapped[str] = mapped_column(ForeignKey("nutanix_vms.ext_id", ondelete="CASCADE"))
+    action: Mapped[str] = mapped_column(String(20))
+    task_id: Mapped[str] = mapped_column(String(200), default="", server_default="")
+    # submitted, running, succeeded, failed or unknown (Prism Central stopped answering about it).
+    status: Mapped[str] = mapped_column(String(20), default="submitted", server_default="submitted", index=True)
+    detail: Mapped[str] = mapped_column(Text, default="", server_default="")
+    requested_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    vm: Mapped[NutanixVm] = relationship()
+    requested_by: Mapped[User | None] = relationship()
+

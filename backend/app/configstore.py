@@ -103,6 +103,11 @@ def _https_url(v: str) -> None:
         raise SettingsError("The console's address, e.g. https://unifi.corp.example (https, no path)")
 
 
+def _prism_url(v: str) -> None:
+    if v and not re.fullmatch(r"https://[A-Za-z0-9.-]+(:[0-9]{1,5})?/?", v):
+        raise SettingsError("Prism Central's address, e.g. https://prism.corp.example:9440 (https, no path)")
+
+
 def _junos_switches(v: str) -> None:
     from app.junos import JunosError, parse_switches
 
@@ -419,6 +424,16 @@ SECTIONS: dict[str, list[Field]] = {
             check=_between(0, 4),
         ),
         Field("survey_question", "The question", "Answered from 1 (very unhappy) to 5 (very happy), with an optional comment.", check=_length(5, 300)),
+    ],
+    "nutanix": [
+        Field("nutanix_enabled", "Read Nutanix", "Optional: Layer 8 reads VMs, clusters and hosts from Prism Central (v4 API, pc.2024.1 or later) and matches VMs to devices by name. Technicians can link VMs to tickets. Turning it off stops reading and hides cached data."),
+        Field("nutanix_url", "Prism Central address", "e.g. https://prism.corp.example:9440. Layer 8's server connects to it directly over HTTPS.", check=_prism_url),
+        Field("nutanix_username", "Login", "A Prism Central account. For reading only, a role that can view VMs, clusters and hosts; power actions also need VM power rights.", check=_length(0, 128)),
+        Field("nutanix_password", "Password", "Written to a secret file and never shown back.", secret=True, check=_length(0, 256)),
+        Field("nutanix_ca_file", "Prism Central CA certificate", "The CA that issued Prism Central's certificate, in PEM form, when it isn't publicly trusted. Empty: the server's trusted CAs.", check=_certificates, file="nutanix-ca.pem"),
+        Field("nutanix_verify_tls", "Check Prism Central's certificate", "Leave on. Turn off only to try Prism Central with its self-signed certificate on a network you trust."),
+        Field("nutanix_sync_minutes", "Read Nutanix every (minutes)", "A failed read keeps the last complete one; older data is marked stale.", check=_between(5, 1440)),
+        Field("nutanix_power_enabled", "Power actions from tickets", "Lets people with the permissions restart, power on or power-cycle a VM linked to a ticket (a write to Nutanix). Every action is noted on the ticket with who asked and how it ended."),
     ],
     "unifi": [
         Field("unifi_enabled", "Read UniFi networks", "Optional, read only: clients (MAC, IP, access point or switch, network) on IP records, devices and tickets, and UniFi gateways, switches and access points with their state. Turning it off stops reading and hides cached data."),

@@ -8,6 +8,7 @@ export type UpdateStatus = S["UpdateStatusOut"];
 export type SoftwareDeployment = S["DeploymentOut"];
 export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
+export type NutanixVm = S["NutanixVmOut"];
 export type TicketPage = S["TicketPage"];
 export type Comment = S["CommentOut"];
 export type TicketEvent = S["EventOut"];
@@ -542,6 +543,17 @@ export const api = {
     read: () => request<S["JunosReadOut"]>("POST", "/api/junos/read"),
     devices: () => request<S["VendorDeviceOut"][]>("GET", "/api/junos/devices"),
     clients: (p: { q?: string } = {}) => request<S["NetworkObservationOut"][]>("GET", `/api/junos/clients${query(p)}`),
+  },
+  nutanix: {
+    status: () => request<S["NutanixStatusOut"]>("GET", "/api/nutanix/status"),
+    test: () => request<S["NutanixTestOut"]>("POST", "/api/nutanix/test"),
+    vms: (p: { q?: string; state?: string } = {}) => request<S["NutanixVmOut"][]>("GET", `/api/nutanix/vms${query(p)}`),
+    forDevice: (deviceId: number) => request<S["NutanixVmOut"][]>("GET", `/api/nutanix/devices/${deviceId}/vms`),
+    forTicket: (ticketId: number) => request<S["TicketVmsOut"]>("GET", `/api/nutanix/tickets/${ticketId}/vms`),
+    link: (ticketId: number, extId: string) => request<void>("POST", `/api/nutanix/tickets/${ticketId}/vms`, { ext_id: extId }),
+    unlink: (ticketId: number, extId: string) => request<void>("DELETE", `/api/nutanix/tickets/${ticketId}/vms/${encodeURIComponent(extId)}`),
+    power: (ticketId: number, extId: string, action: S["PowerIn"]["action"]) =>
+      request<S["NutanixActionOut"]>("POST", `/api/nutanix/tickets/${ticketId}/vms/${encodeURIComponent(extId)}/power`, { action }),
   },
   unifi: {
     status: () => request<S["UnifiStatusOut"]>("GET", "/api/unifi/status"),

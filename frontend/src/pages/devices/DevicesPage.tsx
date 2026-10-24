@@ -7,6 +7,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { api, type DeviceDetail, type DeviceIn, type Me } from "../../api/client";
 import { StatusChip } from "../../components/Chips";
 import { DeviceIps } from "../../components/DeviceIps";
+import { DeviceVms, NutanixVmList } from "../../components/Nutanix";
 import { PatchStatus } from "../../components/PatchStatus";
 import { SoftwareDeployment } from "../../components/SoftwareDeployment";
 import { UserPicker } from "../../components/UserPicker";
@@ -26,6 +27,7 @@ export function DevicesPage({ me }: { me: Me }) {
         ["stale", "Stale"],
         ["unknown", "Unknown on the network"],
         ["lifecycle", "Lifecycle"],
+        ...(uses(me, "nutanix") ? [["vms", "Virtual machines"]] : []),
       ].map(([key, label]) => (
         <Link key={key} to={key === "all" ? "/devices" : `/devices?view=${key}`} role="tab" aria-selected={view === key} className={view === key ? "active" : undefined}>
           {label}
@@ -41,6 +43,16 @@ export function DevicesPage({ me }: { me: Me }) {
         </div>
         {tabs}
         <LifecycleView />
+      </>
+    );
+  if (view === "vms" && uses(me, "nutanix"))
+    return (
+      <>
+        <div className="page-head row-gap">
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
+        </div>
+        {tabs}
+        <NutanixVmList />
       </>
     );
   if (view === "stale" || view === "unknown")
@@ -636,6 +648,14 @@ export function DevicePage({ me }: { me: Me }) {
               </div>
               <PatchStatus deviceId={d.id} />
               <SoftwareDeployment me={me} deviceId={d.id} />
+            </section>
+          )}
+          {uses(me, "nutanix") && (
+            <section className="card stack" aria-label="Virtual machine" style={{ gap: 8 }}>
+              <div className="lbl" style={{ margin: 0 }}>
+                Virtual machine (Nutanix)
+              </div>
+              <DeviceVms deviceId={d.id} />
             </section>
           )}
           <section className="card stack" aria-label="IP addresses" style={{ gap: 8 }}>

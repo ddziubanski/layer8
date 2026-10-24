@@ -43,6 +43,8 @@ LABELS = {
     "ipam": "IP address scans (scheduled)",
     "meraki": "Meraki: read client observations",
     "unifi": "UniFi: read clients and equipment, outage tickets",
+    "nutanix": "Nutanix: read VMs, clusters and hosts",
+    "nutanix_tasks": "Nutanix: follow power actions asked for from tickets",
     "junos": "Juniper: ask a runner to read the switches",
     "action1": "Action1: read patch status",
     "sweeps": "Device sweep (weekly ticket)",
@@ -183,6 +185,37 @@ def build_jobs(session_factory, mail) -> list[Job]:
         finally:
             client.close()
 
+    def nutanix_sync(forced: bool):
+        from app import nutanix
+
+        if not nutanix.on():
+            return "Off: enable and configure Settings > Nutanix", False
+        client = nutanix.from_settings()
+        try:
+            with session_factory() as session:
+                summary = nutanix.sync(session, client)
+                session.commit()
+            return f"Read {summary}", True
+        finally:
+            client.close()
+
+    def nutanix_tasks(forced: bool):
+        from app import nutanix
+        from app.models import NutanixAction
+
+        with session_factory() as session:
+            if not session.scalar(select(NutanixAction.id).where(NutanixAction.status.in_(("submitted", "running"))).limit(1)):
+                return "Nothing under way", True
+            if not nutanix.on():
+                return "Off: Settings > Nutanix; power actions under way can't be followed", False
+            client = nutanix.from_settings()
+            try:
+                summary = nutanix.follow_tasks(session, client)
+                session.commit()
+                return summary, True
+            finally:
+                client.close()
+
     def junos_read(forced: bool):
         from app import junos
 
@@ -276,6 +309,8 @@ def build_jobs(session_factory, mail) -> list[Job]:
         Job("ipam", "ipam", _every(300), ipam_scans),
         Job("meraki", "meraki", lambda: timedelta(minutes=settings.meraki_sync_minutes), meraki_sync),
         Job("unifi", "worker", lambda: timedelta(minutes=max(5, settings.unifi_sync_minutes)), unifi_sync),
+        Job("nutanix", "worker", lambda: timedelta(minutes=max(5, settings.nutanix_sync_minutes)), nutanix_sync),
+        Job("nutanix_tasks", "worker", _every(30), nutanix_tasks),
         Job("junos", "worker", lambda: timedelta(minutes=max(5, settings.junos_sync_minutes)), junos_read),
         Job("action1", "action1", lambda: timedelta(minutes=settings.action1_sync_minutes), action1_sync),
         Job("sweeps", "worker", _every(7 * 86400), device_sweep),

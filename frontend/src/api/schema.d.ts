@@ -3631,6 +3631,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/nutanix/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_nutanix_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutanix/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test
+         * @description Signs in and lists the clusters and how many VMs the account can see. Stores nothing.
+         */
+        post: operations["test_api_nutanix_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutanix/vms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vms */
+        get: operations["list_vms_api_nutanix_vms_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutanix/devices/{device_id}/vms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Device Vms */
+        get: operations["device_vms_api_nutanix_devices__device_id__vms_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutanix/tickets/{ticket_id}/vms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ticket Vms */
+        get: operations["ticket_vms_api_nutanix_tickets__ticket_id__vms_get"];
+        put?: never;
+        /** Link Vm */
+        post: operations["link_vm_api_nutanix_tickets__ticket_id__vms_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutanix/tickets/{ticket_id}/vms/{ext_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink Vm */
+        delete: operations["unlink_vm_api_nutanix_tickets__ticket_id__vms__ext_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nutanix/tickets/{ticket_id}/vms/{ext_id}/power": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Power
+         * @description Restart (gracefully), power on or power-cycle one of the ticket's VMs. Noted on the ticket;
+         *     the worker follows Prism Central's task and notes how it ended.
+         */
+        post: operations["power_api_nutanix_tickets__ticket_id__vms__ext_id__power_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/junos/status": {
         parameters: {
             query?: never;
@@ -7223,6 +7350,11 @@ export interface components {
             /** Unknown */
             unknown: number;
         };
+        /** LinkIn */
+        LinkIn: {
+            /** Ext Id */
+            ext_id: string;
+        };
         /** LogSourceOut */
         LogSourceOut: {
             /** Value */
@@ -7920,6 +8052,96 @@ export interface components {
              */
             state: string;
         };
+        /** NutanixActionOut */
+        NutanixActionOut: {
+            /** Id */
+            id: number;
+            /** Vm Id */
+            vm_id: string;
+            /** Vm Name */
+            vm_name: string;
+            /** Action */
+            action: string;
+            /** Status */
+            status: string;
+            /** Detail */
+            detail: string;
+            /** Requested By */
+            requested_by: string | null;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /** NutanixStatusOut */
+        NutanixStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Power Enabled */
+            power_enabled: boolean;
+            /** Vms */
+            vms: number;
+            /** Running */
+            running: number;
+            /** Last Sync At */
+            last_sync_at: string | null;
+            /** Last Sync Ok */
+            last_sync_ok: boolean | null;
+            /** Last Sync Error */
+            last_sync_error: string | null;
+            /** Last Sync Summary */
+            last_sync_summary: string | null;
+        };
+        /** NutanixTestOut */
+        NutanixTestOut: {
+            /** Clusters */
+            clusters: string[];
+            /** Vms */
+            vms: number;
+        };
+        /** NutanixVmOut */
+        NutanixVmOut: {
+            /** Ext Id */
+            ext_id: string;
+            /** Name */
+            name: string;
+            /** Power State */
+            power_state: string;
+            /** Cluster Name */
+            cluster_name: string;
+            /** Host Name */
+            host_name: string;
+            /** Vcpus */
+            vcpus: number;
+            /** Memory Mb */
+            memory_mb: number;
+            /** Ips */
+            ips: string[];
+            /** Macs */
+            macs: string[];
+            /** Guest Tools */
+            guest_tools: boolean;
+            /** Guest Tools Reachable */
+            guest_tools_reachable: boolean;
+            /** Device Id */
+            device_id: number | null;
+            /** Device Name */
+            device_name: string | null;
+            /** Present */
+            present: boolean;
+            /** Stale */
+            stale: boolean;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+        };
         /** OUOut */
         OUOut: {
             /** Dn */
@@ -8464,6 +8686,14 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
+        };
+        /** PowerIn */
+        PowerIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "restart" | "power_on" | "power_cycle";
         };
         /** PreferencesIn */
         PreferencesIn: {
@@ -10854,6 +11084,59 @@ export interface components {
             computer_id?: number | null;
             /** Parent Id */
             parent_id?: number | null;
+        };
+        /** TicketVmOut */
+        TicketVmOut: {
+            /** Ext Id */
+            ext_id: string;
+            /** Name */
+            name: string;
+            /** Power State */
+            power_state: string;
+            /** Cluster Name */
+            cluster_name: string;
+            /** Host Name */
+            host_name: string;
+            /** Vcpus */
+            vcpus: number;
+            /** Memory Mb */
+            memory_mb: number;
+            /** Ips */
+            ips: string[];
+            /** Macs */
+            macs: string[];
+            /** Guest Tools */
+            guest_tools: boolean;
+            /** Guest Tools Reachable */
+            guest_tools_reachable: boolean;
+            /** Device Id */
+            device_id: number | null;
+            /** Device Name */
+            device_name: string | null;
+            /** Present */
+            present: boolean;
+            /** Stale */
+            stale: boolean;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Linked */
+            linked: boolean;
+        };
+        /** TicketVmsOut */
+        TicketVmsOut: {
+            /** Vms */
+            vms: components["schemas"]["TicketVmOut"][];
+            /** Actions */
+            actions: components["schemas"]["NutanixActionOut"][];
+            /** Power Enabled */
+            power_enabled: boolean;
+            /** May Power */
+            may_power: boolean;
+            /** May Power Cycle */
+            may_power_cycle: boolean;
         };
         /**
          * TicketWorkspacePreferences
@@ -19952,6 +20235,274 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VoucherOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_nutanix_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NutanixStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_api_nutanix_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NutanixTestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_vms_api_nutanix_vms_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                state?: string;
+                limit?: number;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NutanixVmOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    device_vms_api_nutanix_devices__device_id__vms_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NutanixVmOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ticket_vms_api_nutanix_tickets__ticket_id__vms_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketVmsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_vm_api_nutanix_tickets__ticket_id__vms_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_vm_api_nutanix_tickets__ticket_id__vms__ext_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    power_api_nutanix_tickets__ticket_id__vms__ext_id__power_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PowerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NutanixActionOut"];
                 };
             };
             /** @description Validation Error */

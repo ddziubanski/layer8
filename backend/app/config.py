@@ -89,6 +89,16 @@ class Settings(BaseSettings):
     unifi_outage_minutes: int = 10
     unifi_outage_queue_id: int = 0
     unifi_vouchers_enabled: bool = False
+    # Nutanix AHV through Prism Central's v4 REST API (app.nutanix): opt-in read of VMs, clusters and
+    # hosts; power actions from tickets are a separate opt-in, with permissions, logged on the ticket.
+    nutanix_enabled: bool = False
+    nutanix_url: str = ""
+    nutanix_username: str = ""
+    nutanix_password: str = ""
+    nutanix_ca_file: str = ""
+    nutanix_verify_tls: bool = True
+    nutanix_sync_minutes: int = 15
+    nutanix_power_enabled: bool = False
     # Juniper EX switches managed one by one (app.junos): a runner on the LAN reads each switch's
     # Junos REST API (read only) and reports clients and reachability.
     junos_enabled: bool = False
