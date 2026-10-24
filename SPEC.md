@@ -143,3 +143,7 @@ Built: opt-in Settings > Updates checks stable releases of ddziubanski/layer8; a
 ### Ticket workspace presentation (Option B)
 
 Technician tickets default to Conversation / Work / History with a closable tools drawer. All existing tool APIs and permissions remain unchanged. Personal workspace preferences are stored under `personal_ticket_workspace:<user.id>`; see [docs/ticket-workspace.md](docs/ticket-workspace.md) for layout compatibility, draft scope and keyboard controls. Classic arranged panels remain selectable.
+
+## Integration health (2026-10-24)
+
+Settings > Status and admin-only GET /api/system/integrations consolidate local evidence for mailbox, directory, Action1, Meraki, UniFi, Nutanix, Juniper and Teams queue summaries, plus active relay check-ins. No provider calls are made on refresh. Worker pass history retains its last success across later failures; directory and Juniper use actual sync/read outcomes. Configuration and recovery remain in existing Settings pages. See docs/integration-health.md. Next workflow slices are tracked in issue #81: related incidents and ticket templates, with existing access/routing and explicit review preserved.

@@ -18,6 +18,7 @@ from app.config import settings
 from app.models import ServiceHeartbeat, WorkerJob
 from app.schemas import (
     ApiServiceOut,
+    IntegrationHealthOut,
     JobOut,
     JobUpdateIn,
     LogSourceOut,
@@ -36,6 +37,13 @@ STARTED_AT = sla.utcnow()
 @router.get("/status", response_model=list[StatusItemOut])
 def system_status(_: Admin, session: SessionDep):
     return syslog.status(session)
+
+
+@router.get("/integrations", response_model=IntegrationHealthOut)
+def integration_health(_: Admin, session: SessionDep):
+    from app.integration_health import snapshot
+
+    return snapshot(session)
 
 
 def _services(session) -> ServicesOut:

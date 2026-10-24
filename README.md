@@ -87,6 +87,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Change management: approvals, a calendar, overlap warnings, and Action1 patch nights as standard changes.
 - Purchase orders, with receiving by the clerk, vendors and systems.
 - Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
+- Integration health in Settings > Status: configuration gaps, failed/overdue worker passes, last successes and relay check-ins, with recovery links ([guide](docs/integration-health.md)).
 - Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It!.
 - Signed updates: Settings > Updates checks Layer 8's stable GitHub releases, verifies the publisher's signature, backs up first and checks the result ([docs/github-updates.md](docs/github-updates.md)).
 

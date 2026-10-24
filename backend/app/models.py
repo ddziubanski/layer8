@@ -2001,6 +2001,8 @@ class WorkerJob(Base):
     run_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Last completed pass without an exception; preserved across subsequent failures.
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_ok: Mapped[bool | None] = mapped_column(Boolean)
     last_summary: Mapped[str | None] = mapped_column(Text)
     last_error: Mapped[str | None] = mapped_column(Text)
