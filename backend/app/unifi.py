@@ -24,7 +24,7 @@ from urllib.parse import quote, urlsplit
 import httpx
 from sqlalchemy import text
 
-from app import network, sla
+from app import network, sla, tls
 from app.config import settings
 from app.models import NetworkInventory, NetworkObservation
 
@@ -54,7 +54,7 @@ def stale_after() -> timedelta:
 class Client:
     def __init__(self, key: str, http: httpx.Client | None = None, sleep=time.sleep):
         self.key, self.sleep = key, sleep
-        verify = settings.unifi_ca_file or True if settings.unifi_mode == "local" else True
+        verify = tls.verify(settings.unifi_ca_file) if settings.unifi_mode == "local" else True
         self.http = http or httpx.Client(timeout=20, follow_redirects=False, trust_env=False, verify=verify)
 
     def close(self) -> None:
@@ -65,7 +65,7 @@ class Client:
             try:
                 r = self.http.request(method, url, headers={"X-API-KEY": self.key, "Accept": "application/json"}, **kw)
             except httpx.HTTPError as exc:
-                raise UnifiError(f"Can't reach UniFi ({type(exc).__name__}); the last complete read was kept") from None
+                raise UnifiError(f"Can't reach UniFi: {tls.reason(exc)}. The last complete read was kept") from None
             if r.status_code == 429 and attempt < 2:
                 try:
                     self.sleep(min(max(float(r.headers.get("Retry-After", "2")), 1), 10))
