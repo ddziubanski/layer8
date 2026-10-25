@@ -235,7 +235,6 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <SourceChip source={t.source} />
           <StatusChip status={t.status} />
           {drawerMode && !arrangement.editing && <SlaChip ticket={t} long />}
-          {drawerMode && !arrangement.editing && ["status", "assignment", "requester", "actions"].some(id => !hidden.has(id)) && <button className="btn2" type="button" onClick={() => openTool("details")}>Status &amp; assignment</button>}
           {!arrangement.editing && (
             <button className="linkish small" type="button" data-arrange-page="ticket" onClick={() => arrangement.setEditing(true)}>
               Arrange this page
@@ -251,7 +250,9 @@ function TicketView({ me, id }: { me: Me; id: number }) {
       </div>
 
       {drawerMode && <div className="ticket-drawer-live" hidden={arrangement.editing}>
-        <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest} />
+        <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
+          barActions={!arrangement.editing && ["status", "assignment", "requester", "actions"].some(id => !hidden.has(id))
+            && <button className="btn2" type="button" onClick={() => openTool("details")}>Status &amp; assignment</button>} />
       </div>}
       {(!drawerMode || arrangement.editing) && <ArrangedColumns
         page="ticket"
