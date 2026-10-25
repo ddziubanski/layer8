@@ -107,6 +107,7 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
       <form className="card login-card" onSubmit={submit}>
         <p className="workspace-area">SERVICE DESK ACCESS</p>
         <h1>{forConsole ? "Sign in to the console" : <Brand b={brand} className="" />}</h1>
+        {!forConsole && brand.sign_in_heading && <h2 className="sign-in-heading">{brand.sign_in_heading}</h2>}
         {!forConsole && <p className="muted">Sign in once. Your access opens the helpdesk or self-service portal automatically.</p>}
         {forConsole && <p className="muted">The agent console needs your password, not just your Windows sign-in.</p>}
         {windows && (

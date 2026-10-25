@@ -93,6 +93,13 @@ def public(session: Session) -> dict:
     return {
         "product_name": settings.product_name,
         "sign_in_message": settings.sign_in_message,
+        "sign_in_heading": settings.sign_in_heading,
+        "sign_in_layout": settings.sign_in_layout,
+        "sign_in_card_size": settings.sign_in_card_size,
+        "sign_in_background_fit": settings.sign_in_background_fit,
+        "sign_in_background_position": settings.sign_in_background_position,
+        "sign_in_background_overlay": settings.sign_in_background_overlay,
+        "sign_in_backdrop": settings.sign_in_backdrop,
         "background_in_console": settings.background_in_console,
         "portal_welcome": settings.portal_welcome,
         "theme_preset": settings.theme_preset,

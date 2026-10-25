@@ -237,6 +237,13 @@ class Settings(BaseSettings):
     # Branding (Settings > Branding). Images are uploaded there.
     product_name: str = "Layer 8"
     sign_in_message: str = ""
+    sign_in_heading: str = ""
+    sign_in_layout: str = "center"
+    sign_in_card_size: str = "standard"
+    sign_in_background_fit: str = "cover"
+    sign_in_background_position: str = "center"
+    sign_in_background_overlay: int = 0
+    sign_in_backdrop: str = "plain"
     background_in_console: bool = False
     portal_welcome: str = ""
     email_footer: str = ""

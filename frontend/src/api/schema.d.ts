@@ -5761,6 +5761,46 @@ export interface components {
             product_name: string;
             /** Sign In Message */
             sign_in_message: string;
+            /**
+             * Sign In Heading
+             * @default
+             */
+            sign_in_heading: string;
+            /**
+             * Sign In Layout
+             * @default center
+             * @enum {string}
+             */
+            sign_in_layout: "center" | "left" | "right";
+            /**
+             * Sign In Card Size
+             * @default standard
+             * @enum {string}
+             */
+            sign_in_card_size: "standard" | "wide";
+            /**
+             * Sign In Background Fit
+             * @default cover
+             * @enum {string}
+             */
+            sign_in_background_fit: "cover" | "contain";
+            /**
+             * Sign In Background Position
+             * @default center
+             * @enum {string}
+             */
+            sign_in_background_position: "center" | "top" | "bottom" | "left" | "right";
+            /**
+             * Sign In Background Overlay
+             * @default 0
+             */
+            sign_in_background_overlay: number;
+            /**
+             * Sign In Backdrop
+             * @default plain
+             * @enum {string}
+             */
+            sign_in_backdrop: "plain" | "ocean" | "grid";
             /** Background In Console */
             background_in_console: boolean;
             /** Portal Welcome */

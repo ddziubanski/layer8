@@ -25,6 +25,9 @@ def test_public_branding_without_signing_in(client, db):
         "product_name": "Layer 8", "sign_in_message": "", "background_in_console": False, "portal_welcome": "",
         "theme_preset": "custom", "theme_brand": "#0f6b5c", "theme_sidebar": "#14211e", "dark_mode": "off",
         "background_url": None, "logo_url": None, "favicon_url": None,
+        "sign_in_heading": "", "sign_in_layout": "center", "sign_in_card_size": "standard",
+        "sign_in_background_fit": "cover", "sign_in_background_position": "center",
+        "sign_in_background_overlay": 0, "sign_in_backdrop": "plain",
     }
 
 
@@ -63,6 +66,25 @@ def test_name_and_message(client, db, admin):
     assert r.status_code == 200, r.text
     assert client.get("/api/branding").json()["product_name"] == "Example Help Desk"
     assert client.put("/api/settings/branding", json={"values": {"product_name": ""}}, headers=as_user(admin)).status_code == 422
+
+
+def test_signin_appearance_is_admin_only_validated_and_importable(client, db, admin, agent):
+    from app import cli
+    values = {"sign_in_layout":"right", "sign_in_card_size":"wide", "sign_in_heading":"Welcome to Example IT",
+              "sign_in_background_fit":"contain", "sign_in_background_position":"left",
+              "sign_in_background_overlay":45, "sign_in_backdrop":"ocean"}
+    route="/api/settings/signin_appearance"
+    assert client.put(route,json={"values":values},headers=as_user(agent)).status_code==403
+    result=client.put(route,json={"values":values},headers=as_user(admin))
+    assert result.status_code==200,result.text
+    public=client.get("/api/branding").json()
+    assert {key:public[key] for key in values}==values
+    assert public["portal_welcome"]=="" and public["background_in_console"] is False
+    for invalid in ({"sign_in_background_overlay":86},{"sign_in_background_overlay":-1},{"sign_in_layout":"url(evil)"},{"sign_in_heading":"x"*101},{"sign_in_background_fit":"stretch"}):
+        assert client.put(route,json={"values":invalid},headers=as_user(admin)).status_code==422
+    cli.import_settings(db,{"signin_appearance":{"sign_in_layout":"center","sign_in_backdrop":"plain"}})
+    db.commit()
+    assert client.get("/api/branding").json()["sign_in_layout"]=="center"
 
 
 def test_theme_colours_need_contrast_with_white_text(client, db, admin):

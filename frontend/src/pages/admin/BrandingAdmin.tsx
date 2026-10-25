@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
 import { api, type Branding, type User } from "../../api/client";
-import { contrast, PRESETS, themeTokens, useBranding } from "../../branding";
+import { backgroundStyle, Brand, contrast, PRESETS, themeTokens, useBranding } from "../../branding";
 import { useDropFiles } from "../../components/useDropFiles";
 import { SettingsForm } from "./SettingsForm";
 
@@ -130,7 +130,24 @@ function ThemePreview({ values, name, logo }: { values: Record<string, unknown>;
   );
 }
 
-/** Settings > Branding: name, texts, colours and dark mode (with a live preview), background, logo and favicon. */
+export function SignInPreview({ brand, values }: { brand: Branding; values: Record<string, unknown> }) {
+  const preview = {...brand, ...values, sign_in_background_overlay: Number(values.sign_in_background_overlay ?? brand.sign_in_background_overlay ?? 0)} as Branding;
+  return <section className="login login-preview" style={{...backgroundStyle(preview,"sign-in"),backgroundAttachment:"scroll"}} role="img" aria-label="Sign-in appearance preview">
+    <div className="card login-card">
+      <p className="workspace-area">SERVICE DESK ACCESS</p>
+      <h2><Brand b={preview} className="" /></h2>
+      {preview.sign_in_heading && <h3 className="sign-in-heading">{preview.sign_in_heading}</h3>}
+      <p className="muted">Your existing access opens the helpdesk or self-service portal.</p>
+      <span className="small">Email or username</span><div className="login-preview-field">technician@example.com</div>
+      <span className="small">Password</span><div className="login-preview-field">••••••••••••</div>
+      <span className="btn login-preview-button">Sign in</span>
+      {preview.sign_in_message && <p className="muted small">{preview.sign_in_message}</p>}
+    </div>
+    <p className="small login-source">Appearance preview · sign-in options follow your existing configuration</p>
+  </section>;
+}
+
+/** Settings > Branding: name, texts, colours, sign-in appearance and uploaded images. */
 export function BrandingAdmin({ me }: { me: User }) {
   const queryClient = useQueryClient();
   const brand = useBranding();
@@ -156,6 +173,10 @@ export function BrandingAdmin({ me }: { me: User }) {
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["branding"] })}
           preview={(values) => <ThemePreview values={values} name={brand.product_name} logo={brand.logo_url} />}
         />
+        <SettingsForm me={me} section="signin_appearance" title="Sign-in appearance" embedded
+          intro="Customize the main sign-in page. Product name and support message are under Name and texts; upload a background or logo below. These options also style password-change and two-factor setup screens, without changing authentication or portal appearance."
+          onSaved={() => queryClient.invalidateQueries({queryKey:["branding"]})}
+          preview={values => <SignInPreview brand={brand} values={values} />} />
         <ImageSlot name="background" title="Background" hint="Shown behind the sign-in page and the portal (and the console, if chosen above)." url={brand.background_url} />
         <ImageSlot name="logo" title="Logo" hint="Shown next to the product name." url={brand.logo_url} contain />
         <ImageSlot name="favicon" title="Favicon" hint="The small icon in the browser tab and bookmarks. A square image, 32×32 or larger." url={brand.favicon_url} contain types="ICO, PNG, GIF or JPG" />
