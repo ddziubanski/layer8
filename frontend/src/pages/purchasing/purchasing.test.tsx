@@ -142,7 +142,7 @@ test("arrange the order form's fields: hide one, move one, see it as you go", as
   await userEvent.click(screen.getByRole("button", { name: "Arrange this page" }));
   const top = screen.getByRole("group", { name: "Fields at the top" });
   await userEvent.click(within(within(top).getByRole("group", { name: "Field: Budget / cost code" })).getByLabelText("Shown"));
-  expect(within(screen.getByRole("form", { name: "Purchase order" })).queryByLabelText("Budget / cost code")).not.toBeInTheDocument();
+  expect(within(form).queryByLabelText("Budget / cost code")).not.toBeInTheDocument();
   await userEvent.click(within(top).getByRole("button", { name: "Move Vendor quote / order number up" }));
   await userEvent.click(within(within(top).getByRole("group", { name: "Field: Vendor" })).getByLabelText("Full width"));
   await userEvent.click(within(screen.getByRole("region", { name: "Arrange this page" })).getByRole("button", { name: "Save for me" }));

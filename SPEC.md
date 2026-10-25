@@ -153,3 +153,7 @@ Transient session-check failures keep the current workspace mounted and inert wh
 ## Integration health (2026-10-24)
 
 Settings > Status and admin-only GET /api/system/integrations consolidate local evidence for mailbox, directory, Action1, Meraki, UniFi, Nutanix, Juniper and Teams queue summaries, plus active relay check-ins. No provider calls are made on refresh. Worker pass history retains its last success across later failures; directory and Juniper use actual sync/read outcomes. Configuration and recovery remain in existing Settings pages. See docs/integration-health.md. Next workflow slices are tracked in issue #81: related incidents and ticket templates, with existing access/routing and explicit review preserved.
+
+## Widget workspace builder (2026-10-24)
+
+Arrange this page on tickets and POs now uses a metadata-only widget library and placement canvas. Entering the editor keeps the current live workspace mounted rather than mounting every tool. Technicians add/remove widgets, search/filter, start with required widgets only and save personal layouts; admins retain shared defaults. Existing saved assignments and field layouts stay compatible. Builder saves mark `widget_mode: true` so future optional widgets start hidden for those customized layouts. Drawer mode uses selections with its existing grouping; Widget canvas (stored `classic`) uses columns/full-width rows. See docs/widget-workspace.md. No arbitrary-code widgets or permission/module changes.

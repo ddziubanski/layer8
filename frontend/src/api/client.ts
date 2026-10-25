@@ -71,7 +71,8 @@ export type ADGroup = S["ADGroupOut"];
 export type ADChange = S["ADChangeIn"];
 export type ADPlan = S["ADPlanOut"];
 export type ADGroupList = S["ADGroupListOut"];
-export type Layout = S["LayoutOut"];
+// Older saved layouts and fallback layouts do not carry the widget opt-in flag.
+export type Layout = Omit<S["LayoutOut"], "widget_mode"> & { widget_mode?: boolean };
 export type PageLayout = S["PageLayoutOut"];
 export type NewADAccount = S["NewADAccountIn"];
 export type NewADAccountPlan = S["NewADAccountPlanOut"];

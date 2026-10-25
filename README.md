@@ -34,7 +34,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Queues with owners, managers and restricted visibility; priorities from urgency × impact; SLAs that count desk hours, stop while waiting on the user, and show the time left ([docs/desk-hours.md](docs/desk-hours.md#the-sla-clock)).
 - Alerts when nobody takes a ticket: an email to everyone who could, or a post in a Teams channel, and a counter in the console ([docs/desk-hours.md](docs/desk-hours.md#tickets-nobody-has-taken)).
 - KACE-style ticket rules: on save, on a schedule, or in SQL.
-- Merge, parent and child tickets, bulk changes, and a page layout each technician can arrange.
+- Merge, parent and child tickets, bulk changes, and a personal widget workspace: searchable library, essentials-only starting point, saved placement and administrator defaults ([guide](docs/widget-workspace.md)).
 - Canned replies, shared or personal and per queue, with the ticket's details filled in ([docs/canned-replies.md](docs/canned-replies.md)).
 - Time tracking: log minutes with a note or in a ticket's Time panel; the *Time spent* report adds them up by technician, queue, category or day.
 - A grouped, collapsible technician sidebar and contextual header shared across the console; module pages use consistent headings, toolbars and tables. Existing branding, module visibility and ticket layouts are preserved ([layout review](docs/application-layout.md)).

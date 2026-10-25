@@ -234,9 +234,9 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <SourceChip source={t.source} />
           <StatusChip status={t.status} />
           {drawerMode && !arrangement.editing && <SlaChip ticket={t} long />}
-          {drawerMode && !arrangement.editing && <button className="btn2" type="button" onClick={() => openTool("details")}>Status &amp; assignment</button>}
+          {drawerMode && !arrangement.editing && ["status", "assignment", "requester", "actions"].some(id => !hidden.has(id)) && <button className="btn2" type="button" onClick={() => openTool("details")}>Status &amp; assignment</button>}
           {!arrangement.editing && (
-            <button className="linkish small" type="button" onClick={() => arrangement.setEditing(true)}>
+            <button className="linkish small" type="button" data-arrange-page="ticket" onClick={() => arrangement.setEditing(true)}>
               Arrange this page
             </button>
           )}
@@ -249,11 +249,12 @@ function TicketView({ me, id }: { me: Me; id: number }) {
         </div>
       </div>
 
-      {drawerMode && !arrangement.editing ? (
+      {drawerMode && <div className="ticket-drawer-live" hidden={arrangement.editing}>
         <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest} />
-      ) : (
-      <ArrangedColumns
+      </div>}
+      {(!drawerMode || arrangement.editing) && <ArrangedColumns
         page="ticket"
+        editorOnly={drawerMode}
         me={me}
         editing={arrangement.editing}
         onDone={() => arrangement.setEditing(false)}
@@ -261,8 +262,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
         required={arrangement.layout?.required ?? ["conversation"]}
         hasMine={!!arrangement.layout?.mine}
         panels={panels}
-      />
-      )}
+      />}
     </div>
   );
 }

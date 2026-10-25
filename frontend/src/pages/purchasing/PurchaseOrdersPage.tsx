@@ -188,7 +188,7 @@ export function PurchaseOrderPage({ me }: { me: Me }) {
           </h1>
         </div>
         {data && !arrangement.editing && (
-          <button className="linkish small" type="button" onClick={() => arrangement.setEditing(true)}>
+          <button className="linkish small" type="button" data-arrange-page="po" onClick={() => arrangement.setEditing(true)}>
             Arrange this page
           </button>
         )}
