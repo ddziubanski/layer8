@@ -5,7 +5,7 @@ separate opt-in write. Settings > UniFi.
 Two ways in, both with an API key in the X-API-KEY header:
 - cloud: the Site Manager API (https://api.ui.com/v1/hosts lists the consoles the key can see) and
   Ubiquiti's Connector Proxy, which reaches each selected console's local Network Integration API
-  through the cloud: https://api.ui.com/v1/connector/consoles/{id}/network/integration/v1/...
+  through the cloud: https://api.ui.com/v1/connector/consoles/{id}/proxy/network/integration/v1/...
 - local: one UniFi OS console's Network Integration API: https://{console}/proxy/network/integration/v1/...
 
 The Network Integration API pages with offset/limit and answers {offset, limit, count, totalCount,
@@ -141,8 +141,8 @@ def bases() -> list[tuple[str, str]]:
     if settings.unifi_mode == "cloud":
         if not settings.unifi_console_ids:
             raise UnifiError("Choose the consoles to read (Settings > UniFi > Consoles)")
-        # Connector supplies the console's /proxy prefix; only local URLs include it.
-        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe='')}/network/integration/v1") for c in settings.unifi_console_ids]
+        # Match the current Network endpoint examples; Connector GET prose differs.
+        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe='')}{INTEGRATION}") for c in settings.unifi_console_ids]
     url = settings.unifi_console_url.rstrip("/")
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.hostname or parts.path:

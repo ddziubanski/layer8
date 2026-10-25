@@ -6,10 +6,10 @@ from app import unifi
 from app.config import settings
 
 
-def test_cloud_connector_and_local_proxy_have_distinct_paths(monkeypatch):
+def test_cloud_connector_and_local_proxy_match_network_examples(monkeypatch):
     monkeypatch.setattr(settings, "unifi_mode", "cloud")
     monkeypatch.setattr(settings, "unifi_console_ids", ["console:123"])
-    assert unifi.bases() == [("console:123", "https://api.ui.com/v1/connector/consoles/console%3A123/network/integration/v1")]
+    assert unifi.bases() == [("console:123", "https://api.ui.com/v1/connector/consoles/console%3A123/proxy/network/integration/v1")]
     monkeypatch.setattr(settings, "unifi_mode", "local")
     monkeypatch.setattr(settings, "unifi_console_url", "https://unifi.corp.example")
     assert unifi.bases() == [("unifi.corp.example", "https://unifi.corp.example/proxy/network/integration/v1")]
@@ -18,7 +18,7 @@ def test_cloud_connector_and_local_proxy_have_distinct_paths(monkeypatch):
 @pytest.mark.parametrize("status", [401,403])
 @pytest.mark.parametrize("url,stage", [
     ("https://api.ui.com/v1/hosts", "Site Manager console discovery"),
-    ("https://api.ui.com/v1/connector/consoles/example/network/integration/v1/sites", "cloud console Network API"),
+    ("https://api.ui.com/v1/connector/consoles/example/proxy/network/integration/v1/sites", "cloud console Network API"),
     ("https://unifi.corp.example/proxy/network/integration/v1/sites", "local console Network API"),
 ])
 def test_auth_errors_identify_stage_status_and_never_echo_secrets(status,url,stage):

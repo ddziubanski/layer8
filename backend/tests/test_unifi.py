@@ -11,7 +11,7 @@ from app.config import settings
 from app.models import Comment, IpAddress, NetworkInventory, NetworkObservation, NetworkOutage, Subnet, Ticket, TicketStatus
 from tests.conftest import as_user
 
-BASE = "/v1/connector/consoles/console-1/network/integration/v1"
+BASE = "/v1/connector/consoles/console-1/proxy/network/integration/v1"
 
 
 def page(items, offset, limit, total=None):
