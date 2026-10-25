@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from app import VERSION, update_protocol as protocol
+from app import VERSION, configstore, update_protocol as protocol
 from app.auth import Admin, SessionDep
 from app.config import settings
 from app.models import AppSetting
@@ -140,6 +140,8 @@ def get_updates(_: Admin, session: SessionDep):
 
 @router.post("/check", response_model=UpdateStatusOut)
 def check_updates(admin: Admin, session: SessionDep):
+    # Updates may have been enabled moments ago through another worker process.
+    configstore.refresh(session, force=True)
     if not settings.updates_enabled:
         raise HTTPException(409, "Enable GitHub release updates first")
     row = session.get(AppSetting, CHECK_KEY)
@@ -170,6 +172,7 @@ def apply_update(body: ApplyIn, admin: Admin, session: SessionDep):
         raise HTTPException(409, "Only a newer stable release can be installed")
     if not body.confirm:
         raise HTTPException(422, "Confirm the backup and maintenance window before updating")
+    configstore.refresh(session, force=True)
     if not settings.updates_enabled or not ready():
         raise HTTPException(409, "The appliance updater is not enabled or provisioned")
     if not settings.backup_passphrase:
