@@ -18,9 +18,9 @@ From the dev app, 2026-10-24. Regenerate with `backend/.venv/bin/python dev/scre
 
 ![Ticket: conversation, attachments, assignment, requester, devices, status](03-ticket.png)
 
-## Arrange this page: drag panels between columns or across the top or bottom (full width), hide them, save for yourself or as everyone's default
+## Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default
 
-![Arrange this page: drag panels between columns or across the top or bottom (full width), hide them, save for yourself or as everyone's default](03d-ticket-arrange.png)
+![Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default](03d-ticket-arrange.png)
 
 ## Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket
 
