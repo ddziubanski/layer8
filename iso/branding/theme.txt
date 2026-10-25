@@ -1,15 +1,19 @@
 desktop-image: "background.png"
+desktop-color: "#07131f"
 title-text: ""
-message-color: "#d1deeb"
+message-color: "#b4c6d5"
 terminal-font: "Unifont Regular 16"
 + boot_menu {
-    left = 8%
-    top = 43%
-    width = 84%
+    left = 7%
+    top = 46%
+    width = 86%
     height = 22%
-    item_height = 42
-    item_padding = 8
-    item_spacing = 8
-    item_color = "#d1deeb"
-    selected_item_color = "#32d4c8"
+    item_font = "Unifont Regular 16"
+    selected_item_font = "Unifont Regular 16"
+    item_height = 48
+    item_padding = 12
+    item_spacing = 10
+    item_color = "#b4c6d5"
+    selected_item_color = "#f2f7fb"
+    selected_item_pixmap_style = "select_*.png"
 }

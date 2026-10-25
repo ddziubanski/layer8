@@ -155,13 +155,20 @@ It downloads Debian's current 13.x netinst ISO (checking its SHA-256), builds th
 ### Boot artwork and validation
 
 The boot artwork is original, code-generated artwork in `iso/branding/background.png`.
-Regenerate with Pillow and DejaVu Sans: `python3 iso/branding/render.py`.
+The navy/teal splash includes the human-at-a-switch mark, storage guidance and keyboard hints.
+GRUB uses a rounded, nine-slice selection highlight (`select_*.png`) while firmware
+renders the real menu labels; text is never baked into selectable entries. The same
+background stays compatible with the BIOS menu.
+Regenerate the background and all nine highlight tiles with Pillow and DejaVu Sans:
+`python3 iso/branding/render.py`.
 `LAYER8_ARTWORK_FONT` can point to a DejaVu Sans font file on another host.
 The committed PNG is used directly by the ISO; Pillow is not an appliance dependency.
 Text menus remain available when graphical firmware output is unavailable.
 
 Installer validation builds a complete offline ISO and boots it without a hard disk
-under BIOS and UEFI. Its artifact contains the ISO and actual boot screenshots.
+under BIOS and UEFI. Its artifacts contain the ISO and actual boot screenshots; `layer8-boot-menus` holds
+just the BIOS/UEFI menu images for quick visual review.
+The themed selection follows the [GNU GRUB theme format](https://www.gnu.org/software/grub/manual/grub/html_node/Theme-file-format.html).
 The menu test verifies that waiting does not start installation. It does not certify
 partitioning, an installed appliance, networking or first-boot provisioning; those
 need a disposable-disk installation test before release.

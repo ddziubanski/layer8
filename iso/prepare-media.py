@@ -38,6 +38,8 @@ def prepare(source, destination, test=False):
                              ("theme.txt", "boot/grub/layer8/theme.txt"),
                              ("background.png", "boot/grub/layer8/background.png")):
         shutil.copyfile(source / "branding" / filename, destination / target)
+    for tile in (source / "branding").glob("select_*.png"):
+        shutil.copyfile(tile, destination / "boot/grub/layer8" / tile.name)
     if test:
         test_menus(destination)
 
