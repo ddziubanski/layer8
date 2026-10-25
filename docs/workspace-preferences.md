@@ -43,6 +43,18 @@ Open **My preferences > My workspace** to choose what appears in your sidebar. T
 
 Tickets, My preferences and sign-out always remain available. This choice follows your Layer 8 account across browsers; it is not a shared setting for other technicians. The portal's requester navigation is unchanged.
 
+## Ticket list
+
+**My preferences > Ticket list** sets how your queue looks and loads. Only you see these, and they follow your account.
+
+- **Density:** *Comfortable* (the default) or *Compact*, which fits about twice as many tickets on screen.
+- **Long lists:** *Keep scrolling* (the default) loads the next batch as you reach the end of the list, with a **Load more** button as well. *Pages* shows Previous and Next instead.
+- **Tickets loaded at a time** (or **per page**): 25, 50, 100 or 200.
+
+While scrolling, the list refreshes every 30 seconds until you've loaded more than five batches; after that, changing the view or queue starts it fresh. **Select all loaded** selects every ticket loaded so far.
+
+The API field is `queue_list` on `GET /api/auth/me` and `PUT /api/auth/me/preferences`, for example `{"queue_list": {"density": "compact", "paging": "scroll", "page_size": 50}}`; `null` restores the defaults. It's stored under `personal_queue_list:<user id>` in `app_settings`. Requesters can't set it.
+
 ## Hiding and access
 
 Personally hiding a module changes its sidebar entry only. It does not disable the module, change another technician's workspace, change permissions, stop background jobs or remove APIs. Direct links keep working, and the **Ctrl+K / ⌘K** palette can find personally hidden modules while they are globally available. Administrators control global workspace availability in Settings > Modules and integration-wide feature switches in their existing Settings tabs.

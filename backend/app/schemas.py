@@ -127,6 +127,15 @@ class TicketWorkspacePreferences(BaseModel):
     width: int = Field(default=440, ge=320, le=1200)
 
 
+class QueueListPreferences(BaseModel):
+    """How my ticket queue looks and loads. Presentation only."""
+    model_config = ConfigDict(extra="forbid")
+    density: Literal["comfortable", "compact"] = "comfortable"
+    # scroll: the next batch loads as I reach the end; pages: Previous / Next.
+    paging: Literal["scroll", "pages"] = "scroll"
+    page_size: Literal[25, 50, 100, 200] = 100
+
+
 class MeOut(UserOut):
     """The signed-in user. portal_only: signed in by single sign-on, so the portal only;
     the console asks for a password. must_change_password: change it before anything else
@@ -145,6 +154,7 @@ class MeOut(UserOut):
     # Personal navigation only; never changes permissions, routes or global features.
     hidden_modules: list[SidebarModule] = []
     ticket_workspace: TicketWorkspacePreferences = Field(default_factory=TicketWorkspacePreferences)
+    queue_list: QueueListPreferences = Field(default_factory=QueueListPreferences)
     # Global console availability, above personal visibility; never an authorization grant.
     disabled_modules: list[SidebarModule] = []
 
@@ -169,6 +179,7 @@ class PreferencesIn(BaseModel):
     hidden_modules: list[SidebarModule] | None = Field(default=None, max_length=11)
     # Omitted preserves; null resets. Explicit objects replace the presentation preferences.
     ticket_workspace: TicketWorkspacePreferences | None = None
+    queue_list: QueueListPreferences | None = None
 
     @field_validator("hidden_modules")
     @classmethod

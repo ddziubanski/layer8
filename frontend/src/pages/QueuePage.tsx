@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type CSSProperties } from "react";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
-import { api, type Me, type SavedView, type Ticket, type TicketScope, type TicketSort } from "../api/client";
+import { api, type Me, type QueueListPreference, type SavedView, type Ticket, type TicketScope, type TicketSort } from "../api/client";
 import { ruleColor } from "../colors";
 import { PriorityChip, SlaChip, SourceChip } from "../components/Chips";
 import { duration, plural, VIEWS } from "../format";
 import { NewTicketDialog } from "./NewTicketDialog";
 import { can } from "../permissions";
+import { ME_KEY } from "../queryClient";
 
-const PAGE = 100;
+export const DEFAULT_QUEUE_LIST: QueueListPreference = { density: "comfortable", paging: "scroll", page_size: 100 };
+// Past this many loaded batches, stop refreshing them all every 30 s; a new view starts fresh.
+const REFRESH_BATCHES = 5;
 const SCOPES: { key: TicketScope; label: string }[] = [
   { key: "mine", label: "My tickets" },
   { key: "groups", label: "My groups" },
@@ -134,13 +137,40 @@ export function QueuePage({ me }: { me: Me }) {
   const dir: "asc" | "desc" = params.get("dir") === "asc" || params.get("dir") === "desc" ? (params.get("dir") as "asc" | "desc") : column.first;
   const [creating, setCreating] = useState(false);
 
+  // The router keeps the "me" it was built with; saved preferences arrive in the profile query.
+  const profile = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false });
+  const prefs = (profile.data?.id === me.id ? profile.data : me).queue_list ?? DEFAULT_QUEUE_LIST;
+  const scrolling = prefs.paging === "scroll";
+  const pageSize = prefs.page_size;
   const counts = useQuery({ queryKey: ["views", scope, queueId], queryFn: () => api.viewCounts(scope, queueId), refetchInterval: REFRESH_MS });
   const page = useQuery({
-    queryKey: ["tickets", scope, queueId, view, sort, dir, offset],
-    queryFn: () => api.tickets({ scope, queue_id: queueId, view, sort, dir, limit: PAGE, offset }),
+    queryKey: ["tickets", scope, queueId, view, sort, dir, offset, pageSize],
+    queryFn: () => api.tickets({ scope, queue_id: queueId, view, sort, dir, limit: pageSize, offset }),
     refetchInterval: REFRESH_MS,
     placeholderData: keepPreviousData,
+    enabled: !scrolling,
   });
+  const batches = useInfiniteQuery({
+    queryKey: ["tickets", "scroll", scope, queueId, view, sort, dir, pageSize],
+    queryFn: ({ pageParam }) => api.tickets({ scope, queue_id: queueId, view, sort, dir, limit: pageSize, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => (last.offset + last.items.length < last.total && last.items.length > 0 ? last.offset + last.items.length : undefined),
+    refetchInterval: (query) => ((query.state.data?.pages.length ?? 0) > REFRESH_BATCHES ? false : REFRESH_MS),
+    enabled: scrolling,
+  });
+  const listRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = batches;
+  // Load the next batch a little before the end of the list comes into view.
+  useEffect(() => {
+    const end = endRef.current;
+    if (!scrolling || !end || typeof IntersectionObserver === "undefined") return;
+    const seen = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting) && hasNextPage && !isFetchingNextPage) void fetchNextPage();
+    }, { root: listRef.current, rootMargin: "0px 0px 400px 0px" });
+    seen.observe(end);
+    return () => seen.disconnect();
+  }, [scrolling, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   function go(next: { scope?: TicketScope; queue?: string; view?: SavedView; offset?: number; sort?: TicketSort; dir?: "asc" | "desc" }) {
     const s = next.sort ?? sort;
@@ -177,8 +207,12 @@ export function QueuePage({ me }: { me: Me }) {
     else go({ sort: key });
   }
 
-  const total = page.data?.total ?? 0;
-  const items = page.data?.items ?? [];
+  const loaded = scrolling ? batches.data?.pages : page.data ? [page.data] : undefined;
+  const total = loaded?.[0]?.total ?? 0;
+  // Tickets move between batches as they change; show each once.
+  const seenIds = new Set<number>();
+  const items = (loaded ?? []).flatMap((p) => p.items).filter((t) => !seenIds.has(t.id) && !!seenIds.add(t.id));
+  const error = scrolling ? batches.error : page.error;
   const allPicked = items.length > 0 && items.every((t) => selected.has(t.id));
   const pick = (id: number, on: boolean) => {
     const next = new Set(selected);
@@ -225,7 +259,7 @@ export function QueuePage({ me }: { me: Me }) {
         ))}
       </div>
 
-      {page.error && <p className="error">{page.error.message}</p>}
+      {error && <p className="error">{error.message}</p>}
       {selected.size > 0 && can(me, "ticket_bulk") && (
         <BulkBar
           ids={[...selected]}
@@ -237,11 +271,11 @@ export function QueuePage({ me }: { me: Me }) {
           onClear={() => setSelected(new Set())}
         />
       )}
-      <div className="table-wrap queue-list" role="table" aria-label="Tickets">
+      <div ref={listRef} className={`table-wrap queue-list${prefs.density === "compact" ? " compact" : ""}`} role="table" aria-label="Tickets">
         <div className="trow head" role="row">
           <div role="columnheader" className="pick">
             {can(me, "ticket_bulk") && (
-              <input type="checkbox" aria-label="Select all on this page" checked={allPicked} onChange={(e) => setSelected(e.target.checked ? new Set(items.map((t) => t.id)) : new Set())} />
+              <input type="checkbox" aria-label={scrolling ? "Select all loaded" : "Select all on this page"} checked={allPicked} onChange={(e) => setSelected(e.target.checked ? new Set(items.map((t) => t.id)) : new Set())} />
             )}
           </div>
           {COLUMNS.map((c) => (
@@ -258,18 +292,31 @@ export function QueuePage({ me }: { me: Me }) {
         {items.map((t) => (
           <Row key={t.id} t={t} me={me} selected={selected.has(t.id)} onSelect={(on) => pick(t.id, on)} />
         ))}
-        {page.data && page.data.items.length === 0 && <div className="empty">No tickets in this view.</div>}
+        {loaded && items.length === 0 && <div className="empty">No tickets in this view.</div>}
+        {scrolling && <div ref={endRef} className="queue-end" aria-hidden="true" />}
       </div>
 
-      {total > PAGE && (
+      {scrolling && total > 0 && (
+        <div className="pager">
+          <span className="muted" role="status">
+            {items.length < total ? `${items.length} of ${total} loaded` : `All ${total} shown`}
+          </span>
+          {hasNextPage && (
+            <button className="btn2" type="button" disabled={isFetchingNextPage} onClick={() => void fetchNextPage()}>
+              {isFetchingNextPage ? "Loading…" : "Load more"}
+            </button>
+          )}
+        </div>
+      )}
+      {!scrolling && total > pageSize && (
         <div className="pager">
           <span className="muted">
-            {offset + 1}–{Math.min(offset + PAGE, total)} of {total}
+            {offset + 1}–{Math.min(offset + pageSize, total)} of {total}
           </span>
-          <button className="btn2" type="button" disabled={offset === 0} onClick={() => go({ offset: offset - PAGE })}>
+          <button className="btn2" type="button" disabled={offset === 0} onClick={() => go({ offset: offset - pageSize })}>
             Previous
           </button>
-          <button className="btn2" type="button" disabled={offset + PAGE >= total} onClick={() => go({ offset: offset + PAGE })}>
+          <button className="btn2" type="button" disabled={offset + pageSize >= total} onClick={() => go({ offset: offset + pageSize })}>
             Next
           </button>
         </div>

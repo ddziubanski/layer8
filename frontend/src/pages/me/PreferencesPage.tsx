@@ -5,12 +5,13 @@ import { TeamsConnection } from "../../components/TeamsConnection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { api, type ColorRule, type Me } from "../../api/client";
+import { api, type ColorRule, type Me, type QueueListPreference } from "../../api/client";
 import { PALETTE, RULE_FIELDS } from "../../colors";
 import { UserPicker } from "../../components/UserPicker";
 import { ME_KEY } from "../../queryClient";
 import { MINIMAL_HIDDEN, OPTIONAL_MODULES, moduleEnabled, type SidebarModule } from "../../navigation";
 
+import { DEFAULT_QUEUE_LIST } from "../QueuePage";
 import { DEFAULT_TICKET_WORKSPACE, TICKET_TOOLS, type TicketWorkspacePreference } from "../ticket/TicketToolsWorkspace";
 
 function Swatches({ value, onChange, label }: { value: string | null; onChange: (c: string) => void; label: string }) {
@@ -42,10 +43,12 @@ export function PreferencesPage({ me }: { me: Me }) {
   const [hidden, setHidden] = useState<SidebarModule[]>(activeMe.hidden_modules ?? []);
   const [workspace, setWorkspace] = useState<TicketWorkspacePreference>(activeMe.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
   const workspaceChanged = JSON.stringify(workspace) !== JSON.stringify(activeMe.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
+  const [queueList, setQueueList] = useState<QueueListPreference>(activeMe.queue_list ?? DEFAULT_QUEUE_LIST);
+  const queueListChanged = JSON.stringify(queueList) !== JSON.stringify(activeMe.queue_list ?? DEFAULT_QUEUE_LIST);
   const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues });
   const [names, setNames] = useState<Record<string, string>>({});
   const save = useMutation({
-    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden, ...(workspaceChanged ? { ticket_workspace: workspace } : {}) }),
+    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden, ...(workspaceChanged ? { ticket_workspace: workspace } : {}), ...(queueListChanged ? { queue_list: queueList } : {}) }),
     onSuccess: (m) => queryClient.setQueryData(ME_KEY, m),
   });
   const setRule = (i: number, over: Partial<ColorRule>) => setRules(rules.map((r, j) => (j === i ? { ...r, ...over } : r)));
@@ -56,7 +59,7 @@ export function PreferencesPage({ me }: { me: Me }) {
   };
   // What's stored now: the last save, else what the page opened with.
   const stored = save.data ?? activeMe;
-  const changed = workspaceChanged || color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
+  const changed = workspaceChanged || JSON.stringify(queueList) !== JSON.stringify(stored.queue_list ?? DEFAULT_QUEUE_LIST) || color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
     || JSON.stringify([...hidden].sort()) !== JSON.stringify([...(stored.hidden_modules ?? [])].sort());
   const isStaff = me.role !== "requester";
 
@@ -87,6 +90,13 @@ export function PreferencesPage({ me }: { me: Me }) {
           <label className="field">Layout<select value={workspace.mode} onChange={e => setWorkspace({ ...workspace, mode: e.target.value as TicketWorkspacePreference["mode"] })}><option value="drawer">Conversation with tools drawer</option><option value="classic">Widget canvas (arranged panels)</option></select></label>
           <label className="field">Preferred tool<select value={workspace.selected_tool} onChange={e => setWorkspace({ ...workspace, selected_tool: e.target.value as TicketWorkspacePreference["selected_tool"] })}>{TICKET_TOOLS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
           <label className="inline"><input type="checkbox" checked={workspace.keep_open} onChange={e => setWorkspace({ ...workspace, keep_open: e.target.checked })} />Keep tools open on new tickets</label>
+        </section>}
+        {isStaff && <section className="card stack" aria-label="Ticket list">
+          <h2>Ticket list</h2>
+          <p className="muted small">How your ticket queue looks and loads. Only you see these.</p>
+          <label className="field">Density<select value={queueList.density} onChange={e => setQueueList({ ...queueList, density: e.target.value as QueueListPreference["density"] })}><option value="comfortable">Comfortable</option><option value="compact">Compact (more tickets on screen)</option></select></label>
+          <label className="field">Long lists<select value={queueList.paging} onChange={e => setQueueList({ ...queueList, paging: e.target.value as QueueListPreference["paging"] })}><option value="scroll">Keep scrolling (load more as I reach the end)</option><option value="pages">Pages (Previous / Next)</option></select></label>
+          <label className="field">{queueList.paging === "scroll" ? "Tickets loaded at a time" : "Tickets per page"}<select value={queueList.page_size} onChange={e => setQueueList({ ...queueList, page_size: Number(e.target.value) as QueueListPreference["page_size"] })}>{[25, 50, 100, 200].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
         </section>}
         {isStaff && <TeamsConnection />}
         {isStaff && (
@@ -186,7 +196,7 @@ export function PreferencesPage({ me }: { me: Me }) {
             Save
           </button>
           {changed && (
-            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); setWorkspace(stored.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE); }}>
+            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); setWorkspace(stored.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE); setQueueList(stored.queue_list ?? DEFAULT_QUEUE_LIST); }}>
               Undo changes
             </button>
           )}
