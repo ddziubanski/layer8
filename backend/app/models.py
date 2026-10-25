@@ -516,11 +516,14 @@ class Ticket(Base):
         Index("ix_tickets_queue_status", "queue_id", "status"),
         Index("ix_tickets_assignee_status", "assignee_id", "status"),
         Index("ix_tickets_requester", "requester_id"),
+        # Ticket search (app/search.py builds the same expression).
+        Index("ix_tickets_text", text("to_tsvector('simple'::regconfig, (coalesce(subject, '') || ' ') || coalesce(description, ''))"), postgresql_using="gin"),
     )
 
 
 class Comment(Base):
     __tablename__ = "comments"
+    __table_args__ = (Index("ix_comments_text", text("to_tsvector('simple'::regconfig, body)"), postgresql_using="gin"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)

@@ -274,7 +274,7 @@ export const api = {
   windowsSignIn: () => request<Me>("POST", "/api/auth/sso"),
   logout: () => request<void>("POST", "/api/auth/logout"),
 
-  tickets: (p: { view?: SavedView; scope?: TicketScope; queue_id?: number; requester_id?: number; sort?: TicketSort; dir?: "asc" | "desc"; limit?: number; offset?: number }) =>
+  tickets: (p: { view?: SavedView; scope?: TicketScope; queue_id?: number; requester_id?: number; q?: string; sort?: TicketSort; dir?: "asc" | "desc"; limit?: number; offset?: number }) =>
     request<TicketPage>("GET", `/api/tickets${query(p)}`),
   unaccepted: () => request<S["UnacceptedOut"]>("GET", "/api/tickets/unaccepted"),
   person: (id: number) => request<Person>("GET", `/api/people/${id}`),

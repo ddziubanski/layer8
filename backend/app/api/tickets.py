@@ -7,7 +7,7 @@ from sqlalchemy import Select, case, func, select, union
 from sqlalchemy import delete as sa_delete
 from sqlalchemy.orm import aliased
 
-from app import fields, numbering, permissions, services, sla, storage
+from app import fields, numbering, permissions, search, services, sla, storage
 from app.directory.sync import find_by_address
 from app.auth import Agent, CurrentUser, SessionDep
 from app.models import (
@@ -271,6 +271,8 @@ def list_tickets(
     assignee_id: int | None = None,
     source: TicketSource | None = None,
     requester_id: int | None = None,
+    # Words to find in the subject, description and notes (all statuses unless filtered).
+    q: str | None = Query(default=None, max_length=search.MAX_LENGTH),
     # Default: most urgent first (nearest resolution deadline).
     sort: SortKey = "due",
     dir: Literal["asc", "desc"] | None = None,
@@ -290,6 +292,8 @@ def list_tickets(
         stmt = stmt.where(Ticket.source == source)
     if requester_id is not None:
         stmt = stmt.where(Ticket.requester_id == requester_id)
+    if q and (found := search.matches(q)) is not None:
+        stmt = stmt.where(found)
 
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
     rows = session.scalars(sorted_by(stmt, sort, dir).limit(limit).offset(offset)).all()
