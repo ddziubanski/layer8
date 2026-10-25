@@ -170,6 +170,13 @@ def test_not_a_bundle(db, desk, tmp_path):
 def test_text():
     assert trackit.text("<p>One</p><p>Two &amp; three</p>") == "One\n\nTwo & three"
     assert trackit.text("plain &lt;text&gt;\r\nline") == "plain <text>\nline"
+    # <pre> and <label> are HTML too; an address in angle brackets isn't; Office markup goes.
+    assert trackit.text("<pre>Line one\nline two</pre>") == "Line one\nline two"
+    assert trackit.text("<label>Status:</label> <b>Closed</b><o:p></o:p>") == "Status: Closed"
+    assert trackit.text("<p>From Jo <jo@corp.example></p>") == "From Jo <jo@corp.example>"
+    assert trackit.text('<div>See <a href="https://kb.example/1">the article</a></div>') == "See the article (https://kb.example/1)"
+    # An email's HTML kept escaped inside the note's own HTML.
+    assert trackit.text("<pre>&lt;div&gt;Hello&lt;br&gt;World&lt;/div&gt;</pre>") == "Hello\nWorld"
     assert trackit.priority_of("2 - High (same day)") == Priority.high and trackit.priority_of("") == Priority.medium
 
 
@@ -192,3 +199,30 @@ def test_detect(tmp_path):
     found = {f["column"]: f for f in trackit.detect(trackit.Bundle(bundle(tmp_path / "b.zip", TABLES)))}
     assert found["DEPT"]["used"] == 1 and found["DEPT"]["top"] == [("Finance", 1)] and found["DEPT"]["total"] == 3
     assert found["HD_LOOKUP01"]["name"] == "Custom Look Up 1" and "HD_LOOKUP02" not in found and found["OPENED_GROUP"]["distinct"] == 2
+
+
+def test_gaps_are_filled_from_other_columns(db, desk, tmp_path):
+    """Track-It! often leaves the customer or note author out; its other columns still tell."""
+    customers = [{**TABLES["_CUSTOMER_"][0]}, {**TABLES["_CUSTOMER_"][1], "PHONE": "707 555 0100"},
+                 {"SEQUENCE": 3, "FNAME": "Shared", "NAME": "Desk", "PHONE": "707-555-0199"}, {"SEQUENCE": 4, "FNAME": "Other", "NAME": "Desk", "PHONE": "7075550199"}]
+    base = {"STATUS": "C", "DATE OPEN": "2026-10-12T09:00:00", "CLOSED ON": "2026-10-12T10:00:00"}
+    tickets = [
+        {**base, "SEQUENCE": 1004, "DESCRIPTION": "By email", "_EMAILID_": "ALOPEZ@corp.local", "CLOSED BY": 10},
+        {**base, "SEQUENCE": 1005, "DESCRIPTION": "By phone", "PHONE": "(707) 555-0100"},
+        {**base, "SEQUENCE": 1006, "DESCRIPTION": "Shared phone", "PHONE": "707.555.0199"},
+    ]
+    notes = [
+        {"SEQUENCE": 20, "PROBLEM #": 1004, "NOTETYPE": "Technician Note", "NOTE": "<pre>Called &lt;ana@corp.local&gt; back<o:p></o:p></pre>", "LASTUSER": "CORP\\dcole", "PDATE": "2026-10-12T09:30:00"},
+        {"SEQUENCE": 21, "PROBLEM #": 1004, "NOTETYPE": "Technician Note", "NOTE": "Migrated", "LASTUSER": "_SMSYSADMIN_", "PDATE": "2026-10-12T09:40:00"},
+    ]
+    path = bundle(tmp_path / "g.zip", {**TABLES, "_CUSTOMER_": customers, "_TELMASTE_": tickets, "_TELDETAI_": notes, "_WORKORD_": [], "_WORKDET_": [], "_ATTACH_": []})
+    r = trackit.run(db, path, apply=True)
+    assert r.counts["requester_inferred"] == 2
+    by = lambda s: db.scalar(select(Ticket).where(Ticket.subject == s))  # noqa: E731
+    ana, dee = (db.scalar(select(User).where(User.email == e)) for e in ("alopez@corp.local", "dcole@corp.local"))
+    assert by("By email").requester_id == ana.id and by("By email").assignee_id == dee.id  # closed by: the technician on record
+    assert by("By phone").requester.display_name == "Old Timer"
+    assert by("Shared phone").requester.email == "trackit-import@import.invalid"  # two customers share it: not guessed
+    first, second = db.scalars(select(Comment).where(Comment.ticket_id == by("By email").id).order_by(Comment.created_at)).all()
+    assert (first.author_id, first.body) == (dee.id, "Called <ana@corp.local> back")
+    assert second.author.email == "trackit-import@import.invalid"
