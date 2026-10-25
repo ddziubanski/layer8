@@ -22,7 +22,7 @@ Everything is off by default. **Settings > Nutanix** has every option.
 
 ## Set it up
 
-1. Settings > Nutanix: fill in the **Prism Central address** (for example `https://prism.corp.example:9440`), **Login** and **Password**. If Prism Central's certificate isn't from a public CA, paste the CA certificate into **Prism Central CA certificate**. For a quick test with its self-signed certificate on a network you trust, untick **Check Prism Central's certificate** (leave it ticked otherwise).
+1. Settings > Nutanix: fill in the **Prism Central address** (for example `https://prism.corp.example:9440`), **Login** and **Password**. If Prism Central's certificate isn't from a public CA, paste the CA certificate into **Prism Central CA certificate**. If it still has its self-signed factory certificate, paste that certificate itself (`openssl s_client -connect prism.corp.example:9440 </dev/null 2>/dev/null | openssl x509`): Layer 8 then trusts exactly that certificate, at whatever address you use, and checks it before sending the password. Leave **Check Prism Central's certificate** ticked; unticking it trusts any certificate.
 2. Tick **Read Nutanix** and save.
 3. Press **Test connection**. It lists the clusters and how many VMs the account can see.
 4. Press **Read Nutanix now**. Settings > Status shows how the read went. From then on it reads every **Read Nutanix every** minutes (15 by default).

@@ -23,7 +23,7 @@ from urllib.parse import quote
 import httpx
 from sqlalchemy import func, select, text
 
-from app import network, sla
+from app import network, sla, tls
 from app.config import settings
 from app.models import Device, NetworkInventory, NetworkObservation, NutanixAction, NutanixVm
 
@@ -62,7 +62,7 @@ def stale_after() -> timedelta:
 class Client:
     def __init__(self, base: str, username: str, password: str, http: httpx.Client | None = None):
         self.base = base.rstrip("/")
-        verify = (settings.nutanix_ca_file or True) if settings.nutanix_verify_tls else False
+        verify = tls.verify(settings.nutanix_ca_file) if settings.nutanix_verify_tls else False
         self.http = http or httpx.Client(timeout=30, follow_redirects=False, trust_env=False, verify=verify, auth=(username, password))
 
     def close(self) -> None:
@@ -72,7 +72,7 @@ class Client:
         try:
             r = self.http.request(method, self.base + path, headers={"Accept": "application/json", **(headers or {})}, **kw)
         except httpx.HTTPError as exc:
-            raise NutanixError(f"Can't reach Prism Central ({type(exc).__name__})") from None
+            raise NutanixError(f"Can't reach Prism Central: {tls.reason(exc)}") from None
         if r.status_code == 401:
             raise NutanixError("Prism Central refused the login (Settings > Nutanix)")
         if r.status_code == 403:
