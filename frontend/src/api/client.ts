@@ -18,6 +18,7 @@ export type Queue = S["QueueOut"];
 export type User = S["UserOut"];
 /** The signed-in user; portal_only after Windows sign-in (the console needs a password). */
 export type Me = S["MeOut"];
+export type QueueListPreference = S["QueueListPreferences"];
 export type MerakiObservation = S["MerakiClientOut"];
 export type SignInOptions = S["SignInOptionsOut"];
 export type UserRef = S["UserRef"];

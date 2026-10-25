@@ -7905,6 +7905,7 @@ export interface components {
              */
             hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"];
+            queue_list?: components["schemas"]["QueueListPreferences"];
             /**
              * Disabled Modules
              * @default []
@@ -9151,6 +9152,7 @@ export interface components {
             /** Hidden Modules */
             hidden_modules?: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"] | null;
+            queue_list?: components["schemas"]["QueueListPreferences"] | null;
         };
         /**
          * Priority
@@ -9281,6 +9283,30 @@ export interface components {
             };
             /** Hours */
             hours?: string | null;
+        };
+        /**
+         * QueueListPreferences
+         * @description How my ticket queue looks and loads. Presentation only.
+         */
+        QueueListPreferences: {
+            /**
+             * Density
+             * @default comfortable
+             * @enum {string}
+             */
+            density: "comfortable" | "compact";
+            /**
+             * Paging
+             * @default scroll
+             * @enum {string}
+             */
+            paging: "scroll" | "pages";
+            /**
+             * Page Size
+             * @default 100
+             * @enum {integer}
+             */
+            page_size: 25 | 50 | 100 | 200;
         };
         /** QueueOut */
         QueueOut: {

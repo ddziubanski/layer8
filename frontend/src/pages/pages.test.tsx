@@ -293,7 +293,7 @@ describe("queue scope, colours and bulk moves", () => {
     });
     renderAt("/", [{ path: "/", element: <QueuePage me={ME} /> }]);
     await screen.findByRole("row", { name: /VPN down/ });
-    await userEvent.click(screen.getByLabelText("Select all on this page"));
+    await userEvent.click(screen.getByLabelText("Select all loaded"));
     const bar = screen.getByRole("region", { name: "Selected tickets" });
     expect(within(bar).getByText("2 selected")).toBeInTheDocument();
     await userEvent.selectOptions(within(bar).getByLabelText("Move to queue"), "2");
