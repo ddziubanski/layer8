@@ -174,7 +174,8 @@ def run(session, bundle: Bundle, queue_id: int, *, apply: bool = False) -> dict:
                 existing = session.scalar(select(User).where(func.lower(User.email) == email)) or session.scalar(select(User).join(UserEmail, UserEmail.user_id == User.id).where(func.lower(UserEmail.email) == email))
             if existing is None:
                 address = email if re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email) else f"{bundle.source}-{pid}@import.invalid"
-                existing = User(email=address, display_name=(value.name or email or f"KACE user {pid}") if value else "KACE import", role=UserRole.agent if pid in owners else UserRole.requester, is_active=False, auth_source=AuthSource.local)
+                name = (value.name or email or f"KACE user {pid}") if value else "KACE import"
+                existing = User(email=address, display_name=name[:200], role=UserRole.agent if pid in owners else UserRole.requester, is_active=False, auth_source=AuthSource.local)
                 session.add(existing)
                 session.flush()
                 counts["people_created_inactive"] += 1
