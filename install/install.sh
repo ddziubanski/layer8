@@ -237,6 +237,7 @@ install -d -m 755 -o root -g root /var/lib/layer8-updater/progress
 install -d -m 770 -o root -g helpdesk /var/lib/layer8-updater/inbox
 install -m 644 -o root -g root "$BUNDLE/backend/app/update_protocol.py" /usr/local/lib/layer8-updater/protocol.py
 install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.py" /usr/local/lib/layer8-updater/
+install -m 644 -o root -g root "$BUNDLE/install/files/maintenance.html" /usr/local/lib/layer8-updater/maintenance.html
 install -m 644 -o root -g root "$BUNDLE/install/files/layer8-update.service" /etc/systemd/system/
 # The Layer 8 publisher's public key for signed updates (not a secret), shipped with this release.
 if [ -f "$BUNDLE/install/files/layer8-update-public.pem" ]; then

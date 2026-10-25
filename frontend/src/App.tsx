@@ -10,6 +10,7 @@ import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider, usePara
 import { ApiError, api, type Me } from "./api/client";
 import { useBranding } from "./branding";
 import { NoticeBanner, NoticeDialog } from "./components/Notices";
+import { useServerRecovery, transientFailure } from "./components/ServerRecovery";
 import { ME_KEY } from "./queryClient";
 import { RouteFocus } from "./components/RouteFocus";
 import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Login";
@@ -358,21 +359,25 @@ export function App() {
 }
 
 function SignedInApp() {
-  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, refetchInterval: query => query.state.data && !query.state.error ? 30000 : false });
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, refetchInterval: query => transientFailure(query.state.error) ? 5000 : query.state.data && !query.state.error ? 30000 : false, refetchIntervalInBackground: true });
   // Rebuild the router only when a different user signs in, not on every refetch.
   const userId = me.data?.id;
+  const role = me.data?.role;
+  const recovery = useServerRecovery(me.error, me.data, () => me.refetch());
   // Windows sign-in reaches the portal only, whatever the role.
   const portalOnly = me.data?.portal_only;
   const appRouter = useMemo(
     () => (me.data ? (me.data.role === "requester" || me.data.portal_only ? portalRouter(me.data) : router(me.data)) : null),
-    [userId, portalOnly],
+    [userId, role, portalOnly],
   );
 
-  if (me.isPending) return null;
-  if (me.error instanceof ApiError && me.error.status === 401) return <Login />;
-  if (portalOnly && new URLSearchParams(window.location.search).has("console-sign-in")) return <Login console />;
-  if (me.data?.must_change_password) return <ChangePasswordFirst me={me.data} />;
-  if (me.data?.must_set_up_two_factor) return <TwoFactorFirst me={me.data} />;
-  if (me.error) return <p className="error">Could not reach the server: {me.error.message}</p>;
-  return <RouterProvider router={appRouter!} />;
+  let content;
+  if (me.isPending) content = null;
+  else if (me.error instanceof ApiError && me.error.status === 401) content = <Login />;
+  else if (portalOnly && new URLSearchParams(window.location.search).has("console-sign-in")) content = <Login console />;
+  else if (me.data?.must_change_password) content = <ChangePasswordFirst me={me.data} />;
+  else if (me.data?.must_set_up_two_factor) content = <TwoFactorFirst me={me.data} />;
+  else if (me.error && !transientFailure(me.error)) content = <p className="error">Could not reach the server: {me.error.message} <button onClick={() => me.refetch()}>Try again</button></p>;
+  else content = appRouter ? <RouterProvider router={appRouter} /> : null;
+  return <>{recovery.banner}<div className="connection-workspace" inert={recovery.blocked || undefined}>{content}</div></>;
 }

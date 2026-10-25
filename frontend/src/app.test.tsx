@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { App } from "./App";
 import { createQueryClient } from "./queryClient";
-import { ME, mockApi, type Call } from "./test/util";
+import { ME, mockApi, ticket, type Call } from "./test/util";
+import { applicationReload } from "./components/ServerRecovery";
 import type { Me } from "./api/client";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -17,6 +18,35 @@ function mount() {
     </QueryClientProvider>,
   );
 }
+
+test("ticket and identity refetch failures preserve the composer DOM and defer an updated bundle",async () => {
+  window.history.replaceState(null,"","/tickets/4821");
+  let offline=false;
+  const reload=vi.spyOn(applicationReload,"run").mockImplementation(() => {});
+  const unavailable=() => new Response("{}",{status:503});
+  mockApi({
+    "GET /api/auth/me":() => offline ? unavailable() : ME,
+    "GET /api/tickets/4821":() => offline ? unavailable() : ticket(),
+    "GET /api/tickets/4821/comments":[],"GET /api/tickets/4821/attachments":[],"GET /api/tickets/4821/events":[],
+    "GET /api/queues":[],"GET /api/users":[],"GET /api/notices":[],
+    "GET /api/health":() => offline ? unavailable() : {status:"ok"},"GET /api/about":{version:"9.0.0"},
+  });
+  const client=createQueryClient();client.setDefaultOptions({queries:{retry:false}});
+  const view=render(<QueryClientProvider client={client}><App /></QueryClientProvider>);
+  const draft=await screen.findByLabelText("Work notes and replies");
+  fireEvent.input(draft,{target:{value:"Keep this unsaved note"}});
+  offline=true;
+  await act(async () => {await client.invalidateQueries({queryKey:["ticket",4821]});await client.invalidateQueries({queryKey:["me"]});});
+  await screen.findByText("Reconnecting to Layer 8");
+  expect(screen.getByLabelText("Work notes and replies")).toBe(draft);
+  offline=false;
+  fireEvent.click(screen.getByRole("button",{name:"Check connection now"}));
+  await screen.findByText("Layer 8 9.0.0 is ready");
+  expect(screen.getByLabelText("Work notes and replies")).toBe(draft);
+  expect(draft).toHaveValue("Keep this unsaved note");
+  expect(reload).not.toHaveBeenCalled();
+  view.unmount();reload.mockRestore();window.history.replaceState(null,"","/");
+});
 
 test("global off blocks a bookmarked module before loading its page API", async () => {
   window.history.replaceState(null, "", "/scripts");

@@ -41,6 +41,16 @@ The nine stages are signature/review verification; download; stopped-service enc
 
 The CLI backup path now loads stored settings/secrets in its own process, so the updater uses the same backup passphrase as the API. The worker publishes an initial, versioned heartbeat before potentially long integration jobs.
 
+## Browser recovery after a restart
+
+An open application keeps its workspace mounted during transient session-check failures, blocks edits while disconnected and checks API readiness every five seconds. It validates uncached JSON from both `/api/health` and `/api/about`, then checks the session again. A healthy response does not grant access: an expired session goes back to sign-in, with the normal role/MFA/password restrictions.
+
+When the installed version differs from the frontend build, a clean page reloads automatically once per target version per tab. Edited inputs, textareas, selections or editable content conservatively defer that reload, offering **Load updated app** so the technician can finish or copy work first. This guard can also retain an already-saved form; it is not persistent draft storage and does not preserve authenticated work across session expiry, manual refresh or browser closure. Same-version recovery resumes queries without replacing the page.
+
+Fresh visits during maintenance receive a small root-owned recovery page with HTTP **503**, `no-store` and `no-referrer`. It checks readiness and reloads the same URL automatically; it never retries an installation or clears maintenance. Failed, rolled-back and recovery-required update results remain results to review, not a success inferred from browser connectivity.
+
+New installations include the fallback. On an existing appliance, an OS administrator must review and rerun `sudo sh install/install-updater.sh` from this release's reviewed bundle. It installs the static page and migrates the known Nginx layout, preserving site host/TLS settings, backing up to `/etc/nginx/sites-available/helpdesk.before-recovery-page` and testing Nginx before reload. Unfamiliar layouts or custom error handling require local review. Normal application updates deliberately do not rewrite this privileged proxy configuration; until the bootstrap is applied, fresh visits retain the old maintenance response, while the updated open application can still reconnect.
+
 ## Failure and local recovery
 
 Downloads, verification and extraction happen before downtime. A preflight failure leaves the current app running. Dependency/migration/application-check failures attempt recovery with the previous application; if migrations were attempted, the verified full backup is restored with that previous version before services restart. Updater rollback resets/restores the dedicated application public schema in one transaction, including removal of tables/foreign keys added by the failed migration; a failed SQL restore rolls that transaction back. Normal CLI restores retain their existing behavior. The failed update and its recovery state remain in the activity results.

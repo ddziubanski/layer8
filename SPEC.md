@@ -144,6 +144,12 @@ Built: opt-in Settings > Updates checks stable releases of ddziubanski/layer8; a
 
 Technician tickets default to Conversation / Work / History with a closable tools drawer. All existing tool APIs and permissions remain unchanged. Personal workspace preferences are stored under `personal_ticket_workspace:<user.id>`; see [docs/ticket-workspace.md](docs/ticket-workspace.md) for layout compatibility, draft scope and keyboard controls. Classic arranged panels remain selectable.
 
+## Shared sign-in and restart recovery (2026-10-24)
+
+Shared entry uses the existing server role: requesters open self-service, agents/admins open the console (highest mapped directory role still wins). Staff retain their self-service link. Root and /portal links both work for requesters. Windows portal-only sessions, password changes and MFA keep their existing restrictions.
+
+Transient session-check failures keep the current workspace mounted and inert while automatic API readiness checks run. A changed frontend refreshes once per target version only when no edited mounted controls are detected; otherwise an explicit refresh is offered. Session expiry still requires sign-in. A root-owned Nginx maintenance page also polls readiness for fresh visits, retaining HTTP 503 and the original URL. Existing appliances need the reviewed proxy bootstrap for that fallback; see docs/github-updates.md.
+
 ## Integration health (2026-10-24)
 
 Settings > Status and admin-only GET /api/system/integrations consolidate local evidence for mailbox, directory, Action1, Meraki, UniFi, Nutanix, Juniper and Teams queue summaries, plus active relay check-ins. No provider calls are made on refresh. Worker pass history retains its last success across later failures; directory and Juniper use actual sync/read outcomes. Configuration and recovery remain in existing Settings pages. See docs/integration-health.md. Next workflow slices are tracked in issue #81: related incidents and ticket templates, with existing access/routing and explicit review preserved.

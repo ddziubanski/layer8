@@ -19,13 +19,15 @@ docker run --detach --name layer8-update-proxy-test \
     --volume "$qa_dir:/etc/helpdesk/tls:ro" \
     --volume "$qa_dir/update:/var/lib/layer8-updater:ro" \
     --volume "$qa_dir/server.conf:/etc/nginx/layer8-server.conf:ro" \
-    --volume "$qa_dir/nginx.conf:/etc/nginx/nginx.conf:ro" nginx:stable
+    --volume "$qa_dir/nginx.conf:/etc/nginx/nginx.conf:ro" \
+    --volume "$PWD/install/files/maintenance.html:/usr/local/lib/layer8-updater/maintenance.html:ro" nginx:stable
 attempt=0
 until curl --silent --insecure --connect-timeout 1 --output /dev/null 'https://127.0.0.1:8444/'; do
     attempt=$((attempt + 1)); [ "$attempt" -lt 12 ]; sleep 1
 done
 curl --silent --show-error --insecure --dump-header "$qa_dir/progress.headers" \
     'https://127.0.0.1:8444/api/update-progress/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json' > "$qa_dir/progress.body"
+curl --silent --insecure --dump-header "$qa_dir/maintenance.headers" 'https://127.0.0.1:8444/' > "$qa_dir/maintenance.body"
 for endpoint in / /api/health /api/source '/api/meraki/oauth/callback?code=synthetic-update-code'; do
     code=$(curl --silent --insecure --output /dev/null --write-out '%{http_code}' "https://127.0.0.1:8444$endpoint")
     [ "$code" = 503 ] || { echo "Maintenance leaked $endpoint: $code" >&2; exit 1; }
@@ -41,6 +43,13 @@ import json, sys
 root = Path(sys.argv[1])
 headers = (root/'progress.headers').read_text().lower()
 assert '200' in headers.splitlines()[0], headers
+maintenance_headers = (root/'maintenance.headers').read_text().lower()
+assert '503' in maintenance_headers.splitlines()[0]
+assert 'cache-control: no-store' in maintenance_headers and 'referrer-policy: no-referrer' in maintenance_headers
+maintenance = (root/'maintenance.body').read_text()
+assert 'Reconnecting to your service desk' in maintenance
+assert "fetch('/api/health'" in maintenance and "fetch('/api/about'" in maintenance
+assert 'window.location.reload()' in maintenance
 assert 'cache-control: no-store' in headers
 assert 'referrer-policy: no-referrer' in headers
 assert json.loads((root/'progress.body').read_text())['phase'] == 'migrating'

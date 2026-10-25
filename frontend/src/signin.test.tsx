@@ -28,6 +28,15 @@ function mount() {
   );
 }
 
+test.each(["/","/portal"])("a password requester reaches the existing self-service portal at %s", async path => {
+  window.history.replaceState(null,"",path);
+  mockApi({...PORTAL,"GET /api/auth/me":{...REQUESTER,portal_only:false}});
+  mount();
+  expect(await screen.findByText("R. Alvarez")).toBeInTheDocument();
+  expect(screen.queryByRole("heading",{name:"Ticket queue"})).not.toBeInTheDocument();
+  expect(screen.queryByRole("link",{name:"Sign in to the console"})).not.toBeInTheDocument();
+});
+
 test("on a work PC the portal signs in with Windows by itself", async () => {
   let me: unknown = null;
   const calls = mockApi({

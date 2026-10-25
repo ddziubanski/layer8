@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router";
 
 import { api, type User } from "../api/client";
 import { AttachedLine, AttachmentsSection } from "../components/Attachments";
+import { transientFailure } from "../components/ServerRecovery";
 import { StatusChip } from "../components/Chips";
 import { useDropFiles } from "../components/useDropFiles";
 import { fileSize, when } from "../format";
@@ -48,7 +49,7 @@ export function PortalTicket({ me }: { me: User }) {
     onSettled: refresh,
   });
 
-  if (ticket.error) {
+  if (ticket.error && (!ticket.data || !transientFailure(ticket.error))) {
     return (
       <p className="error">
         {ticket.error.message}. <Link to={p("/tickets")}>Back to my tickets</Link>
@@ -106,7 +107,7 @@ export function PortalTicket({ me }: { me: User }) {
           This ticket is closed. <Link to={p("/")}>Make a new request</Link> if you still need help, and mention {t.label}.
         </div>
       ) : (
-        <div className={`card composer${drop.dragging ? " dropping" : ""}`} {...drop.props}>
+        <div data-unsaved-work={!!(body || attach.length)} className={`card composer${drop.dragging ? " dropping" : ""}`} {...drop.props}>
           <label className="lbl" htmlFor="reply">
             {done ? "Still not working? Reply to reopen" : "Add a reply"}
           </label>

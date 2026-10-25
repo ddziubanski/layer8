@@ -15,6 +15,7 @@ import { Link, useParams } from "react-router";
 
 import { api, type Me } from "../api/client";
 import { AttachedLine, AttachmentsSection } from "../components/Attachments";
+import { transientFailure } from "../components/ServerRecovery";
 import { PriorityChip, SourceChip, StatusChip, SlaChip } from "../components/Chips";
 import { SOURCE_LABEL, when } from "../format";
 import { TicketToolsWorkspace, DEFAULT_TICKET_WORKSPACE, type TicketTool } from "./ticket/TicketToolsWorkspace";
@@ -89,7 +90,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
     onSettled: refresh,
   });
 
-  if (ticket.error) {
+  if (ticket.error && (!ticket.data || !transientFailure(ticket.error))) {
     return (
       <p className="error">
         {ticket.error.message}. <Link to="/">Back to the queue</Link>
