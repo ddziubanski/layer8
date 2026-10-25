@@ -7,7 +7,7 @@ from app import adchanges, presence, sla
 from app.api.tickets import visible
 from app.auth import Agent, SessionDep
 from app.models import Device, Ticket, User
-from app.schemas import PersonDeviceOut, PersonOut
+from app.schemas import PersonDeviceOut, PersonOut, PersonRef
 
 router = APIRouter(prefix="/api/people", tags=["people"])
 
@@ -20,10 +20,13 @@ def person(user_id: int, viewer: Agent, session: SessionDep):
     theirs = visible(select(Ticket.status).where(Ticket.requester_id == who.id), viewer).subquery()
     counts = session.execute(select(func.count(), func.count().filter(theirs.c.status.not_in(sla.CLOSED_STATUSES))).select_from(theirs)).one()
     devices = session.scalars(select(Device).where(Device.assigned_user_id == who.id, Device.is_active).order_by(Device.name).limit(50)).all()
+    manager = session.get(User, who.manager_id) if who.manager_id else None
+    reports = session.scalars(select(User).where(User.manager_id == who.id, User.is_active).order_by(User.display_name).limit(50)).all()
     shown = presence.shown(who, sla.utcnow())
     return PersonOut(
         id=who.id, display_name=who.display_name, email=who.email, role=who.role, is_active=who.is_active, auth_source=who.auth_source,
-        title=who.title, department=who.department, phone=who.phone, upn=who.upn, sam_account_name=who.sam_account_name,
+        title=who.title, department=who.department, phone=who.phone, mobile=who.mobile, office=who.office, company=who.company,
+        manager=PersonRef.model_validate(manager) if manager else None, direct_reports=[PersonRef.model_validate(r) for r in reports], upn=who.upn, sam_account_name=who.sam_account_name,
         in_directory=bool(who.directory_dn), ou=adchanges.parent_ou(who.directory_dn) if who.directory_dn else None,
         last_synced_at=who.last_synced_at, presence=None if shown == "unknown" else shown,
         open_tickets=counts[1], all_tickets=counts[0], devices=[PersonDeviceOut.model_validate(d) for d in devices],

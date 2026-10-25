@@ -168,6 +168,11 @@ class User(Base):
     department: Mapped[str | None] = mapped_column(String(200))
     title: Mapped[str | None] = mapped_column(String(200))
     phone: Mapped[str | None] = mapped_column(String(64))
+    # From the directory (AD: mobile, physicalDeliveryOfficeName, company, manager).
+    mobile: Mapped[str | None] = mapped_column(String(64))
+    office: Mapped[str | None] = mapped_column(String(200))
+    company: Mapped[str | None] = mapped_column(String(200))
+    manager_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
     # "manual" for local accounts; for directory users, which mapping set the role,
     # e.g. "group:SG-Helpdesk-Agents", or "default" (no mapped group: requester).
     role_source: Mapped[str] = mapped_column(String(300), default="manual", server_default="manual")

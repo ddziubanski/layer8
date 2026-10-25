@@ -18,6 +18,10 @@ export function PersonDetails({ p }: { p: Person }) {
         {/* Imported addresses can be odd ("SMTP:{…}…"); only a plain address becomes a link. */}
         <dd>{/^[^\s@{}:]+@[^\s@{}]+\.[^\s@{}]+$/.test(p.email) ? <a href={`mailto:${p.email}`}>{p.email}</a> : p.email}</dd>
         {p.phone && <><dt>Phone</dt><dd><a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`}>{p.phone}</a></dd></>}
+        {p.mobile && <><dt>Mobile</dt><dd><a href={`tel:${p.mobile.replace(/[^\d+]/g, "")}`}>{p.mobile}</a></dd></>}
+        {p.office && <><dt>Office</dt><dd>{p.office}</dd></>}
+        {p.company && <><dt>Company</dt><dd>{p.company}</dd></>}
+        {p.manager && <><dt>Manager</dt><dd><Link to={`/people/${p.manager.id}`}>{p.manager.display_name}</Link>{p.manager.title && <span className="muted"> · {p.manager.title}</span>}</dd></>}
         {p.presence && <><dt>Teams</dt><dd>{PRESENCE[p.presence] ?? p.presence}</dd></>}
         {(p.upn || p.sam_account_name) && <><dt>Signs in as</dt><dd>{p.upn || p.sam_account_name}</dd></>}
         <dt>Account</dt>

@@ -2012,6 +2012,12 @@ class PersonDeviceOut(ORM):
     os: str | None = None
 
 
+class PersonRef(ORM):
+    id: int
+    display_name: str
+    title: str | None = None
+
+
 class PersonOut(BaseModel):
     """A person as the service desk knows them (directory sync, import or a local account),
     for the requester card and the person page. Staff only."""
@@ -2024,6 +2030,12 @@ class PersonOut(BaseModel):
     title: str | None = None
     department: str | None = None
     phone: str | None = None
+    mobile: str | None = None
+    office: str | None = None
+    company: str | None = None
+    manager: PersonRef | None = None
+    # Active people who have this person as their manager (first 50).
+    direct_reports: list[PersonRef] = []
     upn: str | None = None
     sam_account_name: str | None = None
     # From the directory: where the account lives, and when sync last saw it.

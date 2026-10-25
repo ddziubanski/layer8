@@ -367,6 +367,9 @@ class Importer:
             dept = self.lookup.get("departments", {}).get(row.get("DEPT"))
             if dept:
                 u.department = str(dept.get("NAME") or dept.get("DEPT") or "")[:200] or None
+            loc = self.lookup.get("locations", {}).get(row.get("LOCATION"))
+            if loc:
+                u.office = (clean(loc.get("NAME") or loc.get("CODE")) or "")[:200] or None
             self.s.add(u)
             self.s.flush()
             self.r.counts["tech_new" if tech else "requester_new"] += 1

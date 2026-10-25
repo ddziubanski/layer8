@@ -59,6 +59,20 @@ export function PersonPage() {
           )}
         </section>
 
+        {p.direct_reports.length > 0 && (
+          <section className="card stack" aria-label="Direct reports">
+            <h2>Direct reports</h2>
+            <ul className="plain-list">
+              {p.direct_reports.map((r) => (
+                <li key={r.id}>
+                  <Link to={`/people/${r.id}`}>{r.display_name}</Link>
+                  {r.title && <span className="muted small"> · {r.title}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {p.in_directory && (
           <section className="card stack" aria-label="Directory">
             <h2>Directory (AD)</h2>

@@ -27,8 +27,10 @@ ACCOUNTDISABLE = 0x2
 
 USER_ATTRS = {
     "ad": ["objectGUID", "mail", "proxyAddresses", "displayName", "givenName", "sn", "userPrincipalName",
-           "sAMAccountName", "department", "title", "telephoneNumber", "userAccountControl"],
-    "generic": ["entryUUID", "mail", "cn", "displayName", "givenName", "sn", "uid", "departmentNumber", "title", "telephoneNumber"],
+           "sAMAccountName", "department", "title", "telephoneNumber", "userAccountControl",
+           "mobile", "physicalDeliveryOfficeName", "company", "manager"],
+    "generic": ["entryUUID", "mail", "cn", "displayName", "givenName", "sn", "uid", "departmentNumber", "title", "telephoneNumber",
+                "mobile", "physicalDeliveryOfficeName", "o", "manager"],
 }
 GUID_ATTR = {"ad": "objectGUID", "generic": "entryUUID"}
 COMPUTER_ATTRS = ["objectGUID", "cn", "dNSHostName", "operatingSystem", "operatingSystemVersion", "description",
@@ -173,6 +175,10 @@ class LdapDirectory:
             department=_first(entry, "department") or _first(entry, "departmentNumber"),
             title=_first(entry, "title"),
             phone=_first(entry, "telephoneNumber"),
+            mobile=_first(entry, "mobile"),
+            office=_first(entry, "physicalDeliveryOfficeName"),
+            company=_first(entry, "company") or _first(entry, "o"),
+            manager_dn=_first(entry, "manager"),
             aliases=sorted({x for x in aliases if x.lower() != email.lower()}, key=str.lower),
         )
 

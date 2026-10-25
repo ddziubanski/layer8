@@ -9070,6 +9070,18 @@ export interface components {
             department?: string | null;
             /** Phone */
             phone?: string | null;
+            /** Mobile */
+            mobile?: string | null;
+            /** Office */
+            office?: string | null;
+            /** Company */
+            company?: string | null;
+            manager?: components["schemas"]["PersonRef"] | null;
+            /**
+             * Direct Reports
+             * @default []
+             */
+            direct_reports: components["schemas"]["PersonRef"][];
             /** Upn */
             upn?: string | null;
             /** Sam Account Name */
@@ -9100,6 +9112,15 @@ export interface components {
              * @default []
              */
             devices: components["schemas"]["PersonDeviceOut"][];
+        };
+        /** PersonRef */
+        PersonRef: {
+            /** Id */
+            id: number;
+            /** Display Name */
+            display_name: string;
+            /** Title */
+            title?: string | null;
         };
         /** PortalDeviceOut */
         PortalDeviceOut: {
