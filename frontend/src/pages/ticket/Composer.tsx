@@ -58,7 +58,7 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
   });
 
   return (
-    <div className={`card composer${toRequester ? "" : " internal"}${drop.dragging ? " dropping" : ""}`} {...drop.props}>
+    <div data-unsaved-work={!!(body || files.length || minutes)} className={`card composer${toRequester ? "" : " internal"}${drop.dragging ? " dropping" : ""}`} {...drop.props}>
       <label className="lbl" htmlFor="composer">
         Work notes and replies
       </label>

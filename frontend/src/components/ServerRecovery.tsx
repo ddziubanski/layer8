@@ -79,7 +79,7 @@ export function useServerRecovery(error: Error | null, me: Me | undefined, retry
     setCycle(null);
     if (version !== __LAYER8_VERSION__) {
       setFreshVersion(version);
-      if (![...dirty.current].some(element => element.isConnected)) {
+      if (!document.querySelector('[data-unsaved-work="true"]') && ![...dirty.current].some(element => element.isConnected)) {
         // One automatic reload per target version per tab. Storage denied means manual refresh.
         try {
           const key = "layer8.reloaded-version";

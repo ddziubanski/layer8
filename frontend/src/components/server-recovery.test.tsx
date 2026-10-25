@@ -9,7 +9,7 @@ import { version } from "../../package.json";
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); sessionStorage.clear(); });
 
-function harness() {
+function harness(unsavedWork = false) {
   let offline = false, expired = false, installed = version;
   const client = new QueryClient({defaultOptions:{queries:{retry:false}}});
   const calls = mockApi({
@@ -20,7 +20,7 @@ function harness() {
   function Workspace() {
     const me = useQuery({queryKey:ME_KEY,queryFn:api.me});
     const recovery = useServerRecovery(me.error,me.data,() => me.refetch());
-    return <>{recovery.banner}<div inert={recovery.blocked || undefined}><textarea aria-label="Ticket draft" defaultValue="" />{me.error && !recovery.blocked && <p>Session expired</p>}</div></>;
+    return <>{recovery.banner}<div data-unsaved-work={unsavedWork} inert={recovery.blocked || undefined}><textarea aria-label="Ticket draft" defaultValue="" />{me.error && !recovery.blocked && <p>Session expired</p>}</div></>;
   }
   render(<QueryClientProvider client={client}><Workspace /></QueryClientProvider>);
   return {client,calls,offline:() => {offline=true;return client.invalidateQueries({queryKey:ME_KEY});},online:(next=version,expire=false) => {offline=false;installed=next;expired=expire;}};
@@ -70,6 +70,18 @@ test("an expired session remains an authentication error after readiness succeed
   fireEvent.click(screen.getByRole("button",{name:"Check connection now"}));
   expect(await screen.findByText("Session expired")).toBeInTheDocument();
   await waitFor(() => expect(screen.queryByText("Reconnecting to Layer 8")).not.toBeInTheDocument());
+});
+
+test("an existing draft or dropped attachment also defers reload without an input event",async () => {
+  const reload=vi.spyOn(applicationReload,"run").mockImplementation(() => {});
+  const h=harness(true);
+  await waitFor(() => expect(h.client.getQueryData(ME_KEY)).toEqual(ME));
+  await act(async () => {await h.offline();});
+  await screen.findByText("Reconnecting to Layer 8");
+  h.online("9.0.0");
+  fireEvent.click(screen.getByRole("button",{name:"Check connection now"}));
+  await screen.findByText("Layer 8 9.0.0 is ready");
+  expect(reload).not.toHaveBeenCalled();
 });
 
 test("readiness rejects HTML and incomplete JSON rather than treating a 200 as success",async () => {

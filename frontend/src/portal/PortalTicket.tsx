@@ -107,7 +107,7 @@ export function PortalTicket({ me }: { me: User }) {
           This ticket is closed. <Link to={p("/")}>Make a new request</Link> if you still need help, and mention {t.label}.
         </div>
       ) : (
-        <div className={`card composer${drop.dragging ? " dropping" : ""}`} {...drop.props}>
+        <div data-unsaved-work={!!(body || attach.length)} className={`card composer${drop.dragging ? " dropping" : ""}`} {...drop.props}>
           <label className="lbl" htmlFor="reply">
             {done ? "Still not working? Reply to reopen" : "Add a reply"}
           </label>
