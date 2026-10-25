@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { DEFAULT_LIGHT_THEME } from "../../branding";
 import { App } from "../../App";
 import { createQueryClient } from "../../queryClient";
 import { ME, mockApi, renderAt, type Call } from "../../test/util";
@@ -473,4 +474,70 @@ test("Midnight can be previewed before saving and keeps custom colours", async (
 test("requester email templates show a preview with sample values", async () => {
   const { fillSample } = await import("./RequesterEmailsAdmin");
   expect(fillSample("Hi {first_name}, {ticket} is resolved. {unknown}")).toBe("Hi Ana, #1042 is resolved. {unknown}");
+});
+
+
+const customThemeFields = (locked = false) => [
+  { name: "theme_preset", label: "Appearance", kind: "choice", value: "midnight", choices: [{ value: "custom", label: "Custom colours" }, { value: "midnight", label: "Midnight" }] },
+  { name: "theme_brand", label: "Main colour", kind: "colour", value: "#123456" },
+  { name: "theme_sidebar", label: "Sidebar colour", kind: "colour", value: "#112233" },
+  { name: "dark_mode", label: "Dark mode", kind: "choice", value: "on", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }] },
+].map(f => ({ ...f, help: "", locked: locked && f.name === "dark_mode" }));
+
+test("branding restores light defaults atomically, discards colour drafts and keeps uploaded branding", async () => {
+  let brand = { product_name: "Example Help Desk", logo_url: "/api/branding/files/logo?v=1", background_url: "/api/branding/files/background?v=1", theme_preset: "midnight" };
+  const calls = mockApi({
+    "GET /api/branding": () => brand,
+    "GET /api/settings/branding": { section: "branding", fields: [] },
+    "GET /api/settings/theme": { section: "theme", fields: customThemeFields() },
+    "PUT /api/settings/theme": () => {
+      brand = { ...brand, ...DEFAULT_LIGHT_THEME };
+      return { section: "theme", fields: customThemeFields().map(f => ({ ...f, value: DEFAULT_LIGHT_THEME[f.name as keyof typeof DEFAULT_LIGHT_THEME] })) };
+    },
+  });
+  renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
+  const form = await screen.findByRole("form", { name: "Colours" });
+  const colour = within(form).getByRole("textbox", { name: "Main colour" });
+  await userEvent.clear(colour);
+  await userEvent.type(colour, "#987654");
+  await userEvent.click(within(form).getByRole("button", { name: "Restore default light theme" }));
+  expect(await within(form).findByText("Saved.")).toBeInTheDocument();
+  expect(calls.filter(c => c.method === "PUT")).toEqual([{ method: "PUT", path: "/api/settings/theme", body: { values: DEFAULT_LIGHT_THEME, clear: [] } }]);
+  expect(colour).toHaveValue(DEFAULT_LIGHT_THEME.theme_brand);
+  expect(within(form).getByRole("button", { name: "Save" })).toBeDisabled();
+  expect(within(form).queryByRole("button", { name: "Undo changes" })).not.toBeInTheDocument();
+  expect(within(form).getByRole("img", { name: "Light preview" })).toBeInTheDocument();
+  await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
+  expect(document.documentElement.dataset.preset).toBe("custom");
+  expect(screen.getByRole("img", { name: "Current logo" })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: "Current background" })).toBeInTheDocument();
+});
+
+test("branding cannot restore defaults over server-locked colour settings", async () => {
+  const calls = mockApi({
+    "GET /api/branding": {},
+    "GET /api/settings/theme": { section: "theme", fields: customThemeFields(true) },
+  });
+  renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
+  const button = await screen.findByRole("button", { name: "Restore default light theme" });
+  expect(button).toBeDisabled();
+  expect(screen.getByText(/Default colours cannot be restored/)).toBeInTheDocument();
+  await userEvent.click(button);
+  expect(calls.some(c => c.method === "PUT")).toBe(false);
+});
+
+test("failed light-theme restore keeps the unsaved palette available for retry", async () => {
+  mockApi({
+    "GET /api/branding": {},
+    "GET /api/settings/theme": { section: "theme", fields: customThemeFields() },
+    "PUT /api/settings/theme": () => new Response(JSON.stringify({ detail: "Could not save settings." }), { status: 503 }),
+  });
+  renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
+  const form = await screen.findByRole("form", { name: "Colours" });
+  const colour = within(form).getByRole("textbox", { name: "Main colour" });
+  fireEvent.change(colour, { target: { value: "#654321" } });
+  await userEvent.click(within(form).getByRole("button", { name: "Restore default light theme" }));
+  expect(await within(form).findByRole("alert")).toHaveTextContent("Could not save settings.");
+  expect(colour).toHaveValue("#654321");
+  expect(within(form).getByRole("button", { name: "Save" })).toBeEnabled();
 });

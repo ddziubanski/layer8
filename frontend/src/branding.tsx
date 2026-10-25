@@ -7,6 +7,13 @@ import { api, type Branding } from "./api/client";
 export const DEFAULT_ICON = "/layer8.svg";
 export const DEFAULT_LOGO = "/layer8-mark.png";
 
+export const DEFAULT_LIGHT_THEME = {
+  theme_preset: "custom",
+  theme_brand: "#0f6b5c",
+  theme_sidebar: "#14211e",
+  dark_mode: "off",
+} as const;
+
 const DEFAULT: Branding = {
   product_name: "Layer 8",
   sign_in_message: "",
@@ -19,10 +26,7 @@ const DEFAULT: Branding = {
   sign_in_backdrop: "plain",
   background_in_console: false,
   portal_welcome: "",
-  theme_preset: "custom",
-  theme_brand: "#0f6b5c",
-  theme_sidebar: "#14211e",
-  dark_mode: "off",
+  ...DEFAULT_LIGHT_THEME,
   background_url: null,
   logo_url: null,
   favicon_url: null,

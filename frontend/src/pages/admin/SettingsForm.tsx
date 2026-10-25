@@ -30,6 +30,7 @@ export function SettingsForm({
   embedded = false,
   onSaved,
   preview,
+  restoreDefaults,
 }: {
   me: User;
   section: string;
@@ -38,6 +39,7 @@ export function SettingsForm({
   embedded?: boolean;
   onSaved?: () => void;
   preview?: (values: Record<string, unknown>) => ReactNode;
+  restoreDefaults?: { label: string; values: Record<string, unknown> };
 }) {
   const queryClient = useQueryClient();
   const data = useQuery({ queryKey: ["settings", section], queryFn: () => api.settings.section(section), enabled: me.role === "admin" });
@@ -54,6 +56,7 @@ export function SettingsForm({
   if (me.role !== "admin") return <p>Settings are managed by admins.</p>;
   if (!data.data) return data.error ? <p className="error">{data.error.message}</p> : null;
   const fields = data.data.fields;
+  const defaultsLocked = restoreDefaults && Object.keys(restoreDefaults.values).some((name) => !fields.some((f) => f.name === name && !f.locked));
   const value = (f: SettingField) => (f.name in draft ? draft[f.name] : initial(f));
   const changed = fields.filter((f) => f.name in draft && (f.kind === "secret" ? draft[f.name] !== "" : draft[f.name] !== initial(f)));
 
@@ -83,7 +86,7 @@ export function SettingsForm({
             return (
               <div key={f.name}>
                 <label className="inline">
-                  <input type="checkbox" checked={value(f) as boolean} disabled={f.locked} onChange={(e) => set(e.target.checked)} /> {f.label}
+                  <input type="checkbox" checked={value(f) as boolean} disabled={f.locked || save.isPending} onChange={(e) => set(e.target.checked)} /> {f.label}
                 </label>
                 {hint && <div className="muted small">{hint}</div>}
               </div>
@@ -94,8 +97,8 @@ export function SettingsForm({
               {f.label}
               {f.kind === "colour" ? (
                 <span className="row-gap">
-                  <input type="color" className="colour-swatch" aria-label={`${f.label} picker`} value={value(f) as string} disabled={f.locked} onChange={(e) => set(e.target.value)} />
-                  <input className="colour-code" aria-label={f.label} value={value(f) as string} disabled={f.locked} maxLength={7} onChange={(e) => set(e.target.value)} />
+                  <input type="color" className="colour-swatch" aria-label={`${f.label} picker`} value={value(f) as string} disabled={f.locked || save.isPending} onChange={(e) => set(e.target.value)} />
+                  <input className="colour-code" aria-label={f.label} value={value(f) as string} disabled={f.locked || save.isPending} maxLength={7} onChange={(e) => set(e.target.value)} />
                 </span>
               ) : f.kind === "list" || f.kind === "pem" || f.kind === "multiline" ? (
                 <textarea
@@ -103,11 +106,11 @@ export function SettingsForm({
                   className={f.kind === "pem" ? "code" : undefined}
                   placeholder={f.kind === "pem" ? "-----BEGIN CERTIFICATE-----" : undefined}
                   value={value(f) as string}
-                  disabled={f.locked}
+                  disabled={f.locked || save.isPending}
                   onChange={(e) => set(e.target.value)}
                 />
               ) : f.kind === "choice" ? (
-                <select value={value(f) as string} disabled={f.locked} onChange={(e) => set(e.target.value)}>
+                <select value={value(f) as string} disabled={f.locked || save.isPending} onChange={(e) => set(e.target.value)}>
                   {f.choices?.map((c) => (
                     <option key={c.value} value={c.value}>
                       {c.label}
@@ -120,7 +123,7 @@ export function SettingsForm({
                   autoComplete={f.kind === "secret" ? "new-password" : "off"}
                   placeholder={f.kind === "secret" ? (f.is_set ? "Set. Type a new value to replace it" : "Not set") : undefined}
                   value={value(f) as string}
-                  disabled={f.locked}
+                  disabled={f.locked || save.isPending}
                   onChange={(e) => set(e.target.value)}
                 />
               )}
@@ -144,11 +147,20 @@ export function SettingsForm({
             Save
           </button>
           {changed.length > 0 && (
-            <button className="btn2" type="button" onClick={() => setDraft({})}>
+            <button className="btn2" type="button" disabled={save.isPending} onClick={() => setDraft({})}>
               Undo changes
             </button>
           )}
+          {restoreDefaults && (
+            <button className="btn2" type="button" disabled={save.isPending || defaultsLocked}
+              onClick={() => save.mutate(restoreDefaults.values)}>
+              {restoreDefaults.label}
+            </button>
+          )}
         </div>
+        {restoreDefaults && <p className="muted small" style={{ margin: 0 }}>
+          {defaultsLocked ? "Default colours cannot be restored while colour settings are set on the server. Change them there first." : "Restores the original colours and light mode immediately, replacing any unsaved colour changes. Images and text stay as they are."}
+        </p>}
       </form>
     </>
   );
