@@ -92,4 +92,4 @@ export function portalRoutes(me: Me, base = ""): RouteObject {
 
 /** Requesters, and technicians signed in with Windows (who also keep their /portal links). */
 export const portalRouter = (me: Me) =>
-  createBrowserRouter(me.role === "requester" ? [portalRoutes(me)] : [portalRoutes(me), portalRoutes(me, "/portal")]);
+  createBrowserRouter([portalRoutes(me), portalRoutes(me, "/portal")]);

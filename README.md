@@ -15,7 +15,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
 - **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
 - **For the room:** a remote display for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
-- **Sign-in your way:** local accounts with two-factor, AD, Windows sign-in to the portal, and Sign in with Microsoft.
+- **Sign-in your way:** one entry screen routes requesters to self-service and technicians/admins to the helpdesk using their existing roles. Local accounts with two-factor, AD, Windows sign-in to the portal, and Sign in with Microsoft remain available. Windows portal-only sessions still require a separate console sign-in.
 - **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, signed updates from GitHub releases, and no cloud required.
 
 <p>
@@ -89,7 +89,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
 - Integration health in Settings > Status: configuration gaps, failed/overdue worker passes, last successes and relay check-ins, with recovery links ([guide](docs/integration-health.md)).
 - Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It!.
-- Signed updates: Settings > Updates checks Layer 8's stable GitHub releases, verifies the publisher's signature, backs up first and checks the result ([docs/github-updates.md](docs/github-updates.md)).
+- Signed updates: Settings > Updates checks Layer 8's stable GitHub releases, verifies the publisher's signature, backs up first and checks the result. Open pages reconnect after restarts; a changed frontend refreshes automatically when no edited controls remain. A maintenance page also reconnects fresh browser visits ([docs/github-updates.md](docs/github-updates.md)).
 
 Screenshots of every page, in light and dark and in each theme: [screenshots/](screenshots/README.md) (an earlier gallery: [command-center](screenshots/command-center/README.md)). The full requirements and decisions are in [SPEC.md](SPEC.md).
 
