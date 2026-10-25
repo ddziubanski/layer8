@@ -55,6 +55,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports/kace/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["preview_api_imports_kace_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/kace/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply */
+        post: operations["apply_api_imports_kace_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/update-progress/{request_id}.json": {
         parameters: {
             query?: never;
@@ -5731,6 +5765,17 @@ export interface components {
             /** Breached */
             breached: boolean;
         };
+        /** Body_apply_api_imports_kace_apply_post */
+        Body_apply_api_imports_kace_apply_post: {
+            /** File */
+            file: string;
+            /** Queue Id */
+            queue_id: number;
+            /** Fingerprint */
+            fingerprint: string;
+            /** Confirm */
+            confirm: boolean;
+        };
         /** Body_photo_api_public_receiving_photo_post */
         Body_photo_api_public_receiving_photo_post: {
             /** Po */
@@ -5744,6 +5789,13 @@ export interface components {
             name: string;
             /** File */
             file: string;
+        };
+        /** Body_preview_api_imports_kace_preview_post */
+        Body_preview_api_imports_kace_preview_post: {
+            /** File */
+            file: string;
+            /** Queue Id */
+            queue_id: number;
         };
         /** Body_upload_attachment_api_tickets__ticket_id__attachments_post */
         Body_upload_attachment_api_tickets__ticket_id__attachments_post: {
@@ -7192,6 +7244,21 @@ export interface components {
         ImportGroupIn: {
             /** Guid */
             guid: string;
+        };
+        /** ImportReport */
+        ImportReport: {
+            /** Applied */
+            applied: boolean;
+            /** Queue */
+            queue: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Warnings */
+            warnings: string[];
+            /** Fingerprint */
+            fingerprint: string;
         };
         /** InstalledSoftwareMatchOut */
         InstalledSoftwareMatchOut: {
@@ -12573,6 +12640,76 @@ export interface operations {
             };
         };
     };
+    preview_api_imports_kace_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_preview_api_imports_kace_preview_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_api_imports_kace_apply_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_apply_api_imports_kace_apply_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_update_progress_api_update_progress__request_id__json_get: {
         parameters: {
             query?: never;
@@ -13253,6 +13390,7 @@ export interface operations {
                 assignee_id?: number | null;
                 source?: components["schemas"]["TicketSource"] | null;
                 requester_id?: number | null;
+                q?: string | null;
                 sort?: "due" | "id" | "subject" | "requester" | "source" | "assignee" | "queue" | "priority" | "status" | "age" | "updated";
                 dir?: ("asc" | "desc") | null;
                 limit?: number;

@@ -1,4 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+.import-counts { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:0; }
+.import-counts > div { padding:14px; background:var(--bg); border:1px solid var(--line); border-radius:8px; }
+.import-counts dt { color:var(--muted); font-size:13px; }
+.import-counts dd { margin:6px 0 0; font-size:24px; font-weight:600; }
 /* Ported from gui-sample/. Desktop first; usable on a tablet. */
 :root, .theme-preview[data-theme="light"] {
   --ink: #1b2421;

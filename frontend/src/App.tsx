@@ -82,6 +82,7 @@ const OnboardingAdmin = named(() => import("./pages/admin/OnboardingAdmin"), "On
 const RunnersAdmin = named(() => import("./pages/admin/RunnersAdmin"), "RunnersAdmin");
 const UpdatesAdmin = named(() => import("./pages/admin/UpdatesAdmin"), "UpdatesAdmin");
 const BackupAdmin = named(() => import("./pages/admin/BackupAdmin"), "BackupAdmin");
+const ImportsAdmin = named(() => import("./pages/admin/ImportsAdmin"), "ImportsAdmin");
 const StatusAdmin = named(() => import("./pages/admin/StatusAdmin"), "StatusAdmin");
 const SystemLogAdmin = named(() => import("./pages/admin/SystemLogAdmin"), "SystemLogAdmin");
 const TicketFieldsAdmin = named(() => import("./pages/admin/TicketFieldsAdmin"), "TicketFieldsAdmin");
@@ -197,6 +198,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   },
   { path: "updates", label: "Updates", adminOnly: true, page: (me) => <UpdatesAdmin me={me} /> },
   { path: "backup", label: "Backup", adminOnly: true, page: (me) => <BackupAdmin me={me} /> },
+  { path: "imports", label: "Imports", adminOnly: true, page: (me) => <ImportsAdmin me={me} /> },
   { path: "status", label: "Status", adminOnly: true, page: (me) => <StatusAdmin me={me} /> },
   { path: "log", label: "Log", adminOnly: true, page: (me) => <SystemLogAdmin me={me} /> },
 ];
@@ -222,7 +224,7 @@ const SETTINGS_GROUPS: { name: string; paths: string[] }[] = [
   { name: "API / Integrations", paths: ["api-keys", "runners", "email", "teams", "action1", "warranty"] },
   { name: "People and access", paths: ["users", "groups", "permissions", "directory", "sign-in", "windows-sign-in"] },
   { name: "Look and feel", paths: ["branding", "modules", "wallboards"] },
-  { name: "System", paths: ["general", "updates", "backup", "status", "log"] },
+  { name: "System", paths: ["general", "updates", "backup", "imports", "status", "log"] },
 ];
 
 const allowedSettings = (me: Me) =>
