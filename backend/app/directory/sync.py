@@ -84,7 +84,7 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
             run.created += 1
             _note(run, "created", du.email, du.display_name)
 
-    before = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.directory_dn, user.is_active)
+    before = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.mobile, user.office, user.company, user.directory_dn, user.is_active)
     if du.email and du.email.lower() != (user.email or "").lower():
         owner = _address_owner(session, du.email)
         if owner and owner != user.id:
@@ -94,6 +94,7 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
     user.display_name = du.display_name or user.display_name
     user.upn, user.sam_account_name = du.upn, du.sam
     user.department, user.title, user.phone = du.department, du.title, du.phone
+    user.mobile, user.office, user.company = du.mobile, du.office, du.company
     user.directory_id, user.directory_dn = du.guid, du.dn
     user.auth_source = AuthSource.directory
     # AD holds the password now; a stale local hash must never work again,
@@ -123,10 +124,20 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
         session.add(UserEmail(user_id=user.id, email=address))
     session.flush()
 
-    after = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.directory_dn, user.is_active)
+    after = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.mobile, user.office, user.company, user.directory_dn, user.is_active)
     if not created and not linked and before != after:
         run.updated += 1
     return user
+
+
+def link_managers(session: Session, pairs: list[tuple[User, str | None]]) -> None:
+    """Point each user at their manager's account, matched by DN (a manager outside the sync scope: none)."""
+    wanted = {dn.lower() for _, dn in pairs if dn}
+    by_dn = {dn.lower(): uid for uid, dn in session.execute(select(User.id, User.directory_dn).where(func.lower(User.directory_dn).in_(wanted)))} if wanted else {}
+    for user, dn in pairs:
+        manager = by_dn.get(dn.lower()) if dn else None
+        user.manager_id = manager if manager != user.id else None
+    session.flush()
 
 
 def sync_group(session: Session, directory: Directory, group: Group, now: datetime, run: DirectorySyncRun) -> None:
@@ -247,10 +258,14 @@ def full_sync(session: Session, directory: Directory, now: datetime | None = Non
     savepoint = session.begin_nested() if dry_run else None
     try:
         seen: set[str] = set()
+        managers: list[tuple[User, str | None]] = []
         for du in directory.users():
             seen.add(du.guid)
-            upsert_user(session, du, now, run)
+            user = upsert_user(session, du, now, run)
+            if user is not None:
+                managers.append((user, du.manager_dn))
         run.users_seen = len(seen)
+        link_managers(session, managers)
 
         known = list(session.scalars(select(User).where(User.auth_source == AuthSource.directory, User.directory_id.is_not(None))))
         if not seen and known:
@@ -292,6 +307,7 @@ def sign_in_sync(session: Session, directory: Directory, du: DirectoryUser, now:
     user = upsert_user(session, du, now, run)
     if user is None or not user.is_active:
         return None
+    link_managers(session, [(user, du.manager_dn)])
     guids = directory.user_group_guids(du)
     for group in tracked_groups(session):
         inside = group.directory_id in guids

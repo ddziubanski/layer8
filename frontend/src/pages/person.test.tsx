@@ -14,6 +14,8 @@ const PERSON: Person = {
   title: "Accountant", department: "Finance", phone: "+1 555 0100", upn: "ralvarez@corp.local", sam_account_name: "ralvarez",
   in_directory: true, ou: "OU=Finance,DC=corp,DC=local", last_synced_at: null, presence: null, open_tickets: 1, all_tickets: 12,
   devices: [{ id: 3, name: "WS-0142", os: "Windows 11" }],
+  mobile: "+1 555 0199", office: "Building 2", company: "Example Corp",
+  manager: { id: 9, display_name: "M. Osei", title: "Finance manager" }, direct_reports: [{ id: 11, display_name: "K. Lee", title: null }],
 };
 
 test("the requester's name opens a contact card, not the ticket", async () => {
@@ -42,5 +44,9 @@ test("the person page: contact, devices and their tickets", async () => {
   expect(screen.getByRole("link", { name: "WS-0142" })).toHaveAttribute("href", "/devices/3");
   expect(await screen.findByRole("link", { name: "Printer jam" })).toHaveAttribute("href", "/tickets/4821");
   expect(screen.getByText("OU=Finance,DC=corp,DC=local")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "M. Osei" })).toHaveAttribute("href", "/people/9");
+  expect(screen.getByRole("link", { name: "+1 555 0199" })).toHaveAttribute("href", "tel:+15550199");
+  expect(screen.getByText("Building 2")).toBeInTheDocument();
+  expect(within(screen.getByRole("region", { name: "Direct reports" })).getByRole("link", { name: "K. Lee" })).toHaveAttribute("href", "/people/11");
   expect(calls.some((c) => c.path.startsWith("/api/tickets?") && c.path.includes("requester_id=7") && c.path.includes("scope=all"))).toBe(true);
 });

@@ -16,7 +16,23 @@ Technicians can see who they're helping without leaving the queue.
   - for AD accounts, their OU and, on request, their AD groups (read live from AD);
   - every ticket they've asked for, newest first, with **All** and **Open** filters and **Show more**. Imported Track-It! history is included.
 
-The details come from what Layer 8 already stores: directory sync for AD accounts, the Track-It! import, or the local account. Manager, office and mobile aren't read from AD yet.
+The details come from what Layer 8 already stores: directory sync for AD accounts, the Track-It! import, or the local account.
+
+From AD, directory sync reads:
+
+| AD attribute | Shown as |
+|---|---|
+| `department` | Department |
+| `title` | Title |
+| `telephoneNumber` | Phone |
+| `mobile` | Mobile |
+| `physicalDeliveryOfficeName` | Office |
+| `company` | Company |
+| `manager` | Manager |
+
+The manager is linked to their own Layer 8 account, so you can click through to it. The person page also lists each manager's direct reports. A manager outside the sync's search base isn't linked. Generic LDAP directories use `o` for company.
+
+New fields appear after the next directory sync (Settings > Directory > Sync now). People added by the Track-It! import get their Track-It! location as their office; people already in AD keep what AD says.
 
 Ticket counts and lists only include queues the technician may see, so a restricted queue's tickets don't show up for someone outside it. Requesters can't open either view.
 

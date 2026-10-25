@@ -89,6 +89,24 @@ def test_sync_creates_users_with_details_and_aliases(db, ad, org):
     assert park.password_hash is None
 
 
+def test_sync_brings_contact_details_and_links_managers(client, db, admin, ad, org):
+    # The manager comes later in the listing than the person who reports to them.
+    ad.put(org["user"], mobile="+1 555 0199", office="Building 2, Room 14", company="Example Corp", manager_dn=org["osei"].dn.upper())
+    ad.put(org["osei"], manager_dn="CN=Someone,OU=Elsewhere,DC=corp,DC=local")  # outside the sync scope
+    run = run_sync(db, ad)
+    assert run.error is None
+    ral, osei = user(db, "ralvarez@corp.local"), user(db, "mosei@corp.local")
+    assert (ral.mobile, ral.office, ral.company, ral.manager_id) == ("+1 555 0199", "Building 2, Room 14", "Example Corp", osei.id)
+    assert osei.manager_id is None
+    card = client.get(f"/api/people/{ral.id}", headers=as_user(admin)).json()
+    assert card["manager"] == {"id": osei.id, "display_name": "M. Osei", "title": None}
+    assert [r["display_name"] for r in client.get(f"/api/people/{osei.id}", headers=as_user(admin)).json()["direct_reports"]] == ["R. Alvarez"]
+    # A manager removed in AD is unlinked on the next sync.
+    ad.put(org["user"], manager_dn=None)
+    run_sync(db, ad)
+    assert user(db, "ralvarez@corp.local").manager_id is None
+
+
 def test_resync_updates_renames_and_aliases(db, ad, org):
     run_sync(db, ad)
     ad.put(org["park"], display_name="Jae Park", dn="CN=Jae Park,OU=Moved,DC=corp,DC=local", aliases=["jae@corp.com"], department="Infra")

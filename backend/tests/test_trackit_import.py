@@ -24,7 +24,7 @@ def bundle(path, tables: dict, files: dict | None = None, manifest: dict | None 
 TABLES = {
     "_CUSTOMER_": [
         {"SEQUENCE": 1, "FNAME": "Ana", "NAME": "Lopez", "_EMAILID_": "alopez@corp.local", "WINUSERID": "CORP\\alopez", "SSPWD": "hash!", "SALT": "salt!", "_INACTIVE_:": 0, "DEPT": 7},
-        {"SEQUENCE": 2, "FNAME": "Old", "NAME": "Timer", "_EMAILID_": "", "WINUSERID": "", "_INACTIVE_:": 1},
+        {"SEQUENCE": 2, "FNAME": "Old", "NAME": "Timer", "_EMAILID_": "", "WINUSERID": "", "_INACTIVE_:": 1, "LOCATION": 4},
     ],
     "_PERSONNEL_": [
         {"SEQUENCE": 10, "FNAME": "Dee", "NAME": "Cole", "_EMAILID_": "", "WINUSERID": "dcole", "PWD": "x", "SID": "S-1-5"},
@@ -110,6 +110,8 @@ def test_import(db, desk, tmp_path):
         ("Track-It! history (system notes):", True), ("Cleared the tray", True), ("Resolution:", False),
     ]
     assert notes[1].body == "Cleared the tray\n\n(Time spent: 30 min)"
+    # People Track-It! adds get its location as their office; existing (AD) people keep theirs.
+    assert db.scalar(select(User).where(User.display_name == "Old Timer")).office == "HQ" and ana.office is None
     # Nobody's Track-It! password came across; unmatched technicians are inactive.
     gone = db.scalar(select(User).where(User.email == "gone@corp.local"))
     assert gone.role == UserRole.agent and not gone.is_active and gone.password_hash is None

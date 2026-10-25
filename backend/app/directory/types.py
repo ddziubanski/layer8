@@ -23,6 +23,11 @@ class DirectoryUser:
     department: str | None = None
     title: str | None = None
     phone: str | None = None
+    mobile: str | None = None
+    office: str | None = None
+    company: str | None = None
+    # The manager's DN; sync links it to their account once everyone is in.
+    manager_dn: str | None = None
     # Other addresses (proxyAddresses), not including email.
     aliases: list[str] = field(default_factory=list)
 
