@@ -174,7 +174,7 @@ export function BrandingAdmin({ me }: { me: User }) {
           preview={(values) => <ThemePreview values={values} name={brand.product_name} logo={brand.logo_url} />}
         />
         <SettingsForm me={me} section="signin_appearance" title="Sign-in appearance" embedded
-          intro="Customize the main sign-in page. Upload a background below; keep your logo, welcome text and support message under Name and texts. These options also style password-change and two-factor setup screens, without changing authentication or portal appearance."
+          intro="Customize the main sign-in page. Product name and support message are under Name and texts; upload a background or logo below. These options also style password-change and two-factor setup screens, without changing authentication or portal appearance."
           onSaved={() => queryClient.invalidateQueries({queryKey:["branding"]})}
           preview={values => <SignInPreview brand={brand} values={values} />} />
         <ImageSlot name="background" title="Background" hint="Shown behind the sign-in page and the portal (and the console, if chosen above)." url={brand.background_url} />
