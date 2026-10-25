@@ -33,3 +33,6 @@ db/
 
 # The AGPL source archive the ISO build packs (served at /api/source)
 /layer8-source.tar.gz
+
+# TypeScript build cache (tsc -b rewrites it; tracking it made release builds "-dirty")
+*.tsbuildinfo

@@ -22,6 +22,7 @@ from app.schemas import (
     IpAddressIn,
     IpAddressOut,
     MerakiClientOut,
+    NetworkObservationOut,
     SubnetDetailOut,
     SubnetIn,
     SubnetOut,
@@ -295,7 +296,7 @@ def _address_out(session, r: IpAddress, subnet: Subnet | None = None, ports: dic
     context = (contexts if contexts is not None else meraki.context_for(session, [r.mac])).get(r.mac)
     out.meraki = MerakiClientOut(**context) if context else None
     seen = observed if observed is not None else network.context_for(session, [r.mac], network.active_providers())
-    out.observations = seen.get(r.mac, []) if r.mac else []
+    out.observations = [NetworkObservationOut(**o) for o in seen.get(r.mac, [])] if r.mac else []
     return out
 
 
