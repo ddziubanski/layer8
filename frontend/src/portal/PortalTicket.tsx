@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router";
 
 import { api, type User } from "../api/client";
 import { AttachedLine, AttachmentsSection } from "../components/Attachments";
+import { transientFailure } from "../components/ServerRecovery";
 import { StatusChip } from "../components/Chips";
 import { useDropFiles } from "../components/useDropFiles";
 import { fileSize, when } from "../format";
@@ -48,7 +49,7 @@ export function PortalTicket({ me }: { me: User }) {
     onSettled: refresh,
   });
 
-  if (ticket.error) {
+  if (ticket.error && (!ticket.data || !transientFailure(ticket.error))) {
     return (
       <p className="error">
         {ticket.error.message}. <Link to={p("/tickets")}>Back to my tickets</Link>

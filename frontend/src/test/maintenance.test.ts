@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 
-const html = readFileSync(new URL("../../../install/files/maintenance.html",import.meta.url),"utf8");
+const html = readFileSync("../install/files/maintenance.html","utf8");
 const script = html.match(/<script>([\s\S]*?)<\/script>/)![1];
 
 test("maintenance retries failed and HTML responses, then reloads the original URL only after JSON readiness",async () => {

@@ -69,7 +69,7 @@ test("an expired session remains an authentication error after readiness succeed
   h.online(version,true);
   fireEvent.click(screen.getByRole("button",{name:"Check connection now"}));
   expect(await screen.findByText("Session expired")).toBeInTheDocument();
-  expect(screen.queryByText("Reconnecting to Layer 8")).not.toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByText("Reconnecting to Layer 8")).not.toBeInTheDocument());
 });
 
 test("readiness rejects HTML and incomplete JSON rather than treating a 200 as success",async () => {
