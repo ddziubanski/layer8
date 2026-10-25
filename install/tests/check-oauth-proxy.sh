@@ -12,7 +12,8 @@ docker run --detach --name layer8-oauth-proxy-test \
     --publish 127.0.0.1:8443:443 \
     --volume "$qa_dir:/etc/helpdesk/tls:ro" \
     --volume "$qa_dir/server.conf:/etc/nginx/layer8-server.conf:ro" \
-    --volume "$qa_dir/nginx.conf:/etc/nginx/nginx.conf:ro" nginx:stable
+    --volume "$qa_dir/nginx.conf:/etc/nginx/nginx.conf:ro" \
+    --volume "$PWD/install/files/maintenance.html:/usr/local/lib/layer8-updater/maintenance.html:ro" nginx:stable
 # No backend is running. Even an upstream failure must not leak callback query
 # parameters through access/error logs or inherited same-origin referrer headers.
 attempt=0
