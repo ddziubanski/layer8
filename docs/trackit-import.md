@@ -59,15 +59,19 @@ Without `--interactive`, the same choices are options: `--label HD_LOOKUP01=Buil
 
 | Track-It! | Layer 8 |
 |---|---|
-| Requesters | Matched to existing users (from AD) by email or Windows login. Others are added as requesters with no password; inactive ones stay inactive. |
+| Requesters | Matched to existing users (from AD) by email or Windows login. Others are added as requesters with no password; inactive ones stay inactive. Their Track-It! location becomes their office. |
 | Technicians | Matched the same way. Others are added as **inactive** technician accounts, so their names stay on old notes. |
-| Tickets | Ticket title, description, status, priority, category path, requester, assignee, phone, department, due date, parent ticket, linked asset, queue (from the opened group), source (email, portal or technician, from Ticket Source), and opened, responded and closed dates. The description ends with "(Track-It! ticket 12345)", so searching for the old number finds it. Other fields become imported details, as chosen above. |
-| Notes | Technician notes (private ones as internal notes) and resolutions, with their authors, dates and time spent. System notes become one internal summary, if exported. |
+| Tickets | Ticket title, description, status, priority, category path, requester, assignee (sent to, else responded by, else closed by), phone, department, due date, parent ticket, linked asset, queue (from the opened group), source (email, portal or technician, from Ticket Source), and opened, responded and closed dates. The description ends with "(Track-It! ticket 12345)", so searching for the old number finds it. Other fields become imported details, as chosen above. |
+| Notes | Technician notes (private ones as internal notes) and resolutions, with their authors, dates and time spent, as plain text (Track-It! stores them as HTML). System notes become one internal summary, if exported. |
 | Work orders | Child tickets of their ticket, with their notes. |
 | Attachments | Files on their tickets. |
 | Solutions | Knowledge base articles in their topic: private ones for staff only, inactive ones archived. |
 | Assets | Merged into Devices by name or serial (empty fields filled: serial, maker, purchase date, warranty end), others added. |
 
+- **Gaps in Track-It!'s data:** older tickets, especially ones Track-It! itself migrated, often have no customer, and notes often have no technician.
+  - A ticket without a customer takes the customer whose email matches the ticket's, or whose phone number matches, but only if no other customer shares that number.
+  - A note without a technician is credited to the technician whose login last saved it.
+  - Whatever is still unknown shows as "Track-It! import". That includes notes last saved by Track-It!'s own system account.
 - **Passwords:** nobody's Track-It! password comes across. People sign in with AD, or set a new local password.
 - **No side effects:** nothing is emailed, and routing rules, SLA timers and surveys don't run on imported tickets.
 - **Statuses:** "C" becomes closed. Open tickets become open, or "waiting on user" when their Track-It! status mentions waiting, pending or hold.

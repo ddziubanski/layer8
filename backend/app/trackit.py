@@ -123,16 +123,34 @@ class Bundle:
 # Text
 
 
+# Tags Track-It! notes use. Anything else in angle brackets is text, e.g. "From: Jo <jo@corp.example>".
+HTML_TAGS = {
+    "a", "abbr", "b", "blockquote", "body", "br", "center", "code", "col", "colgroup", "dd", "div", "dl", "dt", "em", "font",
+    "h1", "h2", "h3", "h4", "h5", "h6", "head", "hr", "html", "i", "img", "label", "li", "meta", "o", "ol", "p", "pre", "s",
+    "script", "small", "span", "strike", "strong", "style", "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead",
+    "title", "tr", "tt", "u", "ul", "xml",
+}
+LOOKS_HTML = re.compile(r"</?(?:" + "|".join(sorted(HTML_TAGS)) + r")(?=[\s/>])[^<>]*>", re.I)
+
+
 class _Text(HTMLParser):
-    BLOCK = {"p", "div", "tr", "li", "h1", "h2", "h3", "h4", "h5", "h6", "table", "ul", "ol", "blockquote", "pre"}
+    BLOCK = {"p", "div", "tr", "li", "h1", "h2", "h3", "h4", "h5", "h6", "table", "ul", "ol", "blockquote", "pre", "hr", "dt", "dd"}
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.out: list[str] = []
         self.skip = 0
+        # Open links: (href, where the link's text starts in out).
+        self.links: list[tuple[str, int]] = []
 
     def handle_starttag(self, tag, attrs):
-        if tag in ("script", "style", "head"):
+        if ":" in tag:
+            return  # Office markup (<o:p>, <v:shape>): nothing to read
+        if tag not in HTML_TAGS:
+            self.out.append(self.get_starttag_text() or "")
+        elif tag == "a":
+            self.links.append((dict(attrs).get("href") or "", len(self.out)))
+        elif tag in ("script", "style", "head"):
             self.skip += 1
         elif tag == "br":
             self.out.append("\n")
@@ -144,7 +162,17 @@ class _Text(HTMLParser):
             self.out.append(" ")
 
     def handle_endtag(self, tag):
-        if tag in ("script", "style", "head"):
+        if ":" in tag:
+            return
+        if tag not in HTML_TAGS:
+            self.out.append(f"</{tag}>")
+        elif tag == "a" and self.links:
+            href, start = self.links.pop()
+            label = "".join(self.out[start:]).strip()
+            target = href.removeprefix("mailto:")
+            if href.lower().startswith(("http:", "https:", "mailto:")) and target.lower() not in label.lower():
+                self.out.append(f" ({target})")
+        elif tag in ("script", "style", "head"):
             self.skip = max(0, self.skip - 1)
         elif tag in self.BLOCK and tag != "li":
             self.out.append("\n")
@@ -154,12 +182,13 @@ class _Text(HTMLParser):
             self.out.append(data)
 
 
-def text(value) -> str:
-    """Track-It! notes are HTML (or plain text): as plain text, paragraphs kept."""
+def text(value, *, again: bool = True) -> str:
+    """Track-It! notes are HTML (or plain text): as plain text, paragraphs kept. Some hold an
+    email's HTML escaped inside the note's own HTML; that comes out as HTML, so it's read once more."""
     if not value:
         return ""
     s = str(value)
-    if re.search(r"<(p|div|br|span|table|li|font|b|i|html)\b", s, re.I):
+    if LOOKS_HTML.search(s):
         parser = _Text()
         parser.feed(s)
         parser.close()
@@ -169,6 +198,8 @@ def text(value) -> str:
     s = s.replace("\r\n", "\n").replace("\r", "\n").replace("\xa0", " ")
     s = re.sub(r"[ \t]+\n", "\n", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
+    if again and LOOKS_HTML.search(s):
+        return text(s, again=False)
     return s.strip()
 
 
@@ -193,6 +224,12 @@ def _int(value) -> int | None:
         return int(value) if value not in (None, "") else None
     except (TypeError, ValueError):
         return None
+
+
+def _digits(value) -> str:
+    """A phone number's digits, for matching; too short to be a real number: nothing."""
+    d = re.sub(r"\D", "", str(value or ""))
+    return d if len(d) >= 7 else ""
 
 
 def _login(value) -> str:
@@ -279,7 +316,7 @@ class Report:
         c = self.counts
         out = [
             ("Imported" if self.apply else "Dry run (nothing saved)") + ":",
-            f"  requesters: {c['requester_matched']} matched, {c['requester_new']} new",
+            f"  requesters: {c['requester_matched']} matched, {c['requester_new']} new; {c['requester_inferred']} tickets without one took it from their email or phone",
             f"  technicians: {c['tech_matched']} matched, {c['tech_new']} new (inactive)",
             f"  tickets: {c['ticket_new']} new, {c['ticket_updated']} updated; child tickets from work orders: {c['workorder_new']} new, {c['workorder_updated']} updated",
             f"  notes: {c['comment_new']} new ({c['comment_internal']} internal), {c['system_summary']} system-note summaries",
@@ -384,6 +421,13 @@ class Importer:
             return self.fallback.id
         return self._person("requester", row)
 
+    def _customer_for(self, row: dict):
+        """Track-It! left the customer out (often tickets it migrated): match the ticket's email or phone."""
+        seq = self.customer_by_email.get(str(row.get("_EMAILID_") or "").strip().lower()) or self.customer_by_phone.get(_digits(row.get("PHONE")))
+        if seq is not None:
+            self.r.counts["requester_inferred"] += 1
+        return seq
+
     def _technician(self, seq) -> int | None:
         row = self.lookup["personnel"].get(seq)
         return self._person("technician", row) if row else None
@@ -480,8 +524,8 @@ class Importer:
         t.imported_fields = self._imported(row, dept, t.department_id is not None)
         t.resolution_due_at = when(row.get("DUE_DATE"))
         t.subject = (str(row.get("DESCRIPTION") or "").strip() or f"Track-It! {kind} {seq}")[:300]
-        t.requester_id = self._requester(row.get("CLIENT"))
-        t.assignee_id = self._technician(row.get("SENT TO") or row.get("RESPONDED BY"))
+        t.requester_id = self._requester(row.get("CLIENT") or self._customer_for(row))
+        t.assignee_id = self._technician(row.get("SENT TO") or row.get("RESPONDED BY") or row.get("CLOSED BY"))
         t.priority, t.category, t.parent_id = self._priority(row), self._category(row.get("CATEGORY")), parent_id or t.parent_id
         t.status, t.status_changed_at = status, closed if status == TicketStatus.closed else t.status_changed_at
         t.closed_at = t.resolved_at = closed if status == TicketStatus.closed else None
@@ -513,7 +557,9 @@ class Importer:
             if self._seen(kind_ref, n.get("SEQUENCE")):
                 continue
             by_requester = bool(n.get("REQUESTOR#"))
-            author = requester_id if by_requester else (self._technician(n.get("PERSON")) or self.fallback.id)
+            author = requester_id if by_requester else (
+                self._technician(n.get("PERSON")) or self._technician(self.tech_by_login.get(_login(n.get("LASTUSER")))) or self.fallback.id
+            )
             internal = bool(n.get("ISPRIVATE"))
             if kind == "Ticket Resolution":
                 body = "Resolution:\n" + body
@@ -630,6 +676,19 @@ class Importer:
             "customers": self._table("_CUSTOMER_"), "personnel": self._table("_PERSONNEL_"), "departments": self._table("_DEPART_"),
             "categories": self._table("_CATEGORIES_"), "priorities": self._table("_PRIORITY_"), "statuses": self._table("_UDSTATUS_"),
             "locations": self._table("_LOCATION_"),
+        }
+        # Tickets without a customer: their email, or a phone number only one customer has.
+        self.customer_by_email: dict[str, object] = {}
+        phones: dict[str, list] = {}
+        for seq, row in self.lookup["customers"].items():
+            if email := str(row.get("_EMAILID_") or "").strip().lower():
+                self.customer_by_email.setdefault(email, seq)
+            if phone := _digits(row.get("PHONE")):
+                phones.setdefault(phone, []).append(seq)
+        self.customer_by_phone = {phone: seqs[0] for phone, seqs in phones.items() if len(seqs) == 1}
+        # Notes without a technician still say which login last saved them.
+        self.tech_by_login = {
+            _login(row.get(k)): seq for seq, row in self.lookup["personnel"].items() for k in ("CODE", "WINUSERID", "LDAPUSERID") if _login(row.get(k))
         }
         self.departments: dict[str, int] = {}
         # Devices first, so tickets can be linked to theirs.
