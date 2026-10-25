@@ -535,6 +535,18 @@ def _ask(question: str, default: str = "") -> str:
     return answer or default
 
 
+def import_spiceworks_command(args) -> None:
+    """python -m app.cli import-spiceworks: dry run (or import) a Spiceworks CSV export into one queue."""
+    from app import spiceworks, trackit
+
+    with SessionLocal() as session:
+        try:
+            report = spiceworks.run(session, args.file, queue_name=args.queue, apply=args.apply, departments=args.departments)
+        except trackit.ImportError_ as exc:
+            raise SystemExit(str(exc)) from None
+    print("\n".join(report.lines()))
+
+
 def import_trackit_command(args) -> None:
     """python -m app.cli import-trackit: show the fields found, (optionally) choose, dry run, import."""
     from app import trackit
@@ -635,10 +647,17 @@ def main() -> None:
     p.add_argument("--skip", action="append", default=[], metavar="FIELD", help="Leave Track-It!'s field FIELD out (e.g. HD_LOOKUP04; repeatable)")
     p.add_argument("--departments", choices=["match", "add", "skip"], default="match", help="match: only your existing department choices (default; others are kept as an imported detail); add: add missing ones as choices; skip")
     p.add_argument("--interactive", action="store_true", help="Go through the fields found, choose what to keep, see the dry run, then confirm")
+    p = sub.add_parser("import-spiceworks", help="Import ticket history from a Spiceworks Cloud Help Desk CSV export into one queue; a dry run unless --apply")
+    p.add_argument("file", help="The export (.csv)")
+    p.add_argument("--queue", required=True, help="The queue the tickets go to, e.g. Maintenance (make it first)")
+    p.add_argument("--apply", action="store_true", help="Import for real (without it, nothing is saved)")
+    p.add_argument("--departments", choices=["match", "add", "skip"], default="match", help="match: only your existing department choices (default; others are kept as an imported detail); add: add missing ones; skip")
     args = parser.parse_args()
 
     if args.cmd == "import-trackit":
         import_trackit_command(args)
+    elif args.cmd == "import-spiceworks":
+        import_spiceworks_command(args)
     elif args.cmd == "create-admin":
         create_admin(args.email, args.name, read_password(args.password_stdin))
     elif args.cmd == "set-password":
