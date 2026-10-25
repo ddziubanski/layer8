@@ -6,6 +6,7 @@ import json
 import mimetypes
 import re
 import zipfile
+import zlib
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import PurePosixPath
@@ -131,7 +132,7 @@ class Bundle:
                             raise KaceError(f"Ticket {row.id}: attachment checksum mismatch")
                 if any(len(key) > 100 or len(value) > 4000 for key, value in row.custom_fields.items()):
                     raise KaceError("Custom field names/values are too long")
-        except (zipfile.BadZipFile, KeyError, ValidationError, ValueError, UnicodeError, RuntimeError, NotImplementedError, EOFError) as exc:
+        except (zipfile.BadZipFile, zlib.error, KeyError, ValidationError, ValueError, UnicodeError, RuntimeError, NotImplementedError, EOFError) as exc:
             if isinstance(exc, KaceError):
                 raise
             raise KaceError("Invalid KACE export bundle; check format, fields and dates with the export tool") from None

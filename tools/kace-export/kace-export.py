@@ -76,7 +76,9 @@ class Client:
             with self.opener.open(request, timeout=30) as response:
                 payload = response.read(MAX_FILE + 1)
         except urllib.error.HTTPError as exc:
-            raise ExportError(f"KACE HTTP {exc.code}; check organization, read permissions and MFA (--mfa). No partial bundle was kept") from None
+            code = exc.code
+            exc.close()
+            raise ExportError(f"KACE HTTP {code}; check organization, read permissions and MFA (--mfa). No partial bundle was kept") from None
         except (urllib.error.URLError, TimeoutError):
             raise ExportError("Cannot reach KACE over trusted HTTPS; check address, certificate and network access") from None
         if len(payload) > MAX_FILE:
@@ -127,7 +129,9 @@ def export(client, org, zone, out, limit=100, offset=0):
                 for key, value in r.items():
                     if key.startswith("custom_") and key[7:].isdigit() and value is not None:
                         row["custom_fields"][key] = (json.dumps(value,ensure_ascii=False) if isinstance(value,(dict,list)) else str(value))[:4000]
-                for raw_change in client.pages(f"/api/service_desk/tickets/{tid}/changes", "Changes", "hd_ticket_change all,attachments standard,user standard"):
+                for raw_change in client.pages(f"/api/service_desk/tickets/{tid}/changes", "Changes", "hd_ticket_change all,attachments standard,user standard",5001):
+                    if len(row["notes"]) >= 5000:
+                        raise ExportError("More than 5,000 changes on one ticket; review this ticket separately")
                     change = lower(raw_change)
                     cid = identifier(change.get("id"))
                     comment = change.get("comment") or change.get("comments")
@@ -146,7 +150,9 @@ def export(client, org, zone, out, limit=100, offset=0):
                 if r.get("resolution"):
                     # A reserved numeric ID cannot collide with KACE's integer change IDs.
                     row["notes"].append({"id":"99999999999999999999","body":str(r["resolution"]),"internal":True,"author":row["owner"],"created_at":row["closed_at"],"files":[]})
-                for raw_work in client.pages(f"/api/service_desk/tickets/{tid}/work", "Work", "hd_work all,user standard"):
+                for raw_work in client.pages(f"/api/service_desk/tickets/{tid}/work", "Work", "hd_work all,user standard",5001):
+                    if len(row["work"]) >= 5000:
+                        raise ExportError("More than 5,000 work items on one ticket; review this ticket separately")
                     work = lower(raw_work)
                     minutes = work.get("minutes",0)
                     if not isinstance(minutes,int) or minutes < 0:
@@ -159,7 +165,8 @@ def export(client, org, zone, out, limit=100, offset=0):
             archive.writestr("manifest.json",json.dumps({"format":"layer8-kace-export-v1","appliance":client.base,"organization":org,"tickets":len(tickets)}))
         if temporary.stat().st_size > 64 * 1024 * 1024:
             raise ExportError("Compressed bundle exceeds 64 MiB; reduce --limit")
-        os.replace(temporary,out)
+        # Same-directory hard link is atomic and refuses an output created by another run.
+        os.link(temporary,out)
         return len(tickets)
     finally:
         temporary.unlink(missing_ok=True)
