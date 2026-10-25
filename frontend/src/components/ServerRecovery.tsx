@@ -39,9 +39,9 @@ export function useServerRecovery(error: Error | null, me: Me | undefined, retry
   const [freshVersion, setFreshVersion] = useState<string | null>(null);
   const dirty = useRef(new Set<Element>());
   const watched = useRef(false);
-  const updates = useQuery<UpdateStatus>({queryKey:["release-updates"],enabled:false});
+  const updates = useQuery<UpdateStatus>({queryKey:["release-updates"],queryFn:api.updates.status,enabled:false});
   const progressUrl = updates.data?.progress_url;
-  const progress = useQuery<Record<string, unknown>>({queryKey:["update-progress",progressUrl],enabled:false});
+  const progress = useQuery<Record<string, unknown>>({queryKey:["update-progress",progressUrl],queryFn:() => api.updates.progress(progressUrl!),enabled:false});
   const admin = me?.role === "admin" && !me.portal_only;
   const phase = String((progress.data ?? updates.data?.operation)?.phase ?? "");
   const updating = admin && !!updates.data?.busy;
