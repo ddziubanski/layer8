@@ -43,7 +43,7 @@ export function UnifiAdmin({ me }: { me: Me }) {
         section="unifi"
         title="Connection and options"
         embedded
-        intro="Cloud needs only an API key from unifi.ui.com and the console IDs (Test connection lists them). Local needs the console's address, a key from its Integrations page and, usually, its CA certificate."
+        intro="Cloud needs a Site Manager API key from unifi.ui.com and the console IDs. Personal keys can reach only consoles owned by that UI account; organization keys need access to the console's organization. Local uses the console address, its own Network Integrations key and usually its CA or self-signed certificate. The key sources are different. Test connection identifies which stage and HTTP status failed."
         onSaved={() => { test.reset(); sync.reset(); void status.refetch(); void queryClient.invalidateQueries({ queryKey: ME_KEY }); }}
       />
       <p className="muted small">

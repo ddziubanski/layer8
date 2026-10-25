@@ -24,6 +24,24 @@ Use a key from an account with read-only access where you can. Guest vouchers ne
 
 ## Set it up
 
+### Key source and connection errors
+
+Cloud uses a **Site Manager** key generated at [unifi.ui.com](https://unifi.ui.com). Local uses the key from that console's **Network > Settings > Integrations**. A key made for one route should not be assumed to work with the other.
+
+The cloud Connector requires console firmware **5.0.3 or later**. A personal (non-organization) API key can proxy only to consoles owned by the UI account that generated it, even if that person is an administrator elsewhere. Organization keys can reach consoles in the organization with the appropriate access. Verify Site Manager and Network access when creating the key. See the [official Network Connector GET contract](https://developer.ui.com/network/v10.6.106/connectorget).
+
+The cloud URL is `https://api.ui.com/v1/connector/consoles/<console-id>/network/integration/v1/sites`; the local URL retains `/proxy/network/integration/v1/sites`. Layer 8 versions through 1.5.1 incorrectly added the local `/proxy` prefix to the cloud route. Correcting that route does not bypass authentication or grant access to another account's console.
+
+Test connection now identifies **Site Manager console discovery**, **cloud console Network API**, or **local console Network API**, together with the provider's HTTP status. **401** means authentication was rejected: check the key source, expiration and revocation. **403** means access was forbidden: check the account/organization, console ownership and Network/site permissions. It never echoes provider error bodies or the key. A TLS error happens before an HTTP authentication response; Local mode can use the trusted certificate setup below without turning verification off.
+
+For an independent read-only cloud check, set `UNIFI_API_KEY` and `UNIFI_CONSOLE_ID` in your terminal, then run (PowerShell):
+
+```powershell
+curl.exe --fail-with-body --silent --show-error "https://api.ui.com/v1/connector/consoles/$env:UNIFI_CONSOLE_ID/network/integration/v1/sites?limit=1" -H "X-API-KEY: $env:UNIFI_API_KEY" -H "Accept: application/json"
+```
+
+Use the full host ID from Site Manager's host list. Do not paste keys into tickets, chat or screenshots. A successful call lists sites and makes no changes. If it works while Layer 8 fails, compare Cloud mode, the saved console ID, saved key and any `HELPDESK_UNIFI_*` environment overrides. The integration has mocked regression coverage; verify the first live connection against your deployment.
+
 1. Settings > UniFi: choose **Connection**, paste the **API key**, and fill in **Consoles** (cloud) or **Console address** (local, plus the CA certificate if needed). Save.
 
    **The console's own certificate (local).** A UniFi console's factory certificate is self-signed and names only `unifi.local`, so neither the server's trusted CAs nor the console's IP address will match it. Paste the certificate itself into **Console CA certificate**; Layer 8 then trusts exactly that certificate, at whatever address you use, and checks it before sending the API key. To get it, from a machine on the same network:

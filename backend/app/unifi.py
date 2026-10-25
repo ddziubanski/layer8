@@ -5,7 +5,7 @@ separate opt-in write. Settings > UniFi.
 Two ways in, both with an API key in the X-API-KEY header:
 - cloud: the Site Manager API (https://api.ui.com/v1/hosts lists the consoles the key can see) and
   Ubiquiti's Connector Proxy, which reaches each selected console's local Network Integration API
-  through the cloud: https://api.ui.com/v1/connector/consoles/{id}/proxy/network/integration/v1/...
+  through the cloud: https://api.ui.com/v1/connector/consoles/{id}/network/integration/v1/...
 - local: one UniFi OS console's Network Integration API: https://{console}/proxy/network/integration/v1/...
 
 The Network Integration API pages with offset/limit and answers {offset, limit, count, totalCount,
@@ -73,7 +73,16 @@ class Client:
                     self.sleep(2)
                 continue
             if r.status_code in (401, 403):
-                raise UnifiError("UniFi refused the API key, or it can't see this console or site")
+                parts = urlsplit(url)
+                cloud = parts.hostname == "api.ui.com"
+                connector = cloud and parts.path.startswith("/v1/connector/")
+                stage = "cloud console Network API" if connector else "Site Manager console discovery" if cloud else "local console Network API"
+                if r.status_code == 401:
+                    hint = "Use a Site Manager key generated at unifi.ui.com for Cloud mode" if cloud else "Use the key from this console's Network Settings > Integrations for Local mode"
+                    raise UnifiError(f"UniFi {stage}: HTTP 401 (authentication rejected). {hint}; check that it hasn't expired or been revoked")
+                hint = ("Personal keys can access only consoles owned by the key's UI account; organization keys need access to this console's organization. Check Network access and console firmware 5.0.3 or later"
+                        if connector else "Check this key's Site Manager access and organization permissions" if cloud else "Check this key's Network permissions on the selected console and site")
+                raise UnifiError(f"UniFi {stage}: HTTP 403 (access forbidden). {hint}")
             if r.status_code == 404:
                 raise UnifiError("UniFi answered 404: check the console ID or address, and that UniFi Network is 9 or later")
             if r.status_code not in (200, 201):
@@ -132,7 +141,8 @@ def bases() -> list[tuple[str, str]]:
     if settings.unifi_mode == "cloud":
         if not settings.unifi_console_ids:
             raise UnifiError("Choose the consoles to read (Settings > UniFi > Consoles)")
-        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe='')}{INTEGRATION}") for c in settings.unifi_console_ids]
+        # Connector supplies the console's /proxy prefix; only local URLs include it.
+        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe='')}/network/integration/v1") for c in settings.unifi_console_ids]
     url = settings.unifi_console_url.rstrip("/")
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.hostname or parts.path:
