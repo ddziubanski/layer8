@@ -15,6 +15,7 @@ import { Link, useParams } from "react-router";
 
 import { api, type Me } from "../api/client";
 import { AttachedLine, AttachmentsSection } from "../components/Attachments";
+import { PersonLink } from "../components/PersonCard";
 import { transientFailure } from "../components/ServerRecovery";
 import { PriorityChip, SourceChip, StatusChip, SlaChip } from "../components/Chips";
 import { SOURCE_LABEL, when } from "../format";
@@ -242,7 +243,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           )}
         </div>
         <div className="ticket-workspace-meta">
-          <span>Requested by <strong>{t.requester.display_name}</strong></span>
+          <span>Requested by <strong><PersonLink id={t.requester.id} name={t.requester.display_name} /></strong></span>
           <span>Queue <strong>{t.queue.name}</strong></span>
           <span>Assigned to <strong>{t.assignee?.display_name ?? "Unassigned"}</strong></span>
           <span>Created {when(t.created_at)}</span>

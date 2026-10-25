@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { duration, fileSize, slaInfo } from "./format";
+import { duration, fileSize, slaInfo, when } from "./format";
 import { describe as describeEvent } from "./pages/ticket/history";
 
 const NOW = Date.parse("2026-10-18T10:00:00Z");
@@ -45,4 +45,11 @@ test("SLA time left comes from the server's business clock, with a share for the
   expect(slaInfo(t, NOW)).toMatchObject({ tone: "g", short: "2h 00m", left: 0.25 });
   expect(slaInfo({ ...t, sla_minutes_left: 30 }, NOW).tone).toBe("r");  // the last tenth is red
   expect(slaInfo({ ...t, sla_state: "paused", resolution_due_at: null }, NOW)).toMatchObject({ tone: "n", short: "Paused", long: "SLA paused while waiting on the user (2h 00m left)" });
+});
+
+test("dates from another year show the year", () => {
+  const now = new Date(2026, 9, 25, 12).getTime();
+  expect(when(new Date(2026, 9, 25, 9, 30).toISOString(), now)).not.toMatch(/2026/);
+  expect(when(new Date(2026, 2, 2, 6, 43).toISOString(), now)).not.toMatch(/2026/);
+  expect(when(new Date(2018, 3, 19, 10, 35).toISOString(), now)).toMatch(/2018/);
 });

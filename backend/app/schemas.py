@@ -2006,6 +2006,38 @@ class ADGroupOut(BaseModel):
     warning: str | None = None
 
 
+class PersonDeviceOut(ORM):
+    id: int
+    name: str
+    os: str | None = None
+
+
+class PersonOut(BaseModel):
+    """A person as the service desk knows them (directory sync, import or a local account),
+    for the requester card and the person page. Staff only."""
+    id: int
+    display_name: str
+    email: str
+    role: UserRole
+    is_active: bool
+    auth_source: AuthSource
+    title: str | None = None
+    department: str | None = None
+    phone: str | None = None
+    upn: str | None = None
+    sam_account_name: str | None = None
+    # From the directory: where the account lives, and when sync last saw it.
+    in_directory: bool = False
+    ou: str | None = None
+    last_synced_at: datetime | None = None
+    # Teams status when it's fresh (Settings > Teams), else None.
+    presence: str | None = None
+    # Tickets they asked for, in the queues the viewer may see.
+    open_tickets: int = 0
+    all_tickets: int = 0
+    devices: list[PersonDeviceOut] = []
+
+
 class RequesterADOut(BaseModel):
     enabled: bool
     # New accounts can be made from tickets (Settings > Directory: where new accounts go).

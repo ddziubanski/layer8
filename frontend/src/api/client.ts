@@ -19,6 +19,7 @@ export type User = S["UserOut"];
 /** The signed-in user; portal_only after Windows sign-in (the console needs a password). */
 export type Me = S["MeOut"];
 export type QueueListPreference = S["QueueListPreferences"];
+export type Person = S["PersonOut"];
 export type MerakiObservation = S["MerakiClientOut"];
 export type SignInOptions = S["SignInOptionsOut"];
 export type UserRef = S["UserRef"];
@@ -273,9 +274,10 @@ export const api = {
   windowsSignIn: () => request<Me>("POST", "/api/auth/sso"),
   logout: () => request<void>("POST", "/api/auth/logout"),
 
-  tickets: (p: { view?: SavedView; scope?: TicketScope; queue_id?: number; sort?: TicketSort; dir?: "asc" | "desc"; limit?: number; offset?: number }) =>
+  tickets: (p: { view?: SavedView; scope?: TicketScope; queue_id?: number; requester_id?: number; sort?: TicketSort; dir?: "asc" | "desc"; limit?: number; offset?: number }) =>
     request<TicketPage>("GET", `/api/tickets${query(p)}`),
   unaccepted: () => request<S["UnacceptedOut"]>("GET", "/api/tickets/unaccepted"),
+  person: (id: number) => request<Person>("GET", `/api/people/${id}`),
   viewCounts: (scope: TicketScope = "all", queueId?: number) => request<Record<SavedView, number>>("GET", `/api/tickets/views${query({ scope, queue_id: queueId })}`),
   bulkAssign: (body: S["BulkAssignIn"]) => request<S["BulkResultOut"]>("POST", "/api/tickets/bulk/assign", body),
   savePreferences: (body: S["PreferencesIn"]) => request<Me>("PUT", "/api/auth/me/preferences", body),

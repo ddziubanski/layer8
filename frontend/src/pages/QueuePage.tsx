@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { api, type Me, type QueueListPreference, type SavedView, type Ticket, type TicketScope, type TicketSort } from "../api/client";
 import { ruleColor } from "../colors";
 import { PriorityChip, SlaChip, SourceChip } from "../components/Chips";
+import { PersonLink } from "../components/PersonCard";
 import { duration, plural, VIEWS } from "../format";
 import { NewTicketDialog } from "./NewTicketDialog";
 import { can } from "../permissions";
@@ -90,7 +91,7 @@ function Row({ t, me, selected, onSelect }: { t: Ticket; me: Me; selected: boole
         </Link>
         {sub && <div className="sub">{sub}</div>}
       </div>
-      <div role="cell">{t.requester.display_name}</div>
+      <div role="cell"><PersonLink id={t.requester.id} name={t.requester.display_name} /></div>
       <div role="cell">
         <SourceChip source={t.source} />
       </div>

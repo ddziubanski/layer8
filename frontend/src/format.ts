@@ -86,11 +86,14 @@ export function fileSize(bytes: number): string {
 
 const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
 const dateTimeFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const otherYearFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
-/** Time only for today, date and time otherwise. */
+/** Time only for today, date and time otherwise, with the year when it isn't this year (imported history). */
 export function when(iso: string, now: number = Date.now()): string {
   const d = new Date(iso);
-  return new Date(now).toDateString() === d.toDateString() ? timeFmt.format(d) : dateTimeFmt.format(d);
+  const today = new Date(now);
+  if (today.toDateString() === d.toDateString()) return timeFmt.format(d);
+  return (today.getFullYear() === d.getFullYear() ? dateTimeFmt : otherYearFmt).format(d);
 }
 
 export function plural(n: number, word: string): string {

@@ -58,6 +58,7 @@ const MerakiAdmin = named(() => import("./pages/admin/MerakiAdmin"), "MerakiAdmi
 const IpamPage = named(() => import("./pages/ipam/IpamPage"), "IpamPage");
 const DevicesPage = named(() => import("./pages/devices/DevicesPage"), "DevicesPage");
 const DevicePage = named(() => import("./pages/devices/DevicesPage"), "DevicePage");
+const PersonPage = named(() => import("./pages/PersonPage"), "PersonPage");
 const BrandingAdmin = named(() => import("./pages/admin/BrandingAdmin"), "BrandingAdmin");
 const DirectoryAdmin = named(() => import("./pages/admin/DirectoryAdmin"), "DirectoryAdmin");
 const EmailAdmin = named(() => import("./pages/admin/EmailAdmin"), "EmailAdmin");
@@ -301,6 +302,7 @@ const router = (me: Me) =>
         { path: "tickets/:ticketId", element: <TicketPage me={me} /> },
         { path: "devices", element: <DevicesPage me={me} /> },
         { path: "devices/:deviceId", element: <DevicePage me={me} /> },
+        { path: "people/:personId", element: <PersonPage /> },
         { path: "purchase-orders", element: <PurchaseOrdersPage /> },
         { path: "purchase-orders/:poId", element: <PurchaseOrderPage me={me} /> },
         { path: "vendors", element: <VendorsPage me={me} /> },

@@ -669,6 +669,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/people/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Person */
+        get: operations["person_api_people__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -9022,6 +9039,68 @@ export interface components {
             /** Needs Attention */
             needs_attention: number;
         };
+        /** PersonDeviceOut */
+        PersonDeviceOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Os */
+            os?: string | null;
+        };
+        /**
+         * PersonOut
+         * @description A person as the service desk knows them (directory sync, import or a local account),
+         *     for the requester card and the person page. Staff only.
+         */
+        PersonOut: {
+            /** Id */
+            id: number;
+            /** Display Name */
+            display_name: string;
+            /** Email */
+            email: string;
+            role: components["schemas"]["UserRole"];
+            /** Is Active */
+            is_active: boolean;
+            auth_source: components["schemas"]["AuthSource"];
+            /** Title */
+            title?: string | null;
+            /** Department */
+            department?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Upn */
+            upn?: string | null;
+            /** Sam Account Name */
+            sam_account_name?: string | null;
+            /**
+             * In Directory
+             * @default false
+             */
+            in_directory: boolean;
+            /** Ou */
+            ou?: string | null;
+            /** Last Synced At */
+            last_synced_at?: string | null;
+            /** Presence */
+            presence?: string | null;
+            /**
+             * Open Tickets
+             * @default 0
+             */
+            open_tickets: number;
+            /**
+             * All Tickets
+             * @default 0
+             */
+            all_tickets: number;
+            /**
+             * Devices
+             * @default []
+             */
+            devices: components["schemas"]["PersonDeviceOut"][];
+        };
         /** PortalDeviceOut */
         PortalDeviceOut: {
             /** Id */
@@ -13152,6 +13231,7 @@ export interface operations {
                 queue_id?: number | null;
                 assignee_id?: number | null;
                 source?: components["schemas"]["TicketSource"] | null;
+                requester_id?: number | null;
                 sort?: "due" | "id" | "subject" | "requester" | "source" | "assignee" | "queue" | "priority" | "status" | "age" | "updated";
                 dir?: ("asc" | "desc") | null;
                 limit?: number;
@@ -13694,6 +13774,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EventOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    person_api_people__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonOut"];
                 };
             };
             /** @description Validation Error */

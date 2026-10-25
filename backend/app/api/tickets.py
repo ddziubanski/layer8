@@ -270,6 +270,7 @@ def list_tickets(
     queue_id: int | None = None,
     assignee_id: int | None = None,
     source: TicketSource | None = None,
+    requester_id: int | None = None,
     # Default: most urgent first (nearest resolution deadline).
     sort: SortKey = "due",
     dir: Literal["asc", "desc"] | None = None,
@@ -287,6 +288,8 @@ def list_tickets(
         stmt = stmt.where(Ticket.assignee_id == assignee_id)
     if source is not None:
         stmt = stmt.where(Ticket.source == source)
+    if requester_id is not None:
+        stmt = stmt.where(Ticket.requester_id == requester_id)
 
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
     rows = session.scalars(sorted_by(stmt, sort, dir).limit(limit).offset(offset)).all()
