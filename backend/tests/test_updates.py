@@ -9,7 +9,9 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from app import VERSION, update_protocol as protocol
+import time
+
+from app import VERSION, configstore, update_protocol as protocol
 from app.api import updates
 from app.config import settings
 from app.models import AppSetting
@@ -111,6 +113,15 @@ def test_stable_check_cached_and_older_release_not_offered(client, admin, monkey
     assert client.post("/api/system/updates/check", headers=h).status_code == 200
     latest.assert_called_once()
     signed.assert_not_called()
+
+
+def test_check_sees_updates_just_enabled_by_another_process(client, db, admin, monkeypatch):
+    # Another worker saved the setting; this process refreshed its copy moments before.
+    db.add(AppSetting(key="updates", value={"updates_enabled": True}))
+    db.commit()
+    monkeypatch.setattr(configstore, "_loaded_at", time.monotonic())
+    monkeypatch.setattr(protocol, "latest", Mock(return_value={"tag_name": "v1.0.0", "body": "Older", "html_url": ""}))
+    assert client.post("/api/system/updates/check", headers=as_user(admin)).status_code == 200
 
 
 def test_check_reports_network_failure_and_does_not_install(client, admin, monkeypatch):

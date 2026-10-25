@@ -89,7 +89,7 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
     ]
     if ticket_id:
         out.append(("03-ticket", "admin", f"/tickets/{ticket_id}", "Ticket: conversation, attachments, assignment, requester, devices, status"))
-        out.append(("03d-ticket-arrange", "admin", f"/tickets/{ticket_id}", "Arrange this page: drag panels between columns or across the top or bottom (full width), hide them, save for yourself or as everyone's default", """(async () => {
+        out.append(("03d-ticket-arrange", "admin", f"/tickets/{ticket_id}", "Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default", """(async () => {
           [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Arrange this page').click();
           await new Promise(r => setTimeout(r, 700));
           for (const t of ['Hide Expenses', 'Hide Systems']) document.querySelector(`button[aria-label="${t}"]`)?.click();
