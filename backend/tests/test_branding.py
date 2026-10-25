@@ -144,3 +144,13 @@ def test_ember_and_ultraviolet_are_choices_like_midnight(client, db, admin, pres
     cli.import_settings(db, {"theme": {"theme_preset": "custom"}})
     db.commit()
     assert client.get("/api/branding").json()["theme_preset"] == "custom"
+
+
+def test_bad_environment_overrides_fall_back_instead_of_breaking_sign_in(client, monkeypatch):
+    # HELPDESK_* values skip Settings' checks; the public branding call must still answer.
+    for name, value in (("sign_in_layout", "url(evil)"), ("sign_in_backdrop", "neon"), ("theme_preset", "bogus"), ("dark_mode", "sometimes"), ("sign_in_background_overlay", 200)):
+        monkeypatch.setattr(settings, name, value)
+    public = client.get("/api/branding")
+    assert public.status_code == 200
+    body = public.json()
+    assert (body["sign_in_layout"], body["sign_in_backdrop"], body["theme_preset"], body["dark_mode"], body["sign_in_background_overlay"]) == ("center", "plain", "custom", "off", 85)

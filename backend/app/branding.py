@@ -11,7 +11,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.configstore import write_secret_file
+from app.configstore import FIELDS, write_secret_file
 from app.models import AppSetting, User
 
 IMAGES = {"background": "Background", "logo": "Logo", "favicon": "Favicon"}
@@ -89,23 +89,31 @@ def url(session: Session, name: str) -> str | None:
     return f"/api/branding/files/{name}?v={meta['version']}"
 
 
+def _choice(name: str) -> str:
+    """A HELPDESK_* override skips Settings' checks; never let a bad one break the sign-in page."""
+    value = getattr(settings, name)
+    if value in {v for v, _ in FIELDS[name].choices}:
+        return value
+    return type(settings).model_fields[name].default
+
+
 def public(session: Session) -> dict:
     return {
         "product_name": settings.product_name,
         "sign_in_message": settings.sign_in_message,
         "sign_in_heading": settings.sign_in_heading,
-        "sign_in_layout": settings.sign_in_layout,
-        "sign_in_card_size": settings.sign_in_card_size,
-        "sign_in_background_fit": settings.sign_in_background_fit,
-        "sign_in_background_position": settings.sign_in_background_position,
-        "sign_in_background_overlay": settings.sign_in_background_overlay,
-        "sign_in_backdrop": settings.sign_in_backdrop,
+        "sign_in_layout": _choice("sign_in_layout"),
+        "sign_in_card_size": _choice("sign_in_card_size"),
+        "sign_in_background_fit": _choice("sign_in_background_fit"),
+        "sign_in_background_position": _choice("sign_in_background_position"),
+        "sign_in_background_overlay": min(max(settings.sign_in_background_overlay, 0), 85),
+        "sign_in_backdrop": _choice("sign_in_backdrop"),
         "background_in_console": settings.background_in_console,
         "portal_welcome": settings.portal_welcome,
-        "theme_preset": settings.theme_preset,
+        "theme_preset": _choice("theme_preset"),
         "theme_brand": settings.theme_brand,
         "theme_sidebar": settings.theme_sidebar,
-        "dark_mode": settings.dark_mode,
+        "dark_mode": _choice("dark_mode"),
         "background_url": url(session, "background"),
         "logo_url": url(session, "logo"),
         "favicon_url": url(session, "favicon"),
