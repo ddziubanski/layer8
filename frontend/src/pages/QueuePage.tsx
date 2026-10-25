@@ -248,7 +248,7 @@ export function QueuePage({ me }: { me: Me }) {
           ))}
         </div>
         <span className="spacer" />
-        <input type="search" className="queue-search" aria-label="Search tickets" placeholder="Search tickets, notes or a number"
+        <input type="search" className="queue-search" aria-label="Search tickets" placeholder="Search tickets…" title="Subject, description and notes, any status; a number finds that ticket"
           value={typed} onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") go({ q: typed.trim() }); }} maxLength={200} />
         <select aria-label="Queue" className="queue-switch" value={queueId ? String(queueId) : ""} onChange={(e) => go({ queue: e.target.value, offset: 0 })}>
           <option value="">All queues</option>

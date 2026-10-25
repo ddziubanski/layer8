@@ -16,6 +16,9 @@ test("sla states", () => {
   expect(slaInfo({ sla_state: "ok", resolution_due_at: at(190) }, NOW)).toEqual({ tone: "g", short: "3h 10m", long: "3h 10m left on the SLA", left: null });
   expect(slaInfo({ sla_state: "at_risk", resolution_due_at: at(42) }, NOW).tone).toBe("a");
   expect(slaInfo({ sla_state: "breached", resolution_due_at: at(-65) }, NOW)).toEqual({ tone: "r", short: "-1h 05m", long: "SLA breached 1h 05m ago", left: 0 });
+  // Resolved or closed late: by how much, not how long ago the deadline was.
+  expect(slaInfo({ sla_state: "breached", resolution_due_at: at(-6000), resolved_at: at(-5880) }, NOW)).toEqual({ tone: "r", short: "Missed", long: "SLA missed by 2h 00m", left: null });
+  expect(slaInfo({ sla_state: "breached", resolution_due_at: at(-6000), resolved_at: null, closed_at: at(-5970) }, NOW).long).toBe("SLA missed by 0h 30m");
   expect(slaInfo({ sla_state: "met", resolution_due_at: at(-5) }, NOW).long).toBe("SLA met");
   expect(slaInfo({ sla_state: "none", resolution_due_at: null }, NOW).short).toBe("None");
 });
