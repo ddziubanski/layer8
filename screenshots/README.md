@@ -1,6 +1,6 @@
 # Screenshots
 
-From the dev app, 2026-10-24. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-10-25. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 
@@ -13,6 +13,18 @@ From the dev app, 2026-10-24. Regenerate with `backend/.venv/bin/python dev/scre
 ## Agent queue: select tickets to move or assign them together
 
 ![Agent queue: select tickets to move or assign them together](02b-queue-bulk.png)
+
+## Search every ticket's subject, description and notes, closed history included; a number finds that ticket
+
+![Search every ticket's subject, description and notes, closed history included; a number finds that ticket](02c-queue-search.png)
+
+## Click a requester's name for their contact card instead of opening the ticket
+
+![Click a requester's name for their contact card instead of opening the ticket](02d-person-card.png)
+
+## A person's page: contact details and manager from AD, direct reports, devices, AD groups and every ticket they've logged
+
+![A person's page: contact details and manager from AD, direct reports, devices, AD groups and every ticket they've logged](03h-person.png)
 
 ## Ticket: conversation, attachments, assignment, requester, devices, status
 

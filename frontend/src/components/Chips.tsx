@@ -26,7 +26,7 @@ export function SourceChip({ source }: { source: TicketSource }) {
   return <span className="chip n">{SOURCE_LABEL[source]}</span>;
 }
 
-export function SlaChip({ ticket, long = false }: { ticket: Pick<Ticket, "sla_state" | "resolution_due_at"> & Partial<Pick<Ticket, "sla_minutes_left" | "sla_resolution_minutes">>; long?: boolean }) {
+export function SlaChip({ ticket, long = false }: { ticket: Pick<Ticket, "sla_state" | "resolution_due_at"> & Partial<Pick<Ticket, "sla_minutes_left" | "sla_resolution_minutes" | "resolved_at" | "closed_at">>; long?: boolean }) {
   const now = useNow();
   const info = slaInfo(ticket, now);
   return (

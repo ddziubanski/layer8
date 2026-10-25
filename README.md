@@ -4,13 +4,13 @@
 
 Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one queue for tickets from email and a self-service portal, with the tools a desk actually uses day to day, all in one install you control. It borrows the best ideas from ManageEngine, Track-It!, KACE and Spiceworks, runs on a single Linux box (an appliance ISO installs it offline), and works standalone or with Active Directory and Microsoft 365.
 
-> **Version 1.5.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
+> **Version 1.6.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
 ![The technician's queue](screenshots/02-queue.png)
 
 **At a glance**
 
-- **One queue** for tickets from email and the self-service portal, with queues, SLAs in desk hours, routing rules, checklists, canned replies, time tracking, alerts for tickets nobody takes, and an arrangeable ticket page.
+- **One queue** for tickets from email and the self-service portal, with queues, SLAs in desk hours, routing rules, checklists, canned replies, time tracking, alerts for tickets nobody takes, full-text search across all history, and an arrangeable ticket page.
 - **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with relays.
 - **Microsoft 365 when you want it:** email through Graph, Teams messages and status, and Microsoft 365 Copilot on tickets, each optional. Step by step: [docs/microsoft-365.md](docs/microsoft-365.md).
 - **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
@@ -35,6 +35,8 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Queues with owners, managers and restricted visibility; priorities from urgency × impact; SLAs that count desk hours, stop while waiting on the user, and show the time left ([docs/desk-hours.md](docs/desk-hours.md#the-sla-clock)).
 - Alerts when nobody takes a ticket: an email to everyone who could, or a post in a Teams channel, and a counter in the console ([docs/desk-hours.md](docs/desk-hours.md#tickets-nobody-has-taken)).
 - Search every ticket's subject, description and notes, closed history and imported Track-It! numbers included ([docs/ticket-search.md](docs/ticket-search.md)).
+- Click a requester for their contact card (title, department, phone, mobile, office, manager from AD); their page lists their devices, AD groups and every ticket they've logged ([docs/people.md](docs/people.md)).
+- A queue that keeps loading as you scroll, with compact or comfortable rows, chosen per technician in My preferences ([docs/workspace-preferences.md](docs/workspace-preferences.md#ticket-list)).
 - KACE-style ticket rules: on save, on a schedule, or in SQL.
 - Merge, parent and child tickets, bulk changes, and a personal widget workspace: searchable library, essentials-only starting point, saved placement and administrator defaults ([guide](docs/widget-workspace.md)).
 - Canned replies, shared or personal and per queue, with the ticket's details filled in ([docs/canned-replies.md](docs/canned-replies.md)).

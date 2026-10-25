@@ -44,7 +44,7 @@ export function duration(ms: number): string {
 
 export type SlaInfo = { tone: Tone; short: string; long: string; left: number | null };
 
-type SlaFields = Pick<Ticket, "sla_state" | "resolution_due_at"> & Partial<Pick<Ticket, "sla_minutes_left" | "sla_resolution_minutes">>;
+type SlaFields = Pick<Ticket, "sla_state" | "resolution_due_at"> & Partial<Pick<Ticket, "sla_minutes_left" | "sla_resolution_minutes" | "resolved_at" | "closed_at">>;
 
 /** Where a ticket stands against its SLA. Time left is business time when the server counts it
  *  (Settings > Desk hours > SLA clock); `left` is the share of the window still to go, for a meter. */
@@ -62,12 +62,19 @@ export function slaInfo(t: SlaFields, now: number): SlaInfo {
       const left = minutesLeft !== null ? duration(minutesLeft * 60000) : "";
       return { tone: "n", short: "Paused", long: `SLA paused while waiting on the user${left ? ` (${left} left)` : ""}`, left: share };
     }
-    case "breached":
+    case "breached": {
+      // A finished ticket missed its SLA by a fixed amount; counting on from today means nothing.
+      const done = t.resolved_at ?? t.closed_at;
+      if (done && due !== null) {
+        const late = duration(Math.max(0, Date.parse(done) - due));
+        return { tone: "r", short: "Missed", long: `SLA missed by ${late}`, left: null };
+      }
       if (due !== null && now > due) {
         const ago = duration(now - due);
         return { tone: "r", short: `-${ago}`, long: `SLA breached ${ago} ago`, left: 0 };
       }
       return { tone: "r", short: "Breached", long: "SLA breached", left: 0 };
+    }
     case "at_risk":
     case "ok": {
       const left = minutesLeft !== null ? duration(minutesLeft * 60000) : "";

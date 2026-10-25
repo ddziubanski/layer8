@@ -80,13 +80,21 @@ def fill_then_click(values: dict[str, str], *texts: str) -> str:
     }})()""".format(first=json.dumps(list(texts[:1])), values=json.dumps(values), rest=json.dumps(list(texts[1:])))
 
 
-def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = None) -> list[tuple]:
+def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = None, person_id: int | None = None) -> list[tuple]:
     """(file, who, path, caption[, script run before the shot]): who is admin, requester or none."""
     out = [
         ("01-sign-in", "none", "/", "Sign-in page with branding (product name, message)"),
         ("02-queue", "admin", "/", "Agent queue: my tickets / my groups / all, views, technicians' colour stripes and personal colour rules; only the list scrolls"),
         ("02b-queue-bulk", "admin", "/", "Agent queue: select tickets to move or assign them together", click("Select all")),
+        ("02c-queue-search", "admin", "/?scope=all&q=switch", "Search every ticket's subject, description and notes, closed history included; a number finds that ticket"),
+        ("02d-person-card", "admin", "/", "Click a requester's name for their contact card instead of opening the ticket", """(async () => {
+          await new Promise(r => setTimeout(r, 600));
+          document.querySelector('.person-link')?.click();
+          await new Promise(r => setTimeout(r, 900));
+        })()"""),
     ]
+    if person_id:
+        out.append(("03h-person", "admin", f"/people/{person_id}", "A person's page: contact details and manager from AD, direct reports, devices, AD groups and every ticket they've logged"))
     if ticket_id:
         out.append(("03-ticket", "admin", f"/tickets/{ticket_id}", "Ticket: conversation, attachments, assignment, requester, devices, status"))
         out.append(("03d-ticket-arrange", "admin", f"/tickets/{ticket_id}", "Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default", """(async () => {
@@ -377,6 +385,7 @@ def main() -> None:
         device_id = session.scalar(select(Device.id).where(Device.is_active).order_by(Device.assigned_user_id.is_(None), Device.id))
         # A ticket from an AD account, for the AD account card.
         ad_ticket = session.scalar(select(Ticket.id).join(User, Ticket.requester_id == User.id).where(User.directory_dn.is_not(None), Ticket.parent_id.is_(None)).order_by(Ticket.id.desc()))
+        person_id = session.scalar(select(Ticket.requester_id).where(Ticket.id == ad_ticket)) if ad_ticket else None
         tokens = make_sessions(session)
         from app.api.wallboards import _hash
         from app.models import Wallboard
@@ -386,7 +395,7 @@ def main() -> None:
         session.commit()
         nutanix_was = nutanix_demo(session, tokens["admin"], ticket_id, device_id)
     try:
-        plan = shots(ticket_id, device_id, ad_ticket)
+        plan = shots(ticket_id, device_id, ad_ticket, person_id)
         done = asyncio.run(capture(tokens, plan))
         was = dark_mode(tokens["admin"], "on")
         try:
