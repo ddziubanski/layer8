@@ -1014,7 +1014,18 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .side .side-source a { display: inline; padding: 0; border: 0; color: inherit; }
 .portal-source { margin: 32px 0 8px; text-align: center; }
 .login-source { text-align: center; margin-top: 14px; }
-.login .login-source { color: var(--muted); }
+.login .login-source { color: var(--muted); background:var(--surface); padding:10px 14px; border:1px solid var(--line); border-radius:10px; }
+
+/* Keep authentication controls solid and readable over any background image. */
+.login { box-sizing:border-box; align-content:center; justify-items:var(--login-align,center); gap:16px; padding:clamp(16px,5vw,80px); }
+.login .login-card { box-sizing:border-box; width:min(calc(var(--login-width,380px) + 56px),100%); }
+.login > .login-source { box-sizing:border-box; max-width:min(calc(var(--login-width,380px) + 56px),100%); margin:0; }
+.login .sign-in-heading { margin:0; font-size:22px; line-height:1.35; overflow-wrap:anywhere; }
+.login-preview { min-height:600px; border-radius:12px; border:1px solid var(--line); padding:24px; }
+.login-preview h2 { margin:0; }
+.login-preview-field { padding:10px 12px; border:1px solid var(--line); border-radius:6px; color:var(--muted); overflow-wrap:anywhere; }
+.login-preview-button { text-align:center; cursor:default; }
+@media(max-width:600px) { .login { justify-items:center; padding:16px; } .login-preview { min-height:560px; padding:12px; } }
 
 /* Release update status stays readable during maintenance. */
 .updates-page .card { gap:14px; }

@@ -504,6 +504,13 @@ class BackupVerifyOut(BaseModel):
 class BrandingOut(BaseModel):
     product_name: str
     sign_in_message: str
+    sign_in_heading: str = ""
+    sign_in_layout: Literal["center", "left", "right"] = "center"
+    sign_in_card_size: Literal["standard", "wide"] = "standard"
+    sign_in_background_fit: Literal["cover", "contain"] = "cover"
+    sign_in_background_position: Literal["center", "top", "bottom", "left", "right"] = "center"
+    sign_in_background_overlay: int = 0
+    sign_in_backdrop: Literal["plain", "ocean", "grid"] = "plain"
     background_in_console: bool
     portal_welcome: str
     theme_preset: Literal["custom", "midnight", "ember", "ultraviolet"] = "custom"

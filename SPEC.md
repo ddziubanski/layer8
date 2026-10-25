@@ -144,6 +144,10 @@ Built: opt-in Settings > Updates checks stable releases of ddziubanski/layer8; a
 
 Technician tickets default to Conversation / Work / History with a closable tools drawer. All existing tool APIs and permissions remain unchanged. Personal workspace preferences are stored under `personal_ticket_workspace:<user.id>`; see [docs/ticket-workspace.md](docs/ticket-workspace.md) for layout compatibility, draft scope and keyboard controls. Classic arranged panels remain selectable.
 
+## Sign-in appearance (2026-10-24)
+
+Settings > Branding adds admin-managed welcome heading, card placement/width, sign-in background image fit/focal point/0–85% darkening, plain/ocean/grid backdrop and a live preview. Existing background/logo/favicon uploads, theme, support message and portal behavior remain intact. Public branding includes only validated presentation values; no arbitrary HTML/CSS/JS or authentication controls. Settings use the existing store and CLI/environment conventions (signin_appearance section), with no migration. See docs/login-branding.md.
+
 ## Shared sign-in and restart recovery (2026-10-24)
 
 Shared entry uses the existing server role: requesters open self-service, agents/admins open the console (highest mapped directory role still wins). Staff retain their self-service link. Root and /portal links both work for requesters. Windows portal-only sessions, password changes and MFA keep their existing restrictions.

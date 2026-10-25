@@ -387,6 +387,15 @@ SECTIONS: dict[str, list[Field]] = {
         Field("portal_welcome", "Portal welcome text", "Shown at the top of the portal's home page, e.g. opening hours or what to try first. Plain text.", check=_length(0, 1000), multiline=True),
         Field("email_footer", "Email footer", "Added to the end of every email to requesters and every emailed report, e.g. the desk's phone number. Plain text.", check=_length(0, 1000), multiline=True),
     ],
+    "signin_appearance": [
+        Field("sign_in_heading", "Welcome heading", "Optional plain-text heading above the sign-in form. Authentication and role routing stay unchanged.", check=_length(0, 100)),
+        Field("sign_in_layout", "Card placement", choices=(("center", "Center"), ("left", "Left"), ("right", "Right"))),
+        Field("sign_in_card_size", "Card width", choices=(("standard", "Standard"), ("wide", "Wide"))),
+        Field("sign_in_backdrop", "Backdrop style", "Used behind the uploaded image, or by itself when no image is uploaded.", choices=(("plain", "Theme default"), ("ocean", "Ocean gradient"), ("grid", "Network grid"))),
+        Field("sign_in_background_fit", "Background image fit", choices=(("cover", "Fill screen (crop edges)"), ("contain", "Show whole image"))),
+        Field("sign_in_background_position", "Background image focus", choices=(("center", "Center"), ("top", "Top"), ("bottom", "Bottom"), ("left", "Left"), ("right", "Right"))),
+        Field("sign_in_background_overlay", "Image darkening (%)", "0–85. Applies only to the sign-in image, keeping the card readable. The portal keeps its own existing background.", check=_between(0, 85)),
+    ],
     "backup": [
         Field("backup_dir", "Backup folder", "A folder on the server, normally a network share the installer mounted (SMB or NFS), e.g. /mnt/backups/helpdesk. Empty: no scheduled backups.", check=_absolute_path),
         Field("backup_time", "Back up daily at", "Server time, 24-hour, e.g. 02:00.", check=_hhmm),

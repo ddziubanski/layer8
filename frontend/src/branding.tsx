@@ -10,6 +10,13 @@ export const DEFAULT_LOGO = "/layer8-mark.png";
 const DEFAULT: Branding = {
   product_name: "Layer 8",
   sign_in_message: "",
+  sign_in_heading: "",
+  sign_in_layout: "center",
+  sign_in_card_size: "standard",
+  sign_in_background_fit: "cover",
+  sign_in_background_position: "center",
+  sign_in_background_overlay: 0,
+  sign_in_backdrop: "plain",
   background_in_console: false,
   portal_welcome: "",
   theme_preset: "custom",
@@ -149,6 +156,20 @@ export function useBranding(): Branding {
 
 /** The uploaded background behind a page, or nothing. */
 export function backgroundStyle(b: Branding, where: "sign-in" | "portal" | "console"): CSSProperties | undefined {
+  if (where === "sign-in") {
+    const positions = {center:"center",top:"center top",bottom:"center bottom",left:"left center",right:"right center"};
+    const backdrop = b.sign_in_backdrop === "ocean" ? "radial-gradient(ellipse at top left, #135d6a, #071421 75%)" : b.sign_in_backdrop === "grid" ? "repeating-linear-gradient(0deg, #238c9826 0 1px, transparent 1px 36px), repeating-linear-gradient(90deg, #238c9826 0 1px, transparent 1px 36px), linear-gradient(#071421, #102b3b)" : "none";
+    const alpha = Math.max(0, Math.min(85, Number(b.sign_in_background_overlay) || 0)) / 100;
+    return {
+      backgroundImage: b.background_url ? `linear-gradient(rgb(0 0 0 / ${alpha}), rgb(0 0 0 / ${alpha})), url("${b.background_url}"), ${backdrop}` : backdrop,
+      backgroundSize: b.background_url ? `100% 100%, ${b.sign_in_background_fit === "contain" ? "contain" : "cover"}, auto` : "cover",
+      backgroundPosition: b.background_url ? `center, ${positions[b.sign_in_background_position ?? "center"] ?? "center"}, center` : "center",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
+      "--login-align": b.sign_in_layout === "left" ? "start" : b.sign_in_layout === "right" ? "end" : "center",
+      "--login-width": b.sign_in_card_size === "wide" ? "480px" : "380px",
+    } as CSSProperties;
+  }
   if (!b.background_url || (where === "console" && !b.background_in_console)) return undefined;
   return { backgroundImage: `url("${b.background_url}")`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" };
 }

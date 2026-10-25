@@ -16,6 +16,7 @@ Layer 8 is a self-hosted IT service desk for small and mid-sized IT teams: one q
 - **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
 - **For the room:** a remote display for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
 - **Sign-in your way:** one entry screen routes requesters to self-service and technicians/admins to the helpdesk using their existing roles. Local accounts with two-factor, AD, Windows sign-in to the portal, and Sign in with Microsoft remain available. Windows portal-only sessions still require a separate console sign-in.
+- **Make the welcome page yours:** uploaded backgrounds and logos, image fit/focus/darkening, card placement and width, optional gradient/grid backdrops and a welcome heading, with a live preview in Settings > Branding ([customization guide](docs/login-branding.md)).
 - **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, signed updates from GitHub releases, and no cloud required.
 
 <p>
