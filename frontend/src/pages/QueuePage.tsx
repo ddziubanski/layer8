@@ -132,10 +132,14 @@ export function QueuePage({ me }: { me: Me }) {
   const queueId = queueParam && (!queues.data || queues.data.some((q) => String(q.id) === queueParam)) ? Number(queueParam) : undefined;
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const offset = Math.max(0, Number(params.get("offset")) || 0);
+  // Searching covers every status (closed history too), most recently opened first unless a column is chosen.
+  const q = (params.get("q") ?? "").trim();
+  const [typed, setTyped] = useState(q);
   const rawSort = params.get("sort");
-  const sort: TicketSort = isSort(rawSort) ? rawSort : "due";
+  const defaultSort: TicketSort = q ? "age" : "due";
+  const sort: TicketSort = isSort(rawSort) ? rawSort : defaultSort;
   const column = COLUMNS.find((c) => c.key === sort)!;
-  const dir: "asc" | "desc" = params.get("dir") === "asc" || params.get("dir") === "desc" ? (params.get("dir") as "asc" | "desc") : column.first;
+  const dir: "asc" | "desc" = params.get("dir") === "asc" || params.get("dir") === "desc" ? (params.get("dir") as "asc" | "desc") : q && !rawSort ? "asc" : column.first;
   const [creating, setCreating] = useState(false);
 
   // The router keeps the "me" it was built with; saved preferences arrive in the profile query.
@@ -145,15 +149,15 @@ export function QueuePage({ me }: { me: Me }) {
   const pageSize = prefs.page_size;
   const counts = useQuery({ queryKey: ["views", scope, queueId], queryFn: () => api.viewCounts(scope, queueId), refetchInterval: REFRESH_MS });
   const page = useQuery({
-    queryKey: ["tickets", scope, queueId, view, sort, dir, offset, pageSize],
-    queryFn: () => api.tickets({ scope, queue_id: queueId, view, sort, dir, limit: pageSize, offset }),
+    queryKey: ["tickets", scope, queueId, q || view, sort, dir, offset, pageSize],
+    queryFn: () => api.tickets({ scope, queue_id: queueId, ...(q ? { q } : { view }), sort, dir, limit: pageSize, offset }),
     refetchInterval: REFRESH_MS,
     placeholderData: keepPreviousData,
     enabled: !scrolling,
   });
   const batches = useInfiniteQuery({
-    queryKey: ["tickets", "scroll", scope, queueId, view, sort, dir, pageSize],
-    queryFn: ({ pageParam }) => api.tickets({ scope, queue_id: queueId, view, sort, dir, limit: pageSize, offset: pageParam }),
+    queryKey: ["tickets", "scroll", scope, queueId, q || view, sort, dir, pageSize],
+    queryFn: ({ pageParam }) => api.tickets({ scope, queue_id: queueId, ...(q ? { q } : { view }), sort, dir, limit: pageSize, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (last) => (last.offset + last.items.length < last.total && last.items.length > 0 ? last.offset + last.items.length : undefined),
     refetchInterval: (query) => ((query.state.data?.pages.length ?? 0) > REFRESH_BATCHES ? false : REFRESH_MS),
@@ -173,8 +177,11 @@ export function QueuePage({ me }: { me: Me }) {
     return () => seen.disconnect();
   }, [scrolling, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  function go(next: { scope?: TicketScope; queue?: string; view?: SavedView; offset?: number; sort?: TicketSort; dir?: "asc" | "desc" }) {
-    const s = next.sort ?? sort;
+  function go(next: { scope?: TicketScope; queue?: string; view?: SavedView; offset?: number; sort?: TicketSort; dir?: "asc" | "desc"; q?: string }) {
+    // Choosing a view leaves the search; a new search starts from its own default order.
+    const search = next.view ? "" : (next.q ?? q);
+    if (next.view) setTyped("");
+    const s = next.sort ?? (next.q !== undefined && !rawSort ? (search ? "age" : "due") : sort);
     const d = next.dir ?? (next.sort ? undefined : dir);
     if (next.scope) {
       try {
@@ -190,17 +197,25 @@ export function QueuePage({ me }: { me: Me }) {
         // Not remembered; the URL still has it.
       }
     }
-    const q = next.queue ?? (queueId ? String(queueId) : "");
+    const queueChoice = next.queue ?? (queueId ? String(queueId) : "");
     setSelected(new Set());
     setParams({
       scope: next.scope ?? scope,
-      ...(q ? { queue: q } : {}),
+      ...(queueChoice ? { queue: queueChoice } : {}),
       view: next.view ?? view,
-      ...(s !== "due" ? { sort: s } : {}),
+      ...(search ? { q: search } : {}),
+      ...(s !== (search ? "age" : "due") ? { sort: s } : {}),
       ...(d && d !== COLUMNS.find((c) => c.key === s)!.first ? { dir: d } : {}),
       ...(next.offset ? { offset: String(next.offset) } : {}),
     });
   }
+
+  // Search as you type, once typing pauses.
+  useEffect(() => {
+    if (typed.trim() === q) return;
+    const wait = setTimeout(() => go({ q: typed.trim() }), 350);
+    return () => clearTimeout(wait);
+  });
 
   // Click a column: sort by it; click it again: the other way round. Back to page 1 either way.
   function sortBy(key: TicketSort) {
@@ -233,6 +248,8 @@ export function QueuePage({ me }: { me: Me }) {
           ))}
         </div>
         <span className="spacer" />
+        <input type="search" className="queue-search" aria-label="Search tickets" placeholder="Search tickets, notes or a number"
+          value={typed} onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") go({ q: typed.trim() }); }} maxLength={200} />
         <select aria-label="Queue" className="queue-switch" value={queueId ? String(queueId) : ""} onChange={(e) => go({ queue: e.target.value, offset: 0 })}>
           <option value="">All queues</option>
           {queues.data?.map((q) => (
@@ -248,7 +265,7 @@ export function QueuePage({ me }: { me: Me }) {
 
       <div className="views" role="group" aria-label="Saved views">
         {VIEWS.map((v) => (
-          <button key={v.key} type="button" aria-pressed={v.key === view} onClick={() => go({ view: v.key })}>
+          <button key={v.key} type="button" aria-pressed={!q && v.key === view} onClick={() => go({ view: v.key })}>
             {v.label}
             {counts.data && (
               <>
@@ -260,6 +277,12 @@ export function QueuePage({ me }: { me: Me }) {
         ))}
       </div>
 
+      {q && (
+        <p className="queue-search-note" role="status">
+          {loaded ? `${plural(total, "ticket")} match “${q}”, any status` : `Searching for “${q}”…`}{" "}
+          <button type="button" className="linkish" onClick={() => { setTyped(""); go({ q: "" }); }}>Clear search</button>
+        </p>
+      )}
       {error && <p className="error">{error.message}</p>}
       {selected.size > 0 && can(me, "ticket_bulk") && (
         <BulkBar
@@ -293,7 +316,7 @@ export function QueuePage({ me }: { me: Me }) {
         {items.map((t) => (
           <Row key={t.id} t={t} me={me} selected={selected.has(t.id)} onSelect={(on) => pick(t.id, on)} />
         ))}
-        {loaded && items.length === 0 && <div className="empty">No tickets in this view.</div>}
+        {loaded && items.length === 0 && <div className="empty">{q ? "No tickets match. Try fewer words, or a ticket number." : "No tickets in this view."}</div>}
         {scrolling && <div ref={endRef} className="queue-end" aria-hidden="true" />}
       </div>
 

@@ -56,11 +56,21 @@ test("ordinary typing and other modal workflows are not intercepted", async () =
   existing.remove();
 });
 
-test("empty search results announce a status without navigating", async () => {
+test("text that matches no page still offers a ticket search; one letter announces nothing found", async () => {
   setup();
   await userEvent.click(screen.getByRole("button", { name: /Find a page/ }));
   await userEvent.type(screen.getByRole("combobox"), "zzzzzzzz");
+  expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Search tickets for “zzzzzzzz”↗"]);
+  await userEvent.clear(screen.getByRole("combobox"));
+  await userEvent.type(screen.getByRole("combobox"), "§");
   expect(screen.getByRole("status")).toHaveTextContent("No matching destination");
   await userEvent.keyboard("{Enter}");
   await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+});
+
+test("any text offers a ticket search", async () => {
+  setup();
+  await userEvent.keyboard("{Control>}k{/Control}");
+  await userEvent.type(screen.getByRole("combobox"), "toner cartridge");
+  expect(screen.getByRole("option", { name: "Search tickets for “toner cartridge”" })).toBeInTheDocument();
 });

@@ -215,6 +215,8 @@ kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--line); border-
 .trow .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .empty { padding: 40px; text-align: center; color: var(--muted); background: var(--surface); }
 .pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; }
+.queue-search { flex: 0 1 240px; min-width: 160px; width: auto; }
+.queue-search-note { margin: 0 0 10px; color: var(--muted); }
 /* My preferences > Ticket list: compact rows fit about twice as many tickets on screen. */
 .queue-list.compact .trow.body, .console-frame .queue-list.compact .trow.body { min-height: 0; padding-top: 5px; padding-bottom: 5px; font-size: 13px; }
 .queue-list.compact .trow .sub { margin-top: 0; font-size: 11px; }

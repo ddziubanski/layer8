@@ -46,6 +46,8 @@ export function CommandPalette({ me }: { me: Me }) {
   const matches = available.filter(c => `${c.label} ${c.keywords ?? ""}`.toLowerCase().includes(needle));
   const number = /^(?:#|ticket\s*)?(\d+)$/i.exec(query.trim());
   if (number && Number.isSafeInteger(Number(number[1])) && Number(number[1]) > 0) matches.unshift({ label: `Open ticket #${Number(number[1])}`, to: `/tickets/${Number(number[1])}` });
+  // Staff can always search ticket text (subject, description, notes), closed history included.
+  if (me.role !== "requester" && !me.portal_only && needle.length >= 2) matches.push({ label: `Search tickets for “${query.trim()}”`, to: `/?scope=all&q=${encodeURIComponent(query.trim())}` });
   const selected = Math.min(active, Math.max(0, matches.length - 1));
   const show = () => { returnTo.current = document.activeElement as HTMLElement | null; setQuery(""); setActive(0); setOpen(true); };
   const close = () => setOpen(false);
