@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { api, type ImportReport, type Me } from "../../api/client";
 
 const LABELS: Record<string,string> = {tickets_created:"Tickets to create",tickets_updated:"Existing tickets to update",people_created_inactive:"Inactive historical accounts to create",people_matched:"Existing people matched",comments_created:"Comments to create",comments_updated:"Imported comments to update",attachments_created:"Files to import",attachments_existing:"Files already imported",work_created:"Internal work notes to create",work_existing:"Work already imported",time_entries_created:"Time entries to create"};
+Object.assign(LABELS,{internal_comments:"Internal comments",public_comments:"Public comments",work_updated:"Imported work notes to update",status_new:"Status: New",status_open:"Status: Open",status_waiting_on_user:"Status: Waiting on user",status_resolved:"Status: Resolved",status_closed:"Status: Closed",priority_low:"Priority: Low",priority_medium:"Priority: Medium",priority_high:"Priority: High",priority_critical:"Priority: Critical"});
 
 export function ImportsAdmin({me}:{me:Me}) {
   const client=useQueryClient();
@@ -15,6 +16,8 @@ export function ImportsAdmin({me}:{me:Me}) {
   const [confirm,setConfirm]=useState(false);
   const [error,setError]=useState("");
   const picker=useRef<HTMLInputElement>(null);
+  const heading=useRef<HTMLHeadingElement>(null);
+  useEffect(()=>{heading.current?.focus();},[review,result]);
   const queues=useQuery({queryKey:["queues"],queryFn:api.queues,enabled:me.role==="admin"});
   const preview=useMutation({mutationFn:()=>api.imports.kace(file!,Number(queue)),onSuccess:data=>{setReview(data);setConfirm(false);}});
   const apply=useMutation({mutationFn:()=>api.imports.kace(file!,Number(queue),review!.fingerprint),onSuccess:data=>{
@@ -34,7 +37,7 @@ export function ImportsAdmin({me}:{me:Me}) {
       <p className="notice">KACE SMA 15.1 support is tested with synthetic fixtures. Live appliance validation is pending. Start with a small trial containing private notes and attachments.</p>
       <details><summary>Prepare a KACE export</summary><div className="stack">
         <p>On a machine that can reach KACE, run <code>tools/kace-export/kace-export.py</code> from the matching Layer 8 source. Use a read-only administrator for the required organization. Credentials and MFA are entered locally, never uploaded here.</p>
-        <pre className="code">python kace-export.py --url https://kace.corp.example --organization Default --user migration --timezone America/Los_Angeles --limit 10 --out trial.zip</pre>
+        <pre className="code import-command">python kace-export.py --url https://kace.corp.example --organization Default --user migration --timezone America/Los_Angeles --limit 10 --out trial.zip</pre>
         <p>Export up to 1,000 tickets per batch with <code>--limit</code> and <code>--offset</code>. Use <code>--mfa</code> when required and <code>--ca-file</code> for a trusted private CA. The guide is <code>docs/kace-import.md</code> in the source.</p>
       </div></details>
       <label className="field">Target queue<select value={queue} disabled={busy} onChange={event=>{changed();setQueue(event.target.value);}}><option value="">Choose a queue</option>{queues.data?.filter(q=>q.is_active).map(q=><option key={q.id} value={q.id}>{q.name}</option>)}</select></label>
@@ -50,7 +53,7 @@ export function ImportsAdmin({me}:{me:Me}) {
       {apply.isPending&&<p role="status">Importing the reviewed bundle. Keep this page open.</p>}
     </section>
     {(review||result)&&<section className="card stack" aria-label={result?"Import result":"Import preview"}>
-      <h2>{result?"Import complete":"Review import"}</h2>
+      <h2 ref={heading} tabIndex={-1}>{result?"Import complete":"Review import"}</h2>
       <p>{result?"Applied to":"Target queue:"} <strong>{(result??review)!.queue}</strong>{result?". No notifications were sent.":". Nothing has been imported yet."}</p>
       <dl className="import-counts">{Object.entries((result??review)!.counts).map(([key,value])=><div key={key}><dt>{result?(LABELS[key]??key.replaceAll("_"," ")).replaceAll(" to create","").replaceAll(" to update","").replaceAll(" to import",""):LABELS[key]??key.replaceAll("_"," ")}</dt><dd>{value}</dd></div>)}</dl>
       {!!(result??review)!.warnings.length&&<div className="notice"><h3>Items to review</h3><ul>{(result??review)!.warnings.map((warning,index)=><li key={index}>{warning}</li>)}</ul></div>}
@@ -59,7 +62,7 @@ export function ImportsAdmin({me}:{me:Me}) {
         <label className="inline"><input type="checkbox" checked={confirm} disabled={busy} onChange={event=>setConfirm(event.target.checked)}/>I reviewed this preview and have a current backup. Apply this file to the selected queue.</label>
         <div><button className="btn" type="button" disabled={!confirm||busy} onClick={()=>apply.mutate()}>Apply reviewed import</button> <Link to="/settings/backup">Backups</Link></div>
       </>}
-      {result&&<p><Link to="/">Open ticket queue</Link> · Select another file above for the next batch.</p>}
+      {result&&<p><Link to={`/?q=KACE&scope=all&queue=${queue}`}>Find KACE tickets in this queue (all statuses)</Link> · Select another file above for the next batch.</p>}
     </section>}
   </div>;
 }

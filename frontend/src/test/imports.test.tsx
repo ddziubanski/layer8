@@ -34,6 +34,7 @@ test("preview is required before explicit apply and a changed queue invalidates 
   await user.click(screen.getByRole("checkbox",{name:/I reviewed this preview/}));
   await user.click(screen.getByRole("button",{name:"Apply reviewed import"}));
   await screen.findByRole("heading",{name:"Import complete"});
+  expect(screen.getByRole("link",{name:/Find KACE tickets/})).toHaveAttribute("href","/?q=KACE&scope=all&queue=2");
   const sent=calls.find(call=>call.path.endsWith("/apply"))!.body as FormData;
   expect(sent.get("fingerprint")).toBe(report.fingerprint);
   expect(sent.get("confirm")).toBe("true");expect(sent.get("queue_id")).toBe("2");
