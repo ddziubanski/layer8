@@ -1039,3 +1039,20 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .integration-health .grid td:nth-child(3) { min-width:160px; line-height:1.7; }
 .integration-relays ul { list-style:none; padding:0; display:grid; gap:10px; }
 .integration-relays li { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+
+/* Metadata-only widget builder; the existing live workspace stays mounted out of view. */
+.arrange-live, .widget-editor, .ticket-drawer-live { display:contents; }
+.arrange-live[hidden], .ticket-drawer-live[hidden] { display:none; }
+.widget-editor { border:0; padding:0; margin:0; min-width:0; }
+.widget-placeholder { padding:12px; min-height:60px; }
+.widget-placeholder p { margin:0 0 6px; font-size:13px; }
+.widget-library { border:1px solid var(--line); border-radius:8px; padding:12px; background:var(--surface); }
+.widget-library summary { cursor:pointer; font-weight:600; }
+.widget-library-filters { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0; }
+.widget-library-filters label { flex:1; min-width:180px; font-size:12px; }
+.widget-library-filters input, .widget-library-filters select { display:block; margin-top:5px; }
+.widget-catalog { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px; max-height:340px; overflow:auto; padding:2px; }
+.widget-catalog-item { border:1px solid var(--line); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.widget-catalog-item > div:first-child { display:grid; gap:4px; }
+.widget-catalog-item p { margin:0; flex:1; }
+.widget-catalog-item .btn2 { min-height:30px; padding:4px 10px; }

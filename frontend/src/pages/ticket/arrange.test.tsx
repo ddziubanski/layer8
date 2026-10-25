@@ -27,7 +27,7 @@ function page(layout: Record<string, unknown>, me = ME) {
     "GET /api/scripts": [],
     "GET /api/runs": [],
     "GET /api/layouts/ticket": { page: "ticket", effective: layout, default: USUAL, mine: null, required: ["conversation"] },
-    "PUT /api/layouts/ticket/mine": (body: unknown) => ({ page: "ticket", effective: body, default: USUAL, mine: body, required: ["conversation"] }),
+    "PUT /api/layouts/ticket/mine": ({ body }: Call) => ({ page: "ticket", effective: body, default: USUAL, mine: body, required: ["conversation"] }),
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={me} /> }]);
   return calls;
@@ -86,4 +86,21 @@ test("arrange: quick changes in a row all count", async () => {
   hideBoth();
   await userEvent.click(within(screen.getByRole("region", { name: "Arrange this page" })).getByRole("button", { name: "Save for me" }));
   await waitFor(() => expect((calls.find((c: Call) => c.method === "PUT")!.body as typeof USUAL).hidden).toEqual(["expenses", "systems"]));
+});
+
+
+test("opening the drawer widget builder mounts no unused tools and preserves the reply draft", async () => {
+  const me = { ...ME, ticket_workspace: { ...ME.ticket_workspace!, mode: "drawer" as const } };
+  const calls = page(USUAL, me);
+  const input = await screen.findByLabelText("Work notes and replies");
+  await userEvent.type(input, "Keep the reply while choosing widgets");
+  await userEvent.click(screen.getByRole("button", {name:"Arrange this page"}));
+  expect(screen.getByRole("list", {name:"Widget library"})).toBeInTheDocument();
+  expect(calls.some(call => /\/api\/(scripts|runs)$|\/checklists$/.test(call.path))).toBe(false);
+  await userEvent.click(screen.getByRole("button", {name:"Start with essentials"}));
+  expect(screen.queryByRole("group", {name:"Panel: Scripts"})).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", {name:"Cancel"}));
+  expect(screen.getByLabelText("Work notes and replies")).toBe(input);
+  expect(input).toHaveValue("Keep the reply while choosing widgets");
+  expect(screen.getByRole("button", {name:"Arrange this page"})).toHaveFocus();
 });

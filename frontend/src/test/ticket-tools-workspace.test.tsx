@@ -80,3 +80,10 @@ test("the drawer is resized with its drag handle (here by keyboard), and the wid
   fireEvent.keyDown(handle, { key: "Home" });
   expect(handle).toHaveAttribute("aria-valuenow", "320");
 });
+
+
+test("a conversation-only pane has no empty Tools button", () => {
+  setup(["status", "scripts", "checklists", "history"]);
+  expect(screen.getByLabelText("Reply draft")).toBeInTheDocument();
+  expect(screen.queryByRole("button", {name:/Tools/})).not.toBeInTheDocument();
+});
