@@ -90,7 +90,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Purchase orders, with receiving by the clerk, vendors and systems.
 - Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
 - Integration health in Settings > Status: configuration gaps, failed/overdue worker passes, last successes and relay check-ins, with recovery links ([guide](docs/integration-health.md)).
-- Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It!.
+- Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It! and Spiceworks Cloud Help Desk ([docs/spiceworks-import.md](docs/spiceworks-import.md)).
 - Signed updates: Settings > Updates checks Layer 8's stable GitHub releases, verifies the publisher's signature, backs up first and checks the result. Open pages reconnect after restarts; a changed frontend refreshes automatically when no edited controls remain. A maintenance page also reconnects fresh browser visits ([docs/github-updates.md](docs/github-updates.md)).
 
 Screenshots of every page, in light and dark and in each theme: [screenshots/](screenshots/README.md) (an earlier gallery: [command-center](screenshots/command-center/README.md)). The full requirements and decisions are in [SPEC.md](SPEC.md).
