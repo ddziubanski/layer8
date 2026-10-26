@@ -5,6 +5,7 @@ import type { components } from "./schema";
 
 type S = components["schemas"];
 export type UpdateStatus = S["UpdateStatusOut"];
+export type ImportReport = S["ImportReport"];
 export type SoftwareDeployment = S["DeploymentOut"];
 export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
@@ -244,6 +245,14 @@ export const api = {
     copilot: (id: number, body: S["CopilotIn"]) => request<S["CopilotOut"]>("POST", `/api/tickets/${id}/copilot`, body),
   },
   me: () => request<Me>("GET", "/api/auth/me"),
+  imports: {
+    kace: (file: File, queue: number, fingerprint?: string) => {
+      const form = new FormData();
+      form.append("file", file); form.append("queue_id", String(queue));
+      if (fingerprint) { form.append("fingerprint", fingerprint); form.append("confirm", "true"); }
+      return request<ImportReport>("POST", `/api/imports/kace/${fingerprint ? "apply" : "preview"}`, form);
+    },
+  },
   branding: () => request<Branding>("GET", "/api/branding"),
   about: () => request<{ product: string; version: string; license: string; source_download: string | null; source_repository: string | null }>("GET", "/api/about"),
   notices: {

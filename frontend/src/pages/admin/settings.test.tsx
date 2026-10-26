@@ -65,7 +65,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
     "API keys", "Relays", "Mailbox (Microsoft 365)", "Teams", "Action1", "Warranty lookups",
     "Users", "Groups", "Permissions", "Directory (AD)", "Sign-in", "Windows sign-in",
     "Branding", "Modules", "Remote displays",
-    "General", "Updates", "Backup", "Status", "Log",
+    "General", "Updates", "Backup", "Imports", "Status", "Log",
   ]);
   expect([...tabs.querySelectorAll("[role=group]")].map((g) => g.getAttribute("aria-label"))).toEqual(
     ["Helpdesk", "Workflows", "Monitoring", "API / Integrations", "People and access", "Look and feel", "System"]);

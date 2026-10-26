@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from app.api import updates as updates_api
+from app.api import imports as imports_api
 from app.api import action1, admin, attachments, auth, branding, changes, checklists, devices, directory, fields, integrations, ipam, kb, meraki, network, notices, portal, reports, rules, surveys, system, tickets, vendors
 from app.api import adchanges as adchanges_api
 from app.api import people as people_api
@@ -48,6 +49,7 @@ from app.meraki_oauth import RedactCallbackQuery
 app = FastAPI(title="Layer 8", version=VERSION, lifespan=lifespan, license_info={"name": LICENSE, "identifier": LICENSE})
 app.add_middleware(RedactCallbackQuery)
 app.include_router(updates_api.router)
+app.include_router(imports_api.router)
 app.include_router(updates_api.progress_router)
 app.include_router(auth.router)
 app.include_router(teams_chat_api.router)

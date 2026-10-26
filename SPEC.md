@@ -1,5 +1,7 @@
 # Layer 8: Spec
 
+KACE migration setup: Settings > System > Imports provides admin-only export-bundle preview and confirmed application into an existing queue. Read-only API export is a separate stdlib tool, with no KACE credentials in the UI. Source IDs are namespaced by appliance/organization; private notes stay private, new historical accounts stay inactive, and no normal ticket notification/routing/SLA/survey side effects run. Archive paths, sizes, checksums and counts are validated. Live KACE SMA 15.1 interoperability remains unverified until an appliance is available. See docs/kace-import.md. Existing Track-It!/Spiceworks CLI imports remain intact.
+
 ## 1. Goal
 A robust, self-hosted service desk that takes the best of ManageEngine (process depth), TrackIT (small-shop simplicity), KACE (endpoint and scripting muscle) and Spiceworks (easy onboarding and portal).
 
