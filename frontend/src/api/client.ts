@@ -18,6 +18,7 @@ export type Attachment = S["AttachmentOut"];
 export type Queue = S["QueueOut"];
 export type User = S["UserOut"];
 /** The signed-in user; portal_only after Windows sign-in (the console needs a password). */
+export type LibraryReference = S["LibraryReference"];
 export type Me = S["MeOut"];
 export type QueueListPreference = S["QueueListPreferences"];
 export type Person = S["PersonOut"];
@@ -579,6 +580,11 @@ export const api = {
     create: (body: S["TicketTemplateIn"]) => request<TicketTemplate>("POST", "/api/ticket-templates", body),
     update: (id: number, body: S["TicketTemplateIn"]) => request<TicketTemplate>("PUT", `/api/ticket-templates/${id}`, body),
     remove: (id: number) => request<void>("DELETE", `/api/ticket-templates/${id}`),
+  },
+  library: {
+    status: () => request<S["LibraryStatus"]>("GET", "/api/library/status"),
+    search: (id: number, text: string) => request<LibraryReference[]>("POST", `/api/tickets/${id}/library/search`, { query: text }),
+    link: (id: number, drive_id: string, item_id: string) => request<S["LibraryLinked"]>("POST", `/api/tickets/${id}/library/link`, { drive_id, item_id, confirm: true }),
   },
   canned: {
     list: (ticketId?: number) => request<S["CannedReplyOut"][]>("GET", `/api/canned-replies${query({ ticket_id: ticketId })}`),

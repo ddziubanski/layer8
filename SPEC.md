@@ -167,3 +167,7 @@ Arrange this page on tickets and POs now uses a metadata-only widget library and
 ## Ticket templates (2026-10-25)
 
 Settings > Helpdesk > Ticket templates provides shared templates under templates_manage. New ticket previews and applies empty text fields and unchosen queue/priority defaults while preserving explicit choices, requester/contact/source and existing drafts. Creation still uses the existing ticket service. Checklist suggestions never start automatically. API CRUD and installer answers share validation; inactive templates/queues and restricted queue visibility are respected. See docs/ticket-templates.md.
+
+## SharePoint Library (2026-10-25)
+
+The ticket knowledge tool is called Library while retaining its saved knowledge identifier and all existing local KB functionality. Optional Settings > Helpdesk > Library enables explicit delegated Microsoft Search for runbook documents/FAQ pages within a named IT site. Result URLs are independently bounded to that site; no shared content cache, downloads or automatic ticket context. Reviewed references are revalidated via Graph and stored as internal ticket notes without requester email. The technician app requests Sites.Read.All only when Library or Copilot is enabled; the site filter does not narrow OAuth consent. See docs/library.md. FAQ list rows, publishing and public portal integration are future slices. No migration.

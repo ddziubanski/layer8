@@ -1106,3 +1106,5 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .connection-workspace[inert] > * { opacity:.7; }
 .connection-notice { position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:3000; width:min(650px,calc(100vw - 40px)); padding:20px; box-sizing:border-box; border:1px solid var(--accent); border-radius:12px; background:var(--surface); color:var(--ink); box-shadow:0 12px 40px #0004; }
 .connection-notice p { margin:10px 0; line-height:1.5; }
+
+.library-result { padding:12px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere; }

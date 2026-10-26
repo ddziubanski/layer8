@@ -33,6 +33,7 @@ import { ExpensesCard } from "./ticket/ExpensesCard";
 import { ADAccountCard } from "./ticket/ADAccountCard";
 import { ArrangedColumns, useArrangement } from "../components/Arrange";
 import { SystemsCard } from "./ticket/SystemsCard";
+import { SharePointLibrary } from "./ticket/SharePointLibrary";
 import { KnowledgeCard } from "./ticket/KnowledgeCard";
 import { CopilotCard } from "./ticket/CopilotCard";
 import { GuestWifiCard } from "./ticket/GuestWifiCard";
@@ -208,7 +209,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           systems: { label: "Systems", node: <SystemsCard ticket={t} onChanged={refresh} /> },
           vms: { label: "Virtual machines", node: uses(signedIn.data ?? {}, "nutanix") ? <TicketVmsCard ticketId={t.id} onChanged={refresh} /> : null },
           changes: { label: "Changes", node: <ChangesCard ticket={t} /> },
-          knowledge: { label: "Knowledge base", node: <KnowledgeCard ticket={t} /> },
+          knowledge: { label: "Library", node: <div className="stack"><KnowledgeCard ticket={t} /><SharePointLibrary ticketId={t.id} /></div> },
           copilot: { label: "Copilot", node: uses(signedIn.data ?? {}, "copilot") ? <CopilotCard ticket={t} onChanged={refresh} /> : null },
           guest_wifi: { label: "Guest Wi-Fi", node: uses(signedIn.data ?? {}, "unifi_vouchers") && can(signedIn.data ?? me, "unifi_vouchers") ? <GuestWifiCard ticket={t} onChanged={refresh} /> : null },
           status: { label: "Status", node: <StatusCard ticket={t} onChanged={refresh} /> },

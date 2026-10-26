@@ -19,7 +19,7 @@ export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; pane
   { id: "scripts", label: "Scripts", symbol: "⌘", panels: ["scripts"] },
   { id: "network", label: "Network", symbol: "⌗", panels: ["network"] },
   { id: "copilot", label: "Copilot", symbol: "✧", panels: ["copilot"] },
-  { id: "knowledge", label: "Knowledge", symbol: "▧", panels: ["knowledge"] },
+  { id: "knowledge", label: "Library", symbol: "▧", panels: ["knowledge"] },
   { id: "files", label: "Files", symbol: "⌕", panels: ["attachments"] },
   { id: "guest_wifi", label: "Guest Wi-Fi", symbol: "⌁", panels: ["guest_wifi"] },
 ];
