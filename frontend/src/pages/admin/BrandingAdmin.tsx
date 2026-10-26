@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
 import { api, type Branding, type User } from "../../api/client";
-import { backgroundStyle, Brand, contrast, PRESETS, themeTokens, useBranding } from "../../branding";
+import { backgroundStyle, Brand, contrast, DEFAULT_LIGHT_THEME, PRESETS, themeTokens, useBranding } from "../../branding";
 import { useDropFiles } from "../../components/useDropFiles";
 import { SettingsForm } from "./SettingsForm";
 
@@ -169,6 +169,7 @@ export function BrandingAdmin({ me }: { me: User }) {
           me={me}
           section="theme"
           title="Colours"
+          restoreDefaults={{ label: "Restore default light theme", values: DEFAULT_LIGHT_THEME }}
           embedded
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["branding"] })}
           preview={(values) => <ThemePreview values={values} name={brand.product_name} logo={brand.logo_url} />}

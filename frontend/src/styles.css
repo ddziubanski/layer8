@@ -850,7 +850,7 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .main .settings-navigation a.active { box-shadow:inset 3px 0 var(--link); background:var(--tint); font-weight:600; }
 .settings-find { width:100%; box-sizing:border-box; }
 .settings-group { display:flex; flex-direction:column; gap:1px; }
-.settings-group-name { padding:0 10px 4px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+.settings-group-name { padding:4px 10px 7px; font-size:14px; line-height:1.4; font-weight:750; letter-spacing:.035em; text-transform:uppercase; color:var(--link); border-bottom:1px solid var(--line); margin-bottom:4px; }
 .settings-content { min-width:0; }
 .settings-content > .stack, .settings-content > .card, .settings-content > form { max-width:1100px; }
 .settings-content .settings-form { width:100%; max-width:960px; box-sizing:border-box; }
