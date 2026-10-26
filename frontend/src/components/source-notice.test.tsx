@@ -32,9 +32,9 @@ test("the sidebar gets one short line", async () => {
 });
 
 test("the collapsed sidebar shows version, licence and source stacked, links kept", async () => {
-  mockApi({ "GET /api/about": { product: "Layer 8", version: "1.10.0", license: "AGPL-3.0-or-later", source_download: "/api/source", source_repository: "https://github.com/example/layer8" } });
+  mockApi({ "GET /api/about": { product: "Layer 8", version: "1.10.1", license: "AGPL-3.0-or-later", source_download: "/api/source", source_repository: "https://github.com/example/layer8" } });
   render(<QueryClientProvider client={new QueryClient()}><SourceNotice stacked /></QueryClientProvider>);
-  expect(await screen.findByText("1.10.0")).toBeInTheDocument();
+  expect(await screen.findByText("1.10.1")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "AGPL" })).toHaveAttribute("href", "https://www.gnu.org/licenses/agpl-3.0.html");
   expect(screen.getByRole("link", { name: "Source" })).toHaveAttribute("href", "/api/source");
 });
