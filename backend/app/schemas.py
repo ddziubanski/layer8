@@ -1649,6 +1649,12 @@ class RunDetailOut(RunOut):
     body: str
 
 
+class RunnerCheckInOut(BaseModel):
+    name: str
+    languages: list[str]
+    builtins_only: bool
+
+
 class RunnerClaimIn(BaseModel):
     host: str = ""
     version: str = ""

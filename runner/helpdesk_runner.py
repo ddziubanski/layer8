@@ -38,7 +38,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-VERSION = "1.3"
+VERSION = "1.4"
 POST_EVERY = 2.0  # seconds between output updates while a script runs
 
 
@@ -265,6 +265,7 @@ def main() -> None:
     p.add_argument("--ca-file", help="CA certificate to check the service desk's HTTPS certificate (default: the system's)")
     p.add_argument("--interval", type=float, default=5.0, help="Seconds between checks for work (default 5)")
     p.add_argument("--once", action="store_true", help="Run at most one job, then stop (for testing)")
+    p.add_argument("--check", action="store_true", help="Check in once without taking any work: confirms the address, certificate and token, then exits (0: OK)")
     p.add_argument("--powershell", help="PowerShell to use (default: pwsh, else powershell)")
     p.add_argument("--eos-user", help="eAPI user for Arista EOS scripts")
     p.add_argument("--eos-password-file", help="File with that user's password")
@@ -281,6 +282,16 @@ def main() -> None:
         raise SystemExit("Use the service desk's https:// address (or --allow-http for development)")
     api = Api(args.url, token, args.ca_file)
     host = socket.getfqdn()
+    if args.check:
+        # Deployment verification: never claims a job.
+        try:
+            status, info = api.post("/api/runner/check-in", {"host": host, "version": VERSION})
+        except (urllib.error.URLError, OSError, TimeoutError) as exc:
+            raise SystemExit(f"Can't reach the service desk at {api.url}: {exc}") from None
+        if status != 200 or not info:
+            raise SystemExit(f"Check-in answered {status}: {info}")
+        print(f"OK: relay {info.get('name')!r} checked in from {host} (languages: {', '.join(info.get('languages') or []) or 'none'})")
+        return
     log(f"helpdesk runner {VERSION} on {host}, polling {api.url}")
     backoff = args.interval
     while True:

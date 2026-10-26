@@ -4,6 +4,8 @@ Relays were called *runners* before version 1.2. Only the name on screen changed
 
 A relay runs action scripts from the script library. It polls the service desk over HTTPS 443 with its own token, so it needs no inbound ports. The relay is one file, `runner/helpdesk_runner.py` (Python 3.10+, standard library only).
 
+To install relays with the ready-made installers (a locked-down service on Linux, or a GPO for chosen Windows hosts), see [Deploying relays](relay-deployment.md). The steps below are the manual way.
+
 ## 1. Add it in the app
 
 Settings > Relays > **Add a relay**: a name and the languages it takes. Copy the token it shows; it isn't shown again (**New token** replaces it).
