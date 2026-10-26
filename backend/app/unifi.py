@@ -141,8 +141,9 @@ def bases() -> list[tuple[str, str]]:
     if settings.unifi_mode == "cloud":
         if not settings.unifi_console_ids:
             raise UnifiError("Choose the consoles to read (Settings > UniFi > Consoles)")
-        # Match the current Network endpoint examples; Connector GET prose differs.
-        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe='')}{INTEGRATION}") for c in settings.unifi_console_ids]
+        # Host IDs look like <hex>:<number>. The connector wants the colon as-is, like UniFi's own
+        # examples: sent as %3A it answers 403 even for a key that owns the console (#128).
+        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe=':')}{INTEGRATION}") for c in settings.unifi_console_ids]
     url = settings.unifi_console_url.rstrip("/")
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.hostname or parts.path:
