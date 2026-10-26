@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ME, mockApi, renderAt, ticket, type Call } from "../../test/util";
@@ -33,74 +33,15 @@ function page(layout: Record<string, unknown>, me = ME) {
   return calls;
 }
 
-test("a saved layout hides and moves panels", async () => {
-  page({ ...USUAL, main: ["history", ...USUAL.main.filter((p) => p !== "history" && p !== "expenses")], hidden: ["expenses"] });
-  await screen.findByText("History");
-  expect(screen.queryByRole("button", { name: "Add an expense" })).not.toBeInTheDocument();
-});
-
-test("arrange: hide a panel, move one up, save for me", async () => {
-  const calls = page(USUAL);
-  await userEvent.click(await screen.findByRole("button", { name: "Arrange this page" }));
-  const bar = screen.getByRole("region", { name: "Arrange this page" });
-  // The conversation can't be hidden.
-  expect(screen.queryByRole("button", { name: "Hide Conversation" })).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Hide Expenses" }));
-  expect(within(bar).getByRole("list", { name: "Hidden panels" })).toHaveTextContent("Expenses");
-  await userEvent.click(screen.getByRole("button", { name: "Move History up" }));
-  await userEvent.selectOptions(screen.getByLabelText("Where Status goes"), "main");
-  // Only admins see "everyone's default".
-  expect(within(bar).queryByRole("button", { name: "Save as everyone's default" })).not.toBeInTheDocument();
-  await userEvent.click(within(bar).getByRole("button", { name: "Save for me" }));
-  await waitFor(() => {
-    const sent = calls.find((c: Call) => c.method === "PUT" && c.path === "/api/layouts/ticket/mine")!.body as typeof USUAL;
-    expect(sent.hidden).toEqual(["expenses"]);
-    expect(sent.main.slice(-3)).toEqual(["history", "scripts", "status"]);
-    expect(sent.side).not.toContain("status");
-  });
-  expect(screen.queryByRole("region", { name: "Arrange this page" })).not.toBeInTheDocument();
-});
-
-test("arrange: a panel across the top, full width", async () => {
-  const calls = page(USUAL);
-  await userEvent.click(await screen.findByRole("button", { name: "Arrange this page" }));
-  await userEvent.selectOptions(screen.getByLabelText("Where Attachments goes"), "top");
-  expect(within(screen.getByRole("region", { name: "Across the top" })).getByRole("group", { name: "Panel: Attachments" })).toBeInTheDocument();
-  await userEvent.selectOptions(screen.getByLabelText("Where History goes"), "bottom");
-  await userEvent.click(within(screen.getByRole("region", { name: "Arrange this page" })).getByRole("button", { name: "Save for me" }));
-  await waitFor(() => {
-    const sent = calls.find((c: Call) => c.method === "PUT" && c.path === "/api/layouts/ticket/mine")!.body as typeof USUAL;
-    expect(sent.top).toEqual(["attachments"]);
-    expect(sent.bottom).toEqual(["history"]);
-    expect(sent.main).not.toContain("attachments");
-  });
-});
-
-test("arrange: quick changes in a row all count", async () => {
-  const calls = page(USUAL);
-  await userEvent.click(await screen.findByRole("button", { name: "Arrange this page" }));
-  const hideBoth = () => {
-    screen.getByRole("button", { name: "Hide Expenses" }).click();
-    screen.getByRole("button", { name: "Hide Systems" }).click();
-  };
-  hideBoth();
-  await userEvent.click(within(screen.getByRole("region", { name: "Arrange this page" })).getByRole("button", { name: "Save for me" }));
-  await waitFor(() => expect((calls.find((c: Call) => c.method === "PUT")!.body as typeof USUAL).hidden).toEqual(["expenses", "systems"]));
-});
-
-
-test("opening the drawer widget builder mounts no unused tools and preserves the reply draft", async () => {
-  const me = { ...ME, ticket_workspace: { ...ME.ticket_workspace!, mode: "drawer" as const } };
-  const calls = page(USUAL, me);
-  const input = await screen.findByLabelText("Work notes and replies");
-  await userEvent.type(input, "Keep the reply while choosing widgets");
-  await userEvent.click(screen.getByRole("button", {name:"Arrange this page"}));
-  expect(screen.getByRole("list", {name:"Widget library"})).toBeInTheDocument();
-  expect(calls.some(call => /\/api\/(scripts|runs)$|\/checklists$/.test(call.path))).toBe(false);
-  await userEvent.click(screen.getByRole("button", {name:"Start with essentials"}));
-  expect(screen.queryByRole("group", {name:"Panel: Scripts"})).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", {name:"Cancel"}));
-  expect(screen.getByLabelText("Work notes and replies")).toBe(input);
-  expect(input).toHaveValue("Keep the reply while choosing widgets");
-  expect(screen.getByRole("button", {name:"Arrange this page"})).toHaveFocus();
+test("legacy layouts use Ticket Focus and cannot hide tools or restore the widget canvas", async () => {
+  const calls = page({ ...USUAL, hidden: ["expenses", "scripts"] });
+  const draft = await screen.findByLabelText("Work notes and replies");
+  await userEvent.type(draft, "Keep this reply");
+  expect(screen.queryByRole("button", { name: "Arrange this page" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("tab", { name: "Tools" }));
+  expect(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Scripts/ })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("tab", { name: "Conversation" }));
+  expect(screen.getByLabelText("Work notes and replies")).toBe(draft);
+  expect(draft).toHaveValue("Keep this reply");
+  expect(calls.some(call => call.method === "PUT" && call.path.startsWith("/api/layouts"))).toBe(false);
 });

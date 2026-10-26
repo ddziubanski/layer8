@@ -1,31 +1,70 @@
-# Ticket workspace: Option B
+# Ticket Focus workspace
 
-The default technician ticket view puts Conversation first. Work contains child tickets, checklists, expenses and changes; History retains the existing audit trail. Status, priority, SLA, requester, queue and assignee remain in the ticket header. Status & assignment opens Details.
+Ticket Focus is the standard technician design. Helpdesk, People & devices,
+Operations, Library and Setup are workspaces across the top. Each contains only
+its available navigation items. Existing global module switches and personal
+navigation choices continue to apply; a workspace with no visible destinations
+is omitted. Tickets and administrator recovery access remain available.
 
-Tools opens a docked drawer: Details (status, assignment, requester and actions), Devices (computer, linked devices and systems), Directory, Scripts, Network, Copilot, Library, Files, and Guest Wi-Fi when enabled and permitted. Existing forms, permission checks and API actions are reused. Computer script shortcuts open Scripts. Network reads existing ticket device links and cached IPAM/vendor observations; opening it launches no scan or diagnostic.
+Tickets use **Conversation**, **Details**, **Tools**, **Work** and **History**.
+Conversation contains replies, internal notes, attachments on messages and Teams
+reply controls when configured. Details contains status, assignment, requester
+and ticket actions. Tools groups Devices, Directory, Scripts, Network, Copilot,
+Library, Files and Guest Wi-Fi when available. Work contains child/related tickets,
+checklists, expenses, time and changes. History retains the audit trail.
 
-Activated panels stay mounted while switching tabs/tools or closing the drawer, retaining unfinished forms and running operations. Escape closes Tools and restores focus to its button. Tab lists support Left/Right/Home/End. Reply text, selected files and public/internal choices also survive entering the Arrange editor. Drafts are in memory only, scoped to the signed-in user and ticket; navigating away resets them. Other tool forms can reset when entering Arrange, so finish those edits first.
+A compact **At a glance** panel summarizes the requester, assignment, status and
+priority, with shortcuts into the same existing ticket controls. On narrow
+screens it moves below the main content. Header SLA and ticket metadata remain.
 
-My preferences offers Conversation with tools drawer or Classic arranged panels, preferred tool, and keeping tools open on other tickets. The drawer's width is set by dragging its left edge (or with the arrow keys on that handle; double-click for the usual width), and it's remembered; the conversation always keeps room beside it. Drawer controls save personal presentation preferences automatically, with errors and Retry. Mode changes take effect on the next ticket navigation so active work is not remounted. An omitted `ticket_workspace` in PUT /api/auth/me/preferences preserves it; null resets defaults. No database migration is required. These settings never grant permissions or enable integrations.
+Activated tab and tool contents remain mounted while hidden. Unsent replies,
+selected attachments and in-progress forms survive switching sections. Drafts
+remain in memory, scoped to the account and ticket; leaving the ticket can reset
+unsaved work. Primary tabs support Left/Right/Home/End keyboard navigation.
+Tool choices save automatically with errors and Retry. A selected device's script
+shortcut opens Scripts. Merely opening a tool never launches a job or scan.
 
-Arrange this page retains the existing editor and saved layouts. Drawer mode respects hidden panels while grouping visible panels by purpose; classic mode also retains saved columns and order. Optional feature/permission gates continue to apply. The layout uses existing theme tokens, including light, Midnight, Ember and Ultraviolet; it does not change the tenant theme or introduce a Carbon color preset. Below 1200px the drawer stacks above the conversation and scrolls internally.
+The old widget canvas, Arrange editor and drawer layout choices are no longer
+shown on tickets. Existing saved layouts/modes remain stored and accepted by the
+API for compatibility; they do not restore an old ticket layout or conceal a
+Ticket Focus tool. Arrangements on other pages are unchanged. All ticket actions,
+integration enablement, module controls and permission checks retain their
+existing behavior.
 
-## Related open tickets
+## Personal themes
 
-The **Work** tab lists up to five open tickets that may be the same problem, each with why it was suggested:
+**My preferences > Appearance** offers Tidepool, Amethyst, Blue Steel, Terracotta
+and Graphite Lime. Each supports Light, Dark and Follow my device. Both theme and
+appearance can independently follow the organization. Changes are saved to the
+technician account and apply immediately after Save across console routes.
+They do not modify another technician's preferences or public branding.
 
-- **Same device / system / VM:** both tickets are linked to it.
-- **Subject shares:** at least two meaningful words in the subjects (common words like "printer not working" don't count on their own).
+**Settings > Branding > Colours** sets the organization palette and dark-mode
+default. Tidepool/light is the initial default. Restore default light theme saves
+Tidepool/light atomically and keeps uploaded names, logos and background files.
+Server-locked settings remain locked. Legacy colour/preset fields remain accepted
+by the API/CLI for older clients and existing public branding, but are not
+appearance choices in the new technician console.
 
-Only open tickets in queues you may see are considered, so a restricted queue's tickets never show, not even as a count. The ticket itself, its parent, its children and its siblings are left out.
+`PUT /api/auth/me/preferences` accepts a `console_appearance` object:
 
-Nothing is linked automatically. **Part of this ticket** makes the other ticket a child of this one, and **This is part of #N** does the reverse. Each asks first, then uses the usual child-ticket link, with its loop checks and history. To tell everyone affected, reply on each ticket as usual.
+```json
+{"console_appearance": {"palette": "tidepool", "mode": "dark"}}
+```
 
-API: `GET /api/tickets/{id}/related` (staff).
+The palette may be one of the five IDs (`tidepool`, `amethyst`, `blue-steel`,
+`terracotta`, `graphite-lime`) or null to follow the organization. Mode is
+`organization`, `light`, `dark` or `system`. Omitting the field preserves it; null
+resets both choices. Requesters cannot change console presentation. Damaged
+stored preferences safely fall back to the organization default. No database
+migration is needed: these are per-account AppSetting records.
 
-## Library
+Organization settings are also available through the admin settings API and
+installer/CLI settings import:
 
-The Library tool retains local KB articles, solved-ticket suggestions and article actions. When configured, it also offers explicit SharePoint runbook/FAQ page search and reviewed internal ticket references. The saved tool ID remains `knowledge`. See [Library setup and access](library.md).
+```json
+{"theme": {"console_theme": "tidepool", "dark_mode": "off"}}
+```
 
 ## Update everyone affected
 

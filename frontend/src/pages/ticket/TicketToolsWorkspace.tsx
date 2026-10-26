@@ -43,7 +43,8 @@ export function TicketToolsWorkspace({ me, panels, layout, request, context }: {
   const visible = (id: string) => id === "conversation" || (!hidden.has(id) && panels[id]?.node != null);
   const tools = TICKET_TOOLS.filter(item => item.id !== "details" && item.panels.some(visible));
   const selected = tools.some(item => item.id === tool) ? tool : tools[0]?.id;
-  const sections = [...SECTIONS.filter(item => item.panels.some(visible)), ...(tools.length ? [{ id: "tools", label: "Tools", panels: [] }] : [])];
+  const sections = SECTIONS.filter(item => item.panels.some(visible));
+  if (tools.length) sections.splice(Math.min(2, sections.length), 0, { id: "tools", label: "Tools", panels: [] });
   const active = sections.some(item => item.id === section) ? section : "conversation";
   function save(next: TicketWorkspacePreference) {
     latest.current = next; setError(""); setSaving(n => n + 1);
@@ -76,7 +77,7 @@ export function TicketToolsWorkspace({ me, panels, layout, request, context }: {
       {sections.map(item => <section key={item.id} id={`${prefix}-panel-${item.id}`} role="tabpanel" aria-labelledby={`${prefix}-tab-${item.id}`} hidden={active !== item.id}>
         {item.id !== "tools" ? visited.has(item.id) && <div className="stack">{render(item.panels)}</div> : visited.has("tools") && <>
           <div className="ticket-focus-tools" role="group" aria-label="Ticket tools">{tools.map(item => <button key={item.id} type="button" className="btn2" aria-pressed={selected === item.id} onClick={() => chooseTool(item.id)}><span aria-hidden="true">{item.symbol}</span>{item.label}</button>)}</div>
-          {tools.map(item => <section key={item.id} aria-label={item.label} hidden={selected !== item.id}>{visited.has(`tool-${item.id}`) && <div className="stack">{render(item.panels)}</div>}</section>)}
+          {tools.map(item => <div key={item.id} hidden={selected !== item.id}>{visited.has(`tool-${item.id}`) && <div className="stack">{render(item.panels)}</div>}</div>)}
         </>}
       </section>)}
       {saving > 0 && <span className="small muted" role="status">Saving workspace…</span>}

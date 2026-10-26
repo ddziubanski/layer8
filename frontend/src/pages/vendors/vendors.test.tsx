@@ -50,6 +50,8 @@ test("link a system on a ticket: the vendor's support details are right there", 
     [`POST /api/tickets/${t.id}/systems`]: () => (linked = [{ system: SYSTEM, linked_at: "2026-10-19T00:00:00Z", linked_by: null }]),
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Devices/ }));
   const card = await screen.findByRole("region", { name: "Systems" });
   await userEvent.type(within(card).getByLabelText("Link a system"), "core");
   await userEvent.click(await within(card).findByRole("option", { name: /Core switching/ }));

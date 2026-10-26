@@ -55,7 +55,7 @@ test("global off blocks a bookmarked module before loading its page API", async 
   expect(await screen.findByRole("heading", { name: "Scripts is turned off" })).toBeInTheDocument();
   const nav = within(screen.getByRole("navigation", { name: "Main" }));
   expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument();
-  expect(nav.getByRole("link", { name: "Tickets" })).toBeInTheDocument();
+  expect(nav.getByRole("link", { name: "Helpdesk" })).toBeInTheDocument();
   expect(calls.some(c => c.path.startsWith("/api/scripts"))).toBe(false);
   await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
   await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
@@ -87,8 +87,8 @@ test("an admin can disable workspace areas and retain recovery access without re
   await userEvent.click(screen.getByRole("checkbox", { name: "Settings for technicians" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
   const nav = within(screen.getByRole("navigation", { name: "Main" }));
-  await waitFor(() => expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument());
-  expect(nav.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByRole("checkbox", { name: "Scripts" })).not.toBeChecked());
+  expect(nav.getByRole("link", { name: "Setup" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Global modules" })).toBeInTheDocument();
   window.history.replaceState(null, "", "/");
 });
@@ -173,14 +173,14 @@ test("minimal navigation applies on save without rebuilding the route; show all 
   mount();
   await screen.findByRole("heading", { name: "My preferences" });
   const nav = within(screen.getByRole("navigation", { name: "Main" }));
-  expect(nav.getByRole("link", { name: "Scripts" })).toBeInTheDocument();
+  expect(nav.getByRole("link", { name: "Operations" })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Use minimal workspace" }));
-  expect(nav.getByRole("link", { name: "Scripts" })).toBeInTheDocument();
+  expect(nav.getByRole("link", { name: "Operations" })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
-  await waitFor(() => expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument());
-  for (const name of ["Tickets", "Dashboard", "Devices", "Knowledge base", "My preferences"])
+  await waitFor(() => expect(nav.queryByRole("link", { name: "Operations" })).not.toBeInTheDocument());
+  for (const name of ["Helpdesk", "People & devices", "Library"])
     expect(nav.getByRole("link", { name })).toBeInTheDocument();
-  expect(nav.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "My preferences" })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
   await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
@@ -188,6 +188,6 @@ test("minimal navigation applies on save without rebuilding the route; show all 
   await userEvent.keyboard("{Escape}");
   await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
-  await waitFor(() => expect(nav.getByRole("link", { name: "Scripts" })).toBeInTheDocument());
+  await waitFor(() => expect(nav.getByRole("link", { name: "Operations" })).toBeInTheDocument());
   window.history.replaceState(null, "", "/");
 });

@@ -69,7 +69,7 @@ export function ConsoleLayout({ me, brand, onLogout, logoutPending, children }: 
       {portal && <Link to={portal.to} className="material-portal">{portal.label}<Icon name="portal" /></Link>}
     </nav>
     <main id="console-main" tabIndex={-1} className="material-main">
-      <div className="material-workspace-header"><div><span className="workspace-area">YOUR WORKSPACE</span><h1>{pathname.startsWith("/preferences") ? "My preferences" : activeGroup?.label ?? "Helpdesk"}</h1></div><span className="small muted">{brand.product_name}</span></div>
+      <div className="material-workspace-header"><div><span className="workspace-area">YOUR WORKSPACE</span><h1>{pathname.startsWith("/preferences") ? "Your account" : activeGroup?.label ?? "Helpdesk"}</h1></div><span className="small muted">{brand.product_name}</span></div>
       {activeGroup && <nav className="material-local-nav" aria-label="Workspace">{activeGroup.links.map(link => <Link key={link.id} to={link.to} className={current?.id === link.id ? "active" : undefined} aria-current={current?.id === link.id ? "page" : undefined}>{link.label}</Link>)}</nav>}
       {children}
     </main>

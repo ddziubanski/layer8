@@ -15,7 +15,7 @@ const LEAVER = {
   ],
 };
 
-function page(extra: Record<string, unknown>) {
+async function page(extra: Record<string, unknown>) {
   const t = ticket();
   const calls = mockApi({
     [`GET /api/tickets/${t.id}`]: t,
@@ -27,12 +27,13 @@ function page(extra: Record<string, unknown>) {
     ...extra,
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Work" }));
   return { t, calls };
 }
 
 test("start an offboarding checklist: preview the steps with their dates, then start", async () => {
   const t = ticket();
-  const { calls } = page({
+  const { calls } = await page({
     [`GET /api/tickets/${t.id}/checklists`]: [],
     [`POST /api/tickets/${t.id}/checklists`]: { id: 1, name: "Leaver", kind: "offboarding", for_name: "Pat Lee", for_user_id: 9, key_date: "2026-10-30", created_at: "2026-10-20T00:00:00Z", items: [] },
   });
@@ -55,7 +56,7 @@ test("a started checklist shows its steps and progress", async () => {
   const child = (id: number, status: string, subject: string) => ({
     id, label: `#${id}`, subject, status, priority: "medium", queue: { id: 1, name: "Desk" }, assignee: null, created_at: "2026-10-20T00:00:00Z",
   });
-  page({
+  await page({
     [`GET /api/tickets/${t.id}/checklists`]: [{
       id: 1, name: "Leaver", kind: "offboarding", for_name: "Pat Lee", for_user_id: 9, key_date: "2026-10-30", created_at: "2026-10-20T00:00:00Z",
       items: [
@@ -73,7 +74,7 @@ test("a started checklist shows its steps and progress", async () => {
 test("a checklist a rule started has no date yet: set it and the steps' dates follow", async () => {
   const t = ticket();
   const undated = { id: 4, name: "New starter", kind: "onboarding", for_name: "John Smith", for_user_id: null, key_date: null, created_at: "2026-10-20T00:00:00Z", items: [] };
-  const { calls } = page({
+  const { calls } = await page({
     [`GET /api/tickets/${t.id}/checklists`]: [undated],
     [`PUT /api/tickets/${t.id}/checklists/4/date`]: { ...undated, key_date: "2026-11-09" },
   });

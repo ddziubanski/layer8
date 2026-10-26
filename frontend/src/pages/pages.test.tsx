@@ -94,7 +94,7 @@ describe("ticket", () => {
     return { t, calls };
   }
 
-  test("drawer reply and attachments survive sections and Arrange; file tools reuse existing downloads", async () => {
+  test("focus reply and attachments survive sections; file tools reuse existing downloads", async () => {
     setup({}, true);
     const input = await screen.findByLabelText("Work notes and replies");
     await userEvent.type(input, "Unfinished reply");
@@ -103,13 +103,13 @@ describe("ticket", () => {
     await userEvent.click(screen.getByRole("tab", { name: "History" }));
     expect(await screen.findByText('Routed to Network by rule "switch"')).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Conversation" }));
-    await userEvent.click(screen.getByRole("button", { name: "Arrange this page" }));
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Details" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Conversation" }));
     expect(screen.getByLabelText("Work notes and replies")).toHaveValue("Unfinished reply");
     expect(screen.getByLabelText("Show to the requester in the portal")).toBeChecked();
     expect(screen.getByRole("button", { name: "Remove draft.txt" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Tools/ }));
-    await userEvent.click(screen.getByRole("tab", { name: "Files" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Tools" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Files/ }));
     expect(await screen.findByRole("link", { name: "Download ping-log.txt" })).toHaveAttribute("href", "/api/attachments/a1/download");
     expect(screen.getByRole("button", { name: "Status & assignment" })).toBeInTheDocument();
   });
@@ -123,34 +123,28 @@ describe("ticket", () => {
     expect(within(breadcrumb).queryByRole("link", { name: "#4821" })).not.toBeInTheDocument();
   });
 
-  test("shows conversation, files, notes, routing and SLA", async () => {
+  test("focus exposes conversation, files, routing and history through their tabs", async () => {
     setup();
     expect(await screen.findByRole("heading", { name: "Switch port flapping, 2nd floor" })).toBeInTheDocument();
     const breadcrumb = screen.getByRole("navigation", { name: "Ticket breadcrumb" });
     expect(within(breadcrumb).getByRole("link", { name: "Tickets" })).toHaveAttribute("href", "/");
-    expect(within(breadcrumb).getByText("#4821")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("SERVICE DESK / TICKET DETAILS")).toBeInTheDocument();
-    expect(screen.getByText("Requested by")).toHaveTextContent("R. Alvarez");
-    expect(screen.getByText("Switch port flapping, 2nd floor").closest(".ticket-workspace-head")).toBeInTheDocument();
-
-    expect(screen.getByText(/R\. Alvarez, via email/)).toBeInTheDocument();
-    // Files are listed in the Attachments section; messages just mention them.
-    expect(screen.getByText("Attached: ping-log.txt")).toBeInTheDocument();
-    expect(screen.getByText("Attachments (2)")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Download ping-log.txt" })).toHaveAttribute("href", "/api/attachments/a1/download");
-    expect(screen.getByText(/8 KB · R\. Alvarez · .* · original request/)).toBeInTheDocument();
-    expect(screen.getByText(/900 B · you · .* · internal note/)).toBeInTheDocument();
-    // HTML is download-only: no View button.
-    expect(screen.queryByRole("button", { name: "View switch.cfg.html" })).toBeNull();
-    expect(screen.getByText("Checked the switch logs").closest(".card")).toHaveClass("note", "ticket-message", "ticket-message-internal");
+    expect(screen.getByText("Checked the switch logs").closest(".card")).toHaveClass("note", "ticket-message-internal");
     expect(screen.getByText(/R\. Alvarez, via email/).closest(".card")).toHaveClass("ticket-message-original");
-    expect(screen.getByText('Routed by rule: subject contains "switch"')).toBeInTheDocument();
     expect(screen.getByText("0h 42m left on the SLA")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Tools" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Files/ }));
+    expect(screen.getByRole("link", { name: "Download ping-log.txt" })).toHaveAttribute("href", "/api/attachments/a1/download");
+    expect(screen.queryByRole("button", { name: "View switch.cfg.html" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Details" }));
+    expect(screen.getByText('Routed by rule: subject contains "switch"')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "History" }));
     expect(await screen.findByText('Routed to Network by rule "switch"')).toBeInTheDocument();
   });
 
   test("previews a file in place, with download alongside", async () => {
     setup();
+    await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Files/ }));
     await userEvent.click(await screen.findByRole("button", { name: "View ping-log.txt" }));
     const dialog = screen.getByRole("dialog", { name: "Preview of ping-log.txt" });
     expect(within(dialog).getByTitle("ping-log.txt")).toHaveAttribute("src", "/api/attachments/a1/view");
@@ -161,6 +155,7 @@ describe("ticket", () => {
 
   test("moving to another queue asks for an optional reason", async () => {
     const { calls } = setup();
+    await userEvent.click(await screen.findByRole("tab", { name: "Details" }));
     await screen.findByRole("option", { name: "Service desk" });
     await userEvent.selectOptions(screen.getByLabelText("Queue"), "Service desk");
     await userEvent.type(screen.getByLabelText(/Reason for moving/), "Not a network issue");
@@ -212,6 +207,8 @@ describe("ticket", () => {
 
   test("resting the mouse on a file previews it; dropping files on Attachments adds them on an internal note", async () => {
     const { t, calls } = setup();
+    await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Files/ }));
     const name = await screen.findByRole("button", { name: "ping-log.txt" });
     await userEvent.hover(name);
     const tip = await screen.findByRole("tooltip", { name: "Preview of ping-log.txt" });
@@ -219,6 +216,8 @@ describe("ticket", () => {
     await userEvent.unhover(name);
     await waitFor(() => expect(screen.queryByRole("tooltip")).not.toBeInTheDocument());
 
+    await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Files/ }));
     const section = screen.getByText(/^Attachments \(/).closest(".card")!;
     const file = new File(["cfg"], "running.cfg", { type: "text/plain" });
     fireEvent.drop(section, { dataTransfer: { types: ["Files"], files: [file] } });
@@ -240,6 +239,7 @@ describe("ticket", () => {
 
   test("assignee list comes from the queue's owners", async () => {
     const { calls } = setup();
+    await userEvent.click(await screen.findByRole("tab", { name: "Details" }));
     const select = await screen.findByLabelText("Assignee");
     await screen.findByRole("option", { name: "D. Cole" });
     await userEvent.selectOptions(select, "D. Cole");
@@ -250,6 +250,7 @@ describe("ticket", () => {
 
   test("escalate asks for a reason and is disabled on resolved tickets", async () => {
     setup({ status: "resolved" });
+    await userEvent.click(await screen.findByRole("tab", { name: "Details" }));
     expect(await screen.findByRole("button", { name: "Escalate" })).toBeDisabled();
     expect(screen.getByText("Reopen the ticket to escalate it.")).toBeInTheDocument();
   });

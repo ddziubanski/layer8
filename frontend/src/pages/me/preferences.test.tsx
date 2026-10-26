@@ -17,6 +17,25 @@ test("personal show-all leaves global-off modules disabled", async () => {
 
 afterEach(() => vi.unstubAllGlobals());
 
+test("technicians can save any Material palette and reset to the organization default", async () => {
+  const calls = mockApi({
+    "GET /api/queues": [],
+    "GET /api/teams/connection": { configured: false, connected: false },
+    "PUT /api/auth/me/preferences": ({ body }: Call) => ({ ...ME, ...(body as object) }),
+  });
+  renderAt("/", [{ path: "/", element: <PreferencesPage me={ME} /> }]);
+  expect(screen.queryByLabelText("Layout")).not.toBeInTheDocument();
+  const palette = screen.getByLabelText("Theme");
+  expect(within(palette).getAllByRole("option")).toHaveLength(6);
+  await userEvent.selectOptions(palette, "graphite-lime");
+  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Appearance" }), "dark");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(calls.find(call => call.method === "PUT")?.body).toMatchObject({ console_appearance: { palette: "graphite-lime", mode: "dark" } }));
+  await userEvent.click(screen.getByRole("button", { name: "Use organization default" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(calls.filter(call => call.method === "PUT").at(-1)?.body).toMatchObject({ console_appearance: { palette: null, mode: "organization" } }));
+});
+
 test("pick my colour and add a rule; saved together", async () => {
   const calls = mockApi({
     "GET /api/queues": [{ id: 2, name: "Network", is_active: true }],

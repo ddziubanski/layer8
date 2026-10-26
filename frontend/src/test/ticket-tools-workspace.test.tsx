@@ -41,9 +41,8 @@ test("hidden panels stay unavailable and keyboard navigation works", async () =>
   expect(screen.queryByRole("tab", { name: "History" })).not.toBeInTheDocument();
   screen.getByRole("tab", { name: "Conversation" }).focus();
   await user.keyboard("{ArrowRight}");
-  expect(screen.getByRole("tab", { name: "Work" })).toHaveFocus();
-  await user.click(screen.getByRole("tab", { name: "Tools" }));
-  expect(screen.queryByRole("button", { name: /Scripts/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Details" })).toHaveFocus();
+  expect(screen.queryByRole("tab", { name: "Tools" })).not.toBeInTheDocument();
 });
 test("only the selected personal tool is saved", async () => {
   const user = userEvent.setup(); const calls = setup();
