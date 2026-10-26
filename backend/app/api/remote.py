@@ -80,6 +80,12 @@ def _end(session, rs: RemoteSession, by: User | None) -> None:
     rs.ended_at, rs.end_token_hash = sla.utcnow(), None
     ticket = session.get(Ticket, rs.ticket_id)
     author = by or rs.started_by or services.automation_user(session)
+    if rs.tool == "action1":
+        services._event(session, ticket, EventType.remote_session, by, session_id=rs.id, tool=rs.tool, target=rs.target, action="tracking_closed", tracking_only=True)
+        services.add_comment(session, ticket, author,
+            body=f"Closed Layer 8 tracking for Action1 remote assistance with {rs.target} (tracking #{rs.id}). This does not disconnect Action1 or confirm the connection duration.",
+            is_internal=True, source=TicketSource.agent, as_staff=True)
+        return
     services._event(session, ticket, EventType.remote_session, by, session_id=rs.id, tool=rs.tool, target=rs.target, action="ended", duration=_minutes(rs))
     services.add_comment(
         session, ticket, author, body=f"{TOOLS.get(rs.tool, rs.tool)} with {rs.target} ended after {_minutes(rs)} (remote session #{rs.id}).",

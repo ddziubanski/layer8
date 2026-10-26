@@ -31,6 +31,7 @@ class Permission:
 
 
 CATALOG = [
+    Permission("action1_remote", "Assets", "Remote control through Action1", "admins", "Launch remote assistance for an Action1-mapped device on a ticket you may access. Requires opt-in credentials and an organization allowlist."),
     Permission("action1_deploy", "Assets", "Deploy software through Action1", "admins", "Search packages, review a single device deployment and submit it. Separate opt-in credentials are required; existing patch status stays read-only."),
     Permission("nutanix_power", "Assets", "Restart or power on Nutanix VMs", "admins", "From a ticket the VM is linked to, when Settings > Nutanix > Power actions is on. A restart is graceful: through Nutanix Guest Tools when the VM has them, otherwise ACPI. Noted on the ticket."),
     Permission("nutanix_power_cycle", "Assets", "Power-cycle Nutanix VMs (hard restart)", "admins", "Like pulling the plug and starting it again: unsaved work in the VM is lost. Separate from a graceful restart. Noted on the ticket."),

@@ -70,3 +70,24 @@ From a ticket's **Requester's computer** card or a device's **Patching (Action1)
 The optional feature does not deploy patches, change Action1 schedules or alter the existing patch-status worker. Primary contract: [Action1 REST API](https://app.action1.com/apidocs/), checked 22 October 2026: catalogue/versions, installed-software inventory, `POST /automations/instances/{orgId}` with `deploy_package`, and instance status reads. Implementation and tests are original; no PSAction1 code is copied.
 
 [View the mocked deployment screenshots](../screenshots/action1/README.md).
+
+## Single-click remote desktop from a ticket
+
+The ticket's **At a glance** panel and **Tools > Devices > Requester's computer** offer **Action1 remote desktop** when enabled and permitted. One click requests remote **assistance** for that computer's matched, online Action1 endpoint, waits for readiness/endpoint consent, then opens Action1's browser viewer in a new tab. The existing Action1 agent performs remote control; no additional Layer 8 remote agent or MeshCentral installation is needed. Windows Remote Assistance remains available.
+
+### Setup
+
+1. Create dedicated Action1 API credentials with `view_endpoints` and `remote_connect`, scoped to the organizations you intend to support. Keep patch credentials read-only. The API authenticates as this credential account; it does not reuse the technician's Action1 browser login. Layer 8 records the initiating technician on the ticket.
+2. Under **Settings > Action1**, enable **Allow Action1 remote desktop**, save **Remote desktop client ID** and **Remote desktop client secret**, and list **Organizations allowed for remote desktop**. An empty list allows none. Action1 must also be enabled globally. `action1_remote_enabled`, `action1_remote_client_id`, `action1_remote_client_secret` and `action1_remote_org_ids` are importable through the `action1` settings section; the secret is write-only.
+3. Grant **Remote control through Action1** in **Settings > Permissions** (admins only by default). Refresh Action1 inventory to populate endpoint organization mappings. Layer 8 rechecks endpoint identity and online status before requesting a session. The technician must have access to the ticket and its linked device.
+4. Allow Layer 8 to open a new tab. Popup blocking prevents the API request. Test with a non-production endpoint and verify your Action1 consent/policy settings; this feature does not bypass them. The connection test on Settings > Action1 checks patch-reading credentials only.
+
+### Tracking and recovery
+
+- Requested launches and viewer handoffs are audited internally on the ticket without emailing the requester. A viewer handoff is not proof of a completed connection. **Mark tracking ended** closes Layer 8 tracking only: end the connection inside Action1. Layer 8 does not claim actual session duration or disconnect the provider.
+- Only the initiating technician can retrieve the launch link, and only on the accessible ticket. Links are HTTPS Action1 viewer URLs, treated as credentials: never persisted to notes, settings, logs, browser storage or query caches. Responses prohibit caching. Copying a link outside Layer 8 may still share access; do not share it.
+- A durable intent is saved before the external POST. Duplicate clicks reuse that entry. A timeout, malformed successful response or provider server error is **unknown**, never automatically resent. Inspect Action1 before closing tracking and requesting another session. No automatic external POST retries are made.
+- The browser waits about one minute, with provider reads throttled to five seconds per launch. A pending entry can be reopened with the same button, without another external POST, for up to five minutes. Closed/expired tracking requires checking Action1 and closing the local entry before a fresh launch. Changed configuration, removed links or changed mappings stop handoff.
+- Turning off remote desktop or removing permissions stops new launches and link retrieval. It does not terminate an already running Action1 connection.
+
+Original implementation from the official [Action1 API documentation](https://app.action1.com/apidocs/) (3.1.0, checked 25 October 2026): `POST /endpoints/managed/{orgId}/{endpointId}/remote-sessions` with `connection_type: assistance`, then `GET /endpoints/managed/{orgId}/{endpointId}/remote-sessions/{sessionId}` until `connected: yes`. Automated verification uses synthetic endpoints only; no live remote session was launched.

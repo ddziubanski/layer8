@@ -149,6 +149,10 @@ class Settings(BaseSettings):
     action1_client_secret: str = ""
     # Explicitly opt in with separate write-capable credentials and organisation allowlist.
     action1_deploy_enabled: bool = False
+    action1_remote_enabled: bool = False
+    action1_remote_client_id: str = ""
+    action1_remote_client_secret: str = ""
+    action1_remote_org_ids: list[str] = []
     action1_deploy_client_id: str = ""
     action1_deploy_client_secret: str = ""
     action1_deploy_org_ids: list[str] = []

@@ -409,6 +409,8 @@ export const api = {
   },
 
   remote: {
+    action1Start: (ticketId: number, deviceId: number) => request<S["Action1RemoteOut"]>("POST", `/api/tickets/${ticketId}/action1-remote`, { device_id: deviceId }),
+    action1Poll: (ticketId: number, sessionId: number) => request<S["Action1RemoteOut"]>("GET", `/api/tickets/${ticketId}/action1-remote/${sessionId}`),
     start: (ticketId: number, deviceId?: number) => request<RemoteLaunch>("POST", `/api/tickets/${ticketId}/remote-sessions`, { device_id: deviceId ?? null }),
     list: (ticketId: number) => request<RemoteSession[]>("GET", `/api/tickets/${ticketId}/remote-sessions`),
     close: (id: number) => request<RemoteSession>("POST", `/api/remote-sessions/${id}/close`),
