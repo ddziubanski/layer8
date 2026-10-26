@@ -83,9 +83,10 @@ def _db_error(exc: DBAPIError) -> SqlRuleError:
 
 def select_ids(select_sql: str, ticket_ids: list[int]) -> list[int]:
     body = _clean(select_sql, ("SELECT", "WITH"))
-    wrapped = f"SELECT DISTINCT rule_select.id FROM ({body}) AS rule_select WHERE {GUARD} ORDER BY 1"
+    wrapped = f"SELECT DISTINCT rule_select.id FROM (\n{body}\n) AS rule_select WHERE {GUARD} ORDER BY 1"
     with engine().connect() as conn:
         try:
+            conn.execute(text("SET TRANSACTION READ ONLY"))
             rows = conn.execute(_params(ticket_ids, wrapped), {**GUARD_PARAMS, **({"ticket_ids": ticket_ids} if ":ticket_ids" in wrapped else {})})
             return [int(r[0]) for r in rows if r[0] is not None]
         except DBAPIError as exc:
@@ -99,8 +100,9 @@ def propose_update(update_sql: str, ticket_ids: list[int], cap: int) -> dict[int
     body = _clean(update_sql, ("UPDATE",))
     if re.search(r"\bRETURNING\b", body, re.I):
         raise SqlRuleError("Leave out RETURNING; the app reads the changes itself")
-    wrapped = f"WITH rule_update AS ({body} RETURNING 1) SELECT count(*) FROM rule_update WHERE {GUARD}"
+    wrapped = f"WITH rule_update AS (\n{body}\n RETURNING 1) SELECT count(*) FROM rule_update WHERE {GUARD}"
     cols = ", ".join(["id", *UPDATABLE])
+    matched = set(ticket_ids)
     with engine().connect() as conn:
         try:
             count = conn.execute(_params(ticket_ids, wrapped), {**GUARD_PARAMS, **({"ticket_ids": ticket_ids} if ":ticket_ids" in wrapped else {})}).scalar()
@@ -113,7 +115,7 @@ def propose_update(update_sql: str, ticket_ids: list[int], cap: int) -> dict[int
                     "WHERE xmin::text::bigint = pg_current_xact_id()::text::bigint % 4294967296"
                 )
             ).mappings()
-            return {r["id"]: {c: r[c] for c in UPDATABLE} for r in rows}
+            return {r["id"]: {c: r[c] for c in UPDATABLE} for r in rows if r["id"] in matched}
         except DBAPIError as exc:
             raise _db_error(exc) from None
         finally:

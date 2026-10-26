@@ -8,7 +8,7 @@ from app import permissions, sla
 from app.api.admin import get_or_404, load_queues
 from app.auth import SessionDep
 from app.config import settings
-from app.models import RuleRun, RuleTrigger, TicketRule
+from app.models import RuleMode, RuleRun, RuleTrigger, TicketRule, User, UserRole
 from app.rules import actions, conditions, engine, sqlmode
 from app.schemas import RuleCatalogOut, RuleRunOut, TicketRuleIn, TicketRuleOut
 
@@ -18,7 +18,15 @@ RulesManager = permissions.require("rules_manage")
 RULE_ERRORS = (engine.RuleError, conditions.ConditionError, actions.ActionError, sqlmode.SqlRuleError)
 
 
-def _apply(session, rule: TicketRule, body: TicketRuleIn) -> None:
+def _require_sql_admin(rule_or_mode, user: User) -> None:
+    mode = getattr(rule_or_mode, "mode", rule_or_mode)
+    if mode == RuleMode.sql and user.role != UserRole.admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can create, change, test or run SQL ticket rules")
+
+
+def _apply(session, rule: TicketRule, body: TicketRuleIn, user: User) -> None:
+    _require_sql_admin(rule.mode, user)
+    _require_sql_admin(body.mode, user)
     data = body.model_dump(exclude={"queue_ids"})
     for field, value in data.items():
         setattr(rule, field, value)
@@ -52,10 +60,10 @@ def list_rules(_: RulesManager, session: SessionDep):
 
 
 @router.post("", response_model=TicketRuleOut, status_code=status.HTTP_201_CREATED)
-def create_rule(body: TicketRuleIn, _: RulesManager, session: SessionDep):
+def create_rule(body: TicketRuleIn, user: RulesManager, session: SessionDep):
     rule = TicketRule()
     session.add(rule)
-    _apply(session, rule, body)
+    _apply(session, rule, body, user)
     session.commit()
     return rule
 
@@ -66,27 +74,30 @@ def get_rule(rule_id: int, _: RulesManager, session: SessionDep):
 
 
 @router.put("/{rule_id}", response_model=TicketRuleOut)
-def replace_rule(rule_id: int, body: TicketRuleIn, _: RulesManager, session: SessionDep):
+def replace_rule(rule_id: int, body: TicketRuleIn, user: RulesManager, session: SessionDep):
     rule = get_or_404(session, TicketRule, rule_id)
-    _apply(session, rule, body)
+    _apply(session, rule, body, user)
     session.commit()
     return rule
 
 
 @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_rule(rule_id: int, _: RulesManager, session: SessionDep):
-    session.delete(get_or_404(session, TicketRule, rule_id))
+def delete_rule(rule_id: int, user: RulesManager, session: SessionDep):
+    rule = get_or_404(session, TicketRule, rule_id)
+    _require_sql_admin(rule, user)
+    session.delete(rule)
     session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{rule_id}/test", response_model=RuleRunOut)
-def test_rule(rule_id: int, _: RulesManager, session: SessionDep, ticket_id: int | None = Query(default=None)):
+def test_rule(rule_id: int, user: RulesManager, session: SessionDep, ticket_id: int | None = Query(default=None)):
     """Run the rule for real inside a transaction that is rolled back: shows what would match and change.
 
     For on_create/on_update rules, pass ticket_id to test against one ticket (change conditions are ignored).
     """
     rule = get_or_404(session, TicketRule, rule_id)
+    _require_sql_admin(rule, user)
     run = engine.execute(session, rule, trigger="test", now=sla.utcnow(), limit_to=[ticket_id] if ticket_id else None, dry_run=True)
     session.add(run)
     session.commit()
@@ -94,9 +105,10 @@ def test_rule(rule_id: int, _: RulesManager, session: SessionDep, ticket_id: int
 
 
 @router.post("/{rule_id}/run", response_model=RuleRunOut)
-def run_rule(rule_id: int, _: RulesManager, session: SessionDep):
+def run_rule(rule_id: int, user: RulesManager, session: SessionDep):
     """Run a scheduled rule now, for real."""
     rule = get_or_404(session, TicketRule, rule_id)
+    _require_sql_admin(rule, user)
     if rule.trigger != RuleTrigger.schedule:
         raise HTTPException(status.HTTP_409_CONFLICT, "Only scheduled rules can be run by hand; test the others")
     now = sla.utcnow()

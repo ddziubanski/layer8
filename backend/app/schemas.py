@@ -1750,6 +1750,14 @@ class VendorIn(BaseModel):
     # The full list: contacts left out are removed.
     contacts: list[VendorContactIn] = Field(default_factory=list, max_length=50)
 
+    @field_validator("website", "support_portal")
+    @classmethod
+    def _http_url(cls, v: str) -> str:
+        s = v.strip()
+        if s and not s.lower().startswith(("http://", "https://")):
+            raise ValueError("URL must start with http:// or https://")
+        return s
+
 
 class VendorRef(ORM):
     id: int

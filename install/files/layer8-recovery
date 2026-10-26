@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -I
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Layer 8 recovery helper: the only privileged commands the recovery menu (layer8-console) may
 run, through sudo. Each subcommand is fixed and checks its values; nothing goes through a shell.
@@ -27,7 +27,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(os.environ.get("LAYER8_RECOVERY_ROOT", "/"))  # tests point this at a temp folder
+ROOT = Path(os.environ.get("LAYER8_RECOVERY_ROOT", "/")) if os.geteuid() != 0 else Path("/")  # tests point this at a temp folder
 INTERFACES = ROOT / "etc/network/interfaces"
 RESOLV = ROOT / "etc/resolv.conf"
 DHCLIENT = ROOT / "etc/dhcp/dhclient.conf"
@@ -184,12 +184,18 @@ def run(*cmd: str, stdin: str | None = None, check: bool = False, quiet: bool = 
 
 def app(*args: str, stdin: str | None = None) -> int:
     """The app's own CLI, as its service account with its settings."""
-    env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"}
-    for line in (ETC / "helpdesk.env").read_text().splitlines():
+    env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "PYTHONNOUSERSITE": "1"}
+    env_file = ETC / "helpdesk.env"
+    st = env_file.lstat()
+    if st.st_uid != 0 or st.st_mode & 0o022:
+        raise Refused("/etc/helpdesk/helpdesk.env must be owned by root and not writable by others")
+    for line in env_file.read_text().splitlines():
         if "=" in line and not line.lstrip().startswith("#"):
             k, v = line.split("=", 1)
-            env[k.strip()] = v.strip().strip('"')
-    cmd = ["/usr/sbin/runuser", "-u", "helpdesk", "--", str(APP / "venv/bin/python"), "-m", "app.cli", *args]
+            k = k.strip()
+            if k.startswith("HELPDESK_"):
+                env[k] = v.strip().strip('"')
+    cmd = ["/usr/sbin/runuser", "-u", "helpdesk", "--", str(APP / "venv/bin/python"), "-I", "-m", "app.cli", *args]
     return subprocess.run(cmd, input=stdin, text=True, env=env, cwd=APP / "app").returncode
 
 
@@ -263,7 +269,7 @@ def cmd_net_revert() -> int:
     shutil.copy2(backup, INTERFACES)
     backup.unlink()
     if name:
-        interface_up(name)
+        interface_up(iface(name))
     print("Back to the previous network settings.")
     return 0
 

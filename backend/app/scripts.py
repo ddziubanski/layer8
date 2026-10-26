@@ -290,12 +290,13 @@ ORDER BY t.created_at""",
        c.created_at AS last_comment_at, w.display_name AS by, c.is_internal AS internal,
        left(regexp_replace(c.body, '[[:space:]]+', ' ', 'g'), 120) AS comment
 FROM tickets t
+JOIN queues q ON q.id = t.queue_id
 LEFT JOIN users a ON a.id = t.assignee_id
 LEFT JOIN LATERAL (
   SELECT * FROM comments x WHERE x.ticket_id = t.id ORDER BY x.created_at DESC, x.id DESC LIMIT 1
 ) c ON true
 LEFT JOIN users w ON w.id = c.author_id
-WHERE t.status IN ('new', 'open', 'waiting_on_user')
+WHERE NOT q.restricted AND t.status IN ('new', 'open', 'waiting_on_user')
 ORDER BY c.created_at NULLS FIRST""",
     },
     {
@@ -345,6 +346,7 @@ LEFT JOIN queues f ON f.id = (e.data->'before'->>'queue_id')::int
 LEFT JOIN queues q ON q.id = (e.data->'after'->>'queue_id')::int
 LEFT JOIN users u ON u.id = e.actor_id
 WHERE e.type = 'assigned'
+  AND NOT coalesce(f.restricted, false) AND NOT coalesce(q.restricted, false)
   AND e.data->'before'->>'queue_id' IS DISTINCT FROM e.data->'after'->>'queue_id'
   AND e.created_at >= :start AND e.created_at < :end
 ORDER BY e.created_at DESC""",

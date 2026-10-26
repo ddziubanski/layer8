@@ -26,7 +26,7 @@ export function VendorSupport({ system }: { system: SystemItem }) {
           <a href={`mailto:${v.support_email}`}>{v.support_email}</a>
         </div>
       )}
-      {v.support_portal && (
+      {v.support_portal && /^https?:\/\//i.test(v.support_portal) && (
         <div>
           <a href={v.support_portal} target="_blank" rel="noreferrer">
             Support portal

@@ -111,10 +111,11 @@ def powershell_files(job: dict, work: Path) -> Path:
     # standard input, never in the environment or a file on disk.
     data = json.dumps({"target": job.get("target"), "values": job.get("values") or {}})
     outer = work / "launch.ps1"
+    inner_escaped = str(inner).replace("'", "''")
     outer.write_text(
         "$ErrorActionPreference = 'Stop'\n"
         f"$HD = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{base64.b64encode(data.encode()).decode()}')) | ConvertFrom-Json\n"
-        f"$inner = '{inner}'\n"
+        f"$inner = '{inner_escaped}'\n"
         "$secret = [Console]::In.ReadToEnd()\n"
         "if ($secret) { foreach ($p in ($secret | ConvertFrom-Json).PSObject.Properties) { $HD.values | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force } }\n"
         "if ($HD.target) { Invoke-Command -ComputerName $HD.target -FilePath $inner -ArgumentList (,$HD.values) }\n"
@@ -202,6 +203,8 @@ def run_eos(job: dict, args, send) -> int:
         raise RuntimeError("Set --eos-user and --eos-password-file on the runner for EOS scripts")
     password = Path(args.eos_password_file).read_text().strip()
     values = {k: "" if v is None else str(v) for k, v in (job.get("values") or {}).items()}
+    if any("\n" in v or "\r" in v or "\x00" in v for v in values.values()):
+        raise RuntimeError("EOS parameter values cannot contain line breaks or control characters")
     cmds = [string.Template(line).safe_substitute(values).strip() for line in job["body"].splitlines()]
     cmds = [c for c in cmds if c and not c.startswith(("!", "#"))]
     body = json.dumps({"jsonrpc": "2.0", "method": "runCmds", "params": {"version": 1, "cmds": cmds, "format": "text"}, "id": job["run_id"]}).encode()

@@ -2,6 +2,7 @@
 """Tickets Anywhere: technicians act on tickets with #commands in email."""
 
 import pytest
+from sqlalchemy import select
 
 from app.config import settings
 from app.mail import commands
@@ -84,5 +85,8 @@ def test_forged_mail_cant_use_commands(setup, db, mailbox, run, agent, requester
     mailbox.deliver(from_address=agent.email, subject=f"RE: [#{t.id}] Printer jammed", body_text="#close\nDone.", headers={"x-ms-exchange-organization-authas": "Anonymous"})
     run()
     db.expire_all()
-    [t] = tickets(db)
-    assert t.status.value != "closed"
+    # Not staff, not the requester: it can't close the ticket or post on it; it's a ticket of its own.
+    original, forged = tickets(db)
+    assert original.id == t.id and original.status.value != "closed"
+    assert not any("Done." in c.body for c in db.scalars(select(Comment).where(Comment.ticket_id == original.id)))
+    assert forged.requester_id == agent.id

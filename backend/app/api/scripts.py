@@ -253,10 +253,11 @@ def add_examples(admin: ScriptsManager, session: SessionDep):
     """Add the example queries that aren't in the library yet. Returns the names added."""
     have = set(session.scalars(select(Script.name)))
     added = []
+    admin_ok = admin.role == UserRole.admin
     for ex in scripts.EXAMPLES:
         if ex["name"] in have:
             continue
-        script = Script(name=ex["name"], description=ex["description"], kind=ScriptKind.query, language=ScriptLanguage.sql, agents_can_run=True, current_version=1)
+        script = Script(name=ex["name"], description=ex["description"], kind=ScriptKind.query, language=ScriptLanguage.sql, agents_can_run=admin_ok, current_version=1)
         params = scripts.check_definition(ScriptKind.query, ScriptLanguage.sql, ex["parameters"])
         script.versions.append(ScriptVersion(number=1, language=script.language, body=ex["body"], parameters=params, note="Example", author_id=admin.id))
         _review(_current(script), admin)

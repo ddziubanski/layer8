@@ -163,5 +163,7 @@ def test_portal_only_session_can_use_the_whole_portal(client, db, mapped, servic
     assert [c["body"] for c in client.get(f"/api/tickets/{tid}/comments").json()] == ["Any news?"]
     assert client.get(f"/api/tickets/{tid}/attachments").status_code == 200
     assert client.get("/api/notices/current").status_code == 200
-    # Still not the agent API.
+    assert client.get("/api/kb/articles").status_code == 200
+    # Still not the agent API or password/2FA changes.
     assert client.get(f"/api/tickets/{tid}").status_code == 403
+    assert client.post("/api/auth/password", json={"current_password": "x", "new_password": "new-password-123"}, headers=CSRF).status_code == 403

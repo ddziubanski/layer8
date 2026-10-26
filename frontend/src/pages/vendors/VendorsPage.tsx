@@ -130,7 +130,7 @@ function VendorForm({ me, vendor, onDone }: { me: Me; vendor: Vendor | null; onD
         {field("contract_level", "Contract / support level")}
         {field("contract_ends", "Contract ends", "date")}
       </div>
-      {vendor?.support_portal && (
+      {vendor?.support_portal && /^https?:\/\//i.test(vendor.support_portal) && (
         <a href={vendor.support_portal} target="_blank" rel="noreferrer" className="small">
           Open the support portal
         </a>

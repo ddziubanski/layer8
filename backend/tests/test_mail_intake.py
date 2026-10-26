@@ -437,3 +437,53 @@ def test_commands_dont_run_on_a_new_ticket_in_a_queue_the_technician_cant_see(se
     assert t.queue.name == "Human Resources" and t.priority.value != "critical"
     notice = [m for m in outbound(db) if m.to_address == agent.email and m.subject.startswith("Not done")]
     assert notice and notice[0].ticket_id is None
+
+
+def test_reply_to_tagged_staff_notice_or_by_non_agent_manager_stays_internal(setup, db, mailbox, run, agent):
+    mailbox.deliver(from_address="a@corp.local", subject="Laptop slow")
+    run()
+    [t] = tickets(db)
+    # A staff notice with [#N] in the subject (e.g. a command failure or rule notice) and a manager escalation notice.
+    db.add_all([
+        OutboundEmail(to_address=agent.email, ticket_id=t.id, subject=f"[#{t.id}] Command failed", body="x", is_staff_notice=True, internet_message_id="<staff-tag@corp.local>"),
+        OutboundEmail(to_address="mgr@corp.local", ticket_id=t.id, subject="Escalation", body="x", is_staff_notice=True, internet_message_id="<mgr-esc@corp.local>"),
+    ])
+    db.commit()
+    mailbox.deliver(from_address=agent.email, subject=f"Re: [#{t.id}] Command failed", headers={"in-reply-to": "<staff-tag@corp.local>", "x-ms-exchange-organization-authas": "Internal"}, body_text="Internal follow-up")
+    mailbox.deliver(from_address="mgr@corp.local", subject="Re: Escalation", headers={"in-reply-to": "<mgr-esc@corp.local>", "x-ms-exchange-organization-authas": "Internal"}, body_text="Manager note")
+    run()
+    db.expire_all()
+    notes = db.scalars(select(Comment).where(Comment.ticket_id == t.id).order_by(Comment.id)).all()
+    assert [(c.body, c.is_internal) for c in notes] == [("Internal follow-up", True), ("Manager note", True)]
+
+
+def test_external_anonymous_mail_spoofing_staff_is_not_treated_as_staff(setup, db, mailbox, run, agent, monkeypatch):
+    monkeypatch.setattr(settings, "email_commands_internal_only", True)
+    mailbox.deliver(from_address="a@corp.local", subject="VPN down")
+    run()
+    [t] = tickets(db)
+    mailbox.deliver(
+        from_address=agent.email,
+        subject=f"Re: [#{t.id}] VPN down",
+        body_text="Spoofed staff reply",
+        headers={"x-ms-exchange-organization-authas": "Anonymous"},
+    )
+    run()
+    db.expire_all()
+    assert db.get(Ticket, t.id).first_responded_at is None
+    assert list(db.scalars(select(Comment).where(Comment.ticket_id == t.id))) == []
+
+
+def test_forged_reply_to_a_managers_notice_is_not_an_internal_note(setup, db, mailbox, run, monkeypatch):
+    """The manager's address was emailed about the ticket, so a reply may join it; but mail Exchange
+    flagged as anonymous never becomes staff talk, even quoting the notice's message ID."""
+    monkeypatch.setattr(settings, "email_commands_internal_only", True)
+    mailbox.deliver(from_address="a@corp.local", subject="Laptop slow")
+    run()
+    [t] = tickets(db)
+    db.add(OutboundEmail(to_address="mgr@corp.local", ticket_id=t.id, subject="Escalation", body="x", is_staff_notice=True, internet_message_id="<mgr-esc@corp.local>"))
+    db.commit()
+    mailbox.deliver(from_address="mgr@corp.local", subject="Re: Escalation", headers={"in-reply-to": "<mgr-esc@corp.local>", "x-ms-exchange-organization-authas": "Anonymous"}, body_text="Forged note")
+    run()
+    db.expire_all()
+    assert not any(c.is_internal for c in db.scalars(select(Comment).where(Comment.ticket_id == t.id)))

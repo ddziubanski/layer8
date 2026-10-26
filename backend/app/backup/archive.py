@@ -95,7 +95,10 @@ def _sha256(path: Path) -> str:
 def _folder_files(root: Path) -> list[Path]:
     if not root.is_dir():
         return []
-    return sorted(p for p in root.rglob("*") if p.is_file() and not p.name.endswith(".tmp"))
+    return sorted(
+        p for p in root.rglob("*")
+        if p.is_file() and not p.name.endswith((".tmp", ".new")) and not p.name.startswith("entra-pending-")
+    )
 
 
 def target_dir() -> Path:
