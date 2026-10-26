@@ -879,6 +879,36 @@ class RelatedTicketOut(BaseModel):
     reasons: list[str]
 
 
+class BroadcastIn(BaseModel):
+    body: str = Field(min_length=1, max_length=20000)
+    # Resolve every included ticket too, with this resolution type if the setup requires one.
+    resolve: bool = False
+    resolution_type_id: int | None = None
+    closure_reason_id: int | None = None
+    # Applying only: the preview's fingerprint, and an explicit yes.
+    fingerprint: str | None = None
+    confirm: bool = False
+
+
+class BroadcastTicketOut(BaseModel):
+    ticket: ChildTicketOut
+    requester: str
+    emailed: bool
+    why_no_email: str | None
+    resolved: bool = False
+    note: str | None = None
+
+
+class BroadcastOut(BaseModel):
+    applied: bool
+    fingerprint: str
+    resolve: bool
+    tickets: list[BroadcastTicketOut]
+    emails: int
+    # Visible children left out because they're already resolved or closed.
+    skipped_closed: int
+
+
 class MergeIn(BaseModel):
     into_id: int
     # A Settings > Ticket fields merge reason.

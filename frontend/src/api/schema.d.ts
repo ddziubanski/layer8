@@ -665,6 +665,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/broadcast/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Broadcast Preview
+         * @description What updating everyone affected would do: run for real, then rolled back. Nothing is sent.
+         */
+        post: operations["broadcast_preview_api_tickets__ticket_id__broadcast_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/broadcast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Broadcast Apply
+         * @description Send the reviewed update to the parent's and its open children's requesters (one email each),
+         *     as a public reply on every ticket; with resolve, resolve them all.
+         */
+        post: operations["broadcast_apply_api_tickets__ticket_id__broadcast_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/children": {
         parameters: {
             query?: never;
@@ -6004,6 +6045,59 @@ export interface components {
             logo_url: string | null;
             /** Favicon Url */
             favicon_url: string | null;
+        };
+        /** BroadcastIn */
+        BroadcastIn: {
+            /** Body */
+            body: string;
+            /**
+             * Resolve
+             * @default false
+             */
+            resolve: boolean;
+            /** Resolution Type Id */
+            resolution_type_id?: number | null;
+            /** Closure Reason Id */
+            closure_reason_id?: number | null;
+            /** Fingerprint */
+            fingerprint?: string | null;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /** BroadcastOut */
+        BroadcastOut: {
+            /** Applied */
+            applied: boolean;
+            /** Fingerprint */
+            fingerprint: string;
+            /** Resolve */
+            resolve: boolean;
+            /** Tickets */
+            tickets: components["schemas"]["BroadcastTicketOut"][];
+            /** Emails */
+            emails: number;
+            /** Skipped Closed */
+            skipped_closed: number;
+        };
+        /** BroadcastTicketOut */
+        BroadcastTicketOut: {
+            ticket: components["schemas"]["ChildTicketOut"];
+            /** Requester */
+            requester: string;
+            /** Emailed */
+            emailed: boolean;
+            /** Why No Email */
+            why_no_email: string | null;
+            /**
+             * Resolved
+             * @default false
+             */
+            resolved: boolean;
+            /** Note */
+            note?: string | null;
         };
         /** BulkAssignIn */
         BulkAssignIn: {
@@ -14048,6 +14142,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RelatedTicketOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    broadcast_preview_api_tickets__ticket_id__broadcast_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BroadcastIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BroadcastOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    broadcast_apply_api_tickets__ticket_id__broadcast_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BroadcastIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BroadcastOut"];
                 };
             };
             /** @description Validation Error */

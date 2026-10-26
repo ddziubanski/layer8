@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router";
 
 import { api, type Ticket } from "../../api/client";
 import { PriorityChip, StatusChip } from "../../components/Chips";
+import { UpdateEveryone } from "./UpdateEveryone";
 
 /** The ticket's child tickets (tasks for other technicians), and adding one. */
 export function ChildTickets({ ticket, onChanged }: { ticket: Ticket; onChanged: () => void }) {
@@ -14,6 +15,7 @@ export function ChildTickets({ ticket, onChanged }: { ticket: Ticket; onChanged:
   const children = useQuery({ queryKey: key, queryFn: () => api.children(ticket.id) });
   const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues });
   const [adding, setAdding] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [queueId, setQueueId] = useState(String(ticket.queue.id));
@@ -43,12 +45,18 @@ export function ChildTickets({ ticket, onChanged }: { ticket: Ticket; onChanged:
         <div className="lbl spacer" style={{ margin: 0 }}>
           Child tickets {list.length > 0 && <span className="muted">({list.filter((c) => !["resolved", "closed"].includes(c.status)).length} open)</span>}
         </div>
+        {list.some((c) => !["resolved", "closed"].includes(c.status)) && !updating && (
+          <button className="btn2" type="button" onClick={() => setUpdating(true)}>
+            Update everyone affected
+          </button>
+        )}
         {!adding && (
           <button className="btn2" type="button" onClick={() => setAdding(true)}>
             Add a child ticket
           </button>
         )}
       </div>
+      {updating && <UpdateEveryone ticket={ticket} onDone={() => { setUpdating(false); void queryClient.invalidateQueries({ queryKey: key }); onChanged(); }} />}
       {list.length === 0 && !adding && <p className="muted small" style={{ margin: 0 }}>None. A child ticket is a piece of this work another technician can take on.</p>}
       {list.map((c) => (
         <div key={c.id} className="row-gap child-row">
