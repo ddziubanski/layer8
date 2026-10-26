@@ -279,6 +279,8 @@ def import_settings(session, answers: dict, base: Path = Path(".")) -> list[str]
         done.append(f"change template: {body.name}")
     for t in answers.get("ticket_templates") or []:
         from app.models import ChecklistTemplate, Queue, TicketTemplate
+        from app.schemas import TicketTemplateIn
+        from pydantic import ValidationError
 
         name = str(t.get("name", "")).strip()
         if not name:
@@ -288,21 +290,20 @@ def import_settings(session, answers: dict, base: Path = Path(".")) -> list[str]
             raise configstore.SettingsError(f"ticket_templates: {name}: unknown fields {', '.join(sorted(unknown_keys))} (templates hold no requester or assignee)")
         queue_id = checklist_id = None
         if q := str(t.get("queue") or "").strip():
-            queue_id = session.scalar(select(Queue.id).where(func.lower(Queue.name) == q.lower()))
+            queue_id = session.scalar(select(Queue.id).where(func.lower(Queue.name) == q.lower(), Queue.is_active))
             if queue_id is None:
                 raise configstore.SettingsError(f"ticket_templates: {name}: no queue {q!r}")
         if c := str(t.get("checklist") or "").strip():
             checklist_id = session.scalar(select(ChecklistTemplate.id).where(func.lower(ChecklistTemplate.name) == c.lower()))
             if checklist_id is None:
                 raise configstore.SettingsError(f"ticket_templates: {name}: no checklist {c!r}")
-        row = session.scalar(select(TicketTemplate).where(func.lower(TicketTemplate.name) == name.lower())) or TicketTemplate(name=name)
-        row.subject, row.description = str(t.get("subject") or "")[:300], str(t.get("description") or "")
-        row.category = (str(t.get("category") or "").strip()[:100]) or None
-        priority = t.get("priority") or None
-        if priority is not None and priority not in ("low", "medium", "high", "critical"):
-            raise configstore.SettingsError(f"ticket_templates: {name}: priority is low, medium, high or critical")
-        row.priority = priority
-        row.queue_id, row.checklist_id, row.is_active = queue_id, checklist_id, bool(t.get("is_active", True))
+        try:
+            body = TicketTemplateIn(**{k: v for k, v in t.items() if k not in {"queue", "checklist"}}, queue_id=queue_id, checklist_id=checklist_id)
+        except ValidationError as exc:
+            raise configstore.SettingsError(f"ticket_templates: {name}: invalid template fields") from exc
+        row = session.scalar(select(TicketTemplate).where(func.lower(TicketTemplate.name) == body.name.lower())) or TicketTemplate()
+        for field, value in body.model_dump().items():
+            setattr(row, field, value)
         session.add(row)
         done.append(f"ticket template: {name}")
     if rules:

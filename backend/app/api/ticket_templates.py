@@ -4,45 +4,17 @@ apply them in the New ticket form; the templates_manage permission edits them. A
 no requester, assignee or credentials, and applying one creates nothing: the ticket is still
 reviewed and created through the usual path (routing, SLA and emails included)."""
 
-from datetime import datetime
-
 from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 
 from app import permissions
 from app.api.tickets import visible_queue_ids
 from app.auth import Agent, SessionDep
-from app.models import ChecklistTemplate, Priority, Queue, TicketTemplate
+from app.models import ChecklistTemplate, Queue, TicketTemplate
+from app.schemas import TicketTemplateIn, TicketTemplateOut
 
 router = APIRouter(prefix="/api/ticket-templates", tags=["ticket templates"])
 Manager = permissions.require("templates_manage")
-
-
-class TicketTemplateIn(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    subject: str = Field(default="", max_length=300)
-    description: str = Field(default="", max_length=20000)
-    category: str | None = Field(default=None, max_length=100)
-    priority: Priority | None = None
-    queue_id: int | None = None
-    checklist_id: int | None = None
-    is_active: bool = True
-
-
-class TicketTemplateOut(BaseModel):
-    id: int
-    name: str
-    subject: str
-    description: str
-    category: str | None
-    priority: Priority | None
-    queue_id: int | None
-    queue_name: str | None
-    checklist_id: int | None
-    checklist_name: str | None
-    is_active: bool
-    updated_at: datetime
 
 
 def _out(session, t: TicketTemplate) -> dict:
@@ -70,7 +42,7 @@ def list_templates(user: Agent, session: SessionDep, all: bool = Query(default=F
     A template for a queue the technician can't see isn't offered to them."""
     stmt = select(TicketTemplate).order_by(func.lower(TicketTemplate.name))
     if not (all and permissions.allowed(session, user, "templates_manage")):
-        stmt = stmt.where(TicketTemplate.is_active)
+        stmt = stmt.where(TicketTemplate.is_active, or_(TicketTemplate.queue_id.is_(None), TicketTemplate.queue.has(Queue.is_active)))
         ids = visible_queue_ids(user)
         if ids is not None:
             stmt = stmt.where(or_(TicketTemplate.queue_id.is_(None), TicketTemplate.queue_id.in_(ids)))

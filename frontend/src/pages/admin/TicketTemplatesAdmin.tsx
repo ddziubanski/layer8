@@ -24,7 +24,9 @@ export function TicketTemplatesAdmin({ me }: { me: Me }) {
         Ready-made new tickets: a subject, details, category, priority and, if you like, a queue and a checklist to suggest. Technicians pick one in
         the New ticket form, see what it fills in, and change anything before creating. A template never holds a requester or an assignee.
       </p>
-      {editing && <TemplateForm template={editing === "new" ? null : editing} me={me} onDone={() => setEditing(null)} />}
+      {templates.error && <p className="error" role="alert">{templates.error.message}</p>}
+      {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+      {editing && <TemplateForm key={editing === "new" ? "new" : editing.id} template={editing === "new" ? null : editing} me={me} onDone={() => setEditing(null)} />}
       <div className="table-wrap">
         <table className="grid">
           <thead>
@@ -80,7 +82,7 @@ function TemplateForm({ template, onDone }: { template: TicketTemplate | null; m
     <form className="card stack" aria-label={template ? `Edit ${template.name}` : "New ticket template"} onSubmit={submit}>
       <label className="field">Name<input required maxLength={120} value={f.name} onChange={set("name")} /></label>
       <label className="field">Subject<input maxLength={300} value={f.subject} onChange={set("subject")} /></label>
-      <label className="field">Details<textarea rows={5} value={f.description} onChange={set("description")} /></label>
+      <label className="field">Details<textarea rows={5} maxLength={20000} value={f.description} onChange={set("description")} /></label>
       <div className="row-gap">
         <label className="field spacer">Category<input maxLength={100} value={f.category} onChange={set("category")} /></label>
         <label className="field spacer">Priority
@@ -103,9 +105,9 @@ function TemplateForm({ template, onDone }: { template: TicketTemplate | null; m
         </select>
       </label>
       <label className="inline"><input type="checkbox" checked={f.is_active} onChange={(e) => setF({ ...f, is_active: e.target.checked })} />Offer it in the New ticket form</label>
-      {save.error && <p className="error">{save.error.message}</p>}
+      {save.error && <p className="error" role="alert">{save.error.message}</p>}
       <div className="row-gap">
-        <button className="btn" type="submit" disabled={save.isPending}>Save</button>
+        <button className="btn" type="submit" disabled={save.isPending || !f.name.trim()}>Save</button>
         <button className="btn2" type="button" onClick={onDone}>Cancel</button>
       </div>
     </form>

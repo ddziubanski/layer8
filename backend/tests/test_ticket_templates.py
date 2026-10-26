@@ -36,14 +36,11 @@ def test_managers_edit_technicians_list(client, db, admin, agent, queues):
     assert client.delete(f"/api/ticket-templates/{tid}", headers=a).status_code == 204
 
 
-@pytest.mark.parametrize("bad", [{"name": ""}, {"priority": "whenever"}, {"queue_id": 999999}, {"requester_id": 5}, {"assignee_id": 5}])
+@pytest.mark.parametrize("bad", [{"name": ""}, {"name": "   "}, {"description": "x" * 20001}, {"priority": "whenever"}, {"queue_id": 999999}, {"requester_id": 5}, {"assignee_id": 5}])
 def test_validated_and_holds_no_people(client, admin, queues, bad):
     r = client.post("/api/ticket-templates", json={**NEW, **bad}, headers=as_user(admin))
-    # Unknown people fields are simply ignored by the model; nothing about them is stored.
-    if set(bad) & {"requester_id", "assignee_id"}:
-        assert r.status_code == 201 and not set(bad) & set(r.json())
-    else:
-        assert r.status_code == 422
+    assert r.status_code == 422
+
 
 
 def test_answers_file_import(db, queues):
@@ -58,6 +55,27 @@ def test_answers_file_import(db, queues):
     db.commit()
     assert db.scalar(select(TicketTemplate)).subject == "Changed" and len(db.scalars(select(TicketTemplate)).all()) == 1
     for bad in ({**NEW, "queue": "Nowhere"}, {**NEW, "assignee": "x@corp.local"}, {**NEW, "priority": "soon"}):
+        with pytest.raises(configstore.SettingsError):
+            cli.import_settings(db, {"ticket_templates": [bad]})
+        db.rollback()
+
+
+def test_inactive_queue_templates_are_not_offered(client, db, admin, agent, queues):
+    desk, _ = queues
+    made = client.post("/api/ticket-templates", json={**NEW, "queue_id": desk.id}, headers=as_user(admin))
+    assert made.status_code == 201
+    desk.is_active = False
+    db.commit()
+    assert client.get("/api/ticket-templates", headers=as_user(agent)).json() == []
+    assert len(client.get("/api/ticket-templates?all=true", headers=as_user(admin)).json()) == 1
+    assert client.post("/api/ticket-templates", json={**NEW, "name": "Inactive", "queue_id": desk.id}, headers=as_user(admin)).status_code == 422
+
+
+def test_answers_file_rejects_oversized_and_inactive_queue(db, queues):
+    desk, _ = queues
+    desk.is_active = False
+    db.commit()
+    for bad in ({**NEW, "description": "x" * 20001}, {**NEW, "name": "x" * 121}, {**NEW, "queue": desk.name}):
         with pytest.raises(configstore.SettingsError):
             cli.import_settings(db, {"ticket_templates": [bad]})
         db.rollback()
