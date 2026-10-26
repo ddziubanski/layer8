@@ -75,7 +75,7 @@ export function Action1Admin({ me }: { me: User }) {
             </details>
           )}
         </section>
-        <SettingsForm me={me} section="action1" title="Connection, tickets, changes and software deployment" intro="Test connection above uses the read-only patch credentials. Optional software deployment has separate credentials and an explicit organization allowlist below; grant technicians access in Settings > Permissions." embedded onSaved={() => test.reset()} />
+        <SettingsForm me={me} section="action1" title="Connection, tickets, deployments and remote desktop" intro="Test connection above uses the read-only patch credentials. Optional software deployment and remote desktop each use separate credentials and explicit organization allowlists below. Grant technicians access in Settings > Permissions. Remote desktop uses the stored API account, rather than the technician’s Action1 browser login." embedded onSaved={() => test.reset()} />
       </div>
     </>
   );

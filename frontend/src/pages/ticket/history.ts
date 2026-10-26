@@ -76,6 +76,10 @@ export function describe(e: TicketEvent, names: Names): string {
     case "survey_answered":
       return `Survey ${d.changed ? "answer changed" : "answered"}: ${d.rating}/5 (${d.label})` + (d.comment ? `: "${d.comment}"` : "");
     case "remote_session":
+      if (d.tool === "action1") {
+        const actions: Record<string, string> = { requested: "Requested Action1 remote assistance", launch_link_returned: "Opened the Action1 remote assistance link", failed: "Action1 remote request failed", unknown: "Action1 remote request outcome unknown; check Action1", tracking_closed: "Closed Layer 8 Action1 tracking (connection ended separately in Action1)" };
+        return actions[String(d.action)] ?? "Action1 remote assistance updated";
+      }
       return d.action === "ended" ? `Remote Assistance with ${d.target} ended after ${d.duration}` : `Offered Remote Assistance to ${d.target}`;
   }
 }

@@ -14,6 +14,7 @@ function measureHead(head: HTMLDivElement | null) {
 import { Link, useParams } from "react-router";
 
 import { api, type Me } from "../api/client";
+import { Action1RemoteControl } from "../components/Action1RemoteControl";
 import { AttachedLine, AttachmentsSection } from "../components/Attachments";
 import { PersonLink } from "../components/PersonCard";
 import { transientFailure } from "../components/ServerRecovery";
@@ -248,7 +249,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
       </div>
 
       <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
-        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><PriorityChip priority={t.priority} /></dd></dl></>} />
+        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><PriorityChip priority={t.priority} /></dd></dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />
     </div>
   );
 }

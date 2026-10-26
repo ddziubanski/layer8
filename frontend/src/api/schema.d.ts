@@ -3051,6 +3051,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/action1-remote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start */
+        post: operations["start_api_tickets__ticket_id__action1_remote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/action1-remote/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Poll */
+        get: operations["poll_api_tickets__ticket_id__action1_remote__session_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vendors": {
         parameters: {
             query?: never;
@@ -5681,6 +5715,25 @@ export interface components {
             department: string | null;
             /** Title */
             title: string | null;
+        };
+        /** Action1RemoteIn */
+        Action1RemoteIn: {
+            /** Device Id */
+            device_id: number;
+        };
+        /** Action1RemoteOut */
+        Action1RemoteOut: {
+            /** Session Id */
+            session_id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "starting" | "pending" | "ready" | "failed" | "unknown" | "expired";
+            /** Message */
+            message: string;
+            /** Launch Url */
+            launch_url?: string | null;
         };
         /** Action1StatusOut */
         Action1StatusOut: {
@@ -19743,6 +19796,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RemoteSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_api_tickets__ticket_id__action1_remote_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Action1RemoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Action1RemoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    poll_api_tickets__ticket_id__action1_remote__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Action1RemoteOut"];
                 };
             };
             /** @description Validation Error */

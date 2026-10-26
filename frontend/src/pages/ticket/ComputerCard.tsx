@@ -8,6 +8,7 @@ import { DeviceIps } from "../../components/DeviceIps";
 import { DevicePicker } from "../../components/DevicePicker";
 import { PatchStatus } from "../../components/PatchStatus";
 import { SoftwareDeployment } from "../../components/SoftwareDeployment";
+import { Action1RemoteControl } from "../../components/Action1RemoteControl";
 import { ME_KEY } from "../../queryClient";
 import { when } from "../../format";
 
@@ -79,13 +80,14 @@ export function ComputerCard({ ticket, onChanged, onRunScript }: { ticket: Ticke
             </button>
           </div>
           <SoftwareDeployment me={me.data} deviceId={pc.id} ticketId={ticket.id} onChanged={onChanged} />
+          <Action1RemoteControl me={me.data} deviceId={pc.id} ticketId={ticket.id} onChanged={onChanged} />
           {open.map((s) => (
             <div key={s.id} className="small row-gap">
               <span className="spacer">
-                Remote Assistance with {s.target} since {when(s.started_at)}
+                {s.tool === "action1" ? "Action1 tracking opened for" : "Remote Assistance with"} {s.target} since {when(s.started_at)}
               </span>
               <button className="linkish small" type="button" disabled={close.isPending} onClick={() => close.mutate(s.id)}>
-                Mark ended
+                {s.tool === "action1" ? "Mark tracking ended" : "Mark ended"}
               </button>
             </div>
           ))}
