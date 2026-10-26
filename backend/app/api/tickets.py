@@ -39,6 +39,7 @@ from app.schemas import (
     BulkAssignIn,
     BulkResultOut,
     ChildTicketOut,
+    RelatedTicketOut,
     MergeIn,
     CommentCreate,
     CommentOut,
@@ -361,6 +362,15 @@ def merge_ticket(ticket_id: int, body: MergeIn, user: Merger, session: SessionDe
     services.merge(session, source, target, user, reason, body.note)
     session.commit()
     return target
+
+
+@router.get("/{ticket_id}/related", response_model=list[RelatedTicketOut])
+def related_tickets(ticket_id: int, user: Agent, session: SessionDep):
+    """Open tickets that may be the same problem (shared device, system or VM, or subject words).
+    Suggestions only: linking one uses the parent/child relationship."""
+    from app import related
+
+    return related.suggestions(session, staff_ticket(session, ticket_id, user), user)
 
 
 @router.get("/{ticket_id}/children", response_model=list[ChildTicketOut])

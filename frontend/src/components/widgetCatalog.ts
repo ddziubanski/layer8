@@ -8,6 +8,7 @@ const TICKET: Record<string, [string, string]> = {
   actions: ["Service desk", "Existing escalation, linking and ticket actions, subject to your permissions."],
   attachments: ["Work", "Review and attach files using the existing ticket workflow."],
   children: ["Work", "Linked child tickets and progress."],
+  related: ["Work", "Open tickets that may be the same problem, with why; link one as part of this ticket."],
   checklists: ["Work", "Start and follow the ticket's checklists."],
   expenses: ["Work", "Track ticket expenses and purchasing links."],
   time: ["Work", "Record time spent on this ticket."],

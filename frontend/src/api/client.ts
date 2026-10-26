@@ -294,6 +294,7 @@ export const api = {
   createTicket: (body: TicketCreate) => request<Ticket>("POST", "/api/tickets", body),
   merge: (id: number, body: S["MergeIn"]) => request<Ticket>("POST", `/api/tickets/${id}/merge`, body),
   children: (id: number) => request<S["ChildTicketOut"][]>("GET", `/api/tickets/${id}/children`),
+  related: (id: number) => request<S["RelatedTicketOut"][]>("GET", `/api/tickets/${id}/related`),
   updateTicket: (id: number, body: TicketUpdate) => request<Ticket>("PATCH", `/api/tickets/${id}`, body),
   assign: (id: number, body: AssignIn) => request<Ticket>("POST", `/api/tickets/${id}/assign`, body),
   escalate: (id: number, reason: string) => request<Ticket>("POST", `/api/tickets/${id}/escalate`, { reason }),

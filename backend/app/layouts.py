@@ -17,7 +17,7 @@ from app.models import AppSetting, User
 # order form) can be moved but not hidden.
 PANELS: dict[str, dict[str, list[str]]] = {
     "ticket": {
-        "main": ["conversation", "attachments", "children", "checklists", "expenses", "time", "ad_account", "scripts", "history"],
+        "main": ["conversation", "attachments", "children", "related", "checklists", "expenses", "time", "ad_account", "scripts", "history"],
         "side": ["assignment", "requester", "computer", "devices", "systems", "vms", "changes", "knowledge", "copilot", "guest_wifi", "status", "actions"],
     },
     # A purchase order: the order itself (its fields, lines and links), and what happens to it.

@@ -873,6 +873,12 @@ class ChildTicketOut(ORM, Labelled):
     created_at: datetime
 
 
+class RelatedTicketOut(BaseModel):
+    """An open ticket that may be the same problem, and why it was suggested."""
+    ticket: ChildTicketOut
+    reasons: list[str]
+
+
 class MergeIn(BaseModel):
     into_id: int
     # A Settings > Ticket fields merge reason.

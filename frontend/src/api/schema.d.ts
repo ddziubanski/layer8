@@ -593,6 +593,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/related": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Related Tickets
+         * @description Open tickets that may be the same problem (shared device, system or VM, or subject words).
+         *     Suggestions only: linking one uses the parent/child relationship.
+         */
+        get: operations["related_tickets_api_tickets__ticket_id__related_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/children": {
         parameters: {
             query?: never;
@@ -9578,6 +9599,15 @@ export interface components {
             /** Hours */
             hours?: string | null;
         };
+        /**
+         * RelatedTicketOut
+         * @description An open ticket that may be the same problem, and why it was suggested.
+         */
+        RelatedTicketOut: {
+            ticket: components["schemas"]["ChildTicketOut"];
+            /** Reasons */
+            reasons: string[];
+        };
         /** RelayHealthOut */
         RelayHealthOut: {
             /** Id */
@@ -13686,6 +13716,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    related_tickets_api_tickets__ticket_id__related_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelatedTicketOut"][];
                 };
             };
             /** @description Validation Error */
