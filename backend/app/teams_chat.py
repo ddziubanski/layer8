@@ -21,7 +21,7 @@ COPILOT_SCOPES = ["Sites.Read.All", "Mail.Read", "People.Read.All", "OnlineMeeti
 
 
 def scopes():
-    return SCOPES + (COPILOT_SCOPES if settings.copilot_enabled else [])
+    return list(dict.fromkeys(SCOPES + (COPILOT_SCOPES if settings.copilot_enabled else []) + (["Sites.Read.All"] if settings.library_enabled else [])))
 GRAPH = "https://graph.microsoft.com/v1.0"
 
 
@@ -155,7 +155,8 @@ def finish(user, cookie, response):
     granted = {s.casefold() for s in str(result.get("scope", "")).split()}
     write(path(user.id), {"config": configuration(), "oid": identity["id"],
                          "account": identity["userPrincipalName"], "cache": cache.serialize(),
-                         "copilot": all(s.casefold() in granted for s in COPILOT_SCOPES)})
+                         "copilot": all(s.casefold() in granted for s in COPILOT_SCOPES),
+                         "library": "sites.read.all" in granted})
 
 
 def disconnect(user_id):

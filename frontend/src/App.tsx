@@ -152,6 +152,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "email", label: "Mailbox (Microsoft 365)", adminOnly: true, page: (me) => <EmailAdmin me={me} /> },
   { path: "requester-emails", label: "Requester emails", adminOnly: true, page: (me) => <RequesterEmailsAdmin me={me} /> },
   { path: "desk-hours", label: "Desk hours and SLA", adminOnly: true, page: (me) => <SettingsForm me={me} section="hours" title="Desk hours" intro="When technicians are in. The portal shows each queue as open or closed, with the after-hours message and when someone is next expected. A queue can have its own hours (Settings > Queues). Teams status shows each queue's owners as available, busy, away or offline: status only, with no way to start a chat." /> },
+  { path: "library", label: "Library", adminOnly: true, page: (me) => <SettingsForm me={me} section="library" title="Library" intro="Find SharePoint runbooks and FAQ pages from tickets. This optional connector reuses technician Microsoft connections configured in Settings > Teams. Existing local knowledge-base articles remain available." /> },
   { path: "teams", label: "Teams", adminOnly: true, page: (me) => <SettingsForm me={me} section="teams" title="Teams" intro="Optional periodic queue counts through a Teams Workflows webhook. Only non-restricted queues contribute. No ticket details or people are sent. Configure a workflow and enable summaries when ready; use Settings > Status to run or pause delivery." /> },
   { path: "windows-sign-in", label: "Windows sign-in", adminOnly: true, page: (me) => <WindowsSignInAdmin me={me} /> },
   { path: "sign-in", label: "Sign-in", adminOnly: true, page: (me) => <SettingsForm me={me} section="signin" title="Sign-in" intro="Two-factor sign-in for admins, and Sign in with Microsoft (Entra ID). Everyone can turn two-factor sign-in on for themselves in My preferences. Recovery from the server: python -m app.cli two-factor-reset <email>. Step by step: docs/entra-sign-in.md." /> },
@@ -218,7 +219,7 @@ function LabelPreview({ format, first }: { format: string; first: number }) {
 
 // Settings > category > page. A page not listed here shows under "Other" (so a new page is never lost).
 const SETTINGS_GROUPS: { name: string; paths: string[] }[] = [
-  { name: "Helpdesk", paths: ["queues", "rules", "ticket-fields", "canned-replies", "requester-emails", "desk-hours", "surveys", "notices"] },
+  { name: "Helpdesk", paths: ["queues", "rules", "ticket-fields", "canned-replies", "library", "requester-emails", "desk-hours", "surveys", "notices"] },
   { name: "Workflows", paths: ["checklists", "onboarding", "changes", "purchasing"] },
   { name: "Monitoring", paths: ["meraki", "unifi", "juniper", "nutanix", "ipam", "sweeps"] },
   { name: "API / Integrations", paths: ["api-keys", "runners", "email", "teams", "action1", "warranty"] },

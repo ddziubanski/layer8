@@ -23,7 +23,7 @@ const TICKET: Record<string, [string, string]> = {
   ad_account: ["Identity", "Directory account information and permitted actions when configured."],
   scripts: ["Automation", "Existing script tools, previews and approvals."],
   copilot: ["Knowledge", "Copilot assistance when enabled and connected."],
-  knowledge: ["Knowledge", "Suggested articles and linked knowledge."],
+  knowledge: ["Library", "Local knowledge articles and optional SharePoint runbooks and FAQs."],
 };
 const PO: Record<string, [string, string]> = {
   order: ["Purchasing", "The order form and lines. Always included; fields remain configurable."],

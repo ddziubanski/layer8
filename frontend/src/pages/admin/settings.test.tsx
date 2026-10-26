@@ -59,7 +59,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
   expect(await screen.findByRole("heading", { name: "Windows sign-in" })).toBeInTheDocument();
   const tabs = screen.getByRole("navigation", { name: "Settings" });
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
-    "Queues", "Ticket rules", "Ticket fields", "Canned replies", "Requester emails", "Desk hours and SLA", "Surveys", "Notices",
+    "Queues", "Ticket rules", "Ticket fields", "Canned replies", "Library", "Requester emails", "Desk hours and SLA", "Surveys", "Notices",
     "Checklists", "Onboarding templates", "Changes", "Purchasing",
     "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps",
     "API keys", "Relays", "Mailbox (Microsoft 365)", "Teams", "Action1", "Warranty lookups",

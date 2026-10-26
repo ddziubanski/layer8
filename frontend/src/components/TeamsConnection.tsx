@@ -11,9 +11,10 @@ export function TeamsConnection() {
   const disconnect = useMutation({ mutationFn: api.teams.disconnect, onSuccess: () => client.invalidateQueries({ queryKey: ["teams-connection"] }) });
   return <section className="card stack" aria-label="Microsoft Teams connection">
     <h2>Microsoft Teams</h2>
-    <p className="muted">Connect your work account to send ticket messages as yourself. Your Layer 8 sign-in stays the same.</p>
+    <p className="muted">Connect your work account to send ticket messages as yourself. Library can also use this account when enabled. Your Layer 8 sign-in stays the same.</p>
     {connection.data?.connected ? <>
       <p>Connected as <strong>{connection.data.account}</strong>.</p>
+      <button className="btn2" type="button" disabled={connect.isPending} onClick={() => connect.mutate()}>Reconnect Microsoft account</button>
       <button className="btn2" type="button" disabled={disconnect.isPending} onClick={() => disconnect.mutate()}>Disconnect Teams</button>
     </> : connection.data?.configured ? <button className="btn" type="button" disabled={connect.isPending} onClick={() => connect.mutate()}>Connect Microsoft Teams</button>
       : <p className="muted">An administrator can enable technician connections in Settings → Teams.</p>}
