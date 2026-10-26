@@ -8,6 +8,7 @@ Layer 8 works on its own with local accounts. Everything on this page is optiona
 | [Teams status on the portal](#2-teams-status-on-the-portal) | Each queue's technicians as available, busy, away or offline (status only) | Two application permissions added to registration **A** |
 | [Teams queue summary](#3-teams-queue-summary) | A periodic card with counts in a Teams channel | A Workflows webhook (no app registration) |
 | [Technician connections](#4-technician-connections-teams-messages) | Technicians message a requester in Teams from a ticket, as themselves | App registration **B** (delegated) |
+| [Library](library.md) | Find SharePoint runbooks/FAQ pages and save reviewed internal ticket references | Delegated Sites.Read.All on registration **B**; optional, no Copilot licence needed |
 | [Copilot on tickets](#5-copilot-on-tickets-preview) | Technicians ask Microsoft 365 Copilot from a ticket, as themselves | Seven more delegated permissions on registration **B**; a Copilot licence per technician |
 
 Two registrations keep the two kinds of access apart. **A** acts as the service desk itself (no signed-in person), so it gets only the narrowest permissions. **B** only ever acts as the technician who connected, with their own rights.

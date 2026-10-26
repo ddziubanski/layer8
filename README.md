@@ -39,6 +39,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - A queue that keeps loading as you scroll, with compact or comfortable rows, chosen per technician in My preferences ([docs/workspace-preferences.md](docs/workspace-preferences.md#ticket-list)).
 - KACE-style ticket rules: on save, on a schedule, or in SQL.
 - Merge, parent and child tickets, bulk changes, and a personal widget workspace: searchable library, essentials-only starting point, saved placement and administrator defaults ([guide](docs/widget-workspace.md)).
+- **Library:** local knowledge articles alongside optional SharePoint runbook/FAQ page search, using the technician’s Microsoft account and an approved IT site. Review a source link before adding it as an internal ticket reference ([setup and access](docs/library.md)).
 - Canned replies, shared or personal and per queue, with the ticket's details filled in ([docs/canned-replies.md](docs/canned-replies.md)).
 - Time tracking: log minutes with a note or in a ticket's Time panel; the *Time spent* report adds them up by technician, queue, category or day.
 - A grouped, collapsible technician sidebar and contextual header shared across the console; module pages use consistent headings, toolbars and tables. Existing branding, module visibility and ticket layouts are preserved ([layout review](docs/application-layout.md)).

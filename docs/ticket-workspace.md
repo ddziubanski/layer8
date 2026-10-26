@@ -2,7 +2,7 @@
 
 The default technician ticket view puts Conversation first. Work contains child tickets, checklists, expenses and changes; History retains the existing audit trail. Status, priority, SLA, requester, queue and assignee remain in the ticket header. Status & assignment opens Details.
 
-Tools opens a docked drawer: Details (status, assignment, requester and actions), Devices (computer, linked devices and systems), Directory, Scripts, Network, Copilot, Knowledge, Files, and Guest Wi-Fi when enabled and permitted. Existing forms, permission checks and API actions are reused. Computer script shortcuts open Scripts. Network reads existing ticket device links and cached IPAM/vendor observations; opening it launches no scan or diagnostic.
+Tools opens a docked drawer: Details (status, assignment, requester and actions), Devices (computer, linked devices and systems), Directory, Scripts, Network, Copilot, Library, Files, and Guest Wi-Fi when enabled and permitted. Existing forms, permission checks and API actions are reused. Computer script shortcuts open Scripts. Network reads existing ticket device links and cached IPAM/vendor observations; opening it launches no scan or diagnostic.
 
 Activated panels stay mounted while switching tabs/tools or closing the drawer, retaining unfinished forms and running operations. Escape closes Tools and restores focus to its button. Tab lists support Left/Right/Home/End. Reply text, selected files and public/internal choices also survive entering the Arrange editor. Drafts are in memory only, scoped to the signed-in user and ticket; navigating away resets them. Other tool forms can reset when entering Arrange, so finish those edits first.
 
@@ -22,3 +22,7 @@ Only open tickets in queues you may see are considered, so a restricted queue's 
 Nothing is linked automatically. **Part of this ticket** makes the other ticket a child of this one, and **This is part of #N** does the reverse. Each asks first, then uses the usual child-ticket link, with its loop checks and history. To tell everyone affected, reply on each ticket as usual.
 
 API: `GET /api/tickets/{id}/related` (staff).
+
+## Library
+
+The Library tool retains local KB articles, solved-ticket suggestions and article actions. When configured, it also offers explicit SharePoint runbook/FAQ page search and reviewed internal ticket references. The saved tool ID remains `knowledge`. See [Library setup and access](library.md).
