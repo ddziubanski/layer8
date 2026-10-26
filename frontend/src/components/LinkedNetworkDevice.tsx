@@ -12,5 +12,6 @@ export function LinkedNetworkDevice({ link }: { link: TicketNetworkLink }) {
     {target.observed_at && <span className="muted small">{target.stale ? "Stale observation · " : ""}Observed {when(target.observed_at)}</span>}
     {!link.current && <span className="muted small">Saved when linked; no longer in the current scan or source is disabled.</span>}
     {link.current && link.current.address !== link.target.address && <span className="muted small">IP when linked: {link.target.address || "unknown"}</span>}
+    {link.current && (link.current.name !== link.target.name || link.current.mac !== link.target.mac) && <span className="muted small">Linked as: {[link.target.name, link.target.mac].filter(Boolean).join(" · ")}</span>}
   </span>;
 }

@@ -63,10 +63,17 @@ test("failed link keeps the device unlinked and explains the error", async () =>
   expect(screen.queryByRole("button", { name: "Unlink Lobby AP" })).not.toBeInTheDocument();
 });
 
-test("missing scan retains the saved identity, and changed IP shows original address", async () => {
+test("missing scan retains the saved identity", async () => {
   setup({ "GET /api/tickets/4821/network-links": [{ ...linked, current: null }] });
   expect(await screen.findByText(/Saved when linked/)).toBeInTheDocument();
   expect(screen.getByText("Lobby AP")).toBeInTheDocument();
+});
+
+test("updated network identity shows its original name, MAC and IP", async () => {
+  setup({ "GET /api/tickets/4821/network-links": [{ ...linked, current: { ...target, name: "Renamed AP", address: "192.0.2.99", mac: "aa:bb:cc:00:00:99" } }] });
+  expect(await screen.findByText("Renamed AP")).toBeInTheDocument();
+  expect(screen.getByText("IP when linked: 192.0.2.10")).toBeInTheDocument();
+  expect(screen.getByText("Linked as: Lobby AP · aa:bb:cc:00:00:01")).toBeInTheDocument();
 });
 
 test("network context includes explicitly linked devices without an AD computer or IPAM asset", async () => {
