@@ -5,5 +5,5 @@ Copyright (C) 2026 Dan Dziubanski and contributors. Free software under the GNU 
 General Public License, version 3 or (at your option) any later version; see LICENSE.
 """
 
-VERSION = "1.10.0"
+VERSION = "1.10.1"
 LICENSE = "AGPL-3.0-or-later"
