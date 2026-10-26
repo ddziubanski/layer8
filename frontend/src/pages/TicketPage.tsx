@@ -249,7 +249,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
       </div>
 
       <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
-        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><PriorityChip priority={t.priority} /></dd></dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />
+        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><PriorityChip priority={t.priority} /></dd>{t.computer && <><dt>Computer</dt><dd><Link to={`/devices/${t.computer.id}`}>{t.computer.name}</Link></dd></>}</dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />
     </div>
   );
 }

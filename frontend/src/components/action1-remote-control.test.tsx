@@ -59,6 +59,18 @@ test("provider errors close the placeholder without navigating", async () => {
   expect(viewer.close).toHaveBeenCalledOnce(); expect(viewer.location.replace).not.toHaveBeenCalled();
 });
 
+test("pending readiness uses GET polling and does not send a second request", async () => {
+  const viewer = popup(); let reads = 0;
+  const original = globalThis.setTimeout;
+  vi.spyOn(globalThis, "setTimeout").mockImplementation(((callback: () => void, delay: number) => original(callback, delay === 5000 ? 0 : delay)) as typeof setTimeout);
+  const calls = setup({ "GET /api/tickets/4821/action1-remote/7": () => ++reads === 1
+    ? { session_id: 7, status: "pending", message: "Waiting" }
+    : { session_id: 7, status: "ready", launch_url: viewerUrl } });
+  await userEvent.click(screen.getByRole("button", { name: "Action1 remote desktop" }));
+  await waitFor(() => expect(viewer.location.replace).toHaveBeenCalledWith(viewerUrl));
+  expect(reads).toBe(2); expect(calls.filter(c => c.method === "POST")).toHaveLength(1);
+});
+
 test.each(["feature", "permission"])("hidden without %s", boundary => {
   const calls = setup({}, { ...me, ...(boundary === "feature" ? { features: [] } : { permissions: [] }) });
   expect(screen.queryByRole("button")).not.toBeInTheDocument(); expect(calls).toHaveLength(0);

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Synthetic Action1 transport; PostgreSQL tests cover authorization and durable intent."""
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 import httpx
@@ -187,3 +188,27 @@ def test_changed_context_cannot_retrieve_a_viewer(change, client, db, admin, tic
     assert response.status_code in (200, 404, 502)
     assert VIEWER not in response.text
     assert len(provider.reads) == 1  # validation read before the initial POST only
+
+
+def test_concurrent_clicks_request_one_provider_session(client, admin, ticket, device, provider):
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses = list(pool.map(lambda _: start(client, admin, ticket, device), range(2)))
+    assert all(r.status_code == 200 for r in responses), [r.text for r in responses]
+    assert len({r.json()["session_id"] for r in responses}) == 1
+    assert provider.posts == [{"connection_type": "assistance"}]
+
+
+def test_remote_settings_secret_is_write_only_and_feature_switch_takes_effect(client, admin, agent):
+    path = "/api/settings/action1"
+    assert client.put(path, headers=as_user(agent), json={"values": {"action1_remote_enabled": True}}).status_code == 403
+    saved = client.put(path, headers=as_user(admin), json={"values": {
+        "action1_remote_enabled": True, "action1_remote_client_id": "synthetic-client",
+        "action1_remote_client_secret": "synthetic-private-secret", "action1_remote_org_ids": [ORG]}})
+    assert saved.status_code == 200, saved.text
+    response = client.get(path, headers=as_user(admin))
+    assert "synthetic-private-secret" not in response.text
+    assert settings.action1_remote_client_secret == "synthetic-private-secret"
+    assert client.put("/api/settings/general", headers=as_user(admin), json={"values": {"action1_enabled": True}}).status_code == 200
+    assert "action1_remote" in client.get("/api/auth/me", headers=as_user(admin)).json()["features"]
+    assert client.put(path, headers=as_user(admin), json={"values": {"action1_remote_enabled": False}}).status_code == 200
+    assert "action1_remote" not in client.get("/api/auth/me", headers=as_user(admin)).json()["features"]

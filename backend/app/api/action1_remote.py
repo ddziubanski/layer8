@@ -53,10 +53,12 @@ def start(ticket_id: int, body: Action1RemoteIn, user: Operator, session: Sessio
     private(response)
     ticket = staff_ticket(session, ticket_id, user)
     try:
+        # Serialize repeated clicks across tabs. An uncertain external write is never retried.
+        session.scalar(select(Ticket).where(Ticket.id == ticket.id).with_for_update().execution_options(populate_existing=True))
+        session.expire(ticket, ["queue"])
+        staff_ticket(session, ticket.id, user)
         device, mapping = linked(session, ticket, body.device_id)
         fingerprint = remote.configuration()
-        # Serialize repeated clicks across tabs. An uncertain external write is never retried.
-        session.scalar(select(Ticket).where(Ticket.id == ticket.id).with_for_update())
         existing = session.scalar(select(RemoteSession).where(RemoteSession.ticket_id == ticket.id,
             RemoteSession.device_id == device.id, RemoteSession.started_by_id == user.id,
             RemoteSession.tool == "action1", RemoteSession.ended_at.is_(None)).order_by(RemoteSession.id.desc()))
@@ -90,7 +92,8 @@ def start(ticket_id: int, body: Action1RemoteIn, user: Operator, session: Sessio
             except remote.RemoteError as error:
                 # A malformed successful response can also mean the request was accepted.
                 uncertain = error.uncertain or "upstream" in locals()
-                state.value = {**state.value, "status": "unknown" if uncertain else "failed", "message": str(error)}
+                message = str(error) + (" Check Action1 before closing tracking or requesting another session." if uncertain else "")
+                state.value = {**state.value, "status": "unknown" if uncertain else "failed", "message": message}
                 if not uncertain:
                     rs.ended_at = sla.utcnow()
                 services._event(session, ticket, EventType.remote_session, user, session_id=rs.id, tool="action1", action=state.value["status"])
