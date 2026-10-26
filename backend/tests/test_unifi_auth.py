@@ -38,5 +38,7 @@ def test_auth_errors_identify_stage_status_and_never_echo_secrets(status,url,sta
         assert len(calls)==1
         if status==403 and "connector" in url:
             assert "owned by" in message
+        if status==401 and "api.ui.com" in url:
+            assert "only works in Local mode" in message
     finally:
         client.close()
