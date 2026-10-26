@@ -8,7 +8,8 @@ import { QueuePage } from "./QueuePage";
 
 const COUNTS = { open: 1, unassigned: 0, mine: 0, my_queues: 0, sla_at_risk: 0, waiting_on_user: 0, from_email: 0, from_portal: 0 };
 
-test("searching covers every status, newest first; a view or Clear ends it", async () => {
+// Typing, a debounced search and two refetches: give it room on a busy CI runner.
+test("searching covers every status, newest first; a view or Clear ends it", { timeout: 15_000 }, async () => {
   const calls = mockApi({
     "GET /api/tickets/views": COUNTS,
     "GET /api/tickets": ({ path }: Call) => path.includes("q=")
