@@ -118,3 +118,15 @@ def test_library_scope_is_opt_in_and_does_not_duplicate_copilot_scopes(monkeypat
     assert teams_chat.scopes() == teams_chat.SCOPES + library.SCOPES
     monkeypatch.setattr(settings, 'copilot_enabled', True)
     assert teams_chat.scopes().count('Sites.Read.All') == 1
+
+
+def test_link_rechecks_provider_access_and_site_before_adding_a_note(client, db, requester, agent, configured, monkeypatch):
+    ticket = make_ticket(db, requester)
+    url = f'/api/tickets/{ticket.id}/library/link'
+    body = {'drive_id': 'drive-1', 'item_id': 'item-1', 'confirm': True}
+    for item in ({**ITEM, 'webUrl': 'https://example.sharepoint.com/sites/HR/private.docx'}, {**ITEM, 'id': 'different-item'}):
+        monkeypatch.setattr(library, 'graph', lambda *args, **kwargs: item)
+        result = client.post(url, json=body, headers=as_user(agent))
+        assert result.status_code == 409
+        assert db.scalars(select(Comment)).all() == []
+    assert client.post(url, json=body, headers=as_user(requester)).status_code == 403

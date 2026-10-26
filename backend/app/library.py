@@ -71,7 +71,7 @@ def graph(method, route, token, body=None):
                 if response.status_code != 200:
                     raise LibraryError('SharePoint could not complete the lookup. Try again later.')
                 data = bytearray()
-                for chunk in response.iter_bytes():
+                for chunk in response.iter_bytes(chunk_size=65536):
                     data.extend(chunk)
                     if len(data) > MAX_RESPONSE:
                         raise LibraryError('SharePoint returned too much data. Use a more specific search.')

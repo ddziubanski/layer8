@@ -19,6 +19,7 @@ test("Library sends only the typed search and linking requires review", async ()
   expect(calls.find(c => c.path.endsWith("/search"))?.body).toEqual({ query: "VPN setup" });
   await user.click(screen.getByRole("button", { name: "Link reference to ticket" }));
   const review = screen.getByRole("region", { name: "Review Library reference" });
+  expect(review).toHaveFocus();
   expect(within(review).getByText(/internal note visible/)).toBeInTheDocument();
   expect(calls.some(c => c.path.endsWith("/link"))).toBe(false);
   await user.click(within(review).getByRole("button", { name: "Confirm internal reference" }));

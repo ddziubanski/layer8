@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { api, type LibraryReference } from "../../api/client";
 
@@ -9,11 +9,13 @@ export function SharePointLibrary({ ticketId }: { ticketId: number }) {
   const client = useQueryClient();
   const status = useQuery({ queryKey: ["library-status"], queryFn: api.library.status, refetchInterval: 30000, gcTime: 0 });
   const [query, setQuery] = useState("");
+  const reviewPanel = useRef<HTMLElement>(null);
   const [review, setReview] = useState<LibraryReference | null>(null);
   const search = useMutation({ mutationFn: (text: string) => api.library.search(ticketId, text), onSuccess: () => setReview(null) });
   const link = useMutation({ mutationFn: (reference: LibraryReference) => api.library.link(ticketId, reference.drive_id, reference.item_id),
     onSuccess: () => { setReview(null); void client.invalidateQueries({ queryKey: ["ticket", ticketId] }); } });
   useEffect(() => { search.reset(); link.reset(); setReview(null); }, [status.data?.site_url, status.data?.connected, status.data?.enabled]);
+  useEffect(() => { if (review) { reviewPanel.current?.focus(); reviewPanel.current?.scrollIntoView?.({ block: "nearest" }); } }, [review]);
   const ready = status.data?.enabled && status.data.connected;
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -41,7 +43,7 @@ export function SharePointLibrary({ ticketId }: { ticketId: number }) {
           <button type="button" className="linkish small" disabled={link.isPending} onClick={() => { link.reset(); setReview(item); }}>Link reference to ticket</button>
         </article>)}
       </div>
-      {review && <section className="notice stack" aria-label="Review Library reference">
+      {review && <section ref={reviewPanel} tabIndex={-1} className="notice stack" aria-label="Review Library reference">
         <strong>{review.title}</strong><a href={review.url} target="_blank" rel="noreferrer">{review.url}</a>
         <p className="small">This title and link will be saved as an internal note visible to technicians with access to this ticket. The requester receives no reply or email. SharePoint checks access when someone opens the link.</p>
         <div className="row-gap"><button className="btn" type="button" disabled={link.isPending} onClick={() => link.mutate(review)}>Confirm internal reference</button><button className="btn2" type="button" disabled={link.isPending} onClick={() => setReview(null)}>Cancel</button></div>
