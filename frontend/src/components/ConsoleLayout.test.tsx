@@ -68,3 +68,34 @@ test("responsive compact navigation keeps accessible link names and can be expan
   act(() => media.dispatchEvent(Object.assign(new Event("change"), { matches: true })));
   expect(screen.getByRole("button", { name: "Expand navigation" })).toBeInTheDocument();
 });
+
+
+test("Settings automatically compacts the main rail and restores the previous state on exit", async () => {
+  const user = userEvent.setup();
+  const { nav, calls } = mount({ ...ME, role: "admin" });
+  await user.type(screen.getByRole("textbox", { name: "Reply draft" }), "Keep this draft");
+  await user.click(within(nav).getByRole("link", { name: "Settings" }));
+  expect(screen.getByRole("button", { name: "Expand navigation" })).toBeInTheDocument();
+  await user.click(within(nav).getByRole("link", { name: "Tickets" }));
+  expect(screen.getByRole("button", { name: "Collapse navigation" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Collapse navigation" }));
+  await user.click(within(nav).getByRole("link", { name: "Settings" }));
+  await user.click(screen.getByRole("button", { name: "Expand navigation" }));
+  await user.click(within(nav).getByRole("link", { name: "Tickets" }));
+  expect(screen.getByRole("button", { name: "Expand navigation" })).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Reply draft" })).toHaveValue("Keep this draft");
+  expect(calls.every(call => call.method === "GET")).toBe(true);
+  await user.click(within(nav).getByRole("link", { name: "Settings" }));
+  expect(screen.getByRole("button", { name: "Expand navigation" })).toBeInTheDocument();
+});
+
+test("a direct Settings link starts compact and still offers an accessible way out", async () => {
+  const user = userEvent.setup();
+  const { nav } = mount({ ...ME, role: "admin" }, "/settings/branding");
+  expect(screen.getByRole("button", { name: "Expand navigation" })).toHaveAttribute("aria-expanded", "false");
+  expect(within(nav).getByRole("link", { name: "Tickets" })).toHaveAttribute("title", "Tickets");
+  await user.click(screen.getByRole("button", { name: "Expand navigation" }));
+  expect(screen.getByRole("button", { name: "Collapse navigation" })).toBeInTheDocument();
+  await user.click(within(nav).getByRole("link", { name: "Tickets" }));
+  expect(screen.getByRole("button", { name: "Collapse navigation" })).toBeInTheDocument();
+});

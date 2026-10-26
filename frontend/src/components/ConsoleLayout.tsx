@@ -39,15 +39,26 @@ function Icon({ name }: { name: string }) {
 export function ConsoleLayout({ me, brand, onLogout, logoutPending, children }: {
   me: Me; brand: Branding; onLogout: () => void; logoutPending: boolean; children: ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(() => window.matchMedia?.("(max-width: 1050px)").matches ?? false);
+  const [navigationCollapsed, setNavigationCollapsed] = useState(() => window.matchMedia?.("(max-width: 1050px)").matches ?? false);
   useEffect(() => {
     const media = window.matchMedia?.("(max-width: 1050px)");
     if (!media) return;
-    const resize = (event: MediaQueryListEvent) => setCollapsed(event.matches);
+    const resize = (event: MediaQueryListEvent) => setNavigationCollapsed(event.matches);
     media.addEventListener("change", resize);
     return () => media.removeEventListener("change", resize);
   }, []);
   const pathname = useLocation().pathname;
+  const inSettings = pathname === "/settings" || pathname.startsWith("/settings/");
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
+  useEffect(() => {
+    if (!inSettings) setSettingsExpanded(false);
+  }, [inSettings]);
+  // Settings has its own navigation. Keep the main rail compact without changing
+  // the technician's navigation state in the rest of the console.
+  const collapsed = inSettings ? !settingsExpanded : navigationCollapsed;
+  const toggleNavigation = () => inSettings
+    ? setSettingsExpanded(value => !value)
+    : setNavigationCollapsed(value => !value);
   const destinations = [{ id: "tickets", label: "Tickets", to: "/" }, ...visibleModules(me)];
   const groups = GROUPS.map(group => ({ ...group, links: group.ids.flatMap(id => destinations.filter(item => item.id === id)) })).filter(group => group.links.length);
   const current = [{ id: "tickets", label: "Tickets", to: "/" }, ...OPTIONAL_MODULES].find(item => item.to === "/" ? pathname === "/" || pathname.startsWith("/tickets/") : pathname === item.to || pathname.startsWith(item.to + "/"));
@@ -59,7 +70,7 @@ export function ConsoleLayout({ me, brand, onLogout, logoutPending, children }: 
     <nav className="side" aria-label="Main">
       <div className="console-brand-row">
         <div className="brand" title={brand.product_name}><Brand b={brand} className="console-brand-content" /></div>
-        <button className="console-nav-toggle" type="button" aria-label={collapsed ? "Expand navigation" : "Collapse navigation"} aria-expanded={!collapsed} aria-controls="console-module-navigation" onClick={() => setCollapsed(value => !value)}><Icon name="collapse" /></button>
+        <button className="console-nav-toggle" type="button" aria-label={collapsed ? "Expand navigation" : "Collapse navigation"} aria-expanded={!collapsed} aria-controls="console-module-navigation" onClick={toggleNavigation}><Icon name="collapse" /></button>
       </div>
       <div className="console-module-navigation" id="console-module-navigation">
         {groups.map(item => <div className="console-nav-group" role="group" aria-label={item.label} key={item.label}>
