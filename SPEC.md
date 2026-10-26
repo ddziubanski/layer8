@@ -163,3 +163,7 @@ Settings > Status and admin-only GET /api/system/integrations consolidate local 
 ## Widget workspace builder (2026-10-24)
 
 Arrange this page on tickets and POs now uses a metadata-only widget library and placement canvas. Entering the editor keeps the current live workspace mounted rather than mounting every tool. Technicians add/remove widgets, search/filter, start with required widgets only and save personal layouts; admins retain shared defaults. Existing saved assignments and field layouts stay compatible. Builder saves mark `widget_mode: true` so future optional widgets start hidden for those customized layouts. Drawer mode uses selections with its existing grouping; Widget canvas (stored `classic`) uses columns/full-width rows. See docs/widget-workspace.md. No arbitrary-code widgets or permission/module changes.
+
+## Ticket templates (2026-10-25)
+
+Settings > Helpdesk > Ticket templates provides shared templates under templates_manage. New ticket previews and applies empty text fields and unchosen queue/priority defaults while preserving explicit choices, requester/contact/source and existing drafts. Creation still uses the existing ticket service. Checklist suggestions never start automatically. API CRUD and installer answers share validation; inactive templates/queues and restricted queue visibility are respected. See docs/ticket-templates.md.

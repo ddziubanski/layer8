@@ -85,11 +85,11 @@ test("switching template editors resets their fields and saves the chosen templa
     "PUT /api/ticket-templates/2": ({ body }: Call) => ({ ...other, ...(body as object) }),
   });
   renderAt("/", [{ path: "/", element: <TicketTemplatesAdmin me={{ ...ME, role: "admin" }} /> }]);
-  await user.click(await screen.findByRole("button", { name: "New starter", exact: true }));
+  await user.click(await screen.findByRole("button", { name: "New starter" }));
   await user.type(screen.getByLabelText("Subject"), " unsaved");
-  await user.click(screen.getByRole("button", { name: "VPN issue", exact: true }));
+  await user.click(screen.getByRole("button", { name: "VPN issue" }));
   expect(screen.getByLabelText("Subject")).toHaveValue("VPN troubleshooting");
-  await user.click(screen.getByRole("button", { name: "Save", exact: true }));
+  await user.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(calls.find(c => c.method === "PUT")?.path).toBe("/api/ticket-templates/2"));
   expect(calls.find(c => c.method === "PUT")?.body).toMatchObject({ name: "VPN issue", subject: "VPN troubleshooting" });
 });
