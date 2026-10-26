@@ -45,6 +45,15 @@ def _http_url(v: str) -> None:
         raise SettingsError("Must start with https:// (or http://), e.g. https://helpdesk.corp.example")
 
 
+def _library_site(v: str) -> None:
+    if v:
+        from app.library import site_url, LibraryError
+        try:
+            site_url(v)
+        except LibraryError as exc:
+            raise SettingsError(str(exc)) from None
+
+
 def _ldap_urls(v: str) -> None:
     for url in (u.strip() for u in v.split(",")):
         if url and not re.match(r"^ldaps?://[^\s/]+", url):
@@ -327,6 +336,10 @@ SECTIONS: dict[str, list[Field]] = {
         Field("teams_enabled", "Send Teams queue summaries", "Off by default. Shares aggregate counts from non-restricted queues only; no ticket subjects, people or notes."),
         Field("teams_webhook_url", "Workflows webhook URL", "A signed Teams Workflows URL. Kept as a secret and never shown back. See docs/teams.md for setup.", secret=True, check=_teams_url),
         Field("teams_summary_minutes", "Summary interval (minutes)", "Sends a periodic snapshot, including zero counts. Settings > Status can pause or run it now.", check=_between(15, 1440)),
+    ],
+    "library": [
+        Field("library_enabled", "Enable SharePoint Library", "Read-only runbook and FAQ page search from tickets using each technician's Microsoft connection. Add delegated Sites.Read.All to the existing technician app registration, grant consent, then reconnect. No Copilot licence is required for Library search. Only the typed search is sent; no ticket text is shared automatically. Default off."),
+        Field("library_site_url", "IT SharePoint site", "Approved named site, such as https://tenant.sharepoint.com/sites/IT. Results are checked against this site. This app filter does not narrow the Microsoft Sites.Read.All consent itself. No file downloads, publishing or public portal exposure. See docs/library.md.", check=_library_site),
     ],
     "updates": [
         Field("updates_enabled", "Enable GitHub release updates", "Allows explicit administrator release checks and reviewed signed updates from ddziubanski/layer8. No automatic installs; leave off for offline appliances."),

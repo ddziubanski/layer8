@@ -45,7 +45,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 ## What it does
 
 **Tickets**
-
+- Reviewed [ticket templates](docs/ticket-templates.md) fill empty fields in New ticket while preserving requester details, drafts and explicit queue/priority choices. Shared templates are managed under Settings > Helpdesk.
 - Email (Microsoft 365 / Exchange Online through Graph) and a self-service portal feed one queue and one routing engine. Requesters hear back in your words: the acknowledgement, and optional resolved and assigned emails, are editable with a preview.
 - Queues with owners, managers and restricted visibility; priorities from urgency × impact; SLAs that count desk hours, stop while waiting on the user, and show the time left ([docs/desk-hours.md](docs/desk-hours.md#the-sla-clock)).
 - Alerts when nobody takes a ticket: an email to everyone who could, or a post in a Teams channel, and a counter in the console ([docs/desk-hours.md](docs/desk-hours.md#tickets-nobody-has-taken)).
@@ -54,6 +54,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - A queue that keeps loading as you scroll, with compact or comfortable rows, chosen per technician in My preferences ([docs/workspace-preferences.md](docs/workspace-preferences.md#ticket-list)).
 - Custom ticket rules: run on save, on a schedule, or through guarded SQL.
 - Merge, parent and child tickets, bulk changes, and a personal widget workspace: searchable library, essentials-only starting point, saved placement and administrator defaults ([guide](docs/widget-workspace.md)).
+- **Library:** local knowledge articles alongside optional SharePoint runbook/FAQ page search, using the technician’s Microsoft account and an approved IT site. Review a source link before adding it as an internal ticket reference ([setup and access](docs/library.md)).
 - Canned replies, shared or personal and per queue, with the ticket's details filled in ([docs/canned-replies.md](docs/canned-replies.md)).
 - Time tracking: log minutes with a note or in a ticket's Time panel; the *Time spent* report adds them up by technician, queue, category or day.
 - A grouped, collapsible technician sidebar and contextual header shared across the console; module pages use consistent headings, toolbars and tables. Settings has searchable setup groups and automatically compacts the main sidebar, restoring it when you leave. Existing branding, module visibility and ticket layouts are preserved ([layout review](docs/application-layout.md)).
@@ -124,7 +125,6 @@ Every setting can be changed in the app (Settings), and also imported from an an
 
 ## Planned and under review
 
-- **Ticket templates ([PR #113](https://github.com/ddziubanski/layer8/pull/113), not merged):** shared, reviewed starting points for New ticket, preserving existing text and explicit queue/priority choices.
 - **Related-incident updates ([#81](https://github.com/ddziubanski/layer8/issues/81)):** reviewed requester updates across affected tickets. Suggestions and reviewed parent/child links are already available; coordinated messaging is future work.
 
 - **Updates without internet access:** importing a signed update package from a USB stick or file share (online updates from GitHub releases are in 1.2).

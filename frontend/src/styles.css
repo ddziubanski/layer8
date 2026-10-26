@@ -221,6 +221,9 @@ kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--line); border-
 .empty { padding: 40px; text-align: center; color: var(--muted); background: var(--surface); }
 .pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; }
 .related-row { display: grid; gap: 4px; padding: 8px 0; border-top: 1px solid var(--line-soft); }
+.template-preview { padding: 12px; display: grid; gap: 8px; }
+.template-preview p { margin: 0; }
+.template-details { white-space: pre-wrap; max-height: 8em; overflow: auto; }
 .queue-search { flex: 0 1 240px; min-width: 160px; width: auto; }
 .queue-search-note { margin: 0 0 10px; color: var(--muted); }
 /* My preferences > Ticket list: compact rows fit about twice as many tickets on screen. */
@@ -1103,3 +1106,5 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .connection-workspace[inert] > * { opacity:.7; }
 .connection-notice { position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:3000; width:min(650px,calc(100vw - 40px)); padding:20px; box-sizing:border-box; border:1px solid var(--accent); border-radius:12px; background:var(--surface); color:var(--ink); box-shadow:0 12px 40px #0004; }
 .connection-notice p { margin:10px 0; line-height:1.5; }
+
+.library-result { padding:12px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere; }
