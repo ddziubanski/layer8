@@ -27,6 +27,9 @@ export function RunnersAdmin({ me }: { me: User }) {
     <>
       <div className="page-head row-gap">
         <h1 className="spacer">Relays</h1>
+        <a className="btn2" href="/api/runners/kit" download="layer8-relay-kit.zip">
+          Download relay kit
+        </a>
         <button className="btn" type="button" onClick={() => (setEditing("new"), setToken(null))}>
           Add a relay
         </button>
@@ -35,6 +38,11 @@ export function RunnersAdmin({ me }: { me: User }) {
         <p className="muted" style={{ margin: 0 }}>
           A relay runs action scripts: for PowerShell, a domain-joined Windows machine whose service account may use WinRM on the PCs. It checks in over HTTPS
           (no inbound ports) with its own token.
+        </p>
+        <p className="muted small" style={{ margin: 0 }}>
+          The relay kit installs a relay as its own locked-down service on this appliance or another Linux server, or builds an unlinked GPO that
+          installs it on chosen Windows hosts. It holds no tokens: add a relay here for each host and give it that relay&apos;s token.
+          Check a relay with <code>helpdesk_runner.py --check</code>; it checks in without taking work.
         </p>
         {token && <TokenCard token={token} onDone={() => setToken(null)} />}
         {editing && (
