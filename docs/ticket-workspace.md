@@ -26,3 +26,16 @@ API: `GET /api/tickets/{id}/related` (staff).
 ## Library
 
 The Library tool retains local KB articles, solved-ticket suggestions and article actions. When configured, it also offers explicit SharePoint runbook/FAQ page search and reviewed internal ticket references. The saved tool ID remains `knowledge`. See [Library setup and access](library.md).
+
+## Update everyone affected
+
+When several reports are one problem, link them under one ticket as its child tickets (from **Related open tickets**, or **Add a child ticket**). Then, from that ticket's **Child tickets** panel, **Update everyone affected**:
+
+1. **Write the update.** Only this text is sent; internal notes and other tickets' contents never are.
+2. **Optionally tick Resolve them all,** choosing a resolution type and closure reason if your setup requires them.
+3. **Preview.** It lists every ticket included (this one and its open child tickets you may see), each requester, whether they're emailed, and, when resolving, which tickets are resolved. The preview really runs the update and then undoes it, so anything that would block it (a missing resolution type, for example) shows here. Nothing is sent.
+4. **Send.** Each ticket gets the update as its own public reply, in its history. A requester with several of these tickets gets one email. If resolved emails are on, they also get the usual resolved email.
+
+Child tickets in queues you can't see are left out, and the preview doesn't count or name them. If one of them is still open, this ticket stays open when you resolve the rest. Changing the message or the ticket list after a preview needs a new preview.
+
+API: `POST /api/tickets/{id}/broadcast/preview`, then `POST /api/tickets/{id}/broadcast` with the preview's `fingerprint` and `"confirm": true`.

@@ -40,6 +40,8 @@ from app.schemas import (
     BulkResultOut,
     ChildTicketOut,
     RelatedTicketOut,
+    BroadcastIn,
+    BroadcastOut,
     MergeIn,
     CommentCreate,
     CommentOut,
@@ -371,6 +373,36 @@ def related_tickets(ticket_id: int, user: Agent, session: SessionDep):
     from app import related
 
     return related.suggestions(session, staff_ticket(session, ticket_id, user), user)
+
+
+@router.post("/{ticket_id}/broadcast/preview", response_model=BroadcastOut)
+def broadcast_preview(ticket_id: int, body: BroadcastIn, user: Agent, session: SessionDep):
+    """What updating everyone affected would do: run for real, then rolled back. Nothing is sent."""
+    from app import broadcast
+
+    parent = staff_ticket(session, ticket_id, user)
+    try:
+        return {"applied": False, **broadcast.run(session, parent, user, body=body.body, resolve=body.resolve, resolution_type_id=body.resolution_type_id, closure_reason_id=body.closure_reason_id)}
+    except broadcast.BroadcastError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
+
+
+@router.post("/{ticket_id}/broadcast", response_model=BroadcastOut)
+def broadcast_apply(ticket_id: int, body: BroadcastIn, user: Agent, session: SessionDep):
+    """Send the reviewed update to the parent's and its open children's requesters (one email each),
+    as a public reply on every ticket; with resolve, resolve them all."""
+    from app import broadcast
+
+    if not body.confirm or not body.fingerprint:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Preview the update and confirm it first")
+    parent = staff_ticket(session, ticket_id, user)
+    try:
+        result = broadcast.run(session, parent, user, body=body.body, resolve=body.resolve, resolution_type_id=body.resolution_type_id,
+                               closure_reason_id=body.closure_reason_id, apply=True, expected=body.fingerprint)
+    except broadcast.BroadcastError as exc:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT if "changed since" in str(exc) else status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
+    return {"applied": True, **result}
 
 
 @router.get("/{ticket_id}/children", response_model=list[ChildTicketOut])
