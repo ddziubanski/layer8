@@ -50,7 +50,7 @@ CATALOG = [
     Permission("queues_manage", "Settings areas", "Queues: create them and change any queue", "admins", "Including its managers, whether it's the default or in use, and who may see it. A queue's managers can always change the rest of their own queue."),
     Permission("rules_manage", "Settings areas", "Ticket rules: create, change, test and run", "admins"),
     Permission("notices_manage", "Settings areas", "Service notices: post and take down", "admins"),
-    Permission("templates_manage", "Settings areas", "Templates: checklists, changes and onboarding", "admins"),
+    Permission("templates_manage", "Settings areas", "Templates: tickets, checklists, changes and onboarding", "admins"),
     Permission("scripts_manage", "Settings areas", "Scripts: write and change them", "admins", "Who may run each script is set on the script. Writing scripts is as powerful as running them: a writer can mark a script as one technicians may run."),
 ]
 BY_KEY = {p.key: p for p in CATALOG}

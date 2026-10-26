@@ -3043,3 +3043,31 @@ class DeviceWarrantyOut(BaseModel):
     entitlements: list[WarrantyEntitlementOut] = []
     # The device's own warranty end or purchase date differs from the maker's.
     differs: bool = False
+
+
+class TicketTemplateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+    subject: str = Field(default="", max_length=300)
+    description: str = Field(default="", max_length=20000)
+    category: str | None = Field(default=None, max_length=100)
+    priority: Priority | None = None
+    queue_id: int | None = None
+    checklist_id: int | None = None
+    is_active: bool = True
+
+
+class TicketTemplateOut(BaseModel):
+    id: int
+    name: str
+    subject: str
+    description: str
+    category: str | None
+    priority: Priority | None
+    queue_id: int | None
+    queue_name: str | None
+    checklist_id: int | None
+    checklist_name: str | None
+    is_active: bool
+    updated_at: datetime
