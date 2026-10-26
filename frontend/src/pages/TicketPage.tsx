@@ -26,6 +26,7 @@ import { describe, type Names } from "./ticket/history";
 import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
 import { ChildTickets } from "./ticket/ChildTickets";
+import { RelatedTickets } from "./ticket/RelatedTickets";
 import { ComputerCard } from "./ticket/ComputerCard";
 import { DevicesCard } from "./ticket/DevicesCard";
 import { ExpensesCard } from "./ticket/ExpensesCard";
@@ -161,6 +162,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
             ),
           },
           children: { label: "Child tickets", node: <ChildTickets ticket={t} onChanged={refresh} /> },
+          related: { label: "Related open tickets", node: <RelatedTickets ticket={t} onChanged={refresh} /> },
           checklists: { label: "Checklists", node: <ChecklistsCard ticket={t} onChanged={refresh} /> },
           expenses: { label: "Expenses", node: <ExpensesCard ticket={t} /> },
           time: { label: "Time", node: <TimeCard ticketId={t.id} /> },
