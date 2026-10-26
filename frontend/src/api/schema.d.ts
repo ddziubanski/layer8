@@ -2413,6 +2413,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notices/{notice_id}/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Switch Notice
+         * @description Turn a notice off (it disappears for everyone straight away) or back on (it follows its
+         *     dates again). Used from Settings > Notices and from the notice itself.
+         */
+        put: operations["switch_notice_api_notices__notice_id__enabled_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -8832,10 +8853,20 @@ export interface components {
              */
             updated_at: string;
             /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
              * State
              * @default current
              */
             state: string;
+        };
+        /** NoticeSwitch */
+        NoticeSwitch: {
+            /** Enabled */
+            enabled: boolean;
         };
         /** NutanixActionOut */
         NutanixActionOut: {
@@ -18176,6 +18207,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoticeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switch_notice_api_notices__notice_id__enabled_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                notice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeSwitch"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

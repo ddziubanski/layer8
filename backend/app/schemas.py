@@ -555,8 +555,13 @@ class NoticeOut(ORM):
     ends_at: datetime | None
     created_by: UserRef | None
     updated_at: datetime
-    # upcoming, current or ended
+    enabled: bool = True
+    # off, upcoming, current or ended
     state: str = "current"
+
+
+class NoticeSwitch(BaseModel):
+    enabled: bool
 
 
 class WindowsSignInIn(BaseModel):

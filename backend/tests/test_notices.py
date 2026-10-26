@@ -47,3 +47,24 @@ def test_only_admins_manage_notices(client, admin, agent):
     assert r.json()["title"] == "Email is back, catching up"
     assert client.delete(f"/api/notices/{n['id']}", headers=as_user(admin)).status_code == 204
     assert titles(client, agent) == []
+
+
+def test_switch_off_and_on_without_losing_the_schedule(client, admin, agent, requester):
+    n = post(client, admin, ends_at=(sla.utcnow() + timedelta(days=1)).isoformat())
+    assert titles(client, requester) == ["Email is down"]
+    off = client.put(f"/api/notices/{n['id']}/enabled", json={"enabled": False}, headers=as_user(admin))
+    assert off.status_code == 200 and off.json()["state"] == "off" and off.json()["ends_at"] == n["ends_at"]
+    assert titles(client, requester) == titles(client, agent) == []
+    on = client.put(f"/api/notices/{n['id']}/enabled", json={"enabled": True}, headers=as_user(admin))
+    assert on.json()["state"] == "current" and titles(client, requester) == ["Email is down"]
+
+
+def test_switching_needs_the_notices_permission(client, admin, agent, db):
+    from app import permissions
+
+    n = post(client, admin)
+    assert client.put(f"/api/notices/{n['id']}/enabled", json={"enabled": False}, headers=as_user(agent)).status_code == 403
+    # Given the permission (Settings > Permissions), a technician can turn it off from the notice.
+    permissions.save(db, {"notices_manage": {"who": "agents", "group_ids": []}})
+    db.commit()
+    assert client.put(f"/api/notices/{n['id']}/enabled", json={"enabled": False}, headers=as_user(agent)).status_code == 200

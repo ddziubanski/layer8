@@ -2123,6 +2123,8 @@ class ServiceNotice(Base):
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     # None: until taken down.
     ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Off: not shown, whatever the dates say; turned back on, it follows them again.
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
