@@ -27,6 +27,8 @@ export function RunnersAdmin({ me }: { me: User }) {
     <>
       <div className="page-head row-gap">
         <h1 className="spacer">Relays</h1>
+        <a className="btn2" href="/appliancekit">Download appliance relay kit</a>
+        <a className="btn2" href="/windowskit">Download Windows relay kit</a>
         <button className="btn" type="button" onClick={() => (setEditing("new"), setToken(null))}>
           Add a relay
         </button>
@@ -36,6 +38,7 @@ export function RunnersAdmin({ me }: { me: User }) {
           A relay runs action scripts: for PowerShell, a domain-joined Windows machine whose service account may use WinRM on the PCs. It checks in over HTTPS
           (no inbound ports) with its own token.
         </p>
+        <p className="muted small">Windows Server 2025 Core is supported by the kit. Use one dedicated Windows host per site for AD/WinRM jobs; Python/bash/network jobs can use an isolated relay on the appliance. The Windows kit contains no tokens. See docs/relay-deployment.md for setup, the optional GPO wizard and uninstall steps.</p>
         {token && <TokenCard token={token} onDone={() => setToken(null)} />}
         {editing && (
           <RunnerForm

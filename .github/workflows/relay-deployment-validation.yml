@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: Relay deployment validation
+on:
+  pull_request:
+    paths:
+      - 'tools/relay-deployment/**'
+      - '.github/workflows/relay-deployment-validation.yml'
+  push:
+    paths:
+      - 'tools/relay-deployment/**'
+      - '.github/workflows/relay-deployment-validation.yml'
+permissions:
+  contents: read
+jobs:
+  windows-prerequisites:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse scripts with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem tools/relay-deployment/*.ps1 | ForEach-Object {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
+          }
+      - name: Prerequisite safety checks (mocked, no provisioning)
+        shell: pwsh
+        run: ./tools/relay-deployment/Test-RelayPrerequisites.ps1

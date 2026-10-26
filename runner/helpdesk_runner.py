@@ -22,6 +22,8 @@ ended. Parameters reach scripts by name:
 import argparse
 import base64
 import json
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 import queue
 import shutil
@@ -38,7 +40,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-VERSION = "1.3"
+VERSION = "1.4"
 POST_EVERY = 2.0  # seconds between output updates while a script runs
 
 
@@ -71,7 +73,10 @@ class Api:
 
 
 def log(msg: str) -> None:
-    print(time.strftime("%Y-%m-%d %H:%M:%S"), msg, flush=True)
+    if logging.getLogger("layer8-relay").handlers:
+        logging.getLogger("layer8-relay").info(msg)
+    else:
+        print(time.strftime("%Y-%m-%d %H:%M:%S"), msg, flush=True)
 
 
 # Building the command for each language
@@ -264,6 +269,8 @@ def main() -> None:
     p.add_argument("--token-file", help="File holding this runner's token (Settings > Runners). Or set HELPDESK_RUNNER_TOKEN.")
     p.add_argument("--ca-file", help="CA certificate to check the service desk's HTTPS certificate (default: the system's)")
     p.add_argument("--interval", type=float, default=5.0, help="Seconds between checks for work (default 5)")
+    p.add_argument("--check", action="store_true", help="Verify this relay token and record check-in without claiming or executing a job")
+    p.add_argument("--log-file", help="Optional rotating operational log (three 2 MiB files); job output still goes to the API")
     p.add_argument("--once", action="store_true", help="Run at most one job, then stop (for testing)")
     p.add_argument("--powershell", help="PowerShell to use (default: pwsh, else powershell)")
     p.add_argument("--eos-user", help="eAPI user for Arista EOS scripts")
@@ -280,7 +287,20 @@ def main() -> None:
     if not args.url.lower().startswith("https://") and host_part not in ("localhost", "127.0.0.1", "::1") and not args.allow_http:
         raise SystemExit("Use the service desk's https:// address (or --allow-http for development)")
     api = Api(args.url, token, args.ca_file)
+    if args.log_file:
+        handler = RotatingFileHandler(args.log_file, maxBytes=2 * 1024 * 1024, backupCount=2, encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+        logger = logging.getLogger("layer8-relay")
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
     host = socket.getfqdn()
+    if args.check:
+        status, result = api.post("/api/runner/check-in", {"host": host, "version": VERSION})
+        if status != 200:
+            raise SystemExit("Relay check-in failed; check HTTPS, the token and server version")
+        print("Relay check-in verified; no job was claimed or executed.")
+        return
     log(f"helpdesk runner {VERSION} on {host}, polling {api.url}")
     backoff = args.interval
     while True:

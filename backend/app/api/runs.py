@@ -270,6 +270,15 @@ def _calling_runner(session, authorization: str | None) -> Runner:
     return runner
 
 
+@router.post("/api/runner/check-in", response_model=RunnerOut)
+def runner_check_in(body: RunnerClaimIn, session: SessionDep, authorization: str | None = Header(default=None)):
+    """Deployment health check: no queued job is claimed and no secret values are read."""
+    runner = _calling_runner(session, authorization)
+    runner.last_seen_at, runner.last_host, runner.last_version = sla.utcnow(), body.host[:255], body.version[:50]
+    session.commit()
+    return runner
+
+
 @router.post("/api/runner/claim", response_model=RunnerJobOut, responses={204: {"description": "Nothing to run"}})
 def runner_claim(body: RunnerClaimIn, session: SessionDep, authorization: str | None = Header(default=None)):
     runner = _calling_runner(session, authorization)
