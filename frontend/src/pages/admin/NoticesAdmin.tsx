@@ -8,7 +8,7 @@ import { when } from "../../format";
 import { can } from "../../permissions";
 
 const AUDIENCE: Record<string, string> = { everyone: "Everyone", staff: "Technicians and admins", requesters: "Requesters (portal)" };
-const STATE: Record<string, [string, string]> = { current: ["g", "Showing now"], upcoming: ["n", "Scheduled"], ended: ["n", "Ended"] };
+const STATE: Record<string, [string, string]> = { current: ["g", "Showing now"], upcoming: ["n", "Scheduled"], ended: ["n", "Ended"], off: ["n", "Off"] };
 
 // <input type="datetime-local"> works in local time without a zone.
 const toLocalInput = (iso: string | null | undefined) => {
@@ -38,6 +38,7 @@ export function NoticesAdmin({ me }: { me: Me }) {
     onSettled: refresh,
   });
   const end = useMutation({ mutationFn: api.notices.end, onSettled: refresh });
+  const toggle = useMutation({ mutationFn: (v: { id: number; on: boolean }) => api.notices.setEnabled(v.id, v.on), onSettled: refresh });
   const remove = useMutation({ mutationFn: api.notices.remove, onSettled: refresh });
 
   if (!can(me, "notices_manage")) return <p>Notices are managed by admins.</p>;
@@ -157,9 +158,11 @@ export function NoticesAdmin({ me }: { me: Me }) {
                 </div>
                 <div className="row-gap">
                   {n.state !== "ended" && (
-                    <button className="btn2" type="button" disabled={end.isPending} onClick={() => end.mutate(n.id)}>
-                      End now
-                    </button>
+                    <label className="inline notice-switch">
+                      <input type="checkbox" role="switch" checked={n.enabled} disabled={toggle.isPending}
+                        aria-label={`Show the notice "${n.title}"`} onChange={(e) => toggle.mutate({ id: n.id, on: e.target.checked })} />
+                      {n.enabled ? "On" : "Off"}
+                    </label>
                   )}
                   <button className="linkish small" type="button" onClick={() => edit(n)}>
                     Edit

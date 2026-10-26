@@ -263,6 +263,7 @@ export const api = {
     post: (body: NoticeIn) => request<Notice>("POST", "/api/notices", body),
     update: (id: number, body: NoticeIn) => request<Notice>("PUT", `/api/notices/${id}`, body),
     end: (id: number) => request<Notice>("POST", `/api/notices/${id}/end`),
+    setEnabled: (id: number, enabled: boolean) => request<Notice>("PUT", `/api/notices/${id}/enabled`, { enabled }),
     remove: (id: number) => request<void>("DELETE", `/api/notices/${id}`),
   },
   uploadBrandingImage: (name: "background" | "logo" | "favicon", file: File) => {

@@ -11,7 +11,7 @@ from sqlalchemy import or_, select
 from app import permissions, sla
 from app.auth import CurrentUser, SessionDep
 from app.models import ServiceNotice, UserRole
-from app.schemas import NoticeIn, NoticeOut
+from app.schemas import NoticeIn, NoticeOut, NoticeSwitch
 
 router = APIRouter(prefix="/api/notices", tags=["notices"])
 NoticesManager = permissions.require("notices_manage")
@@ -21,7 +21,8 @@ ORDER = {"outage": 0, "warning": 1, "info": 2}
 
 def _out(n: ServiceNotice, now) -> NoticeOut:
     out = NoticeOut.model_validate(n)
-    out.state = "upcoming" if n.starts_at > now else "ended" if n.ends_at is not None and n.ends_at <= now else "current"
+    out.state = ("off" if not n.enabled else "upcoming" if n.starts_at > now
+                 else "ended" if n.ends_at is not None and n.ends_at <= now else "current")
     return out
 
 
@@ -34,6 +35,7 @@ def current_notices(user: CurrentUser, session: SessionDep):
     audiences = ["everyone", "staff" if staff else "requesters"]
     rows = session.scalars(
         select(ServiceNotice).where(
+            ServiceNotice.enabled,
             ServiceNotice.starts_at <= now,
             or_(ServiceNotice.ends_at.is_(None), ServiceNotice.ends_at > now),
             ServiceNotice.audience.in_(audiences),
@@ -91,6 +93,17 @@ def end_notice(notice_id: int, admin: NoticesManager, session: SessionDep):
     session.commit()
     log.info("Notice ended by %s: %s", admin.display_name, n.title, extra={"source": "settings"})
     return _out(n, now)
+
+
+@router.put("/{notice_id}/enabled", response_model=NoticeOut)
+def switch_notice(notice_id: int, body: NoticeSwitch, user: NoticesManager, session: SessionDep):
+    """Turn a notice off (it disappears for everyone straight away) or back on (it follows its
+    dates again). Used from Settings > Notices and from the notice itself."""
+    n = _notice(session, notice_id)
+    n.enabled = body.enabled
+    session.commit()
+    log.warning("Notice turned %s by %s: %s", "on" if body.enabled else "off", user.display_name, n.title, extra={"source": "settings"})
+    return _out(n, sla.utcnow())
 
 
 @router.delete("/{notice_id}", status_code=status.HTTP_204_NO_CONTENT)

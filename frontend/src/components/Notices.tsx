@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { api, type Notice } from "../api/client";
+import { can } from "../permissions";
+import { ME_KEY } from "../queryClient";
 
 export const SEVERITY: Record<string, { label: string; chip: string; icon: string }> = {
   outage: { label: "Outage", chip: "r", icon: "⛔" },
@@ -34,6 +36,26 @@ function useCurrentNotices() {
   return useQuery({ queryKey: ["notices", "current"], queryFn: api.notices.current, refetchInterval: 60_000 }).data ?? [];
 }
 
+/** For technicians allowed to manage notices: turn this one off for everyone, right here. */
+function TurnOff({ n, onOff }: { n: Notice; onOff?: () => void }) {
+  const queryClient = useQueryClient();
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, staleTime: Infinity }).data;
+  const off = useMutation({
+    mutationFn: () => api.notices.setEnabled(n.id, false),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notices"] });
+      onOff?.();
+    },
+  });
+  if (!me || me.portal_only || !can(me, "notices_manage")) return null;
+  return (
+    <button type="button" className="linkish small" disabled={off.isPending} aria-label={`Turn off notice for everyone: ${n.title}`}
+      title="Stops showing it to everyone; turn it back on in Settings > Notices" onClick={() => off.mutate()}>
+      {off.isError ? "Couldn't turn off; retry" : "Turn off for everyone"}
+    </button>
+  );
+}
+
 function NoticeText({ n }: { n: Notice }) {
   const s = SEVERITY[n.severity] ?? SEVERITY.info;
   return (
@@ -60,6 +82,7 @@ export function NoticeBanner() {
           <span className="spacer">
             <NoticeText n={n} />
           </span>
+          <TurnOff n={n} />
           <button
             type="button"
             className="linkish small"
@@ -101,7 +124,7 @@ export function NoticeDialog() {
         <h2 id="notices-title">{fresh.some((n) => n.severity === "outage") ? "Current outage" : "Service notice"}</h2>
         {fresh.map((n) => (
           <p key={n.id} style={{ margin: 0 }}>
-            <NoticeText n={n} />
+            <NoticeText n={n} /> <TurnOff n={n} />
           </p>
         ))}
         <div className="row-gap">
