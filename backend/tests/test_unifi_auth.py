@@ -9,7 +9,7 @@ from app.config import settings
 def test_cloud_connector_and_local_proxy_match_network_examples(monkeypatch):
     monkeypatch.setattr(settings, "unifi_mode", "cloud")
     monkeypatch.setattr(settings, "unifi_console_ids", ["console:123"])
-    assert unifi.bases() == [("console:123", "https://api.ui.com/v1/connector/consoles/console%3A123/proxy/network/integration/v1")]
+    assert unifi.bases() == [("console:123", "https://api.ui.com/v1/connector/consoles/console:123/proxy/network/integration/v1")]
     monkeypatch.setattr(settings, "unifi_mode", "local")
     monkeypatch.setattr(settings, "unifi_console_url", "https://unifi.corp.example")
     assert unifi.bases() == [("unifi.corp.example", "https://unifi.corp.example/proxy/network/integration/v1")]
@@ -38,5 +38,7 @@ def test_auth_errors_identify_stage_status_and_never_echo_secrets(status,url,sta
         assert len(calls)==1
         if status==403 and "connector" in url:
             assert "owned by" in message
+        if status==401 and "api.ui.com" in url:
+            assert "only works in Local mode" in message
     finally:
         client.close()

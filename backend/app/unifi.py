@@ -78,7 +78,8 @@ class Client:
                 connector = cloud and parts.path.startswith("/v1/connector/")
                 stage = "cloud console Network API" if connector else "Site Manager console discovery" if cloud else "local console Network API"
                 if r.status_code == 401:
-                    hint = "Use a Site Manager key generated at unifi.ui.com for Cloud mode" if cloud else "Use the key from this console's Network Settings > Integrations for Local mode"
+                    hint = ("Cloud mode needs a Site Manager key from unifi.ui.com > API. A key made on the console itself (Network > Settings > Integrations) only works in Local mode"
+                            if cloud else "Use the key from this console's Network Settings > Integrations for Local mode")
                     raise UnifiError(f"UniFi {stage}: HTTP 401 (authentication rejected). {hint}; check that it hasn't expired or been revoked")
                 hint = ("Personal keys can access only consoles owned by the key's UI account; organization keys need access to this console's organization. Check Network access and console firmware 5.0.3 or later"
                         if connector else "Check this key's Site Manager access and organization permissions" if cloud else "Check this key's Network permissions on the selected console and site")
@@ -141,8 +142,9 @@ def bases() -> list[tuple[str, str]]:
     if settings.unifi_mode == "cloud":
         if not settings.unifi_console_ids:
             raise UnifiError("Choose the consoles to read (Settings > UniFi > Consoles)")
-        # Match the current Network endpoint examples; Connector GET prose differs.
-        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe='')}{INTEGRATION}") for c in settings.unifi_console_ids]
+        # Host IDs look like <hex>:<number>. The connector wants the colon as-is, like UniFi's own
+        # examples: sent as %3A it answers 403 even for a key that owns the console (#128).
+        return [(c, f"{CLOUD}/v1/connector/consoles/{quote(c, safe=':')}{INTEGRATION}") for c in settings.unifi_console_ids]
     url = settings.unifi_console_url.rstrip("/")
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.hostname or parts.path:
