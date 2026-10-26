@@ -472,3 +472,18 @@ def test_external_anonymous_mail_spoofing_staff_is_not_treated_as_staff(setup, d
     db.expire_all()
     assert db.get(Ticket, t.id).first_responded_at is None
     assert list(db.scalars(select(Comment).where(Comment.ticket_id == t.id))) == []
+
+
+def test_forged_reply_to_a_managers_notice_is_not_an_internal_note(setup, db, mailbox, run, monkeypatch):
+    """The manager's address was emailed about the ticket, so a reply may join it; but mail Exchange
+    flagged as anonymous never becomes staff talk, even quoting the notice's message ID."""
+    monkeypatch.setattr(settings, "email_commands_internal_only", True)
+    mailbox.deliver(from_address="a@corp.local", subject="Laptop slow")
+    run()
+    [t] = tickets(db)
+    db.add(OutboundEmail(to_address="mgr@corp.local", ticket_id=t.id, subject="Escalation", body="x", is_staff_notice=True, internet_message_id="<mgr-esc@corp.local>"))
+    db.commit()
+    mailbox.deliver(from_address="mgr@corp.local", subject="Re: Escalation", headers={"in-reply-to": "<mgr-esc@corp.local>", "x-ms-exchange-organization-authas": "Anonymous"}, body_text="Forged note")
+    run()
+    db.expire_all()
+    assert not any(c.is_internal for c in db.scalars(select(Comment).where(Comment.ticket_id == t.id)))

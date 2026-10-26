@@ -236,7 +236,8 @@ def process_message(session: Session, msg: InboundMessage, cfg: IntakeConfig) ->
         # Staff only if they may see this queue (and Exchange didn't flag the mail as external/anonymous).
         staff = is_staff and unspoofed and ticket.queue.can_view(sender)
         # Anyone authorized to answer a staff/escalation notice is talking to staff, not the requester.
-        internal = bool(staff_reply and (staff or sender.id != ticket.requester_id))
+        # Never for mail Exchange flagged as external/anonymous: a forged reply to a notice isn't staff talk.
+        internal = bool(staff_reply and unspoofed and (staff or sender.id != ticket.requester_id))
         parsed = commands.parse(body) if staff and _commands_allowed(msg) else commands.Parsed(body)
         result = commands.apply(session, ticket, sender, parsed.commands) if parsed.commands else None
         if result is not None and result.internal:
