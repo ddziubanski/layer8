@@ -1,5 +1,12 @@
 # Layer 8
 
+The technician console uses **Ticket Focus**, a Material-inspired workspace with
+Conversation, Details, Tools, Work and History. **Tidepool** is the default theme;
+each technician can choose from five light/dark theme pairs, or follow the
+organization default. Optional modules stay governed by administrator switches
+and personal navigation preferences. [Workspace guide](docs/ticket-workspace.md).
+
+
 *The service desk for the layer every network has: its people.*
 
 Layer 8 is a self-hosted IT service desk that brings tickets, people, devices and technician tools into one workspace. Connect Microsoft Entra ID, Teams and Microsoft 365 Copilot to work from the ticket: see who is available, message the requester, investigate the problem and keep a record of the response. It runs on a single Linux appliance you control, with an offline installer and local accounts for standalone operation. Microsoft 365 and other integrations are optional.

@@ -31,7 +31,9 @@ export function SettingsForm({
   onSaved,
   preview,
   restoreDefaults,
+  visibleFields,
 }: {
+  visibleFields?: string[];
   me: User;
   section: string;
   title: string;
@@ -55,7 +57,7 @@ export function SettingsForm({
 
   if (me.role !== "admin") return <p>Settings are managed by admins.</p>;
   if (!data.data) return data.error ? <p className="error">{data.error.message}</p> : null;
-  const fields = data.data.fields;
+  const fields = data.data.fields.filter(field => !visibleFields || visibleFields.includes(field.name));
   const defaultsLocked = restoreDefaults && Object.keys(restoreDefaults.values).some((name) => !fields.some((f) => f.name === name && !f.locked));
   const value = (f: SettingField) => (f.name in draft ? draft[f.name] : initial(f));
   const changed = fields.filter((f) => f.name in draft && (f.kind === "secret" ? draft[f.name] !== "" : draft[f.name] !== initial(f)));

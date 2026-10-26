@@ -17,7 +17,7 @@ const ACCOUNT = {
 };
 const NESTED = "Nested group: Entra ID won't apply it through nesting.";
 
-function page(extra: Record<string, unknown> = {}) {
+async function page(extra: Record<string, unknown> = {}) {
   const t = ticket();
   const calls = mockApi({
     [`GET /api/tickets/${t.id}`]: t,
@@ -36,12 +36,14 @@ function page(extra: Record<string, unknown> = {}) {
     ...extra,
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Directory/ }));
   return { t, calls };
 }
 
 test("apply an onboarding template to the requester: preview with a nesting warning, then run", async () => {
   const t = ticket();
-  const { calls } = page({
+  const { calls } = await page({
     [`GET /api/tickets/${t.id}/requester-ad`]: ACCOUNT,
     [`POST /api/tickets/${t.id}/ad-changes/preview`]: {
       add: [{ dn: `CN=Finance,${BASE}`, name: "Finance", changeable: true, nested: true, warning: NESTED }], remove: [], already: [],
@@ -65,7 +67,7 @@ test("apply an onboarding template to the requester: preview with a nesting warn
 
 test("the card stays away when AD changes aren't set up", async () => {
   const t = ticket();
-  page({ [`GET /api/tickets/${t.id}/requester-ad`]: { enabled: false, problem: null, name: null, dn: null, ou: null, groups: [] } });
+  await page({ [`GET /api/tickets/${t.id}/requester-ad`]: { enabled: false, problem: null, name: null, dn: null, ou: null, groups: [] } });
   await screen.findByRole("region", { name: "Scripts" }).catch(() => null);
   await waitFor(() => expect(screen.queryByRole("region", { name: "AD account" })).not.toBeInTheDocument());
 });
@@ -78,7 +80,7 @@ const DL = { label: "Distribution lists", prefix: "[EMAIL]", groups: [
 test("a new account for a new starter: tick distribution lists, check, create, password shown once", async () => {
   const t = ticket();
   const made = { runs: [], sam: "jsmith2", upn: "jsmith2@example.com", password: "Kx7#pQ2m!Rt9vZ4w" };
-  const { calls } = page({
+  const { calls } = await page({
     // The requester (HR, say) has a local account: no card for them, but accounts can still be made.
     [`GET /api/tickets/${t.id}/requester-ad`]: { enabled: true, can_create: true, problem: "Pat isn't an AD account here", name: null, dn: null, ou: null, groups: [] },
     "GET /api/ad/group-lists": [DL],
@@ -117,7 +119,7 @@ test("a new account for a new starter: tick distribution lists, check, create, p
 test("ticking a distribution list on an existing account adds it; unticking one they're in removes it", async () => {
   const t = ticket();
   const inAll = { ...ACCOUNT, groups: [...ACCOUNT.groups, DL.groups[0]] };
-  const { calls } = page({
+  const { calls } = await page({
     [`GET /api/tickets/${t.id}/requester-ad`]: inAll,
     "GET /api/ad/group-lists": [DL],
     [`POST /api/tickets/${t.id}/ad-changes/preview`]: { add: [], remove: [], already: [], move_to_ou: null, current_ou: "", department: null, title: null },
@@ -136,7 +138,7 @@ test("ticking a distribution list on an existing account adds it; unticking one 
 
 test("copy groups from a colleague: only ones that may change, not ones they're already in", async () => {
   const t = ticket();
-  const { calls } = page({
+  const { calls } = await page({
     [`GET /api/tickets/${t.id}/requester-ad`]: ACCOUNT,
     "GET /api/users": [{ id: 9, display_name: "Morgan Osei", email: "mosei@corp.example", role: "requester", is_active: true }],
     "GET /api/ad/users/9/groups": [

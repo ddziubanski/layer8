@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ME, mockApi, renderAt, type Call } from "./util";
 import { TicketToolsWorkspace, DEFAULT_TICKET_WORKSPACE } from "../pages/ticket/TicketToolsWorkspace";
@@ -16,7 +16,7 @@ function setup(hidden: string[] = []) {
   renderAt("/", [{ path: "/", element: <TicketToolsWorkspace me={{ ...ME, ticket_workspace: DEFAULT_TICKET_WORKSPACE }} panels={panels} layout={{ ...layout, hidden }} request={null} /> }]);
   return calls;
 }
-test("tabs and closed drawer retain drafts; tools mount lazily", async () => {
+test("ticket focus tabs retain drafts; tools mount lazily", async () => {
   const user = userEvent.setup(); setup();
   expect(screen.queryByLabelText("Script argument")).not.toBeInTheDocument();
   await user.type(screen.getByLabelText("Reply draft"), "Keep reply");
@@ -25,15 +25,15 @@ test("tabs and closed drawer retain drafts; tools mount lazily", async () => {
   await user.click(screen.getByRole("tab", { name: "History" }));
   await user.click(screen.getByRole("tab", { name: "Conversation" }));
   expect(screen.getByLabelText("Reply draft")).toHaveValue("Keep reply");
-  await user.click(screen.getByRole("button", { name: /Tools/ }));
-  await user.click(screen.getByRole("tab", { name: /Scripts/ }));
+  await user.click(screen.getByRole("tab", { name: "Tools" }));
+  await user.click(screen.getByRole("button", { name: /Scripts/ }));
   await user.type(screen.getByLabelText("Script argument"), "argument");
-  await user.click(screen.getByRole("tab", { name: /Details/ }));
-  await user.click(screen.getByRole("tab", { name: /Scripts/ }));
+  await user.click(screen.getByRole("tab", { name: "Details" }));
+  await user.click(screen.getByRole("tab", { name: "Tools" }));
+  await user.click(screen.getByRole("button", { name: /Scripts/ }));
   expect(screen.getByLabelText("Script argument")).toHaveValue("argument");
-  fireEvent.keyDown(screen.getByLabelText("Script argument"), { key: "Escape" });
-  expect(screen.getByRole("button", { name: /Tools/ })).toHaveFocus();
-  await user.click(screen.getByRole("button", { name: /Tools/ }));
+  await user.click(screen.getByRole("tab", { name: "Conversation" }));
+  await user.click(screen.getByRole("tab", { name: "Tools" }));
   expect(screen.getByLabelText("Script argument")).toHaveValue("argument");
 });
 test("hidden panels stay unavailable and keyboard navigation works", async () => {
@@ -41,49 +41,31 @@ test("hidden panels stay unavailable and keyboard navigation works", async () =>
   expect(screen.queryByRole("tab", { name: "History" })).not.toBeInTheDocument();
   screen.getByRole("tab", { name: "Conversation" }).focus();
   await user.keyboard("{ArrowRight}");
-  expect(screen.getByRole("tab", { name: "Work" })).toHaveFocus();
-  await user.click(screen.getByRole("button", { name: /Tools/ }));
-  expect(screen.queryByRole("tab", { name: /Scripts/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Details" })).toHaveFocus();
+  expect(screen.queryByRole("tab", { name: "Tools" })).not.toBeInTheDocument();
 });
-test("only personal presentation preferences are saved", async () => {
+test("only the selected personal tool is saved", async () => {
   const user = userEvent.setup(); const calls = setup();
-  await user.click(screen.getByRole("button", { name: /Tools/ }));
-  await user.click(screen.getByRole("checkbox", { name: /Keep panel open/ }));
-  await user.click(screen.getByRole("tab", { name: /Scripts/ }));
-  await waitFor(() => expect(calls.filter(c => c.method === "PUT")).toHaveLength(2));
-  expect(calls.at(-1)?.body).toEqual({ ticket_workspace: { ...DEFAULT_TICKET_WORKSPACE, keep_open: true, selected_tool: "scripts" } });
+  await user.click(screen.getByRole("tab", { name: "Tools" }));
+  await user.click(screen.getByRole("button", { name: /Scripts/ }));
+  await waitFor(() => expect(calls.filter(c => c.method === "PUT")).toHaveLength(1));
+  expect(calls.at(-1)?.body).toEqual({ ticket_workspace: { ...DEFAULT_TICKET_WORKSPACE, selected_tool: "scripts" } });
 });
 
 test("failed presentation saves can be retried", async () => {
   const user = userEvent.setup(); let failed = true;
   mockApi({ "PUT /api/auth/me/preferences": ({ body }: Call) => failed ? new Response(JSON.stringify({ detail: "Temporarily unavailable" }), { status: 503 }) : ({ ...ME, ticket_workspace: (body as { ticket_workspace: typeof DEFAULT_TICKET_WORKSPACE }).ticket_workspace }) });
   renderAt("/", [{ path: "/", element: <TicketToolsWorkspace me={{ ...ME, ticket_workspace: DEFAULT_TICKET_WORKSPACE }} panels={panels} layout={layout} request={null} /> }]);
-  await user.click(screen.getByRole("button", { name: /Tools/ }));
-  await user.click(screen.getByRole("tab", { name: /Scripts/ }));
+  await user.click(screen.getByRole("tab", { name: "Tools" }));
+  await user.click(screen.getByRole("button", { name: /Scripts/ }));
   expect(await screen.findByRole("alert")).toHaveTextContent("not saved");
   await user.type(screen.getByLabelText("Script argument"), "retained");
   failed = false; await user.click(screen.getByRole("button", { name: "Retry" }));
   await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   expect(screen.getByLabelText("Script argument")).toHaveValue("retained");
 });
-test("the drawer is resized with its drag handle (here by keyboard), and the width is saved", async () => {
-  const user = userEvent.setup(); const calls = setup();
-  await user.click(screen.getByRole("button", { name: /Tools/ }));
-  expect(screen.queryByLabelText("Tools drawer width")).not.toBeInTheDocument();  // no slider any more
-  const handle = screen.getByRole("separator", { name: "Resize ticket tools" });
-  expect(handle).toHaveAttribute("aria-valuenow", "440");
-  fireEvent.keyDown(handle, { key: "ArrowLeft" });
-  fireEvent.keyDown(handle, { key: "ArrowLeft", shiftKey: true });
-  expect(handle).toHaveAttribute("aria-valuenow", "540");
-  fireEvent.keyUp(handle, { key: "ArrowLeft" });
-  await waitFor(() => expect(calls.find(c => c.method === "PUT")?.body).toEqual({ ticket_workspace: { ...DEFAULT_TICKET_WORKSPACE, width: 540 } }));
-  fireEvent.keyDown(handle, { key: "Home" });
-  expect(handle).toHaveAttribute("aria-valuenow", "320");
-});
-
-
 test("a conversation-only pane has no empty Tools button", () => {
   setup(["status", "scripts", "checklists", "history"]);
   expect(screen.getByLabelText("Reply draft")).toBeInTheDocument();
-  expect(screen.queryByRole("button", {name:/Tools/})).not.toBeInTheDocument();
+  expect(screen.queryByRole("tab", {name:"Tools"})).not.toBeInTheDocument();
 });

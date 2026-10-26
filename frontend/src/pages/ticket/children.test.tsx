@@ -25,6 +25,7 @@ test("add a child ticket for another technician; it's listed on the parent", asy
     },
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Work" }));
   const section = await screen.findByRole("region", { name: "Child tickets" });
   await userEvent.click(within(section).getByRole("button", { name: "Add a child ticket" }));
   const form = within(section).getByRole("form", { name: "New child ticket" });
@@ -56,6 +57,7 @@ test("merge into another ticket with a reason, then land on it", async () => {
   renderAt(`/tickets/${t.id}`, [
     { path: "/tickets/:ticketId", element: <TicketPage me={ME} /> },
   ]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Details" }));
   await userEvent.click(await screen.findByRole("button", { name: "Merge into another ticket…" }));
   const form = screen.getByRole("form", { name: "Merge into another ticket" });
   await userEvent.type(within(form).getByLabelText("Merge into ticket number"), "4700");

@@ -6054,6 +6054,12 @@ export interface components {
              * @enum {string}
              */
             theme_preset: "custom" | "midnight" | "ember" | "ultraviolet";
+            /**
+             * Console Theme
+             * @default tidepool
+             * @enum {string}
+             */
+            console_theme: "tidepool" | "amethyst" | "blue-steel" | "terracotta" | "graphite-lime";
             /** Theme Brand */
             theme_brand: string;
             /** Theme Sidebar */
@@ -6738,6 +6744,20 @@ export interface components {
              * @default false
              */
             copilot: boolean;
+        };
+        /**
+         * ConsoleAppearance
+         * @description Personal technician theme; null palette follows the organization.
+         */
+        ConsoleAppearance: {
+            /** Palette */
+            palette?: ("tidepool" | "amethyst" | "blue-steel" | "terracotta" | "graphite-lime") | null;
+            /**
+             * Mode
+             * @default organization
+             * @enum {string}
+             */
+            mode: "organization" | "light" | "dark" | "system";
         };
         /** CopilotContextOut */
         CopilotContextOut: {
@@ -8264,6 +8284,7 @@ export interface components {
             hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"];
             queue_list?: components["schemas"]["QueueListPreferences"];
+            console_appearance?: components["schemas"]["ConsoleAppearance"];
             /**
              * Disabled Modules
              * @default []
@@ -9604,6 +9625,7 @@ export interface components {
             hidden_modules?: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"] | null;
             queue_list?: components["schemas"]["QueueListPreferences"] | null;
+            console_appearance?: components["schemas"]["ConsoleAppearance"] | null;
         };
         /**
          * Priority

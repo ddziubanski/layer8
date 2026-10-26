@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type Layout, type Me } from "../../api/client";
 import type { Panel } from "../../components/Arrange";
 import { ME_KEY } from "../../queryClient";
-
 export type TicketWorkspacePreference = NonNullable<Me["ticket_workspace"]>;
 export type TicketTool = TicketWorkspacePreference["selected_tool"];
-// Drawer width limits; the conversation always keeps at least CONVERSATION_MIN pixels beside it.
-const MIN_WIDTH = 320;
-const MAX_WIDTH = 1200;
-const CONVERSATION_MIN = 460;
+// Legacy API fields remain readable; all technicians now use Ticket Focus.
 export const DEFAULT_TICKET_WORKSPACE: TicketWorkspacePreference = { mode: "drawer", selected_tool: "details", keep_open: false, width: 440 };
 export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; panels: string[] }[] = [
   { id: "details", label: "Details", symbol: "◧", panels: ["status", "assignment", "requester", "actions"] },
@@ -25,149 +21,68 @@ export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; pane
 ];
 const SECTIONS = [
   { id: "conversation", label: "Conversation", panels: ["conversation"] },
+  { id: "details", label: "Details", panels: ["status", "assignment", "requester", "actions"] },
   { id: "work", label: "Work", panels: ["children", "related", "checklists", "expenses", "time", "changes"] },
   { id: "history", label: "History", panels: ["history"] },
 ];
 
-function tabKey(event: KeyboardEvent<HTMLButtonElement>, ids: string[], active: string, choose: (id: string) => void, prefix: string) {
-  const index = ids.indexOf(active);
-  const next = event.key === "Home" ? 0 : event.key === "End" ? ids.length - 1 : event.key === "ArrowRight" ? (index + 1) % ids.length : event.key === "ArrowLeft" ? (index - 1 + ids.length) % ids.length : -1;
-  if (next < 0) return;
-  event.preventDefault(); choose(ids[next]); document.getElementById(`${prefix}-${ids[next]}`)?.focus();
-}
-
-/** Activated panels stay mounted while hidden, preserving drafts/files and in-flight operations. */
-export function TicketToolsWorkspace({ me, panels, layout, request, barActions }: {
-  me: Me; panels: Record<string, Panel>; layout: Layout; request: { tool: TicketTool; sequence: number } | null;
-  // Buttons that open the drawer at a tool, shown just before Tools.
-  barActions?: ReactNode;
+/** Lazily mounted tabs remain mounted while hidden, preserving drafts and running actions. */
+export function TicketToolsWorkspace({ me, panels, layout, request, context }: {
+  me: Me; panels: Record<string, Panel>; layout: Layout; request: { tool: TicketTool; sequence: number } | null; context?: ReactNode;
 }) {
-  const queryClient = useQueryClient();
-  const [prefs, setPrefs] = useState<TicketWorkspacePreference>(me.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
-  const [open, setOpen] = useState(prefs.keep_open);
-  const [section, setSection] = useState("conversation");
-  const [visited, setVisited] = useState<Set<string>>(() => new Set(["conversation", ...(prefs.keep_open ? [prefs.selected_tool] : [])]));
-  const [width, setWidth] = useState(prefs.width);
-  const [saving, setSaving] = useState(0);
-  const [error, setError] = useState("");
-  const queue = useRef(Promise.resolve());
-  const latest = useRef(prefs);
-  const toggle = useRef<HTMLButtonElement>(null);
-  const drawer = useRef<HTMLElement>(null);
-  const columns = useRef<HTMLDivElement>(null);
-  const previousOpen = useRef(open);
+  const client = useQueryClient();
   const prefix = useId();
+  const [section, setSection] = useState("conversation");
+  const [tool, setTool] = useState<TicketTool>(me.ticket_workspace?.selected_tool ?? "devices");
+  const [visited, setVisited] = useState<Set<string>>(() => new Set(["conversation"]));
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(0);
+  const queue = useRef(Promise.resolve());
+  const latest = useRef(me.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
   const hidden = new Set(layout.hidden ?? []);
   const visible = (id: string) => id === "conversation" || (!hidden.has(id) && panels[id]?.node != null);
-  const tools = TICKET_TOOLS.filter(tool => tool.panels.some(visible));
-  const selected = tools.some(t => t.id === prefs.selected_tool) ? prefs.selected_tool : tools[0]?.id;
+  const tools = TICKET_TOOLS.filter(item => item.id !== "details" && item.panels.some(visible));
+  const selected = tools.some(item => item.id === tool) ? tool : tools[0]?.id;
   const sections = SECTIONS.filter(item => item.panels.some(visible));
-  const activeSection = sections.some(item => item.id === section) ? section : "conversation";
-
+  if (tools.length) sections.splice(Math.min(2, sections.length), 0, { id: "tools", label: "Tools", panels: [] });
+  const active = sections.some(item => item.id === section) ? section : "conversation";
   function save(next: TicketWorkspacePreference) {
-    latest.current = next; setPrefs(next); setError(""); setSaving(n => n + 1);
-    // Serialize rapid tool/width choices: a slow older request cannot replace a newer preference.
+    latest.current = next; setError(""); setSaving(n => n + 1);
     const work = queue.current.catch(() => {}).then(() => api.savePreferences({ ticket_workspace: next }));
     queue.current = work.then(() => {}, () => {});
-    void work.then(profile => {
-      queryClient.setQueryData<Me>(ME_KEY, current => current?.id === me.id ? { ...current, ticket_workspace: profile.ticket_workspace } : current);
-    }, failure => setError(failure.message)).finally(() => setSaving(n => n - 1));
+    void work.then(profile => client.setQueryData<Me>(ME_KEY, current => current?.id === me.id ? { ...current, ticket_workspace: profile.ticket_workspace } : current), failure => setError(failure.message)).finally(() => setSaving(n => n - 1));
   }
-  function chooseTool(id: TicketTool, persist = true) {
-    setOpen(true); setVisited(old => new Set([...old, id]));
-    const next = { ...latest.current, selected_tool: id };
-    if (persist) save(next); else { latest.current = next; setPrefs(next); }
-  }
-  useEffect(() => {
-    if (request) chooseTool(request.tool);
-  }, [request?.sequence]); // A header/remote-action shortcut deliberately reopens the same tool.
-  useEffect(() => {
-    if (open && selected) setVisited(old => old.has(selected) ? old : new Set([...old, selected]));
-    if (open && !previousOpen.current) document.getElementById(`${prefix}-tool-${selected}`)?.focus();
-    previousOpen.current = open;
-  }, [open, selected, prefix]);
-  useEffect(() => {
-    if (request && open && selected === request.tool) document.getElementById(`${prefix}-tool-${selected}`)?.focus();
-  }, [request?.sequence, open, selected, prefix]);
-  function close() { setOpen(false); toggle.current?.focus(); }
   function chooseSection(id: string) { setSection(id); setVisited(old => new Set([...old, id])); }
-  function saveWidth() { if (width !== latest.current.width) save({ ...latest.current, width }); }
-  /** The widest the drawer can be here, so the conversation keeps CONVERSATION_MIN pixels. */
-  function maxWidth() {
-    const room = columns.current?.clientWidth ?? 0;
-    return Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, room ? room - CONVERSATION_MIN - 20 : MAX_WIDTH));
-  }
-  const clampWidth = (w: number) => Math.round(Math.max(MIN_WIDTH, Math.min(maxWidth(), w)));
-  function startResize(event: ReactPointerEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const handle = event.currentTarget;
-    handle.setPointerCapture(event.pointerId);
-    const startX = event.clientX, startWidth = width;
-    let next = width;
-    const move = (e: PointerEvent) => { next = clampWidth(startWidth + (startX - e.clientX)); setWidth(next); };
-    const up = () => {
-      handle.removeEventListener("pointermove", move);
-      handle.removeEventListener("pointerup", up);
-      handle.removeEventListener("pointercancel", up);
-      if (next !== latest.current.width) save({ ...latest.current, width: next });
-    };
-    handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", up);
-    handle.addEventListener("pointercancel", up);
-  }
-  function resizeKey(event: KeyboardEvent<HTMLDivElement>) {
-    const step = event.shiftKey ? 80 : 20;
-    const next = event.key === "ArrowLeft" ? width + step : event.key === "ArrowRight" ? width - step
-      : event.key === "Home" ? MIN_WIDTH : event.key === "End" ? maxWidth() : null;
-    if (next === null) return;
-    event.preventDefault();
-    setWidth(clampWidth(next));
-  }
-
+  function chooseTool(id: TicketTool) { setTool(id); setVisited(old => new Set([...old, `tool-${id}`])); save({ ...latest.current, selected_tool: id }); }
+  useEffect(() => {
+    if (active === "tools" && selected) setVisited(old => old.has(`tool-${selected}`) ? old : new Set([...old, `tool-${selected}`]));
+  }, [active, selected]);
+  useEffect(() => {
+    if (!request) return;
+    if (request.tool === "details") chooseSection("details");
+    else { chooseSection("tools"); chooseTool(request.tool); }
+  }, [request?.sequence]);
   const render = (ids: string[]) => ids.filter(visible).map(id => <div key={id} data-ticket-panel={id}>{panels[id].node}</div>);
-  return <div className="ticket-tools-workspace" style={{ "--ticket-drawer-width": `${width}px` } as CSSProperties}>
-    <div className="ticket-section-bar">
+  return <div className="ticket-focus-workspace">
+    <div className="ticket-focus-main">
       <div className="ticket-section-tabs" role="tablist" aria-label="Ticket sections">
-        {sections.map(item => <button key={item.id} id={`${prefix}-section-${item.id}`} role="tab" type="button"
-          aria-selected={activeSection === item.id} aria-controls={`${prefix}-section-panel-${item.id}`} tabIndex={activeSection === item.id ? 0 : -1}
-          onKeyDown={event => tabKey(event, sections.map(s => s.id), activeSection, chooseSection, `${prefix}-section`)} onClick={() => chooseSection(item.id)}>{item.label}</button>)}
+        {sections.map(item => <button key={item.id} id={`${prefix}-tab-${item.id}`} role="tab" type="button" aria-selected={active === item.id} aria-controls={`${prefix}-panel-${item.id}`} tabIndex={active === item.id ? 0 : -1}
+          onKeyDown={event => {
+            const index = sections.findIndex(s => s.id === active);
+            const next = event.key === "Home" ? 0 : event.key === "End" ? sections.length - 1 : event.key === "ArrowRight" ? (index + 1) % sections.length : event.key === "ArrowLeft" ? (index - 1 + sections.length) % sections.length : -1;
+            if (next < 0) return;
+            event.preventDefault(); chooseSection(sections[next].id); document.getElementById(`${prefix}-tab-${sections[next].id}`)?.focus();
+          }} onClick={() => chooseSection(item.id)}>{item.label}</button>)}
       </div>
-      {(barActions || tools.length > 0) && <div className="ticket-section-actions">
-        {barActions}
-        {tools.length > 0 && <button ref={toggle} className={open ? "btn" : "btn2"} type="button" aria-expanded={open} aria-controls={`${prefix}-drawer`} onClick={() => { if (open) close(); else setOpen(true); }}>▥ Tools</button>}
-      </div>}
+      {sections.map(item => <section key={item.id} id={`${prefix}-panel-${item.id}`} role="tabpanel" aria-labelledby={`${prefix}-tab-${item.id}`} hidden={active !== item.id}>
+        {item.id !== "tools" ? visited.has(item.id) && <div className="stack">{render(item.panels)}</div> : visited.has("tools") && <>
+          <div className="ticket-focus-tools" role="group" aria-label="Ticket tools">{tools.map(item => <button key={item.id} type="button" className="btn2" aria-pressed={selected === item.id} onClick={() => chooseTool(item.id)}><span aria-hidden="true">{item.symbol}</span>{item.label}</button>)}</div>
+          {tools.map(item => <div key={item.id} hidden={selected !== item.id}>{visited.has(`tool-${item.id}`) && <div className="stack">{render(item.panels)}</div>}</div>)}
+        </>}
+      </section>)}
+      {saving > 0 && <span className="small muted" role="status">Saving workspace…</span>}
+      {error && <p className="error small" role="alert">Workspace preference was not saved: {error} <button className="linkish" type="button" onClick={() => save(latest.current)}>Retry</button></p>}
     </div>
-    <div ref={columns} className={`ticket-workspace-columns${open && tools.length ? " drawer-open" : ""}`}>
-      <div className="ticket-primary-panels">
-        {sections.map(item => <section key={item.id} id={`${prefix}-section-panel-${item.id}`} role="tabpanel" aria-labelledby={`${prefix}-section-${item.id}`} hidden={activeSection !== item.id} tabIndex={0}>
-          {visited.has(item.id) && <div className="stack">{render(item.panels)}</div>}
-        </section>)}
-      </div>
-      <aside ref={drawer} id={`${prefix}-drawer`} className="ticket-tool-drawer" aria-label="Ticket tools" hidden={!open || !tools.length}
-        onKeyDown={event => { if (event.key === "Escape" && !event.defaultPrevented) { event.preventDefault(); close(); } }}>
-        <div className="ticket-tool-resize" role="separator" aria-orientation="vertical" aria-label="Resize ticket tools" tabIndex={0}
-          aria-valuemin={MIN_WIDTH} aria-valuemax={maxWidth()} aria-valuenow={width} title="Drag to resize; double-click for the usual width"
-          onPointerDown={startResize} onDoubleClick={() => { setWidth(DEFAULT_TICKET_WORKSPACE.width); save({ ...latest.current, width: DEFAULT_TICKET_WORKSPACE.width }); }}
-          onKeyDown={resizeKey} onKeyUp={saveWidth} onBlur={saveWidth} />
-        <header className="ticket-tool-drawer-head"><h2>Ticket tools</h2><button className="btn2" type="button" aria-label="Close ticket tools" onClick={close}>×</button></header>
-        <div className="ticket-tool-tabs" role="tablist" aria-label="Ticket tools">
-          {tools.map(tool => <button key={tool.id} id={`${prefix}-tool-${tool.id}`} role="tab" type="button" aria-selected={selected === tool.id}
-            aria-controls={`${prefix}-tool-panel-${tool.id}`} tabIndex={selected === tool.id ? 0 : -1}
-            onKeyDown={event => tabKey(event, tools.map(t => t.id), selected!, id => chooseTool(id as TicketTool), `${prefix}-tool`)} onClick={() => chooseTool(tool.id)}>
-            <span aria-hidden="true">{tool.symbol}</span>{tool.label}
-          </button>)}
-        </div>
-        <div className="ticket-tool-body">
-          {tools.map(tool => <section key={tool.id} id={`${prefix}-tool-panel-${tool.id}`} role="tabpanel" aria-labelledby={`${prefix}-tool-${tool.id}`} hidden={selected !== tool.id} tabIndex={0}>
-            {visited.has(tool.id) && <div className="stack">{render(tool.panels)}</div>}
-          </section>)}
-        </div>
-        <footer className="ticket-tool-footer">
-          <label className="inline small"><input type="checkbox" checked={prefs.keep_open} onChange={event => save({ ...latest.current, keep_open: event.target.checked })} />Keep panel open on other tickets</label>
-          {saving > 0 && <span className="muted small" role="status">Saving workspace…</span>}
-          {error && <p className="error small" role="alert">Workspace preference was not saved: {error} <button className="linkish" type="button" onClick={() => save(latest.current)}>Retry</button></p>}
-        </footer>
-      </aside>
-    </div>
+    {context && <aside className="ticket-focus-context" aria-label="At a glance">{context}<hr /><h2>Quick tools</h2><div className="stack">{[{ id: "details" as TicketTool, label: "Status & assignment" }, ...tools.filter(item => ["copilot", "knowledge", "devices", "scripts"].includes(item.id))].filter(item => item.id !== "details" || sections.some(s => s.id === "details")).map(item => <button className="btn2" key={item.id} type="button" onClick={() => { if (item.id === "details") chooseSection("details"); else { chooseSection("tools"); chooseTool(item.id); } }}>{item.label}</button>)}</div></aside>}
   </div>;
 }

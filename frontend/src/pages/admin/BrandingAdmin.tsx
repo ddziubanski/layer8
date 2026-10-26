@@ -3,8 +3,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
 import { api, type Branding, type User } from "../../api/client";
-import { backgroundStyle, Brand, contrast, DEFAULT_LIGHT_THEME, PRESETS, themeTokens, useBranding } from "../../branding";
+import { backgroundStyle, Brand, useBranding } from "../../branding";
 import { useDropFiles } from "../../components/useDropFiles";
+import { materialTheme, materialTokens } from "../../materialThemes";
 import { SettingsForm } from "./SettingsForm";
 
 /** One uploadable image: preview, choose or drag a file, remove. */
@@ -70,64 +71,9 @@ function ImageSlot({
   );
 }
 
-const isColour = (v: unknown): v is string => typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
-
-/** How the console looks with these colours, light and (if it's on) dark, before saving. */
-function ThemePreview({ values, name, logo }: { values: Record<string, unknown>; name: string; logo: string | null }) {
-  const preset = typeof values.theme_preset === "string" && PRESETS[values.theme_preset] ? values.theme_preset : "custom";
-  const fixed = PRESETS[preset];
-  const brand = isColour(values.theme_brand) ? values.theme_brand : "#0f6b5c";
-  const sidebar = isColour(values.theme_sidebar) ? values.theme_sidebar : "#14211e";
-  const modes = fixed || values.dark_mode === "on" ? ["dark"] : values.dark_mode === "auto" ? ["light", "dark"] : ["light"];
-  const checks = fixed ? [
-    { label: fixed.button, ratio: contrast(fixed.brand, fixed.onBrand) },
-    { label: "Panel text", ratio: contrast(fixed.ink, fixed.surface) },
-    { label: "Secondary text", ratio: contrast(fixed.muted, fixed.surface) },
-  ] : [
-    { label: "Main colour", ratio: contrast(brand, "#ffffff") },
-    { label: "Sidebar colour", ratio: contrast(sidebar, "#ffffff") },
-  ];
-  return (
-    <div className="stack" style={{ gap: 8 }}>
-      <div className="lbl" style={{ margin: 0 }}>
-        Preview
-      </div>
-      <div className="theme-previews">
-        {modes.map((mode) => (
-          <div key={mode} className="theme-preview" data-theme={mode} data-preset={preset} style={themeTokens(brand, sidebar, preset)} aria-label={`${mode === "dark" ? "Dark" : "Light"} preview`} role="img">
-            <div className="side">
-              <span className="brand">
-                {logo && <img className="brand-logo" src={logo} alt="" />}
-                {name}
-              </span>
-              <a className="active">Tickets</a>
-              <a>Reports</a>
-            </div>
-            <div className="theme-preview-main">
-              <div className="card stack" style={{ padding: 10, gap: 6 }}>
-                <strong>Printer on 3rd floor jams</strong>
-                <span>
-                  <span className="chip g">Open</span> <span className="chip a">SLA at risk</span>
-                </span>
-                <a href="#preview" onClick={(e) => e.preventDefault()}>
-                  View ticket
-                </a>
-              </div>
-              <span className="btn">Send reply</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      {fixed && <p className="small muted">{fixed.about} Your custom colours and dark-mode preference are kept for when you switch back.</p>}
-      <div className="contrast-note">
-        {checks.map((c) => (
-          <div key={c.label} className={c.ratio < 4.5 ? "error" : "muted"}>
-            {c.label}: {fixed ? "text contrast" : "white text contrast"} {c.ratio.toFixed(1)}:1 {c.ratio < 4.5 ? "(too light; needs 4.5:1)" : "(readable)"}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+/** Both supported appearances of the organization palette. */
+function ThemePreview({ values, name }: { values: Record<string, unknown>; name: string; logo: string | null }) {
+  return <div className="theme-previews">{[false, true].map(dark => <div key={String(dark)} className="material-theme-preview" style={materialTokens(materialTheme(values.console_theme), dark)} aria-label={`${dark ? "Dark" : "Light"} preview`} role="img"><strong>{name}</strong><span className="small muted">{dark ? "Dark" : "Light"} · Ticket Focus</span><h3>VPN connection failing</h3><p>Conversation · Details · Tools</p><span className="btn">Send reply</span></div>)}</div>;
 }
 
 export function SignInPreview({ brand, values }: { brand: Branding; values: Record<string, unknown> }) {
@@ -169,7 +115,8 @@ export function BrandingAdmin({ me }: { me: User }) {
           me={me}
           section="theme"
           title="Colours"
-          restoreDefaults={{ label: "Restore default light theme", values: DEFAULT_LIGHT_THEME }}
+          restoreDefaults={{ label: "Restore default light theme", values: { console_theme: "tidepool", dark_mode: "off" } }}
+          visibleFields={["console_theme", "dark_mode"]}
           embedded
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["branding"] })}
           preview={(values) => <ThemePreview values={values} name={brand.product_name} logo={brand.logo_url} />}

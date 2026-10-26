@@ -4,7 +4,7 @@
 
 Open **Settings > Modules** to choose the workspace areas available to your organization. All modules default on. Each switch is a checkbox; save to apply. The saving admin sees navigation update immediately; other signed-in clients refresh within 30 seconds while active or when they regain focus.
 
-Global-off areas disappear from the sidebar and Ctrl+K, and direct console links show an unavailable page without loading that page's API queries. A technician's **Show all modules** cannot restore them. Existing personal hidden choices are retained, so restoring a global module does not undo someone's workspace preferences.
+Global-off areas disappear from workspace navigation and Ctrl+K, and direct console links show an unavailable page without loading that page's API queries. A technician's **Show all modules** cannot restore them. Existing personal hidden choices are retained, so restoring a global module does not undo someone's workspace preferences.
 
 **Tickets, My preferences and sign-out remain available.** Admins always retain Settings access to restore modules. **Settings for technicians** affects staff console settings pages, not administrator recovery access. **Self-service portal shortcut** affects staff navigation only: requester self-service and public helpdesk links remain available. Knowledge base controls staff pages; requester articles remain part of the portal. Source code links remain available regardless of module choices.
 
@@ -70,3 +70,12 @@ Personally hiding a module changes its sidebar entry only. It does not disable t
 The allowed IDs are `dashboard`, `devices`, `changes`, `purchase-orders`, `vendors`, `ipam`, `kb`, `scripts`, `reports`, `settings` and `portal`. Unknown IDs, including the fixed Tickets and My preferences links, are rejected. Duplicates are removed. An omitted field preserves the saved value, so older clients saving colours do not erase navigation; `[]` or `null` restores all modules.
 
 The authenticated account determines ownership; the API accepts no target user ID. Preferences use the existing `app_settings` table with a `personal_navigation:<user id>` key and no secrets. Backups and full-install exports preserve this table; no database migration or installer configuration is required. Existing users see the full sidebar until they save a personal selection.
+
+## Ticket Focus navigation and themes
+
+The standard console uses workspace navigation. When every destination in a
+workspace is hidden or globally unavailable, that workspace disappears. A
+personal hide still permits Ctrl+K/direct navigation; a global-off module stays
+unavailable through console routes. Appearance choices are in **My preferences >
+Appearance**, with five paired palettes and an organization-default reset. See
+[ticket workspace](ticket-workspace.md) for the complete theme and tab behavior.

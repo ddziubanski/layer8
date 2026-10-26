@@ -36,6 +36,8 @@ test("link the requester's device in one click, find another, unlink", async () 
     },
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Devices/ }));
   const card = await screen.findByRole("region", { name: "Devices" });
   await userEvent.click(await within(card).findByRole("button", { name: "+ WS-0142" }));
   expect(await within(card).findByRole("link", { name: "WS-0142" })).toHaveAttribute("href", "/devices/1");
@@ -69,6 +71,8 @@ test("a linked device shows its IP addresses; a matching host name links in one 
     "POST /api/ipam/addresses/8/link-device/1": () => ((linkedIp = true), ip(8, "10.1.20.13")),
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Devices/ }));
   const card = await screen.findByRole("region", { name: "Devices" });
   const ips = await within(card).findByRole("list", { name: "IP addresses" });
   expect(within(ips).getByRole("link", { name: "10.1.20.12" })).toHaveAttribute("href", "/ipam/addresses?q=10.1.20.12");
@@ -95,6 +99,8 @@ test("a linked device shows its patch state from Action1", async () => {
     },
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Devices/ }));
   const card = await screen.findByRole("region", { name: "Devices" });
   const patching = await within(card).findByLabelText("Patching");
   expect(patching).toHaveTextContent("2 critical updates missing · reboot pending");

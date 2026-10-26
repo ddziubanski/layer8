@@ -16,7 +16,7 @@ from app import auth, entra, kerberos, permissions, sla, totp, workspace
 from app.auth import CurrentUser, SessionDep
 from app.config import settings
 from app.schemas import (
-    LoginIn, MeOut, PasswordChangeIn, PreferencesIn, QueueListPreferences, SidebarModule, SignInOptionsOut, TicketWorkspacePreferences,
+    ConsoleAppearance, LoginIn, MeOut, PasswordChangeIn, PreferencesIn, QueueListPreferences, SidebarModule, SignInOptionsOut, TicketWorkspacePreferences,
     TwoFactorConfirmIn, TwoFactorOffIn, TwoFactorRecoveryOut, TwoFactorSetupOut, TwoFactorStatusOut,
 )
 from app.models import AppSetting, User, UserRole
@@ -41,6 +41,12 @@ def me_out(session, user) -> MeOut:
     if queue_list:
         try:
             out.queue_list = QueueListPreferences.model_validate(queue_list.value)
+        except ValidationError:
+            pass
+    appearance = session.get(AppSetting, f"personal_console_appearance:{user.id}")
+    if appearance:
+        try:
+            out.console_appearance = ConsoleAppearance.model_validate(appearance.value)
         except ValidationError:
             pass
     return out
@@ -174,7 +180,7 @@ def change_password(body: PasswordChangeIn, user: CurrentUser, request: Request,
 @router.put("/me/preferences", response_model=MeOut)
 def save_preferences(body: PreferencesIn, user: CurrentUser, session: SessionDep):
     """My colours and sidebar; omitted fields preserve independently saved preferences."""
-    if {"ticket_workspace", "queue_list"} & body.model_fields_set and user.role == UserRole.requester:
+    if {"ticket_workspace", "queue_list", "console_appearance"} & body.model_fields_set and user.role == UserRole.requester:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Ticket workspace and queue preferences are for technicians")
     session.scalar(select(User).where(User.id == user.id).with_for_update())
     if "ticket_color" in body.model_fields_set:
@@ -204,6 +210,14 @@ def save_preferences(body: PreferencesIn, user: CurrentUser, session: SessionDep
             row = AppSetting(key=key)
             session.add(row)
         row.value = (body.queue_list or QueueListPreferences()).model_dump()
+        row.updated_by_id, row.updated_at = user.id, sla.utcnow()
+    if "console_appearance" in body.model_fields_set:
+        key = f"personal_console_appearance:{user.id}"
+        row = session.get(AppSetting, key)
+        if row is None:
+            row = AppSetting(key=key)
+            session.add(row)
+        row.value = (body.console_appearance or ConsoleAppearance()).model_dump()
         row.updated_by_id, row.updated_at = user.id, sla.utcnow()
     session.commit()
     return me_out(session, user)

@@ -2,17 +2,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router";
 import type { Branding, Me } from "../api/client";
-import { Brand, backgroundStyle } from "../branding";
+import { Brand } from "../branding";
 import { OPTIONAL_MODULES, visibleModules } from "../navigation";
 import { CommandPalette } from "./CommandPalette";
+import { consoleAppearance, materialTokens } from "../materialThemes";
 import { SourceNotice } from "./SourceNotice";
 import { UnacceptedCounter } from "./UnacceptedCounter";
 
 const GROUPS = [
-  { label: "Service desk", ids: ["tickets", "dashboard", "kb"] },
-  { label: "Infrastructure", ids: ["devices", "ipam", "scripts"] },
-  { label: "Operations", ids: ["changes", "purchase-orders", "vendors", "reports"] },
-  { label: "Workspace", ids: ["settings", "portal"] },
+  { label: "Helpdesk", ids: ["tickets", "dashboard", "changes"] },
+  { label: "People & devices", ids: ["devices"] },
+  { label: "Operations", ids: ["ipam", "scripts", "purchase-orders", "vendors", "reports"] },
+  { label: "Library", ids: ["kb"] },
+  { label: "Setup", ids: ["settings"] },
 ];
 const ICONS: Record<string, ReactNode> = {
   tickets: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h10M7 13h7" /></>,
@@ -35,65 +37,42 @@ function Icon({ name }: { name: string }) {
   return <svg className="console-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[name] ?? ICONS.tickets}</svg>;
 }
 
-/** Shared console chrome only. Collapsing/resizing never changes the mounted workspace. */
+/** Ticket Focus chrome: five workspaces, with local destinations below the header. */
 export function ConsoleLayout({ me, brand, onLogout, logoutPending, children }: {
   me: Me; brand: Branding; onLogout: () => void; logoutPending: boolean; children: ReactNode;
 }) {
-  const [navigationCollapsed, setNavigationCollapsed] = useState(() => window.matchMedia?.("(max-width: 1050px)").matches ?? false);
+  const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   useEffect(() => {
-    const media = window.matchMedia?.("(max-width: 1050px)");
-    if (!media) return;
-    const resize = (event: MediaQueryListEvent) => setNavigationCollapsed(event.matches);
-    media.addEventListener("change", resize);
-    return () => media.removeEventListener("change", resize);
+    const query = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!query) return;
+    const change = (event: MediaQueryListEvent) => setPrefersDark(event.matches);
+    query.addEventListener("change", change);
+    return () => query.removeEventListener("change", change);
   }, []);
   const pathname = useLocation().pathname;
-  const inSettings = pathname === "/settings" || pathname.startsWith("/settings/");
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
-  useEffect(() => {
-    if (!inSettings) setSettingsExpanded(false);
-  }, [inSettings]);
-  // Settings has its own navigation. Keep the main rail compact without changing
-  // the technician's navigation state in the rest of the console.
-  const collapsed = inSettings ? !settingsExpanded : navigationCollapsed;
-  const toggleNavigation = () => inSettings
-    ? setSettingsExpanded(value => !value)
-    : setNavigationCollapsed(value => !value);
   const destinations = [{ id: "tickets", label: "Tickets", to: "/" }, ...visibleModules(me)];
   const groups = GROUPS.map(group => ({ ...group, links: group.ids.flatMap(id => destinations.filter(item => item.id === id)) })).filter(group => group.links.length);
   const current = [{ id: "tickets", label: "Tickets", to: "/" }, ...OPTIONAL_MODULES].find(item => item.to === "/" ? pathname === "/" || pathname.startsWith("/tickets/") : pathname === item.to || pathname.startsWith(item.to + "/"));
-  const context = pathname.startsWith("/preferences") ? "My preferences" : current?.label ?? "Service desk";
-  const group = GROUPS.find(item => item.ids.some(id => id === current?.id))?.label ?? "Workspace";
+  const activeGroup = groups.find(group => group.ids.includes(current?.id ?? ""));
+  const appearance = consoleAppearance(me, brand, prefersDark);
   const role = me.role === "admin" ? "Administrator" : "Technician";
-  return <div className={`shell console-frame${collapsed ? " console-frame-collapsed" : ""}`}>
+  const portal = destinations.find(item => item.id === "portal");
+  return <div className="material-console" data-appearance={appearance.dark ? "dark" : "light"} data-palette={appearance.palette} style={materialTokens(appearance.palette, appearance.dark)}>
     <a className="skip-link" href="#console-main">Skip to workspace</a>
-    <nav className="side" aria-label="Main">
-      <div className="console-brand-row">
-        <div className="brand" title={brand.product_name}><Brand b={brand} className="console-brand-content" /></div>
-        <button className="console-nav-toggle" type="button" aria-label={collapsed ? "Expand navigation" : "Collapse navigation"} aria-expanded={!collapsed} aria-controls="console-module-navigation" onClick={toggleNavigation}><Icon name="collapse" /></button>
-      </div>
-      <div className="console-module-navigation" id="console-module-navigation">
-        {groups.map(item => <div className="console-nav-group" role="group" aria-label={item.label} key={item.label}>
-          <div className="console-nav-heading" aria-hidden="true">{item.label}</div>
-          {item.links.map(link => <Link key={link.id} to={link.to} className={`console-nav-link${current?.id === link.id ? " active" : ""}`} aria-current={current?.id === link.id ? "page" : undefined} aria-label={link.label} title={collapsed ? link.label : undefined}>
-            <Icon name={link.id} /><span className="console-nav-label">{link.label}</span>
-          </Link>)}
-        </div>)}
-      </div>
-      <div className="me console-account">
-        <div className="me-identity"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><div className="console-nav-label console-account-name"><strong>{me.display_name}</strong><span>{role}</span></div></div>
-        <NavLink to="/preferences" aria-label="My preferences" title={collapsed ? "My preferences" : undefined}><Icon name="preferences" /><span className="console-nav-label">My preferences</span></NavLink>
-        <button type="button" onClick={onLogout} disabled={logoutPending} aria-label="Sign out" title={collapsed ? "Sign out" : undefined}><Icon name="logout" /><span className="console-nav-label">Sign out</span></button>
-        <SourceNotice className="source-notice side-source" compact={!collapsed} stacked={collapsed} />
-      </div>
+    <header className="material-topbar">
+      <Link to="/" className="material-brand"><Brand b={brand} /></Link>
+      <div className="console-command-slot"><CommandPalette me={me} /></div>
+      <div className="material-account"><UnacceptedCounter /><NavLink to="/preferences" aria-label="My preferences"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><span>{me.display_name}<small>{role}</small></span></NavLink><button className="btn2" type="button" onClick={onLogout} disabled={logoutPending}>Sign out</button></div>
+    </header>
+    <nav className="material-workspaces" aria-label="Main">
+      {groups.map(group => <Link key={group.label} to={group.links[0].to} className={activeGroup?.label === group.label ? "active" : undefined} aria-current={activeGroup?.label === group.label ? "true" : undefined}><Icon name={group.links[0].id} />{group.label}</Link>)}
+      {portal && <Link to={portal.to} className="material-portal">{portal.label}<Icon name="portal" /></Link>}
     </nav>
-    <main id="console-main" tabIndex={-1} className="main" style={backgroundStyle(brand, "console")}>
-      <header className="console-topbar">
-        <div className="console-context"><span>{group}</span><strong>{context}</strong></div>
-        <div className="console-command-slot"><CommandPalette me={me} /></div>
-        <div className="console-header-actions"><UnacceptedCounter /><div className="console-header-identity"><span className="me-avatar" aria-hidden="true">{me.display_name.trim().slice(0, 1).toUpperCase()}</span><span>{me.display_name}<small>{role}</small></span></div></div>
-      </header>
+    <main id="console-main" tabIndex={-1} className="material-main">
+      <div className="material-workspace-header"><div><span className="workspace-area">YOUR WORKSPACE</span><h1>{pathname.startsWith("/preferences") ? "Your account" : activeGroup?.label ?? "Helpdesk"}</h1></div><span className="small muted">{brand.product_name}</span></div>
+      {activeGroup && <nav className="material-local-nav" aria-label="Workspace">{activeGroup.links.map(link => <Link key={link.id} to={link.to} className={current?.id === link.id ? "active" : undefined} aria-current={current?.id === link.id ? "page" : undefined}>{link.label}</Link>)}</nav>}
       {children}
     </main>
+    <footer className="material-source"><SourceNotice /></footer>
   </div>;
 }

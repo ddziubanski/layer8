@@ -37,6 +37,8 @@ test("run a script on the ticket's device; it's logged on the ticket", async () 
     "POST /api/scripts/3/runs": () => ((started = true), [run]),
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Scripts/ }));
   const card = await screen.findByRole("region", { name: "Scripts" });
   const pick = within(card).getByLabelText("Run a script");
   // Only actions are offered.

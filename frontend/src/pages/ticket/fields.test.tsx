@@ -16,7 +16,7 @@ const OPTIONS = {
 };
 const MOSEI = { ...ME, id: 9, email: "mosei@corp.local", display_name: "M. Osei", phone: "+1 555 0199", department: "it" };
 
-function mount(over = {}) {
+async function mount(over = {}) {
   const t = ticket({ contact_phone: "+1 555 0100", department: { id: 5, label: "Finance" }, resolution_type: null, closure_reason: null, ...over });
   const calls = mockApi({
     [`GET /api/tickets/${t.id}`]: t,
@@ -31,11 +31,12 @@ function mount(over = {}) {
     [`POST /api/tickets/${t.id}/requester`]: { ...t, requester: { id: 9, email: MOSEI.email, display_name: MOSEI.display_name } },
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Details" }));
   return { t, calls };
 }
 
 test("resolving asks for the resolution type and closure reason", async () => {
-  const { t, calls } = mount();
+  const { t, calls } = await mount();
   const status = await screen.findByRole("combobox", { name: "Status" });
   await waitFor(() => expect(calls.some((c) => c.path.includes("list=closure_reason"))).toBe(true));
   await userEvent.selectOptions(status, "resolved");
@@ -49,7 +50,7 @@ test("resolving asks for the resolution type and closure reason", async () => {
 });
 
 test("change the requester by picking them; edit phone and department", async () => {
-  const { t, calls } = mount();
+  const { t, calls } = await mount();
   await userEvent.click(await screen.findByRole("button", { name: "Change requester" }));
   await userEvent.type(screen.getByRole("combobox", { name: "Change requester to" }), "osei");
   await userEvent.click(await screen.findByRole("option", { name: /M. Osei/ }));
@@ -86,14 +87,14 @@ test("new ticket: pick the requester, and their phone and department fill in fro
 });
 
 test("imported details show only on tickets that have them", async () => {
-  mount({ imported_fields: { Building: "A", "Ticket source": "Phone" } });
+  await mount({ imported_fields: { Building: "A", "Ticket source": "Phone" } });
   const box = await screen.findByRole("region", { name: "Imported details" });
   expect(box).toHaveTextContent("BuildingA");
   expect(box).toHaveTextContent("Ticket sourcePhone");
 });
 
 test("no imported details box on other tickets", async () => {
-  mount();
+  await mount();
   await screen.findByRole("combobox", { name: "Status" });
   expect(screen.queryByRole("region", { name: "Imported details" })).toBeNull();
 });

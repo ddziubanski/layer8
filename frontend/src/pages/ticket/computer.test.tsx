@@ -30,6 +30,8 @@ test("no computer yet: pick one of the requester's", async () => {
     [`PATCH /api/tickets/${t.id}`]: ({ body }: Call) => ({ ...t, computer: (body as { computer_id: number }).computer_id === 5 ? PC : null }),
   });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Devices/ }));
   const card = await screen.findByRole("region", { name: "Requester's computer" });
   expect(within(card).getByText(/Not set/)).toBeInTheDocument();
   await userEvent.click(await within(card).findByRole("button", { name: "WS-0142" }));
@@ -47,6 +49,8 @@ test("Remote Assistance starts a logged session and hands over to the launcher",
   const href = vi.fn();
   vi.stubGlobal("location", { ...window.location, set href(v: string) { href(v); } });
   renderAt(`/tickets/${t.id}`, [{ path: "/tickets/:ticketId", element: <TicketPage me={ME} /> }]);
+  await userEvent.click(await screen.findByRole("tab", { name: "Tools" }));
+  await userEvent.click(within(screen.getByRole("group", { name: "Ticket tools" })).getByRole("button", { name: /Devices/ }));
   const card = await screen.findByRole("region", { name: "Requester's computer" });
   expect(within(card).getByRole("link", { name: "WS-0142" })).toHaveAttribute("href", "/devices/5");
   await userEvent.click(within(card).getByRole("button", { name: "Remote Assistance" }));

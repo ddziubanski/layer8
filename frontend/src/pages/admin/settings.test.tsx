@@ -3,7 +3,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { DEFAULT_LIGHT_THEME } from "../../branding";
 import { App } from "../../App";
 import { createQueryClient } from "../../queryClient";
 import { ME, mockApi, renderAt, type Call } from "../../test/util";
@@ -341,40 +340,18 @@ test("current notices: a dialog once per tab, then a banner that can be hidden",
   expect(screen.queryByRole("region", { name: "Service notices" })).not.toBeInTheDocument();
 });
 
-test("branding: colours show in a live preview with their contrast before saving", async () => {
-  const field = (name: string, label: string, kind: string, value: string, choices?: { value: string; label: string }[]) => ({ name, label, help: "", kind, value, is_set: true, locked: false, choices });
-  const calls = mockApi({
-    "GET /api/branding": { product_name: "Example Help Desk" },
-    "GET /api/settings/branding": { section: "branding", fields: [] },
-    "GET /api/settings/theme": {
-      section: "theme",
-      fields: [
-        field("theme_brand", "Main colour", "colour", "#0f6b5c"),
-        field("theme_sidebar", "Sidebar colour", "colour", "#14211e"),
-        field("dark_mode", "Dark mode", "choice", "off", [
-          { value: "off", label: "Off" },
-          { value: "auto", label: "Follow each person's device setting" },
-          { value: "on", label: "Always dark" },
-        ]),
-      ],
-    },
-    "PUT /api/settings/theme": { section: "theme", fields: [] },
-  });
+test("branding previews both appearances before saving the organization theme", async () => {
+  const fields = customThemeFields();
+  const calls = mockApi({ "GET /api/branding": { product_name: "Layer 8" }, "GET /api/settings/theme": { section: "theme", fields }, "PUT /api/settings/theme": { section: "theme", fields } });
   renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
   const form = await screen.findByRole("form", { name: "Colours" });
-  expect(within(form).getByRole("img", { name: "Light preview" })).toHaveStyle({ "--brand": "#0f6b5c" });
-  expect(within(form).queryByRole("img", { name: "Dark preview" })).not.toBeInTheDocument();
-
-  const code = within(form).getByRole("textbox", { name: "Main colour" });
-  await userEvent.clear(code);
-  await userEvent.type(code, "#7dd3fc");
-  expect(within(form).getByRole("img", { name: "Light preview" })).toHaveStyle({ "--brand": "#7dd3fc" });
-  expect(within(form).getByText(/Main colour: white text contrast 1\.\d:1 \(too light/)).toBeInTheDocument();
-
-  await userEvent.selectOptions(within(form).getByLabelText("Dark mode"), "auto");
+  expect(within(form).getByRole("img", { name: "Light preview" })).toBeInTheDocument();
   expect(within(form).getByRole("img", { name: "Dark preview" })).toBeInTheDocument();
+  await userEvent.selectOptions(within(form).getByLabelText("Default technician theme"), "amethyst");
+  expect(within(form).getByRole("img", { name: "Light preview" })).toHaveStyle({ "--brand": "#6547a9" });
+  expect(calls.filter(c => c.method === "PUT")).toHaveLength(0);
   await userEvent.click(within(form).getByRole("button", { name: "Save" }));
-  await waitFor(() => expect(calls.find((c) => c.method === "PUT")?.body).toMatchObject({ values: { theme_brand: "#7dd3fc", dark_mode: "auto" } }));
+  await waitFor(() => expect(calls.find(c => c.method === "PUT")?.body).toMatchObject({ values: { console_theme: "amethyst" } }));
 });
 
 test("backup: list backups, back up now, verify one", async () => {
@@ -448,27 +425,12 @@ test("API keys: a new key is shown once", async () => {
   expect(calls.find((c) => c.method === "POST")!.body).toEqual({ name: "MER server room" });
 });
 
-test("Midnight can be previewed before saving and keeps custom colours", async () => {
-  const fields = [
-    { name: "theme_preset", label: "Appearance", help: "", kind: "choice", value: "custom", locked: false, choices: [{ value: "custom", label: "Custom colours" }, { value: "midnight", label: "Midnight command center" }] },
-    { name: "theme_brand", label: "Main colour", help: "", kind: "colour", value: "#0f6b5c", locked: false },
-    { name: "dark_mode", label: "Dark mode", help: "", kind: "choice", value: "off", locked: false, choices: [{ value: "off", label: "Off" }] },
-  ];
-  const calls = mockApi({
-    "GET /api/branding": { product_name: "Layer 8", theme_preset: "custom" },
-    "GET /api/settings/branding": { section: "branding", fields: [] },
-    "GET /api/settings/theme": { section: "theme", fields },
-    "PUT /api/settings/theme": { section: "theme", fields: fields.map(f => f.name === "theme_preset" ? { ...f, value: "midnight" } : f) },
-  });
+test("legacy console palette and custom-colour controls are no longer offered", async () => {
+  mockApi({ "GET /api/branding": {}, "GET /api/settings/theme": { section: "theme", fields: [...customThemeFields(), { name: "theme_preset", label: "Old appearance", kind: "choice", value: "midnight", choices: [{ value: "midnight", label: "Midnight" }], locked: false }] } });
   renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
   const form = await screen.findByRole("form", { name: "Colours" });
-  await userEvent.selectOptions(within(form).getByLabelText("Appearance"), "midnight");
-  expect(within(form).getByRole("img", { name: "Dark preview" })).toHaveAttribute("data-preset", "midnight");
-  expect(within(form).queryByRole("img", { name: "Light preview" })).not.toBeInTheDocument();
-  expect(within(form).getByRole("textbox", { name: "Main colour" })).toHaveValue("#0f6b5c");
-  expect(calls.filter(c => c.method === "PUT")).toHaveLength(0);
-  await userEvent.click(within(form).getByRole("button", { name: "Save" }));
-  await waitFor(() => expect(calls.find(c => c.method === "PUT")?.body).toEqual({ values: { theme_preset: "midnight" }, clear: [] }));
+  expect(within(form).queryByLabelText("Old appearance")).not.toBeInTheDocument();
+  expect(within(form).getByLabelText("Default technician theme")).toBeInTheDocument();
 });
 
 test("requester email templates show a preview with sample values", async () => {
@@ -478,37 +440,25 @@ test("requester email templates show a preview with sample values", async () => 
 
 
 const customThemeFields = (locked = false) => [
-  { name: "theme_preset", label: "Appearance", kind: "choice", value: "midnight", choices: [{ value: "custom", label: "Custom colours" }, { value: "midnight", label: "Midnight" }] },
-  { name: "theme_brand", label: "Main colour", kind: "colour", value: "#123456" },
-  { name: "theme_sidebar", label: "Sidebar colour", kind: "colour", value: "#112233" },
+  { name: "console_theme", label: "Default technician theme", kind: "choice", value: "blue-steel", choices: [{ value: "tidepool", label: "Tidepool" }, { value: "amethyst", label: "Amethyst" }, { value: "blue-steel", label: "Blue Steel" }] },
   { name: "dark_mode", label: "Dark mode", kind: "choice", value: "on", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }] },
 ].map(f => ({ ...f, help: "", locked: locked && f.name === "dark_mode" }));
 
-test("branding restores light defaults atomically, discards colour drafts and keeps uploaded branding", async () => {
-  let brand = { product_name: "Example Help Desk", logo_url: "/api/branding/files/logo?v=1", background_url: "/api/branding/files/background?v=1", theme_preset: "midnight" };
+test("branding restores Tidepool light atomically and keeps uploaded branding", async () => {
+  const defaults = { console_theme: "tidepool", dark_mode: "off" };
   const calls = mockApi({
-    "GET /api/branding": () => brand,
-    "GET /api/settings/branding": { section: "branding", fields: [] },
+    "GET /api/branding": { product_name: "Example Help Desk", logo_url: "/api/branding/files/logo?v=1", background_url: "/api/branding/files/background?v=1" },
     "GET /api/settings/theme": { section: "theme", fields: customThemeFields() },
-    "PUT /api/settings/theme": () => {
-      brand = { ...brand, ...DEFAULT_LIGHT_THEME };
-      return { section: "theme", fields: customThemeFields().map(f => ({ ...f, value: DEFAULT_LIGHT_THEME[f.name as keyof typeof DEFAULT_LIGHT_THEME] })) };
-    },
+    "PUT /api/settings/theme": { section: "theme", fields: customThemeFields().map(f => ({ ...f, value: defaults[f.name as keyof typeof defaults] })) },
   });
   renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
   const form = await screen.findByRole("form", { name: "Colours" });
-  const colour = within(form).getByRole("textbox", { name: "Main colour" });
-  await userEvent.clear(colour);
-  await userEvent.type(colour, "#987654");
+  await userEvent.selectOptions(within(form).getByLabelText("Default technician theme"), "amethyst");
   await userEvent.click(within(form).getByRole("button", { name: "Restore default light theme" }));
   expect(await within(form).findByText("Saved.")).toBeInTheDocument();
-  expect(calls.filter(c => c.method === "PUT")).toEqual([{ method: "PUT", path: "/api/settings/theme", body: { values: DEFAULT_LIGHT_THEME, clear: [] } }]);
-  expect(colour).toHaveValue(DEFAULT_LIGHT_THEME.theme_brand);
+  expect(calls.filter(c => c.method === "PUT")).toEqual([{ method: "PUT", path: "/api/settings/theme", body: { values: defaults, clear: [] } }]);
+  expect(within(form).getByLabelText("Default technician theme")).toHaveValue("tidepool");
   expect(within(form).getByRole("button", { name: "Save" })).toBeDisabled();
-  expect(within(form).queryByRole("button", { name: "Undo changes" })).not.toBeInTheDocument();
-  expect(within(form).getByRole("img", { name: "Light preview" })).toBeInTheDocument();
-  await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
-  expect(document.documentElement.dataset.preset).toBe("custom");
   expect(screen.getByRole("img", { name: "Current logo" })).toBeInTheDocument();
   expect(screen.getByRole("img", { name: "Current background" })).toBeInTheDocument();
 });
@@ -526,18 +476,13 @@ test("branding cannot restore defaults over server-locked colour settings", asyn
   expect(calls.some(c => c.method === "PUT")).toBe(false);
 });
 
-test("failed light-theme restore keeps the unsaved palette available for retry", async () => {
-  mockApi({
-    "GET /api/branding": {},
-    "GET /api/settings/theme": { section: "theme", fields: customThemeFields() },
-    "PUT /api/settings/theme": () => new Response(JSON.stringify({ detail: "Could not save settings." }), { status: 503 }),
-  });
+test("failed theme restore retains the unsaved palette for retry", async () => {
+  mockApi({ "GET /api/branding": {}, "GET /api/settings/theme": { section: "theme", fields: customThemeFields() }, "PUT /api/settings/theme": () => new Response(JSON.stringify({ detail: "Could not save settings." }), { status: 503 }) });
   renderAt("/", [{ path: "/", element: <BrandingAdmin me={ADMIN} /> }]);
   const form = await screen.findByRole("form", { name: "Colours" });
-  const colour = within(form).getByRole("textbox", { name: "Main colour" });
-  fireEvent.change(colour, { target: { value: "#654321" } });
+  await userEvent.selectOptions(within(form).getByLabelText("Default technician theme"), "amethyst");
   await userEvent.click(within(form).getByRole("button", { name: "Restore default light theme" }));
   expect(await within(form).findByRole("alert")).toHaveTextContent("Could not save settings.");
-  expect(colour).toHaveValue("#654321");
+  expect(within(form).getByLabelText("Default technician theme")).toHaveValue("amethyst");
   expect(within(form).getByRole("button", { name: "Save" })).toBeEnabled();
 });

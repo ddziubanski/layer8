@@ -23,7 +23,7 @@ def test_public_branding_without_signing_in(client, db):
     assert r.status_code == 200
     assert r.json() == {
         "product_name": "Layer 8", "sign_in_message": "", "background_in_console": False, "portal_welcome": "",
-        "theme_preset": "custom", "theme_brand": "#0f6b5c", "theme_sidebar": "#14211e", "dark_mode": "off",
+        "theme_preset": "custom", "console_theme": "tidepool", "theme_brand": "#0f6b5c", "theme_sidebar": "#14211e", "dark_mode": "off",
         "background_url": None, "logo_url": None, "favicon_url": None,
         "sign_in_heading": "", "sign_in_layout": "center", "sign_in_card_size": "standard",
         "sign_in_background_fit": "cover", "sign_in_background_position": "center",
