@@ -12,7 +12,7 @@ import { ME_KEY } from "../../queryClient";
 import { MINIMAL_HIDDEN, OPTIONAL_MODULES, moduleEnabled, type SidebarModule } from "../../navigation";
 
 import { DEFAULT_QUEUE_LIST } from "../QueuePage";
-import { DEFAULT_TICKET_WORKSPACE, TICKET_TOOLS, type TicketWorkspacePreference } from "../ticket/TicketToolsWorkspace";
+import { DEFAULT_APPEARANCE, MATERIAL_THEMES } from "../../materialThemes";
 
 function Swatches({ value, onChange, label }: { value: string | null; onChange: (c: string) => void; label: string }) {
   return (
@@ -41,14 +41,14 @@ export function PreferencesPage({ me }: { me: Me }) {
   const [color, setColor] = useState<string | null>(activeMe.ticket_color ?? null);
   const [rules, setRules] = useState<ColorRule[]>(activeMe.color_rules ?? []);
   const [hidden, setHidden] = useState<SidebarModule[]>(activeMe.hidden_modules ?? []);
-  const [workspace, setWorkspace] = useState<TicketWorkspacePreference>(activeMe.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
-  const workspaceChanged = JSON.stringify(workspace) !== JSON.stringify(activeMe.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE);
+  const [appearance, setAppearance] = useState<NonNullable<Me["console_appearance"]>>(activeMe.console_appearance ?? DEFAULT_APPEARANCE);
+  const appearanceChanged = JSON.stringify(appearance) !== JSON.stringify(activeMe.console_appearance ?? DEFAULT_APPEARANCE);
   const [queueList, setQueueList] = useState<QueueListPreference>(activeMe.queue_list ?? DEFAULT_QUEUE_LIST);
   const queueListChanged = JSON.stringify(queueList) !== JSON.stringify(activeMe.queue_list ?? DEFAULT_QUEUE_LIST);
   const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues });
   const [names, setNames] = useState<Record<string, string>>({});
   const save = useMutation({
-    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden, ...(workspaceChanged ? { ticket_workspace: workspace } : {}), ...(queueListChanged ? { queue_list: queueList } : {}) }),
+    mutationFn: () => api.savePreferences({ ticket_color: color, color_rules: rules, hidden_modules: hidden, ...(appearanceChanged ? { console_appearance: appearance } : {}), ...(queueListChanged ? { queue_list: queueList } : {}) }),
     onSuccess: (m) => queryClient.setQueryData(ME_KEY, m),
   });
   const setRule = (i: number, over: Partial<ColorRule>) => setRules(rules.map((r, j) => (j === i ? { ...r, ...over } : r)));
@@ -59,7 +59,7 @@ export function PreferencesPage({ me }: { me: Me }) {
   };
   // What's stored now: the last save, else what the page opened with.
   const stored = save.data ?? activeMe;
-  const changed = workspaceChanged || JSON.stringify(queueList) !== JSON.stringify(stored.queue_list ?? DEFAULT_QUEUE_LIST) || color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
+  const changed = appearanceChanged || JSON.stringify(queueList) !== JSON.stringify(stored.queue_list ?? DEFAULT_QUEUE_LIST) || color !== (stored.ticket_color ?? null) || JSON.stringify(rules) !== JSON.stringify(stored.color_rules ?? [])
     || JSON.stringify([...hidden].sort()) !== JSON.stringify([...(stored.hidden_modules ?? [])].sort());
   const isStaff = me.role !== "requester";
 
@@ -84,12 +84,12 @@ export function PreferencesPage({ me }: { me: Me }) {
               onChange={e => setHidden(e.target.checked ? hidden.filter(id => id !== module.id) : [...hidden, module.id])} />{module.label}{!moduleEnabled(activeMe, module.id) && <span className="muted small"> — turned off by administrator</span>}</label>)}
           </fieldset>
         </section>}
-        {isStaff && <section className="card stack" aria-label="Ticket workspace">
-          <h2>Ticket workspace</h2>
-          <p className="muted small">Layout changes apply when you next open a ticket. Use Arrange this page to choose widgets. Widget canvas uses your saved columns and full-width rows; the tools drawer groups selected widgets into tabs.</p>
-          <label className="field">Layout<select value={workspace.mode} onChange={e => setWorkspace({ ...workspace, mode: e.target.value as TicketWorkspacePreference["mode"] })}><option value="drawer">Conversation with tools drawer</option><option value="classic">Widget canvas (arranged panels)</option></select></label>
-          <label className="field">Preferred tool<select value={workspace.selected_tool} onChange={e => setWorkspace({ ...workspace, selected_tool: e.target.value as TicketWorkspacePreference["selected_tool"] })}>{TICKET_TOOLS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
-          <label className="inline"><input type="checkbox" checked={workspace.keep_open} onChange={e => setWorkspace({ ...workspace, keep_open: e.target.checked })} />Keep tools open on new tickets</label>
+        {isStaff && <section className="card stack" aria-label="Appearance">
+          <h2>Appearance</h2>
+          <p className="muted small">Ticket Focus is the standard workspace. Theme and light/dark choices are personal and follow your account across browsers.</p>
+          <label className="field">Theme<select value={appearance.palette ?? "organization"} onChange={event => setAppearance({ ...appearance, palette: event.target.value === "organization" ? null : event.target.value as NonNullable<Me["console_appearance"]>["palette"] })}><option value="organization">Use organization default</option>{Object.entries(MATERIAL_THEMES).map(([id, theme]) => <option key={id} value={id}>{theme.label}</option>)}</select></label>
+          <label className="field">Appearance<select value={appearance.mode} onChange={event => setAppearance({ ...appearance, mode: event.target.value as NonNullable<Me["console_appearance"]>["mode"] })}><option value="organization">Use organization default</option><option value="light">Light</option><option value="dark">Dark</option><option value="system">Follow my device</option></select></label>
+          <button className="btn2" type="button" onClick={() => setAppearance(DEFAULT_APPEARANCE)}>Use organization default</button>
         </section>}
         {isStaff && <section className="card stack" aria-label="Ticket list">
           <h2>Ticket list</h2>
@@ -196,7 +196,7 @@ export function PreferencesPage({ me }: { me: Me }) {
             Save
           </button>
           {changed && (
-            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); setWorkspace(stored.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE); setQueueList(stored.queue_list ?? DEFAULT_QUEUE_LIST); }}>
+            <button className="btn2" type="button" onClick={() => { setColor(stored.ticket_color ?? null); setRules(stored.color_rules ?? []); setHidden(stored.hidden_modules ?? []); setAppearance(stored.console_appearance ?? DEFAULT_APPEARANCE); setQueueList(stored.queue_list ?? DEFAULT_QUEUE_LIST); }}>
               Undo changes
             </button>
           )}

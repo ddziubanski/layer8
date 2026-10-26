@@ -111,6 +111,7 @@ def public(session: Session) -> dict:
         "background_in_console": settings.background_in_console,
         "portal_welcome": settings.portal_welcome,
         "theme_preset": _choice("theme_preset"),
+        "console_theme": _choice("console_theme"),
         "theme_brand": settings.theme_brand,
         "theme_sidebar": settings.theme_sidebar,
         "dark_mode": _choice("dark_mode"),

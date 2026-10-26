@@ -19,7 +19,7 @@ import { PersonLink } from "../components/PersonCard";
 import { transientFailure } from "../components/ServerRecovery";
 import { PriorityChip, SourceChip, StatusChip, SlaChip } from "../components/Chips";
 import { SOURCE_LABEL, when } from "../format";
-import { TicketToolsWorkspace, DEFAULT_TICKET_WORKSPACE, type TicketTool } from "./ticket/TicketToolsWorkspace";
+import { TicketToolsWorkspace, type TicketTool } from "./ticket/TicketToolsWorkspace";
 import { TicketNetworkContext } from "./ticket/TicketNetworkContext";
 import { Composer, useComposerDraft } from "./ticket/Composer";
 import { describe, type Names } from "./ticket/history";
@@ -31,7 +31,7 @@ import { ComputerCard } from "./ticket/ComputerCard";
 import { DevicesCard } from "./ticket/DevicesCard";
 import { ExpensesCard } from "./ticket/ExpensesCard";
 import { ADAccountCard } from "./ticket/ADAccountCard";
-import { ArrangedColumns, useArrangement } from "../components/Arrange";
+import { useArrangement } from "../components/Arrange";
 import { SystemsCard } from "./ticket/SystemsCard";
 import { SharePointLibrary } from "./ticket/SharePointLibrary";
 import { KnowledgeCard } from "./ticket/KnowledgeCard";
@@ -61,8 +61,7 @@ export function TicketPage({ me }: { me: Me }) {
 
 function TicketView({ me, id }: { me: Me; id: number }) {
   const composerDraft = useComposerDraft();
-  // Apply layout-mode changes on the next ticket navigation, never under an active draft.
-  const [drawerMode] = useState((me.ticket_workspace ?? DEFAULT_TICKET_WORKSPACE).mode !== "classic");
+
   const [toolRequest, setToolRequest] = useState<{ tool: TicketTool; sequence: number } | null>(null);
   const openTool = (tool: TicketTool) => setToolRequest(current => ({ tool, sequence: (current?.sequence ?? 0) + 1 }));
   const queryClient = useQueryClient();
@@ -110,7 +109,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
   const filesFor = (commentId: number | null) => (files.data ?? []).filter((f) => f.comment_id === commentId);
 
   const activeMe = signedIn.data ?? me;
-  const effectiveLayout = arrangement.layout?.effective ?? USUAL_LAYOUT;
+  const effectiveLayout = { ...(arrangement.layout?.effective ?? USUAL_LAYOUT), hidden: [] as string[] };
   const hidden = new Set(effectiveLayout.hidden ?? []);
   const panels = {
           conversation: {
@@ -197,7 +196,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
                 ticket={t}
                 onChanged={refresh}
                 onRunScript={() => {
-                  if (drawerMode && !arrangement.editing) { openTool("scripts"); return; }
+                  { openTool("scripts"); return; }
                   const section = document.querySelector<HTMLElement>("[aria-label='Scripts']");
                   section?.scrollIntoView({ behavior: "smooth", block: "start" });
                   section?.querySelector<HTMLSelectElement>("select")?.focus();
@@ -218,7 +217,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
   };
 
   return (
-    <div className={`ticket${drawerMode && !arrangement.editing ? " ticket-drawer-page" : ""}`}>
+    <div className="ticket ticket-focus-page">
       <div className="head ticket-workspace-head" ref={measureHead}>
         <nav className="ticket-breadcrumb" aria-label="Ticket breadcrumb">
           <Link to="/">Tickets</Link>
@@ -237,12 +236,8 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <PriorityChip priority={t.priority} />
           <SourceChip source={t.source} />
           <StatusChip status={t.status} />
-          {drawerMode && !arrangement.editing && <SlaChip ticket={t} long />}
-          {!arrangement.editing && (
-            <button className="linkish small" type="button" data-arrange-page="ticket" onClick={() => arrangement.setEditing(true)}>
-              Arrange this page
-            </button>
-          )}
+          <SlaChip ticket={t} long />
+
         </div>
         <div className="ticket-workspace-meta">
           <span>Requested by <strong><PersonLink id={t.requester.id} name={t.requester.display_name} /></strong></span>
@@ -252,22 +247,8 @@ function TicketView({ me, id }: { me: Me; id: number }) {
         </div>
       </div>
 
-      {drawerMode && <div className="ticket-drawer-live" hidden={arrangement.editing}>
-        <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
-          barActions={!arrangement.editing && ["status", "assignment", "requester", "actions"].some(id => !hidden.has(id))
-            && <button className="btn2" type="button" onClick={() => openTool("details")}>Status &amp; assignment</button>} />
-      </div>}
-      {(!drawerMode || arrangement.editing) && <ArrangedColumns
-        page="ticket"
-        editorOnly={drawerMode}
-        me={me}
-        editing={arrangement.editing}
-        onDone={() => arrangement.setEditing(false)}
-        layout={arrangement.layout?.effective ?? USUAL_LAYOUT}
-        required={arrangement.layout?.required ?? ["conversation"]}
-        hasMine={!!arrangement.layout?.mine}
-        panels={panels}
-      />}
+      <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
+        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><PriorityChip priority={t.priority} /></dd></dl></>} />
     </div>
   );
 }

@@ -136,6 +136,13 @@ class QueueListPreferences(BaseModel):
     page_size: Literal[25, 50, 100, 200] = 100
 
 
+class ConsoleAppearance(BaseModel):
+    """Personal technician theme; null palette follows the organization."""
+    model_config = ConfigDict(extra="forbid")
+    palette: Literal["tidepool", "amethyst", "blue-steel", "terracotta", "graphite-lime"] | None = None
+    mode: Literal["organization", "light", "dark", "system"] = "organization"
+
+
 class MeOut(UserOut):
     """The signed-in user. portal_only: signed in by single sign-on, so the portal only;
     the console asks for a password. must_change_password: change it before anything else
@@ -155,6 +162,7 @@ class MeOut(UserOut):
     hidden_modules: list[SidebarModule] = []
     ticket_workspace: TicketWorkspacePreferences = Field(default_factory=TicketWorkspacePreferences)
     queue_list: QueueListPreferences = Field(default_factory=QueueListPreferences)
+    console_appearance: ConsoleAppearance = Field(default_factory=ConsoleAppearance)
     # Global console availability, above personal visibility; never an authorization grant.
     disabled_modules: list[SidebarModule] = []
 
@@ -180,6 +188,7 @@ class PreferencesIn(BaseModel):
     # Omitted preserves; null resets. Explicit objects replace the presentation preferences.
     ticket_workspace: TicketWorkspacePreferences | None = None
     queue_list: QueueListPreferences | None = None
+    console_appearance: ConsoleAppearance | None = None
 
     @field_validator("hidden_modules")
     @classmethod
@@ -525,6 +534,7 @@ class BrandingOut(BaseModel):
     background_in_console: bool
     portal_welcome: str
     theme_preset: Literal["custom", "midnight", "ember", "ultraviolet"] = "custom"
+    console_theme: Literal["tidepool", "amethyst", "blue-steel", "terracotta", "graphite-lime"] = "tidepool"
     theme_brand: str
     theme_sidebar: str
     dark_mode: str

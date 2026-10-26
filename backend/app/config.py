@@ -251,6 +251,7 @@ class Settings(BaseSettings):
     email_footer: str = ""
     # Theme: buttons and links, and the sidebar; dark mode off / auto (each device's setting) / on.
     theme_preset: str = "custom"
+    console_theme: str = "tidepool"
     theme_brand: str = "#0f6b5c"
     theme_sidebar: str = "#14211e"
     dark_mode: str = "off"

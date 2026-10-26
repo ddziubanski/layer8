@@ -1,0 +1,74 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+.material-console { min-height:100dvh; background:var(--bg); color:var(--ink); padding:0 28px 12px; box-sizing:border-box; }
+.material-console *, .material-theme-preview * { box-sizing:border-box; }
+.material-console [hidden] { display:none !important; }
+.material-console a, .material-theme-preview a { color:var(--link); }
+.material-console :is(button,a,input,select,textarea):focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
+.material-topbar { display:flex; align-items:center; gap:28px; min-height:94px; max-width:1600px; margin:auto; padding:16px 4px; }
+.material-brand { flex-shrink:0; text-decoration:none; }
+.material-brand .brand { display:flex; align-items:center; gap:10px; color:var(--ink); font-size:24px; font-weight:600; letter-spacing:-.04em; }
+.material-brand .brand-logo { width:38px; height:38px; object-fit:contain; }
+.material-topbar .console-command-slot { flex:1; max-width:620px; min-width:160px; }
+.material-topbar .command-trigger { width:100%; min-height:48px; border:0; border-radius:28px; background:var(--material-high); color:var(--muted); justify-content:space-between; padding:12px 20px; }
+.material-account { display:flex; align-items:center; gap:14px; margin-left:auto; }
+.material-account > a { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-size:13px; }
+.material-account small { display:block; color:var(--muted); font-size:11px; }
+.material-console .me-avatar { background:var(--material-container); color:var(--material-on-container); }
+.material-console .console-icon { width:20px; height:20px; flex-shrink:0; }
+.material-workspaces { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:0 4px 18px; max-width:1600px; margin:auto; }
+.material-workspaces a { display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:16px; text-decoration:none; color:var(--muted); }
+.material-workspaces a:hover { background:var(--material-low); color:var(--ink); }
+.material-workspaces a.active { background:var(--material-container); color:var(--material-on-container); font-weight:600; }
+.material-workspaces .material-portal { margin-left:auto; font-size:12px; }
+.material-main { background:var(--surface); padding:24px 28px 32px; border-radius:28px; max-width:1600px; margin:auto; min-width:0; min-height:calc(100dvh - 215px); }
+.material-workspace-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+.material-workspace-header h1 { font-size:26px; letter-spacing:-.035em; margin-top:3px; }
+.material-workspace-header .workspace-area { color:var(--link); font-size:11px; letter-spacing:.09em; }
+.material-local-nav { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:16px; margin-bottom:22px; border-bottom:1px solid var(--line); }
+.material-local-nav a { border-radius:12px; padding:8px 14px; color:var(--muted); text-decoration:none; }
+.material-local-nav a:hover { background:var(--material-low); }
+.material-local-nav a.active { color:var(--material-on-container); background:var(--material-container); font-weight:600; }
+.material-console :is(.btn,.btn2), .material-theme-preview :is(.btn,.btn2) { border-radius:20px; min-height:42px; }
+.material-console .btn2 { background:var(--material-low); border-color:transparent; }
+.material-console .btn2:hover { background:var(--material-high); }
+.material-console .btn2[aria-pressed=true] { background:var(--material-container); color:var(--material-on-container); border-color:var(--brand); }
+.material-console :is(input,select,textarea):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]) { border-radius:12px; }
+.material-console :is(.card,.builder,.filter-box) { box-shadow:none; border-radius:18px; }
+.material-console .module-workspace { width:100%; min-width:0; }
+.material-console .page-head { margin-bottom:20px; }
+.material-console .queue-list { border-radius:18px; border:1px solid var(--line); overflow:clip; }
+.material-console .queue-list .trow.head { background:var(--material-low); }
+.material-console .queue-page .views button { border-radius:16px; }
+.material-console .ticket-focus-page { display:block; width:100%; max-width:1360px; margin:auto; }
+.material-console .ticket-workspace-head { background:transparent; border:0; padding:0 0 20px; box-shadow:none; border-radius:0; }
+.material-console .ticket-breadcrumb { margin-bottom:12px; }
+.material-console .ticket-workspace-kicker { display:none; }
+.material-console .ticket-workspace-title h1 { font-size:30px; letter-spacing:-.04em; }
+.material-console .ticket-workspace-meta { font-size:12px; }
+.ticket-focus-workspace { display:grid; grid-template-columns:minmax(0,1fr) 240px; align-items:start; gap:28px; }
+.ticket-focus-workspace:not(:has(> .ticket-focus-context)) { grid-template-columns:minmax(0,1fr); }
+.ticket-focus-main { min-width:0; }
+.ticket-focus-main .ticket-section-tabs { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:16px; margin-bottom:22px; border-bottom:1px solid var(--line); }
+.ticket-focus-main .ticket-section-tabs button { border:0; color:var(--muted); background:transparent; border-radius:20px; padding:10px 16px; }
+.ticket-focus-main .ticket-section-tabs button[aria-selected=true] { background:var(--material-container); color:var(--material-on-container); }
+.ticket-focus-tools { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.ticket-focus-main .ticket-message { background:var(--material-low); padding:18px 20px; border:0; border-radius:6px 22px 22px; }
+.ticket-focus-main .ticket-message .lbl { text-transform:none; letter-spacing:normal; color:var(--muted); font-size:12px; }
+.ticket-focus-main .ticket-message-internal { background:var(--note-bg); color:var(--chip-a); border-radius:18px; margin-left:24px; }
+.ticket-focus-main .ticket-message-internal .lbl { color:inherit; }
+.ticket-focus-main .composer { background:var(--material-low); border:0; border-radius:22px; }
+.ticket-focus-main .composer.internal { background:var(--note-bg); }
+.ticket-focus-main .composer textarea { background:var(--surface); }
+.ticket-focus-context { background:var(--material-low); border-radius:22px; padding:20px; min-width:0; position:sticky; top:20px; }
+.ticket-focus-context h2 { font-size:16px; margin:0 0 14px; }
+.ticket-focus-context dl { margin:0; display:grid; gap:4px; }
+.ticket-focus-context dt { font-size:12px; color:var(--muted); }
+.ticket-focus-context dd { margin:0 0 12px; overflow-wrap:anywhere; }
+.ticket-focus-context hr { border:0; border-top:1px solid var(--line); margin:16px 0; }
+.ticket-focus-context .btn2 { text-align:left; justify-content:flex-start; font-size:12px; padding:9px 10px; }
+.material-source { max-width:1600px; margin:12px auto 0; font-size:11px; color:var(--muted); }
+.material-theme-preview { padding:22px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:24px; display:grid; gap:12px; }
+.material-theme-preview .btn { justify-self:start; }
+@media(max-width:1100px) { .material-console { padding-inline:18px; } .material-account > a > span:last-child { display:none; } .material-topbar { gap:16px; } .ticket-focus-workspace { grid-template-columns:minmax(0,1fr) 210px; gap:18px; } .material-main { padding:22px; } }
+@media(max-width:760px) { .material-console { padding:0 8px 12px; } .material-topbar { flex-wrap:wrap; gap:12px; padding:16px 8px; } .material-topbar .console-command-slot { order:3; flex-basis:100%; max-width:none; } .material-brand .brand { font-size:20px; } .material-workspaces { gap:4px; } .material-workspaces a { font-size:12px; padding:10px 12px; } .material-workspaces .material-portal { margin-left:0; } .material-main { padding:18px 14px; border-radius:22px; } .ticket-focus-workspace { grid-template-columns:minmax(0,1fr); } .ticket-focus-context { position:static; } .material-console .ticket-workspace-title h1 { font-size:25px; min-width:0; flex-basis:100%; } .ticket-focus-main .ticket-message-internal { margin-left:0; } .material-local-nav { gap:4px; } .material-local-nav a { padding:8px 10px; } }
+@media(pointer:coarse) { .material-console :is(button,.material-workspaces a,.material-local-nav a) { min-height:44px; } }
