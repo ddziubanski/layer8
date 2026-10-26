@@ -1,6 +1,6 @@
 # Screenshots
 
-From the dev app, 2026-10-25. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-10-26. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 
@@ -30,21 +30,17 @@ From the dev app, 2026-10-25. Regenerate with `backend/.venv/bin/python dev/scre
 
 ![Ticket: conversation, attachments, assignment, requester, devices, status](03-ticket.png)
 
-## Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default
+## Ticket > Tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket
 
-![Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default](03d-ticket-arrange.png)
+![Ticket > Tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket](03f-ticket-vms.png)
 
-## Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket
+## Ticket > Work: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress
 
-![Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket](03f-ticket-vms.png)
+![Ticket > Work: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress](03e-ticket-checklist.png)
 
-## Ticket: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress
+## Ticket > Tools > Directory: the requester's AD account: groups, an onboarding template, add a group, move OU, department and title (checked before it runs)
 
-![Ticket: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress](03e-ticket-checklist.png)
-
-## Ticket: the requester's AD account: groups, an onboarding template, add a group, move OU, department and title (checked before it runs)
-
-![Ticket: the requester's AD account: groups, an onboarding template, add a group, move OU, department and title (checked before it runs)](03b-ticket-ad.png)
+![Ticket > Tools > Directory: the requester's AD account: groups, an onboarding template, add a group, move OU, department and title (checked before it runs)](03b-ticket-ad.png)
 
 ## Onboarding: a new AD account from the ticket, with phone, extension, distribution lists as tick boxes, checked against AD before it's created
 

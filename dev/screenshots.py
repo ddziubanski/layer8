@@ -56,6 +56,22 @@ def click(*texts: str) -> str:
     }} }})()""".format(texts=json.dumps(list(texts)))
 
 
+def in_ticket(section: str, tool: str | None = None, then: str = "") -> str:
+    """Open a ticket section tab (Conversation, Details, Tools, Work, History) and, under Tools, one
+    tool (Devices, Directory...); then run another of these scripts, if given."""
+    return """(async () => {{
+      await new Promise(r => setTimeout(r, 600));
+      [...document.querySelectorAll('[role=tab]')].find(b => b.textContent.trim() === {section})?.click();
+      await new Promise(r => setTimeout(r, 600));
+      const tool = {tool};
+      if (tool) {{
+        [...document.querySelectorAll('[aria-label="Ticket tools"] button')].find(b => b.textContent.trim().endsWith(tool))?.click();
+        await new Promise(r => setTimeout(r, 900));
+      }}
+      {then}
+    }})()""".format(section=json.dumps(section), tool=json.dumps(tool), then=f"await {then};" if then else "")
+
+
 def fill_then_click(values: dict[str, str], *texts: str) -> str:
     """Like click(), after typing into the labelled inputs (React needs the native setter and an input event)."""
     return """(async () => {{
@@ -97,36 +113,23 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         out.append(("03h-person", "admin", f"/people/{person_id}", "A person's page: contact details and manager from AD, direct reports, devices, AD groups and every ticket they've logged"))
     if ticket_id:
         out.append(("03-ticket", "admin", f"/tickets/{ticket_id}", "Ticket: conversation, attachments, assignment, requester, devices, status"))
-        out.append(("03d-ticket-arrange", "admin", f"/tickets/{ticket_id}", "Arrange this page: a widget builder. Search the library, add or remove widgets, place them in a column or a full-width row, and save for yourself or as everyone's default", """(async () => {
-          [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Arrange this page').click();
-          await new Promise(r => setTimeout(r, 700));
-          for (const t of ['Hide Expenses', 'Hide Systems']) document.querySelector(`button[aria-label="${t}"]`)?.click();
-          await new Promise(r => setTimeout(r, 200));
-          const sel = document.querySelector('select[aria-label="Where Attachments goes"]');
-          Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(sel, 'top');
-          sel.dispatchEvent(new Event('change', { bubbles: true }));
-          await new Promise(r => setTimeout(r, 500));
-        })()"""))
     if ticket_id:
-        out.append(("03f-ticket-vms", "admin", f"/tickets/{ticket_id}", "Ticket tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket", """(async () => {
-          [...document.querySelectorAll('button')].find(b => b.textContent.includes('Tools') && b.getAttribute('aria-expanded') === 'false')?.click();
-          await new Promise(r => setTimeout(r, 600));
-          [...document.querySelectorAll('[role=tab]')].find(b => b.textContent.endsWith('Devices'))?.click();
-          await new Promise(r => setTimeout(r, 900));
+        out.append(("03f-ticket-vms", "admin", f"/tickets/{ticket_id}", "Ticket > Tools > Devices: a linked Nutanix VM with its state, and a restart that asks first; each power action is noted on the ticket",
+                    in_ticket("Tools", "Devices", """(async () => {
           [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Restart')?.click();
           await new Promise(r => setTimeout(r, 400));
           document.querySelector('[data-ticket-panel="vms"]')?.scrollIntoView({ block: 'center' });
           await new Promise(r => setTimeout(r, 400));
-        })()"""))
+        })()""")))
     if ad_ticket:
-        out.append(("03e-ticket-checklist", "admin", f"/tickets/{ad_ticket}", "Ticket: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress"))
+        out.append(("03e-ticket-checklist", "admin", f"/tickets/{ad_ticket}", "Ticket > Work: a New starter checklist started for John Smith: each step a child ticket, due from the start date, with progress", in_ticket("Work")))
     if ad_ticket:
-        out.append(("03b-ticket-ad", "admin", f"/tickets/{ad_ticket}", "Ticket: the requester's AD account: groups, an onboarding template, add a group, move OU, department and title (checked before it runs)", click("Change groups or OU")))
+        out.append(("03b-ticket-ad", "admin", f"/tickets/{ad_ticket}", "Ticket > Tools > Directory: the requester's AD account: groups, an onboarding template, add a group, move OU, department and title (checked before it runs)", in_ticket("Tools", "Directory", click("Change groups or OU"))))
     if ad_ticket:
         out.append((
             "03c-ticket-new-account", "admin", f"/tickets/{ad_ticket}",
             "Onboarding: a new AD account from the ticket, with phone, extension, distribution lists as tick boxes, checked against AD before it's created",
-            fill_then_click({"First name": "John", "Last name": "Smith", "Phone number": "+1 555 0100", "Extension": "4321", "Job title": "Network engineer"}, "New account", "All Staff", "Network Alerts", "Check"),
+            in_ticket("Tools", "Directory", fill_then_click({"First name": "John", "Last name": "Smith", "Phone number": "+1 555 0100", "Extension": "4321", "Job title": "Network engineer"}, "New account", "All Staff", "Network Alerts", "Check")),
         ))
     out += [
         ("04-devices", "admin", "/devices", "Devices: AD computers from directory sync and devices added by hand"),
