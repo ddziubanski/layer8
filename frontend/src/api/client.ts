@@ -71,6 +71,8 @@ export type LogSource = S["LogSourceOut"];
 export type Services = S["ServicesOut"];
 export type BackupList = S["BackupListOut"];
 export type Device = S["DeviceOut"];
+export type NetworkTarget = S["NetworkTargetOut"];
+export type TicketNetworkLink = S["TicketNetworkLinkOut"];
 export type Vendor = S["VendorOut"];
 export type ADGroup = S["ADGroupOut"];
 export type ADChange = S["ADChangeIn"];
@@ -414,6 +416,12 @@ export const api = {
     start: (ticketId: number, deviceId?: number) => request<RemoteLaunch>("POST", `/api/tickets/${ticketId}/remote-sessions`, { device_id: deviceId ?? null }),
     list: (ticketId: number) => request<RemoteSession[]>("GET", `/api/tickets/${ticketId}/remote-sessions`),
     close: (id: number) => request<RemoteSession>("POST", `/api/remote-sessions/${id}/close`),
+  },
+  ticketNetwork: {
+    candidates: (ticketId: number, q: string) => request<NetworkTarget[]>("GET", `/api/tickets/${ticketId}/device-candidates${query({ q })}`),
+    list: (ticketId: number) => request<TicketNetworkLink[]>("GET", `/api/tickets/${ticketId}/network-links`),
+    link: (ticketId: number, target: NetworkTarget) => request<TicketNetworkLink[]>("POST", `/api/tickets/${ticketId}/network-links`, { kind: target.kind, source_id: target.source_id, key: target.key }),
+    unlink: (ticketId: number, id: number) => request<TicketNetworkLink[]>("DELETE", `/api/tickets/${ticketId}/network-links/${id}`),
   },
   runners: {
     list: () => request<Runner[]>("GET", "/api/runners"),

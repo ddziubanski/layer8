@@ -10,7 +10,7 @@ from app import lifecycle, permissions, services, sweeps, warranty
 from app.api.tickets import staff_ticket, visible
 from app.auth import Agent, SessionDep
 from app.config import settings
-from app.models import Device, DeviceSource, DeviceWarranty, EventType, Ticket, TicketDevice, User
+from app.models import Device, DeviceSource, DeviceWarranty, EventType, IpAddress, Ticket, TicketDevice, User
 from app.schemas import (
     DeviceWarrantyOut,
     DeviceDetailOut,
@@ -62,7 +62,7 @@ def list_devices(
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
-    """Search by name, host name, OS, description or assigned person."""
+    """Search by name, host name, OS, person, or a linked IP/MAC."""
     stmt = select(Device).outerjoin(User, User.id == Device.assigned_user_id)
     if not include_inactive:
         stmt = stmt.where(Device.is_active)
@@ -71,7 +71,9 @@ def list_devices(
     for word in q.split():
         like = f"%{word}%"
         stmt = stmt.where(
-            or_(Device.name.ilike(like), Device.dns_hostname.ilike(like), Device.os.ilike(like), Device.description.ilike(like), User.display_name.ilike(like))
+            or_(Device.name.ilike(like), Device.dns_hostname.ilike(like), Device.os.ilike(like), Device.description.ilike(like), User.display_name.ilike(like),
+                select(IpAddress.id).where(IpAddress.device_id == Device.id,
+                    or_(func.host(IpAddress.address).ilike(like), IpAddress.mac.ilike(like), IpAddress.hostname.ilike(like))).exists())
         )
     total = session.scalar(select(func.count()).select_from(stmt.subquery()))
     items = session.scalars(stmt.order_by(func.lower(Device.name), Device.id).limit(limit).offset(offset)).all()

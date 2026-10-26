@@ -2443,7 +2443,7 @@ export interface paths {
         };
         /**
          * List Devices
-         * @description Search by name, host name, OS, description or assigned person.
+         * @description Search by name, host name, OS, person, or a linked IP/MAC.
          */
         get: operations["list_devices_api_devices_get"];
         put?: never;
@@ -3046,6 +3046,58 @@ export interface paths {
          */
         post: operations["close_remote_session_api_remote_sessions__session_id__close_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/device-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Candidates */
+        get: operations["candidates_api_tickets__ticket_id__device_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/network-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Links */
+        get: operations["list_links_api_tickets__ticket_id__network_links_get"];
+        put?: never;
+        /** Link */
+        post: operations["link_api_tickets__ticket_id__network_links_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/network-links/{link_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink */
+        delete: operations["unlink_api_tickets__ticket_id__network_links__link_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8737,6 +8789,55 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** NetworkTargetIn */
+        NetworkTargetIn: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "unifi_device" | "unifi_client" | "ip_address";
+            /**
+             * Source Id
+             * @default
+             */
+            source_id: string;
+            /** Key */
+            key: string;
+        };
+        /** NetworkTargetOut */
+        NetworkTargetOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "unifi_device" | "unifi_client" | "ip_address";
+            /**
+             * Source Id
+             * @default
+             */
+            source_id: string;
+            /** Key */
+            key: string;
+            /** Source Label */
+            source_label: string;
+            /** Name */
+            name: string;
+            /** Address */
+            address: string;
+            /** Mac */
+            mac: string;
+            /** Source Name */
+            source_name: string;
+            /** Details */
+            details: string;
+            /** Observed At */
+            observed_at: string | null;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+        };
         /** NewADAccountIn */
         NewADAccountIn: {
             /** Given Name */
@@ -11884,6 +11985,18 @@ export interface components {
             similar: components["schemas"]["SimilarTicketOut"][];
             /** Linked */
             linked: components["schemas"]["KbArticleSummaryOut"][];
+        };
+        /** TicketNetworkLinkOut */
+        TicketNetworkLinkOut: {
+            /** Id */
+            id: number;
+            target: components["schemas"]["NetworkTargetOut"];
+            current: components["schemas"]["NetworkTargetOut"] | null;
+            /**
+             * Linked At
+             * Format: date-time
+             */
+            linked_at: string;
         };
         /** TicketOut */
         TicketOut: {
@@ -19796,6 +19909,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RemoteSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    candidates_api_tickets__ticket_id__device_candidates_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkTargetOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_links_api_tickets__ticket_id__network_links_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketNetworkLinkOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_api_tickets__ticket_id__network_links_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkTargetIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketNetworkLinkOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_api_tickets__ticket_id__network_links__link_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                link_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketNetworkLinkOut"][];
                 };
             };
             /** @description Validation Error */
