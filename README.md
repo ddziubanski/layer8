@@ -31,6 +31,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 ## What it does
 
 **Tickets**
+- Reviewed [ticket templates](docs/ticket-templates.md) fill empty fields in New ticket while preserving requester details, drafts and explicit queue/priority choices. Shared templates are managed under Settings > Helpdesk.
 - Email (Microsoft 365 / Exchange Online through Graph) and a self-service portal feed one queue and one routing engine. Requesters hear back in your words: the acknowledgement, and optional resolved and assigned emails, are editable with a preview.
 - Queues with owners, managers and restricted visibility; priorities from urgency × impact; SLAs that count desk hours, stop while waiting on the user, and show the time left ([docs/desk-hours.md](docs/desk-hours.md#the-sla-clock)).
 - Alerts when nobody takes a ticket: an email to everyone who could, or a post in a Teams channel, and a counter in the console ([docs/desk-hours.md](docs/desk-hours.md#tickets-nobody-has-taken)).

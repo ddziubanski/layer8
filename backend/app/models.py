@@ -1510,6 +1510,29 @@ class ChangeTemplate(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class TicketTemplate(Base):
+    """A ready-made new ticket (Settings > Ticket templates): what a technician would otherwise type
+    each time. It never carries a requester, assignee or credentials; applying one only fills the
+    New ticket form, which is reviewed and created as usual (routing, SLA and emails included)."""
+
+    __tablename__ = "ticket_templates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    subject: Mapped[str] = mapped_column(String(300), default="", server_default="")
+    description: Mapped[str] = mapped_column(Text, default="", server_default="")
+    category: Mapped[str | None] = mapped_column(String(100))
+    priority: Mapped[Priority | None] = mapped_column(str_enum(Priority))
+    # Blank: routing decides, as for any new ticket.
+    queue_id: Mapped[int | None] = mapped_column(ForeignKey("queues.id", ondelete="SET NULL"))
+    # A checklist worth suggesting once the ticket exists (never started automatically).
+    checklist_id: Mapped[int | None] = mapped_column(ForeignKey("checklist_templates.id", ondelete="SET NULL"))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    queue: Mapped["Queue | None"] = relationship()
+
+
 class Change(Base):
     """A planned change to systems (a firmware upgrade, a firewall rule, a patch ring): its risk
     (impact x likelihood), plans (the rollback plan is required), window, approval and outcome."""

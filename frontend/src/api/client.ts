@@ -21,6 +21,7 @@ export type User = S["UserOut"];
 export type Me = S["MeOut"];
 export type QueueListPreference = S["QueueListPreferences"];
 export type Person = S["PersonOut"];
+export type TicketTemplate = S["TicketTemplateOut"];
 export type MerakiObservation = S["MerakiClientOut"];
 export type SignInOptions = S["SignInOptionsOut"];
 export type UserRef = S["UserRef"];
@@ -572,6 +573,12 @@ export const api = {
     forTicket: (ticketId: number) => request<S["TicketTimeOut"]>("GET", `/api/tickets/${ticketId}/time`),
     log: (ticketId: number, body: S["TimeEntryIn"]) => request<S["TimeEntryOut"]>("POST", `/api/tickets/${ticketId}/time`, body),
     remove: (ticketId: number, entryId: number) => request<void>("DELETE", `/api/tickets/${ticketId}/time/${entryId}`),
+  },
+  ticketTemplates: {
+    list: (all = false) => request<TicketTemplate[]>("GET", `/api/ticket-templates${query({ all: all ? "true" : undefined })}`),
+    create: (body: S["TicketTemplateIn"]) => request<TicketTemplate>("POST", "/api/ticket-templates", body),
+    update: (id: number, body: S["TicketTemplateIn"]) => request<TicketTemplate>("PUT", `/api/ticket-templates/${id}`, body),
+    remove: (id: number) => request<void>("DELETE", `/api/ticket-templates/${id}`),
   },
   canned: {
     list: (ticketId?: number) => request<S["CannedReplyOut"][]>("GET", `/api/canned-replies${query({ ticket_id: ticketId })}`),

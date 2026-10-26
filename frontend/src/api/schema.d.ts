@@ -741,6 +741,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ticket-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Templates
+         * @description Active templates for the New ticket form; with all=true (managers), inactive ones too.
+         *     A template for a queue the technician can't see isn't offered to them.
+         */
+        get: operations["list_templates_api_ticket_templates_get"];
+        put?: never;
+        /** Create Template */
+        post: operations["create_template_api_ticket_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ticket-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Template */
+        put: operations["update_template_api_ticket_templates__template_id__put"];
+        post?: never;
+        /** Delete Template */
+        delete: operations["delete_template_api_ticket_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -11762,6 +11802,62 @@ export interface components {
             linked_at: string;
             linked_by: components["schemas"]["UserRef"] | null;
         };
+        /** TicketTemplateIn */
+        TicketTemplateIn: {
+            /** Name */
+            name: string;
+            /**
+             * Subject
+             * @default
+             */
+            subject: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Category */
+            category?: string | null;
+            priority?: components["schemas"]["Priority"] | null;
+            /** Queue Id */
+            queue_id?: number | null;
+            /** Checklist Id */
+            checklist_id?: number | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** TicketTemplateOut */
+        TicketTemplateOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Subject */
+            subject: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string | null;
+            priority: components["schemas"]["Priority"] | null;
+            /** Queue Id */
+            queue_id: number | null;
+            /** Queue Name */
+            queue_name: string | null;
+            /** Checklist Id */
+            checklist_id: number | null;
+            /** Checklist Name */
+            checklist_name: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** TicketTimeOut */
         TicketTimeOut: {
             /** Total Minutes */
@@ -14030,6 +14126,142 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PersonOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_api_ticket_templates_get: {
+        parameters: {
+            query?: {
+                all?: boolean;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketTemplateOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_template_api_ticket_templates_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketTemplateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketTemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_template_api_ticket_templates__template_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketTemplateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketTemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_api_ticket_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

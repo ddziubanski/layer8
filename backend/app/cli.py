@@ -222,6 +222,8 @@ def import_settings(session, answers: dict, base: Path = Path(".")) -> list[str]
     "checklist_templates": [{"name": ..., "kind": "onboarding", "items": [{"title": ..., "details": ..., "queue": "Desk",
         "assignee": "tech@corp.example", "offset_days": -3, "action": "disable_ad_account"}]}] (queues by name, technicians by email),
     "change_templates": [{"name": ..., "pre_approved": true, "implementation_plan": ..., "rollback_plan": ..., "impact": 1, "likelihood": 1}],
+    "ticket_templates": [{"name": ..., "subject": ..., "description": ..., "category": ..., "priority": "high", "queue": "Desk",
+        "checklist": "New starter"}] (queue and checklist by name; no requester or assignee),
     "layouts": {"ticket": {"top": [...], "main": [...], "side": [...], "bottom": [...], "hidden": [...]}} (everyone's default),
     "permissions": {"ticket_delete": {"who": "groups", "groups": ["IT Leads"]}, "kb_publish": {"who": "admins"}} (groups by name;
         they must exist: local, or synced from AD before the import),
@@ -237,7 +239,7 @@ def import_settings(session, answers: dict, base: Path = Path(".")) -> list[str]
     answers = {k: ({n: resolve(v) for n, v in s.items()} if k in configstore.SECTIONS else s) for k, s in answers.items()}
     done = []
     windows = answers.get("windows_sign_in")
-    unknown = set(answers) - set(configstore.SECTIONS) - {"windows_sign_in", "onboarding_templates", "checklist_templates", "change_templates", "layouts", "permissions"}
+    unknown = set(answers) - set(configstore.SECTIONS) - {"windows_sign_in", "onboarding_templates", "checklist_templates", "change_templates", "ticket_templates", "layouts", "permissions"}
     if unknown:
         raise configstore.SettingsError(f"Unknown sections: {', '.join(sorted(unknown))}")
     rules = dict(answers.get("permissions") or {})
@@ -275,6 +277,35 @@ def import_settings(session, answers: dict, base: Path = Path(".")) -> list[str]
             setattr(row, f, v)
         session.add(row)
         done.append(f"change template: {body.name}")
+    for t in answers.get("ticket_templates") or []:
+        from app.models import ChecklistTemplate, Queue, TicketTemplate
+        from app.schemas import TicketTemplateIn
+        from pydantic import ValidationError
+
+        name = str(t.get("name", "")).strip()
+        if not name:
+            raise configstore.SettingsError("ticket_templates: every template needs a name")
+        unknown_keys = set(t) - {"name", "subject", "description", "category", "priority", "queue", "checklist", "is_active"}
+        if unknown_keys:
+            raise configstore.SettingsError(f"ticket_templates: {name}: unknown fields {', '.join(sorted(unknown_keys))} (templates hold no requester or assignee)")
+        queue_id = checklist_id = None
+        if q := str(t.get("queue") or "").strip():
+            queue_id = session.scalar(select(Queue.id).where(func.lower(Queue.name) == q.lower(), Queue.is_active))
+            if queue_id is None:
+                raise configstore.SettingsError(f"ticket_templates: {name}: no queue {q!r}")
+        if c := str(t.get("checklist") or "").strip():
+            checklist_id = session.scalar(select(ChecklistTemplate.id).where(func.lower(ChecklistTemplate.name) == c.lower()))
+            if checklist_id is None:
+                raise configstore.SettingsError(f"ticket_templates: {name}: no checklist {c!r}")
+        try:
+            body = TicketTemplateIn(**{k: v for k, v in t.items() if k not in {"queue", "checklist"}}, queue_id=queue_id, checklist_id=checklist_id)
+        except ValidationError as exc:
+            raise configstore.SettingsError(f"ticket_templates: {name}: invalid template fields") from exc
+        row = session.scalar(select(TicketTemplate).where(func.lower(TicketTemplate.name) == body.name.lower())) or TicketTemplate()
+        for field, value in body.model_dump().items():
+            setattr(row, field, value)
+        session.add(row)
+        done.append(f"ticket template: {name}")
     if rules:
         from app import permissions
         from app.models import Group

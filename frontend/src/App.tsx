@@ -54,6 +54,7 @@ const JunosAdmin = named(() => import("./pages/admin/JunosAdmin"), "JunosAdmin")
 const UnifiAdmin = named(() => import("./pages/admin/UnifiAdmin"), "UnifiAdmin");
 const NutanixAdmin = named(() => import("./pages/admin/NutanixAdmin"), "NutanixAdmin");
 const CannedRepliesAdmin = named(() => import("./pages/admin/CannedRepliesAdmin"), "CannedRepliesAdmin");
+const TicketTemplatesAdmin = named(() => import("./pages/admin/TicketTemplatesAdmin"), "TicketTemplatesAdmin");
 const MerakiAdmin = named(() => import("./pages/admin/MerakiAdmin"), "MerakiAdmin");
 const IpamPage = named(() => import("./pages/ipam/IpamPage"), "IpamPage");
 const DevicesPage = named(() => import("./pages/devices/DevicesPage"), "DevicesPage");
@@ -142,6 +143,7 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
   { path: "rules", label: "Ticket rules", adminOnly: true, permission: "rules_manage", page: (me) => <RulesAdmin me={me} /> },
   { path: "ticket-fields", label: "Ticket fields", adminOnly: true, page: (me) => <TicketFieldsAdmin me={me} /> },
   { path: "canned-replies", label: "Canned replies", page: (me) => <CannedRepliesAdmin me={me} /> },
+  { path: "ticket-templates", label: "Ticket templates", adminOnly: true, permission: "templates_manage", page: (me) => <TicketTemplatesAdmin me={me} /> },
   { path: "users", label: "Users", page: (me) => <UsersAdmin me={me} /> },
   { path: "groups", label: "Groups", page: (me) => <GroupsAdmin me={me} /> },
   { path: "permissions", label: "Permissions", adminOnly: true, page: () => <PermissionsAdmin /> },
@@ -218,7 +220,7 @@ function LabelPreview({ format, first }: { format: string; first: number }) {
 
 // Settings > category > page. A page not listed here shows under "Other" (so a new page is never lost).
 const SETTINGS_GROUPS: { name: string; paths: string[] }[] = [
-  { name: "Helpdesk", paths: ["queues", "rules", "ticket-fields", "canned-replies", "requester-emails", "desk-hours", "surveys", "notices"] },
+  { name: "Helpdesk", paths: ["queues", "rules", "ticket-fields", "canned-replies", "ticket-templates", "requester-emails", "desk-hours", "surveys", "notices"] },
   { name: "Workflows", paths: ["checklists", "onboarding", "changes", "purchasing"] },
   { name: "Monitoring", paths: ["meraki", "unifi", "juniper", "nutanix", "ipam", "sweeps"] },
   { name: "API / Integrations", paths: ["api-keys", "runners", "email", "teams", "action1", "warranty"] },

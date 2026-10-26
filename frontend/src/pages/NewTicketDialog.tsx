@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 
-import { api, type Priority, type TicketSource, type User } from "../api/client";
+import { api, type Priority, type TicketSource, type TicketTemplate, type User } from "../api/client";
 import { UserPicker } from "../components/UserPicker";
 import { PRIORITY_LABEL, SOURCE_LABEL } from "../format";
 
@@ -28,13 +28,34 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
     department_id: "",
   });
 
+  // A template fills the form once reviewed; the requester and anything else stay as chosen.
+  const templates = useQuery({ queryKey: ["ticket-templates"], queryFn: () => api.ticketTemplates.list() });
+  const [chosen, setChosen] = useState<TicketTemplate | null>(null);
+  const [applied, setApplied] = useState<TicketTemplate | null>(null);
+  const [edited, setEdited] = useState<Set<keyof typeof form>>(new Set());
+  function applyTemplate(t: TicketTemplate) {
+    setForm((f) => ({
+      ...f,
+      subject: f.subject || t.subject,
+      description: f.description || t.description,
+      category: f.category || t.category || "",
+      priority: edited.has("priority") ? f.priority : t.priority ?? f.priority,
+      queue_id: edited.has("queue_id") ? f.queue_id : t.queue_id ? String(t.queue_id) : f.queue_id,
+    }));
+    setApplied(t);
+    setChosen(null);
+  }
+
   // Picking someone fills their phone and department from AD (still editable).
   function pickRequester(user: typeof requester) {
     setRequester(user);
     const dept = user?.department ? departments.data?.find((d) => d.label.toLowerCase() === user.department!.toLowerCase()) : undefined;
     setForm((f) => ({ ...f, contact_phone: user?.phone ?? "", department_id: dept ? String(dept.id) : "" }));
   }
-  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => {
+    setEdited(fields => new Set(fields).add(k));
+    setForm(f => ({ ...f, [k]: e.target.value }));
+  };
 
   useEffect(() => {
     first.current?.focus();
@@ -75,6 +96,36 @@ export function NewTicketDialog({ onClose }: { onClose: () => void }) {
     <div className="overlay" onClick={onClose}>
       <form className="dialog" role="dialog" aria-modal="true" aria-labelledby="new-ticket" onSubmit={submit} onClick={(e) => e.stopPropagation()}>
         <h2 id="new-ticket">New ticket</h2>
+        {templates.error && <p className="muted small" role="status">Templates could not be loaded. You can still create a ticket manually.</p>}
+        {(templates.data?.length ?? 0) > 0 && (
+          <div className="stack template-picker" style={{ gap: 8 }}>
+            <label className="field">
+              Start from a template
+              <select value={chosen?.id ?? ""} onChange={(e) => setChosen(templates.data!.find((x) => String(x.id) === e.target.value) ?? null)}>
+                <option value="">None</option>
+                {templates.data!.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+              </select>
+            </label>
+            {chosen && (
+              <div className="card template-preview" role="region" aria-label="Template preview">
+                <dl className="person-facts">
+                  {chosen.subject && <><dt>Subject</dt><dd>{chosen.subject}</dd></>}
+                  {chosen.priority && <><dt>Priority</dt><dd>{PRIORITY_LABEL[chosen.priority]}</dd></>}
+                  <dt>Queue</dt><dd>{chosen.queue_name ?? "Keeps your queue choice or lets routing decide"}</dd>
+                  {chosen.category && <><dt>Category</dt><dd>{chosen.category}</dd></>}
+                  {chosen.description && <><dt>Details</dt><dd className="template-details">{chosen.description}</dd></>}
+                  {chosen.checklist_name && <><dt>Suggested</dt><dd>The {chosen.checklist_name} checklist: start it from the ticket&apos;s Work tab once it exists.</dd></>}
+                </dl>
+                <p className="muted small">Fills empty subject, details and category fields. Keeps your requester, existing text and any queue or priority you selected.</p>
+                <div className="row-gap">
+                  <button className="btn" type="button" onClick={() => applyTemplate(chosen)}>Apply template</button>
+                  <button className="btn2" type="button" onClick={() => setChosen(null)}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {applied && !chosen && <p className="muted small" role="status">Filled from “{applied.name}”. Review and change anything before creating. {applied.checklist_name && `Suggested checklist: ${applied.checklist_name}. Start it from the ticket’s Work tab after creation; it does not start automatically.`}</p>}
+          </div>
+        )}
         <label className="field">
           Subject
           <input ref={first} required maxLength={300} value={form.subject} onChange={set("subject")} />
