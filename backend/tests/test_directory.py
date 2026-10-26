@@ -150,6 +150,13 @@ def test_the_last_admin_is_never_deactivated_by_sync(db, ad, org):
     # One goes; the other is kept as the only admin left, and the run says so.
     active = [u.email for u in (user(db, "jpark@corp.local"), user(db, "dcole@corp.local")) if u.is_active]
     assert len(active) == 1 and any(d["kind"] == "kept" for d in run.details)
+    # Disabling the remaining admin in AD also refuses to deactivate the last active admin.
+    kept_guid = org["park"].guid if active[0] == "jpark@corp.local" else org["cole"].guid
+    kept_user = org["park"] if active[0] == "jpark@corp.local" else org["cole"]
+    ad.users_by_guid[kept_guid] = kept_user
+    ad.put(kept_user, enabled=False)
+    run2 = run_sync(db, ad)
+    assert user(db, active[0]).is_active and any(d["kind"] == "kept" for d in run2.details)
 
 
 def test_links_email_intake_requesters_keeping_their_tickets(client, db, ad, org, agent, service_desk):

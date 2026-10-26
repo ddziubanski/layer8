@@ -157,6 +157,8 @@ def me(user: CurrentUser, session: SessionDep):
 
 @router.post("/password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(body: PasswordChangeIn, user: CurrentUser, request: Request, response: Response, session: SessionDep):
+    if user.portal_only:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password first")
     try:
         auth.authenticate(session, user.email, body.current_password, sla.utcnow())
         auth.set_password(session, user, body.new_password)
@@ -245,14 +247,21 @@ def two_factor_confirm(body: TwoFactorConfirmIn, user: CurrentUser, session: Ses
 
 @router.post("/two-factor/off", status_code=status.HTTP_204_NO_CONTENT)
 def two_factor_off(body: TwoFactorOffIn, user: CurrentUser, request: Request, session: SessionDep):
+    if user.portal_only:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password first")
     if auth.must_set_up_two_factor(user) or (settings.totp_required_admins and user.role == UserRole.admin and user.password_hash is not None):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Two-factor sign-in is required for admins here (Settings > Sign-in)")
+    now = sla.utcnow()
+    before = (user.failed_logins, user.locked_until)
     try:
-        auth.authenticate(session, user.email, body.password, sla.utcnow())
+        auth.authenticate(session, user.email, body.password, now)
     except auth.AuthError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
+    user.failed_logins, user.locked_until = before
     if user.totp_enabled_at is None or not _second_factor(user, body.code):
+        auth._failed(session, user, now)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That code didn't work")
+    user.failed_logins, user.locked_until = 0, None
     clear_two_factor(user)
     log.warning("%s turned off two-factor sign-in", user.email, extra={"source": "auth"})
     session.commit()

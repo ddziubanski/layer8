@@ -39,7 +39,7 @@ LOCKOUT = timedelta(minutes=15)
 # Only write last_seen_at this often, not on every request.
 TOUCH_EVERY = timedelta(minutes=5)
 # All a portal-only (single sign-on) session can reach: the portal and the files on its tickets.
-PORTAL_ONLY_PATHS = re.compile(r"^/api/(auth/|portal/|attachments/|tickets/\d+/(attachments|comments)$|notices/current$|branding)")
+PORTAL_ONLY_PATHS = re.compile(r"^/api/(auth/|portal/|attachments/|tickets/\d+/(attachments|comments)$|notices/current$|branding|kb/(articles(/\d+(/feedback)?)?|files/[0-9a-f-]+)$)")
 
 _hasher = PasswordHasher()
 # Verified against when the email is unknown, so timing doesn't reveal which emails exist.
@@ -349,12 +349,16 @@ CurrentUser = Annotated[User, Depends(current_user)]
 
 
 def require_agent(user: CurrentUser) -> User:
+    if user.portal_only:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
     if user.role not in (UserRole.agent, UserRole.admin):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Agents only")
     return user
 
 
 def require_admin(user: CurrentUser) -> User:
+    if user.portal_only:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
     if user.role != UserRole.admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admins only")
     return user

@@ -455,14 +455,15 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if (STATE / "maintenance").exists():
             raise SystemExit("An earlier update was interrupted. Recover locally before another attempt")
-        updater = Updater(read_request())
         try:
-            updater.prepare()
-            updater.install()
-        except BaseException as exc:
-            message = exc if isinstance(exc, protocol.UpdateError) else protocol.UpdateError("Update step failed; inspect the updater service locally")
-            updater.checks.append({"name": updater.phase, "state": "failed", "detail": str(message)})
-            updater.recover(message)
+            updater = Updater(read_request())
+            try:
+                updater.prepare()
+                updater.install()
+            except BaseException as exc:
+                message = exc if isinstance(exc, protocol.UpdateError) else protocol.UpdateError("Update step failed; inspect the updater service locally")
+                updater.checks.append({"name": updater.phase, "state": "failed", "detail": str(message)})
+                updater.recover(message)
         finally:
             (STATE / "inbox/request.json").unlink(missing_ok=True)
 

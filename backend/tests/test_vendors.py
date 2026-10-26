@@ -30,6 +30,9 @@ def test_vendor_with_contacts(client, agent, admin):
     # Technicians edit; only admins delete.
     assert client.delete(f"/api/vendors/{v['id']}", headers=as_user(agent)).status_code == 403
     assert client.delete(f"/api/vendors/{v['id']}", headers=as_user(admin)).status_code == 204
+    # Unsafe URL schemes in support_portal / website are rejected.
+    assert client.post("/api/vendors", json={**MERAKI, "support_portal": "javascript:alert(1)"}, headers=as_user(agent)).status_code == 422
+    assert client.post("/api/vendors", json={**MERAKI, "website": "data:text/html,hi"}, headers=as_user(agent)).status_code == 422
 
 
 def test_system_with_vendor_devices_addresses_and_tickets(client, db, agent, requester):

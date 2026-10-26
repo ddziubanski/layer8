@@ -107,20 +107,25 @@ def _thread_ticket(session: Session, msg: InboundMessage) -> tuple[Ticket | None
 
 
 def _tagged_or_referenced(session: Session, msg: InboundMessage) -> tuple[Ticket | None, bool]:
-    """Subject tag first, then In-Reply-To/References."""
+    """Subject tag first, then In-Reply-To/References (preserving staff-notice threading)."""
+    refs = msg.in_reply_to
+    sent = (
+        session.execute(
+            select(OutboundEmail.ticket_id, OutboundEmail.is_staff_notice)
+            .where(OutboundEmail.internet_message_id.in_(refs))
+            .limit(1)
+        ).first()
+        if refs
+        else None
+    )
     tagged = find_ticket_id(msg.subject)
     if tagged is not None:
         ticket = session.get(Ticket, tagged)
         if ticket is not None:
-            return ticket, False
-    refs = msg.in_reply_to
+            notice = bool(sent and sent.ticket_id == ticket.id and sent.is_staff_notice)
+            return ticket, notice
     if not refs:
         return None, False
-    sent = session.execute(
-        select(OutboundEmail.ticket_id, OutboundEmail.is_staff_notice)
-        .where(OutboundEmail.internet_message_id.in_(refs))
-        .limit(1)
-    ).first()
     if sent and sent.ticket_id is not None:
         return session.get(Ticket, sent.ticket_id), sent.is_staff_notice
     if sent:
@@ -141,11 +146,11 @@ def _commands_allowed(msg: InboundMessage) -> bool:
     return not settings.email_commands_internal_only or msg.headers.get("x-ms-exchange-organization-authas", "").strip().lower() == "internal"
 
 
-def _may_reply(session: Session, ticket: Ticket, sender: User) -> bool:
+def _may_reply(session: Session, ticket: Ticket, sender: User, *, unspoofed: bool = True) -> bool:
     """Whether a message from sender may join this ticket: its requester, staff who can see its
     queue, or someone the desk has emailed about it (a CC, a manager's notice). Anyone else
     quoting the number starts a ticket of their own."""
-    if sender.id == ticket.requester_id or (sender.role in services.AGENT_ROLES and ticket.queue.can_view(sender)):
+    if sender.id == ticket.requester_id or (unspoofed and sender.role in services.AGENT_ROLES and ticket.queue.can_view(sender)):
         return True
     return session.scalar(
         select(OutboundEmail.id).where(OutboundEmail.ticket_id == ticket.id, func.lower(OutboundEmail.to_address) == sender.email.lower()).limit(1)
@@ -220,23 +225,24 @@ def process_message(session: Session, msg: InboundMessage, cfg: IntakeConfig) ->
     if isinstance(sender, str):
         return reject(sender)
 
+    unspoofed = not settings.email_commands_internal_only or msg.headers.get("x-ms-exchange-organization-authas", "").strip().lower() != "anonymous"
     ticket, staff_reply = _thread_ticket(session, msg)
-    if ticket is not None and not _may_reply(session, ticket, sender):
+    if ticket is not None and not _may_reply(session, ticket, sender, unspoofed=unspoofed):
         ticket, staff_reply = None, False
     comment = None
     is_staff = sender.role in services.AGENT_ROLES
     if ticket is not None and ticket.status != TicketStatus.closed:
         body = strip_quoted(msg.body_text) or "(no message text)"
-        # Staff only if they may see this queue; otherwise (e.g. their own HR ticket) they're the requester.
-        staff = is_staff and ticket.queue.can_view(sender)
-        # A manager answering an escalation notice is talking to staff, not the requester.
-        internal = staff_reply and staff
+        # Staff only if they may see this queue (and Exchange didn't flag the mail as external/anonymous).
+        staff = is_staff and unspoofed and ticket.queue.can_view(sender)
+        # Anyone authorized to answer a staff/escalation notice is talking to staff, not the requester.
+        internal = bool(staff_reply and (staff or sender.id != ticket.requester_id))
         parsed = commands.parse(body) if staff and _commands_allowed(msg) else commands.Parsed(body)
         result = commands.apply(session, ticket, sender, parsed.commands) if parsed.commands else None
         if result is not None and result.internal:
             internal = True
         if parsed.text or not parsed.commands:
-            comment = services.add_comment(session, ticket, sender, body=parsed.text or "(no message text)", is_internal=internal, source=TicketSource.email, as_staff=staff)
+            comment = services.add_comment(session, ticket, sender, body=parsed.text or "(no message text)", is_internal=internal, source=TicketSource.email, as_staff=staff or internal)
         if result is not None:
             _report_commands(session, ticket, sender, msg, result)
     else:

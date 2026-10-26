@@ -81,9 +81,7 @@ if not s.get("username") or not s.get("switches"):
     sys.exit(2)
 ctx = ssl.create_default_context()
 if s.get("ca"):
-    with tempfile.NamedTemporaryFile("w", suffix=".pem", delete=False) as f:
-        f.write(s["ca"])
-    ctx.load_verify_locations(f.name)
+    ctx.load_verify_locations(cadata=s["ca"])
 if not s.get("verify", True):
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE

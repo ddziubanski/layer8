@@ -87,6 +87,7 @@ class Manifest(BaseModel):
 
 class Bundle:
     def __init__(self, data: bytes):
+        self.unpacked = 0
         try:
             self.zip = zipfile.ZipFile(io.BytesIO(data))
             entries = self.zip.infolist()
@@ -100,12 +101,12 @@ class Bundle:
                     raise KaceError("Encrypted archives and entries above 25 MiB are not supported")
                 if entry.filename not in ("manifest.json", "tickets.jsonl") and not re.fullmatch(r"files/[0-9]+/[0-9]+/[0-9]+", entry.filename):
                     raise KaceError("Unexpected archive path; use the KACE export tool")
-            self.manifest = Manifest.model_validate_json(self.zip.read("manifest.json"))
+            self.manifest = Manifest.model_validate_json(self.read("manifest.json"))
             url = urlsplit(self.manifest.appliance)
             if self.manifest.format != FORMAT or url.scheme != "https" or not url.hostname or url.username or url.password or url.query or url.fragment or url.path not in ("", "/"):
                 raise KaceError("Not a supported KACE export manifest")
             self.source = "kace-" + hashlib.sha256((self.manifest.appliance.rstrip("/").lower() + "\0" + self.manifest.organization.strip().casefold()).encode()).hexdigest()[:20]
-            lines = [line for line in self.zip.read("tickets.jsonl").splitlines() if line.strip()]
+            lines = [line for line in self.read("tickets.jsonl", MAX_UNPACKED).splitlines() if line.strip()]
             if len(lines) != self.manifest.tickets:
                 raise KaceError("Ticket count mismatch")
             self.rows = []
@@ -128,14 +129,25 @@ class Bundle:
                     for file in note.files:
                         if file.path != f"files/{row.id}/{note.id}/{file.id}" or file.path not in names:
                             raise KaceError(f"Ticket {row.id}: missing or mismatched attachment")
-                        if hashlib.sha256(self.zip.read(file.path)).hexdigest() != file.sha256:
+                        if hashlib.sha256(self.read(file.path)).hexdigest() != file.sha256:
                             raise KaceError(f"Ticket {row.id}: attachment checksum mismatch")
                 if any(len(key) > 100 or len(value) > 4000 for key, value in row.custom_fields.items()):
                     raise KaceError("Custom field names/values are too long")
+            self.unpacked = 0
         except (zipfile.BadZipFile, zlib.error, KeyError, ValidationError, ValueError, UnicodeError, RuntimeError, NotImplementedError, EOFError) as exc:
             if isinstance(exc, KaceError):
                 raise
             raise KaceError("Invalid KACE export bundle; check format, fields and dates with the export tool") from None
+
+    def read(self, name: str, limit: int = MAX_FILE) -> bytes:
+        with self.zip.open(name) as f:
+            data = f.read(limit + 1)
+        if len(data) > limit:
+            raise KaceError("Encrypted archives and entries above 25 MiB are not supported")
+        self.unpacked += len(data)
+        if self.unpacked > MAX_UNPACKED:
+            raise KaceError("Bundle expands beyond 256 MiB; export a smaller batch")
+        return data
 
 
 def fingerprint(data: bytes, queue_id: int) -> str:
@@ -250,7 +262,7 @@ def run(session, bundle: Bundle, queue_id: int, *, apply: bool = False) -> dict:
                         counts["attachments_existing"] += 1
                         continue
                     if apply:
-                        stored = storage.save(bundle.zip.read(file.path))
+                        stored = storage.save(bundle.read(file.path))
                         saved.append(stored.key)
                         name = re.sub(r"[\x00-\x1f\x7f]", "", PurePosixPath(file.name.replace("\\", "/")).name) or "attachment"
                         attachment = Attachment(ticket_id=ticket.id, comment_id=comment.id, uploaded_by_id=author.id, filename=name, content_type=mimetypes.guess_type(name)[0] or "application/octet-stream", size_bytes=stored.size, sha256=stored.sha256, storage_key=stored.key, scan_status=ScanStatus.skipped, created_at=comment.created_at)

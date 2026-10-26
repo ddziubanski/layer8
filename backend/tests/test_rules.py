@@ -399,3 +399,36 @@ def test_sql_is_refused_while_turned_off(client, admin, monkeypatch):
     monkeypatch.setattr(settings, "sql_enabled", False)
     r = rule(client, admin, trigger="schedule", schedule_minutes=5, mode="sql", select_sql="SELECT id FROM tickets", actions=[{"type": "add_note", "body": "x"}])
     assert r.status_code == 422 and "Settings > General > Allow SQL" in r.json()["detail"]
+
+
+def test_sql_update_without_where_clause_stays_scoped_to_matched_tickets(client, db, admin, requester, desk):
+    a = new_ticket(client, requester, subject="Match me")
+    b = new_ticket(client, requester, subject="Leave me alone")
+    r = rule(
+        client,
+        admin,
+        name="unscoped update",
+        trigger="schedule",
+        schedule_minutes=10,
+        mode="sql",
+        select_sql="SELECT id FROM tickets WHERE subject = 'Match me' -- trailing comment",
+        update_sql="UPDATE tickets SET priority = 'low' -- no WHERE clause",
+    ).json()
+    run = client.post(f"/api/ticket-rules/{r['id']}/run", headers=as_user(admin)).json()
+    assert run["error"] is None and run["changed"] == 1
+    assert ticket(db, a).priority == "low" and ticket(db, b).priority == "medium"
+
+
+def test_delegated_rules_manager_cannot_manage_or_run_sql_rules(client, db, admin, agent, desk):
+    from app.models import AppSetting
+
+    db.add(AppSetting(key="permissions", value={"rules_manage": {"who": "agents"}}))
+    db.commit()
+    # Delegated technician can create builder rules, but not SQL rules.
+    ok = rule(client, agent, name="builder ok", trigger="on_create", actions=[{"type": "set_priority", "value": "low"}])
+    assert ok.status_code == 201
+    denied = rule(client, agent, name="sql denied", trigger="schedule", schedule_minutes=5, mode="sql", select_sql="SELECT id FROM tickets", actions=[{"type": "add_note", "body": "x"}])
+    assert denied.status_code == 403
+    sql_rule = rule(client, admin, name="admin sql", trigger="schedule", schedule_minutes=5, mode="sql", select_sql="SELECT id FROM tickets", actions=[{"type": "add_note", "body": "x"}]).json()
+    assert client.post(f"/api/ticket-rules/{sql_rule['id']}/run", headers=as_user(agent)).status_code == 403
+    assert client.delete(f"/api/ticket-rules/{sql_rule['id']}", headers=as_user(agent)).status_code == 403

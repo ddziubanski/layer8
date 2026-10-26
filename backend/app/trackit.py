@@ -90,19 +90,34 @@ class ImportError_(ValueError):
 # Reading the bundle
 
 
+MAX_FILE = 50 * 1024 * 1024
+MAX_UNPACKED = 512 * 1024 * 1024
+
+
 class Bundle:
     def __init__(self, path: str):
+        self.unpacked = 0
         try:
             self.zip = zipfile.ZipFile(path)
         except (OSError, zipfile.BadZipFile) as exc:
             raise ImportError_(f"Not a Track-It! export bundle: {exc}") from None
         try:
-            self.manifest = json.loads(self.zip.read("manifest.json"))
+            self.manifest = json.loads(self._read("manifest.json"))
         except KeyError:
             raise ImportError_("Not a Track-It! export bundle: no manifest.json") from None
         if self.manifest.get("format") != FORMAT:
             raise ImportError_(f"Not a Track-It! export bundle (format {self.manifest.get('format')!r})")
         self.names = set(self.zip.namelist())
+
+    def _read(self, name: str, limit: int = MAX_FILE) -> bytes:
+        with self.zip.open(name) as f:
+            data = f.read(limit + 1)
+        if len(data) > limit:
+            raise ImportError_(f"Archive entry {name!r} exceeds the size limit")
+        self.unpacked += len(data)
+        if self.unpacked > MAX_UNPACKED:
+            raise ImportError_("Bundle expands beyond the uncompressed size limit")
+        return data
 
     def rows(self, table: str) -> Iterator[dict]:
         name = f"tables/{table}.jsonl"
@@ -110,6 +125,9 @@ class Bundle:
             return
         with self.zip.open(name) as f:
             for line in f:
+                self.unpacked += len(line)
+                if self.unpacked > MAX_UNPACKED:
+                    raise ImportError_("Bundle expands beyond the uncompressed size limit")
                 line = line.strip()
                 if line:
                     row = json.loads(line)
@@ -117,7 +135,7 @@ class Bundle:
 
     def file(self, seq) -> bytes | None:
         name = f"files/{seq}"
-        return self.zip.read(name) if name in self.names else None
+        return self._read(name) if name in self.names else None
 
 
 # Text

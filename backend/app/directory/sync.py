@@ -101,11 +101,16 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
     # unless it's this technician's deliberate AD-down fallback.
     if not user.local_fallback:
         user.password_hash = None
-    if user.is_active and not du.enabled:
-        _note(run, "disabled", user.email, "disabled in the directory; signed out")
-        if user.id:
-            _end_sessions(session, user)
-    user.is_active = du.enabled
+    if not du.enabled and user.id and user.is_active and user.role == UserRole.admin and not session.scalar(
+        select(func.count()).select_from(User).where(User.role == UserRole.admin, User.is_active, User.id != user.id)
+    ):
+        _note(run, "kept", user.email, "disabled in the directory, but the only active admin; kept active")
+    else:
+        if user.is_active and not du.enabled:
+            _note(run, "disabled", user.email, "disabled in the directory; signed out")
+            if user.id:
+                _end_sessions(session, user)
+        user.is_active = du.enabled
     user.last_synced_at = now
     session.flush()
 
@@ -255,7 +260,7 @@ def sync_devices(session: Session, directory: Directory, run: DirectorySyncRun) 
 def full_sync(session: Session, directory: Directory, now: datetime | None = None, *, dry_run: bool = False) -> DirectorySyncRun:
     now = now or sla.utcnow()
     run = DirectorySyncRun(started_at=now, dry_run=dry_run, details=[], users_seen=0, created=0, updated=0, linked=0, deactivated=0, role_changes=0, groups_synced=0, devices_seen=0)
-    savepoint = session.begin_nested() if dry_run else None
+    savepoint = session.begin_nested()
     try:
         seen: set[str] = set()
         managers: list[tuple[User, str | None]] = []
@@ -288,14 +293,20 @@ def full_sync(session: Session, directory: Directory, now: datetime | None = Non
         for group in tracked_groups(session):
             sync_group(session, directory, group, now, run)
         session.flush()
-        apply_roles(session, run)
+        try:
+            apply_roles(session, run)
+        except SyncAborted as exc:
+            run.error = str(exc)
         sync_devices(session, directory, run)
         session.flush()
     except (DirectoryError, SyncAborted) as exc:
         run.error = str(exc)
-    finally:
-        if savepoint is not None:
+        savepoint.rollback()
+    else:
+        if dry_run:
             savepoint.rollback()
+        else:
+            savepoint.commit()
     run.finished_at = sla.utcnow()
     return run
 

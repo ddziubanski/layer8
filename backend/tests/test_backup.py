@@ -28,6 +28,8 @@ def setup(db, tmp_path, monkeypatch, requester):
     (settings.storage_dir / "2026" / "10" / "abc123").write_bytes(b"an attachment")
     settings.secrets_dir.mkdir(parents=True)
     (settings.secrets_dir / "graph_client_secret").write_text("s3cret")
+    (settings.secrets_dir / "graph_client_secret.new").write_text("in-flight")
+    (settings.secrets_dir / "entra-pending-abc").write_text("{}")
     queue = Queue(name="Desk", is_default=True)
     db.add(queue)
     db.flush()
@@ -91,14 +93,15 @@ def test_backup_needs_folder_and_passphrase(db, setup, monkeypatch):
 
 @pytest.fixture
 def scratch_db():
-    url = make_url(TEST_URL).set(database="helpdesk_restore_test")
+    name = f"{make_url(TEST_URL).database or 'helpdesk_test'}_restore"
+    url = make_url(TEST_URL).set(database=name)
     admin = create_engine(make_url(TEST_URL).set(database="postgres"), isolation_level="AUTOCOMMIT")
     with admin.connect() as conn:
-        conn.execute(text("DROP DATABASE IF EXISTS helpdesk_restore_test"))
-        conn.execute(text("CREATE DATABASE helpdesk_restore_test"))
+        conn.execute(text(f"DROP DATABASE IF EXISTS {name}"))
+        conn.execute(text(f"CREATE DATABASE {name}"))
     yield url.render_as_string(hide_password=False)
     with admin.connect() as conn:
-        conn.execute(text("DROP DATABASE IF EXISTS helpdesk_restore_test WITH (FORCE)"))
+        conn.execute(text(f"DROP DATABASE IF EXISTS {name} WITH (FORCE)"))
     admin.dispose()
 
 
