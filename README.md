@@ -4,7 +4,7 @@
 
 Layer 8 is a self-hosted IT service desk that brings tickets, people, devices and technician tools into one workspace. Connect Microsoft Entra ID, Teams and Microsoft 365 Copilot to work from the ticket: see who is available, message the requester, investigate the problem and keep a record of the response. It runs on a single Linux appliance you control, with an offline installer and local accounts for standalone operation. Microsoft 365 and other integrations are optional.
 
-> **Version 1.7.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
+> **Version 1.8.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
 ![The technician's queue](screenshots/02-queue.png)
 
@@ -59,6 +59,7 @@ All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 - Time tracking: log minutes with a note or in a ticket's Time panel; the *Time spent* report adds them up by technician, queue, category or day.
 - A grouped, collapsible technician sidebar and contextual header shared across the console; module pages use consistent headings, toolbars and tables. Settings has searchable setup groups and automatically compacts the main sidebar, restoring it when you leave. Existing branding, module visibility and ticket layouts are preserved ([layout review](docs/application-layout.md)).
 - Related open-ticket suggestions on the Work tab explain shared devices, systems, VMs or meaningful subject matches. Only tickets the technician may see are considered; parent/child linking requires review ([ticket workspace](docs/ticket-workspace.md#related-open-tickets)).
+- One update to everyone affected: from a ticket with linked child tickets, preview and send one message to all their requesters (one email each, a public reply on every ticket), and optionally resolve them all ([ticket workspace](docs/ticket-workspace.md#update-everyone-affected)).
 - A ticket page that puts the conversation first, with Work and History tabs and a drawer of tools (details, devices, directory, scripts, network…); the classic arranged layout is still there ([docs/ticket-workspace.md](docs/ticket-workspace.md)).
 - Act on tickets by replying to email (`#close`, `#assign`, `#priority`).
 - Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
@@ -125,7 +126,6 @@ Every setting can be changed in the app (Settings), and also imported from an an
 
 ## Planned and under review
 
-- **Related-incident updates ([#81](https://github.com/ddziubanski/layer8/issues/81)):** reviewed requester updates across affected tickets. Suggestions and reviewed parent/child links are already available; coordinated messaging is future work.
 
 - **Updates without internet access:** importing a signed update package from a USB stick or file share (online updates from GitHub releases are in 1.2).
 - **Action1 deployment, later slices ([#33](https://github.com/ddziubanski/layer8/issues/33)):** bulk/group targets, scheduled deployments and onboarding software bundles. One reviewed package to one ticket-linked computer is already available (opt-in, Settings > Action1).
