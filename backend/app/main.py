@@ -18,6 +18,7 @@ from app.api import permissions as permissions_api
 from app.api import purchasing as purchasing_api
 from app.api import receiving as receiving_api
 from app.api import remote as remote_api
+from app.api import ticket_network as ticket_network_api
 from app.api import action1_remote as action1_remote_api
 from app.api import runs as runs_api
 from app.api import script_schedules as script_schedules_api
@@ -75,6 +76,7 @@ app.include_router(devices.router)
 app.include_router(scripts_api.router)
 app.include_router(runs_api.router)
 app.include_router(remote_api.router)
+app.include_router(ticket_network_api.router)
 app.include_router(action1_remote_api.router)
 app.include_router(vendors.router)
 app.include_router(ipam.router)

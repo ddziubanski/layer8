@@ -616,6 +616,25 @@ class TicketDevice(Base):
     device: Mapped[Device] = relationship()
 
 
+class TicketNetworkLink(Base):
+    """A ticket device reference to cached equipment/client or an IPAM record.
+
+    Stable source identity plus a historical snapshot: vendor refreshes replace rows,
+    so these references deliberately have no FK to ephemeral network inventory.
+    """
+    __tablename__ = "ticket_network_links"
+    __table_args__ = (UniqueConstraint("ticket_id", "kind", "source_id", "object_key", name="uq_ticket_network_links_target"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(24))
+    source_id: Mapped[str] = mapped_column(String(200))
+    object_key: Mapped[str] = mapped_column(String(200))
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    linked_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    linked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class ScriptKind(enum.StrEnum):
     query = "query"  # read-only SQL: a report or a dynamic group of devices/users
     action = "action"  # acts on devices, through a runner

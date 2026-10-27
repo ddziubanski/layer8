@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, type Ticket } from "../../api/client";
 import { MerakiContext } from "../../components/MerakiContext";
 import { NetworkContext } from "../../components/NetworkContext";
+import { LinkedNetworkDevice } from "../../components/LinkedNetworkDevice";
 
 function DeviceNetwork({ id, name }: { id: number; name: string }) {
   const ips = useQuery({ queryKey: ["device-ips", id], queryFn: () => api.ipam.forDevice(id) });
@@ -23,13 +24,16 @@ function DeviceNetwork({ id, name }: { id: number; name: string }) {
 /** Cached context only: no scan, diagnostic or vendor mutation is launched from this drawer. */
 export function TicketNetworkContext({ ticket, includeComputer, includeDevices }: { ticket: Ticket; includeComputer: boolean; includeDevices: boolean }) {
   const linked = useQuery({ queryKey: ["ticket-devices", ticket.id], queryFn: () => api.devices.forTicket(ticket.id), enabled: includeDevices });
+  const network = useQuery({ queryKey: ["ticket-network-links", ticket.id], queryFn: () => api.ticketNetwork.list(ticket.id), enabled: includeDevices });
   const devices = new Map<number, string>();
   if (includeComputer && ticket.computer) devices.set(ticket.computer.id, ticket.computer.name);
   if (includeDevices) for (const link of linked.data ?? []) devices.set(link.device.id, link.device.name);
   return <div className="stack">
     <div><h3>Network context</h3><p className="muted small">Read-only cached observations, separate from documented IP records. Use Devices to manage links.</p></div>
     {linked.error && <p role="alert" className="error">Could not read linked devices.</p>}
-    {!devices.size && (!includeDevices || !linked.isPending) && <p className="muted">Link a computer or device to see network context.</p>}
+    {!devices.size && (!includeDevices || (!linked.isPending && !network.data?.length)) && <p className="muted">Link a computer or device to see network context.</p>}
     {[...devices].map(([id, name]) => <DeviceNetwork key={id} id={id} name={name} />)}
+    {includeDevices && network.error && <p className="error" role="alert">Could not read linked network devices.</p>}
+    {includeDevices && network.data?.map(link => <section className="card" key={link.id}><LinkedNetworkDevice link={link} /></section>)}
   </div>;
 }

@@ -69,6 +69,14 @@ All the settings can go in an answers file under `unifi` (`python -m app.cli set
 - This was built against Ubiquiti's published API and tested with mocked responses. Check it against your console with **Test connection** and a first **Read now** before relying on it. UniFi Network's API has grown with each release, so some fields (for example a client's switch port) appear only on newer versions.
 - The classic, unofficial controller API (cookie sign-in with an admin password) isn't used.
 
+## Linking a device or IP to a ticket
+
+Use the ticket's **Tools > Devices > Link a device** search for managed assets, UniFi equipment/clients, and IPAM records together. Search a name, IP, MAC, or site; select the matching result to link it. Each entry shows a source pill, such as **Active Directory**, **Manual**, **UniFi**, **IPAM scan**, or **IPAM import**, with the site beside network discoveries. Existing managed devices can also be found by their linked IP/MAC.
+
+All linked entries appear in the same **Devices** list and in the ticket's read-only Network context. Linking a discovered entry does not create a managed asset, modify IPAM, start a scan, or change UniFi. Only technicians with access to the ticket can search, link, or unlink; requesters and portal sessions cannot.
+
+UniFi links use the console/site and device ID (clients use their MAC), not the IP alone. The original identity/IP is saved on the ticket; current cached details are shown alongside it. If a later scan removes an entry, the saved link remains marked unavailable and can still be unlinked. DHCP/IP reuse and identical names on different sites do not silently retarget it. Ticket merges retain these links without duplicating them.
+
 ## Credits
 
 The map of UniFi's APIs (Site Manager, Connector Proxy, Network Integration and the classic API), and their paging and rate-limit behaviour, comes from **"UniFi best practices" by uchkunr**: https://github.com/uchkunr/unifi-best-practices, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Ubiquiti's own documentation is at https://developer.ui.com. Layer 8's code is its own. UniFi and Ubiquiti are trademarks of Ubiquiti Inc.

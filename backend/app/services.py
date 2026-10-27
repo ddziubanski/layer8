@@ -30,6 +30,7 @@ from app.models import (
     Ticket,
     TicketEvent,
     TicketDevice,
+    TicketNetworkLink,
     TicketSource,
     TicketStatus,
     User,
@@ -618,6 +619,13 @@ def merge(session: Session, source: Ticket, target: Ticket, actor: User, reason:
     for link in session.scalars(select(TicketDevice).where(TicketDevice.ticket_id == source.id)):
         if link.device_id not in have:
             session.add(TicketDevice(ticket_id=target.id, device_id=link.device_id, linked_by_id=actor.id))
+    network_have = {(r.kind, r.source_id, r.object_key) for r in session.scalars(select(TicketNetworkLink).where(TicketNetworkLink.ticket_id == target.id))}
+    for link in session.scalars(select(TicketNetworkLink).where(TicketNetworkLink.ticket_id == source.id)):
+        identity = (link.kind, link.source_id, link.object_key)
+        if identity not in network_have:
+            session.add(TicketNetworkLink(ticket_id=target.id, kind=link.kind, source_id=link.source_id, object_key=link.object_key,
+                snapshot=link.snapshot, linked_by_id=link.linked_by_id, linked_at=link.linked_at))
+            network_have.add(identity)
     for child in session.scalars(select(Ticket).where(Ticket.parent_id == source.id)):
         child.parent_id = target.id
     if target.computer_id is None and source.computer_id is not None:
