@@ -2,7 +2,7 @@
   "name": "helpdesk-frontend",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "version": "1.10.4",
+  "version": "1.11.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
