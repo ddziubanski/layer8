@@ -28,6 +28,7 @@ def test_public_branding_without_signing_in(client, db):
         "sign_in_heading": "", "sign_in_layout": "center", "sign_in_card_size": "standard",
         "sign_in_background_fit": "cover", "sign_in_background_position": "center",
         "sign_in_background_overlay": 0, "sign_in_backdrop": "plain",
+        "windows_sign_in_glow": True,
     }
 
 
@@ -84,7 +85,7 @@ def test_brand_visibility_and_alignment_are_optional_admin_settings(client, admi
 
 def test_signin_appearance_is_admin_only_validated_and_importable(client, db, admin, agent):
     from app import cli
-    values = {"sign_in_layout":"right", "sign_in_card_size":"wide", "sign_in_heading":"Welcome to Example IT",
+    values = {"windows_sign_in_glow":False, "sign_in_layout":"right", "sign_in_card_size":"wide", "sign_in_heading":"Welcome to Example IT",
               "sign_in_background_fit":"contain", "sign_in_background_position":"left",
               "sign_in_background_overlay":45, "sign_in_backdrop":"ocean"}
     route="/api/settings/signin_appearance"

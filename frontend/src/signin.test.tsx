@@ -54,14 +54,14 @@ test("on a work PC the portal signs in with Windows by itself", async () => {
 test("when Windows sign-in fails, the form offers it as a button and it isn't retried by itself", async () => {
   const calls = mockApi({ "GET /api/auth/me": SIGNED_OUT, "GET /api/auth/options": WINDOWS, "POST /api/auth/sso": SSO_FAILED });
   const first = mount();
-  expect(await screen.findByRole("button", { name: "Sign in with your Windows account" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Sign in with my Windows account" })).toBeInTheDocument();
   expect(screen.getByLabelText("Password")).toBeInTheDocument();
   // A silent attempt failing isn't an error to show.
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   first.unmount();
 
   mount();
-  await userEvent.click(await screen.findByRole("button", { name: "Sign in with your Windows account" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Sign in with my Windows account" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("didn't offer a Windows sign-in");
   // Once by itself, once from the click.
   expect(calls.filter((c) => c.path === "/api/auth/sso")).toHaveLength(2);
@@ -102,7 +102,7 @@ test("a technician's browser isn't signed in to the portal by itself", async () 
   sessionStorage.clear();
   me = null;
   mount();
-  expect(await screen.findByRole("button", { name: "Sign in with your Windows account" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Sign in with my Windows account" })).toBeInTheDocument();
   expect(calls.some((c) => c.path === "/api/auth/sso")).toBe(false);
 });
 
@@ -130,4 +130,24 @@ test("a technician signed in with Windows gets the portal, and a password sign-i
   await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
   await waitFor(() => expect(screen.getByRole("heading", { name: "Ticket queue" })).toBeInTheDocument());
   expect(window.location.search).toBe("");
+});
+
+test.each([true, false])("manual Windows button below credentials respects branding glow=%s", async glow => {
+  const calls = mockApi({
+    "GET /api/branding": { windows_sign_in_glow: glow },
+    "GET /api/auth/me": SIGNED_OUT,
+    "GET /api/auth/options": { ...WINDOWS, windows_sign_in_silent: false },
+    "POST /api/auth/sso": SSO_FAILED,
+  });
+  mount();
+  const button = await screen.findByRole("button", { name: "Sign in with my Windows account" });
+  expect(button).toHaveClass("windows-sign-in");
+  await waitFor(() => expect(button.classList.contains("windows-sign-in-glow")).toBe(glow));
+  expect(screen.getByRole("button", { name: "Sign in" }).compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(calls.some(c => c.path === "/api/auth/sso")).toBe(false);
+  await userEvent.click(button);
+  expect(await screen.findByRole("alert")).toHaveTextContent("didn't offer a Windows sign-in");
+  expect(screen.getByLabelText("Password")).toHaveValue("");
+  expect(calls.filter(c => c.path === "/api/auth/sso")).toHaveLength(1);
+  expect(calls.some(c => c.path === "/api/auth/login")).toBe(false);
 });

@@ -87,6 +87,8 @@ export function SignInPreview({ brand, values }: { brand: Branding; values: Reco
       <span className="small">Email or username</span><div className="login-preview-field">technician@example.com</div>
       <span className="small">Password</span><div className="login-preview-field">••••••••••••</div>
       <span className="btn login-preview-button">Sign in</span>
+      <span className={`btn2 windows-sign-in${preview.windows_sign_in_glow ? " windows-sign-in-glow" : ""}`} style={{textAlign:"center",boxSizing:"border-box"}}>Sign in with my Windows account</span>
+      <span className="small muted">Windows button appearance; only offered when Windows sign-in is configured.</span>
       {preview.sign_in_message && <p className="muted small">{preview.sign_in_message}</p>}
     </div>
     <p className="small login-source">Appearance preview · sign-in options follow your existing configuration</p>

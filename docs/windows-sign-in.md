@@ -106,3 +106,9 @@ Changing the service account's password invalidates the keytab. Run step 3 again
 A new host name needs a new SPN (step 2), a new keytab (step 3), and a new GPO entry (step 5).
 
 Removing the keytab in Settings turns Windows sign-in off for everyone straight away.
+
+## Main sign-in button appearance
+
+When Windows sign-in is configured, the main login form offers **Sign in with my Windows account** below the username/password sign-in button. It negotiates the current Windows session; it never reads or fills the Windows password. A failed attempt leaves the password form available. Existing silent sign-in, sign-out suppression, portal-only sessions and technician password requirements are unchanged.
+
+In **Settings > Branding > Sign-in appearance**, **Highlight Windows sign-in button** controls its subtle static glow (on by default), with a preview. Turning the glow off keeps the keyboard focus outline. This appearance setting does not enable Windows authentication; complete the keytab and browser trust setup above first.

@@ -1109,3 +1109,9 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .connection-notice p { margin:10px 0; line-height:1.5; }
 
 .library-result { padding:12px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere; }
+
+/* A quiet, static emphasis; keyboard focus stays visible even with the glow off. */
+.login .windows-sign-in { width:100%; }
+.login .windows-sign-in-glow { border-color:var(--brand); box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 18%,transparent),0 0 14px color-mix(in srgb,var(--brand) 20%,transparent); }
+.login .windows-sign-in-glow:hover:not(:disabled) { box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 32%,transparent),0 0 18px color-mix(in srgb,var(--brand) 30%,transparent); }
+.login .windows-sign-in:focus-visible { outline:3px solid var(--link); outline-offset:4px; }

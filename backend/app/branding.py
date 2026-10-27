@@ -100,6 +100,7 @@ def _choice(name: str) -> str:
 def public(session: Session) -> dict:
     return {
         "product_name": settings.product_name,
+        "windows_sign_in_glow": settings.windows_sign_in_glow,
         "hide_product_name": settings.hide_product_name,
         "center_brand_logo": settings.center_brand_logo,
         "sign_in_message": settings.sign_in_message,
