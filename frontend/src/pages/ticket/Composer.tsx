@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { api } from "../../api/client";
 import { useDropFiles } from "../../components/useDropFiles";
 import { fileSize } from "../../format";
+import { useTicketSaveTask } from "./TicketSave";
 
 /** Work notes and replies, with optional files. A note stays internal (technicians and admins)
  * unless it's shown to the requester in the portal, and maybe emailed to them too. */
@@ -21,22 +22,42 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
   const local = useComposerDraft();
   const { body, setBody, files, setFiles, toRequester, setToRequester, email, setEmail, minutes, setMinutes } = draft ?? local;
   const picker = useRef<HTMLInputElement>(null);
-  const drop = useDropFiles((dropped) => setFiles((f) => [...f, ...dropped]));
+  const progress = useRef<{ commentId: number; timeDone: boolean; uploaded: Set<File> } | null>(null);
+  const [partial, setPartial] = useState(false);
+  const locked = useRef(false);
+  const drop = useDropFiles((dropped) => { if (!locked.current) setFiles((f) => [...f, ...dropped]); });
+  function validate() {
+    if (!body.trim()) throw new Error("Write a work note or reply before saving it.");
+    if (minutes && (!Number.isInteger(Number(minutes)) || Number(minutes) < 1 || Number(minutes) > 1440)) throw new Error("Time must be a whole number from 1 to 1,440 minutes.");
+  }
 
   const send = useMutation({
     mutationFn: async () => {
-      const comment = await api.addComment(ticketId, body, !toRequester, toRequester && email);
-      if (Number(minutes) > 0) await api.time.log(ticketId, { minutes: Number(minutes), note: "", comment_id: comment.id });
+      validate();
+      if (!progress.current) {
+        const comment = await api.addComment(ticketId, body, !toRequester, toRequester && email);
+        progress.current = { commentId: comment.id, timeDone: false, uploaded: new Set() };
+        setPartial(true);
+      }
+      const saved = progress.current;
+      if (Number(minutes) > 0 && !saved.timeDone) {
+        await api.time.log(ticketId, { minutes: Number(minutes), note: "", comment_id: saved.commentId });
+        saved.timeDone = true;
+      }
       // Upload one at a time so a failure says which file it was.
       for (const file of files) {
+        if (saved.uploaded.has(file)) continue;
         try {
-          await api.upload(ticketId, file, comment.id);
+          await api.upload(ticketId, file, saved.commentId);
+          saved.uploaded.add(file);
         } catch (e) {
           throw new Error(`Saved, but ${file.name} wasn't attached: ${(e as Error).message}`);
         }
       }
     },
     onSuccess: () => {
+      progress.current = null;
+      setPartial(false);
       setBody("");
       setFiles([]);
       setMinutes("");
@@ -46,7 +67,6 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
     },
     onSettled: onDone,
   });
-
   const action = !toRequester ? "Add internal note" : email ? "Send to requester" : "Post to portal";
   const canned = useQuery({ queryKey: ["canned-replies", ticketId], queryFn: () => api.canned.list(ticketId) });
   const insert = useMutation({
@@ -57,6 +77,11 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
     },
   });
 
+  const savingTicket = useTicketSaveTask("composer", { dirty: !!(body.trim() || files.length || minutes), busy: send.isPending || insert.isPending,
+    label: partial ? "Remaining time/attachments (note already saved)" : !toRequester ? "Internal note" : email ? "Email requester" : "Portal reply",
+    error: send.error?.message, order: 100, validate, save: () => send.mutateAsync() });
+  const frozen = savingTicket || send.isPending || insert.isPending || partial;
+  locked.current = frozen;
   return (
     <div data-unsaved-work={!!(body || files.length || minutes)} className={`card composer${toRequester ? "" : " internal"}${drop.dragging ? " dropping" : ""}`} {...drop.props}>
       <label className="lbl" htmlFor="composer">
@@ -67,14 +92,15 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
         rows={4}
         placeholder={toRequester ? "Write a reply to the requester." : "Write a work note. Only technicians and admins see it."}
         value={body}
+        disabled={frozen}
         onChange={(e) => setBody(e.target.value)}
       />
       <div className="row-gap" style={{ marginTop: 8 }}>
         <label className="inline small">
-          <input type="checkbox" checked={toRequester} onChange={(e) => setToRequester(e.target.checked)} /> Show to the requester in the portal
+          <input type="checkbox" checked={toRequester} disabled={frozen} onChange={(e) => setToRequester(e.target.checked)} /> Show to the requester in the portal
         </label>
         <label className="inline small">
-          <input type="checkbox" checked={toRequester && email} disabled={!toRequester} onChange={(e) => setEmail(e.target.checked)} /> Email it to them too
+          <input type="checkbox" checked={toRequester && email} disabled={!toRequester || frozen} onChange={(e) => setEmail(e.target.checked)} /> Email it to them too
         </label>
         <span className="muted small">{toRequester ? "" : "Internal: technicians and admins only."}</span>
       </div>
@@ -83,7 +109,7 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
           {files.map((f, i) => (
             <li key={`${f.name}-${i}`} className="chip n">
               {f.name} {fileSize(f.size)}{" "}
-              <button type="button" className="linkish" aria-label={`Remove ${f.name}`} onClick={() => setFiles(files.filter((_, j) => j !== i))}>
+              <button type="button" className="linkish" disabled={savingTicket || send.isPending || !!progress.current?.uploaded.has(f)} aria-label={`Remove ${f.name}`} onClick={() => setFiles(files.filter((_, j) => j !== i))}>
                 ×
               </button>
             </li>
@@ -97,11 +123,13 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
           {send.error.message}
         </p>
       )}
+      {partial && !send.isPending && <p className="small muted">The note/reply is already saved. Retry will save remaining time and attachments without posting it again.</p>}
       <div className="row-gap" style={{ marginTop: 10 }}>
         <input
           ref={picker}
           type="file"
           multiple
+          disabled={frozen}
           hidden
           data-testid="file-input"
           onChange={(e) => {
@@ -109,12 +137,12 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
             e.target.value = "";
           }}
         />
-        <button className="btn2" type="button" onClick={() => picker.current?.click()}>
+        <button className="btn2" type="button" disabled={frozen} onClick={() => picker.current?.click()}>
           Attach file
         </button>
         <span className="muted small">or drag files here</span>
         {!!canned.data?.length && (
-          <select aria-label="Insert a canned reply" value="" disabled={insert.isPending} onChange={(e) => e.target.value && insert.mutate(Number(e.target.value))} style={{ width: "auto" }}>
+          <select aria-label="Insert a canned reply" value="" disabled={insert.isPending || frozen} onChange={(e) => e.target.value && insert.mutate(Number(e.target.value))} style={{ width: "auto" }}>
             <option value="">Canned reply…</option>
             {canned.data.map((r) => (
               <option key={r.id} value={r.id}>{r.personal ? r.title : `${r.title} (shared)`}</option>
@@ -124,10 +152,10 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
         <span className="spacer" />
         <label className="inline small">
           Time (min)
-          <input type="number" min={1} max={1440} value={minutes} onChange={(e) => setMinutes(e.target.value)} style={{ width: 72 }} aria-label="Time spent, minutes" />
+          <input type="number" min={1} max={1440} value={minutes} disabled={frozen} onChange={(e) => setMinutes(e.target.value)} style={{ width: 72 }} aria-label="Time spent, minutes" />
         </label>
-        <button className={toRequester ? "btn" : "btn2"} type="button" disabled={!body.trim() || send.isPending} onClick={() => send.mutate()}>
-          {action}
+        <button className={toRequester ? "btn" : "btn2"} type="button" disabled={!body.trim() || send.isPending || savingTicket} onClick={() => send.mutate()}>
+          {partial ? "Retry remaining items" : action}
         </button>
       </div>
     </div>

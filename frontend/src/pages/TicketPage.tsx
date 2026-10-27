@@ -23,6 +23,8 @@ import { SOURCE_LABEL, when } from "../format";
 import { TicketToolsWorkspace, type TicketTool } from "./ticket/TicketToolsWorkspace";
 import { TicketNetworkContext } from "./ticket/TicketNetworkContext";
 import { Composer, useComposerDraft } from "./ticket/Composer";
+import { TicketSaveButton, TicketSaveProvider } from "./ticket/TicketSave";
+import { TicketDetailsEditor } from "./ticket/TicketDetailsEditor";
 import { describe, type Names } from "./ticket/history";
 import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
@@ -57,7 +59,7 @@ const USUAL_LAYOUT = {
 
 export function TicketPage({ me }: { me: Me }) {
   const id = Number(useParams().ticketId);
-  return <TicketView key={`${me.id}:${id}`} me={me} id={id} />;
+  return <TicketSaveProvider key={`${me.id}:${id}`}><TicketView me={me} id={id} /></TicketSaveProvider>;
 }
 
 function TicketView({ me, id }: { me: Me; id: number }) {
@@ -212,7 +214,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           knowledge: { label: "Library", node: <div className="stack"><KnowledgeCard ticket={t} /><SharePointLibrary ticketId={t.id} /></div> },
           copilot: { label: "Copilot", node: uses(signedIn.data ?? {}, "copilot") ? <CopilotCard ticket={t} onChanged={refresh} /> : null },
           guest_wifi: { label: "Guest Wi-Fi", node: uses(signedIn.data ?? {}, "unifi_vouchers") && can(signedIn.data ?? me, "unifi_vouchers") ? <GuestWifiCard ticket={t} onChanged={refresh} /> : null },
-          status: { label: "Status", node: <StatusCard ticket={t} onChanged={refresh} /> },
+          status: { label: "Status", node: <><TicketDetailsEditor ticket={t} onChanged={refresh} /><StatusCard ticket={t} onChanged={refresh} /></> },
           actions: { label: "Actions", node: <ActionsCard ticket={t} onChanged={refresh} /> },
           network: { label: "Network context", node: (!hidden.has("computer") || !hidden.has("devices")) ? <TicketNetworkContext ticket={t} includeComputer={!hidden.has("computer")} includeDevices={!hidden.has("devices")} /> : null },
   };
@@ -238,13 +240,14 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <SourceChip source={t.source} />
           <StatusChip status={t.status} />
           <SlaChip ticket={t} long />
-
+          <TicketSaveButton />
         </div>
         <div className="ticket-workspace-meta">
           <span>Requested by <strong><PersonLink id={t.requester.id} name={t.requester.display_name} /></strong></span>
           <span>Queue <strong>{t.queue.name}</strong></span>
           <span>Assigned to <strong>{t.assignee?.display_name ?? "Unassigned"}</strong></span>
           <span>Created {when(t.created_at)}</span>
+          <button className="linkish small" type="button" onClick={() => openTool("details")}>Edit ticket details</button>
         </div>
       </div>
 

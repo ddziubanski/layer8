@@ -9,6 +9,7 @@ import { UserPicker } from "../../components/UserPicker";
 import { PRIORITY_LABEL, STATUS_LABEL } from "../../format";
 import { can } from "../../permissions";
 import { ME_KEY } from "../../queryClient";
+import { useTicketSaveTask } from "./TicketSave";
 
 const STATUSES = Object.keys(STATUS_LABEL) as TicketStatus[];
 const PRIORITIES = Object.keys(PRIORITY_LABEL) as Priority[];
@@ -29,6 +30,9 @@ export function AssignmentCard({ ticket, onChanged }: Props) {
   // Picking another queue asks for an optional reason before moving.
   const [moveTo, setMoveTo] = useState<number | null>(null);
   const [reason, setReason] = useState("");
+  const savingTicket = useTicketSaveTask("assignment", { dirty: moveTo !== null, busy: assign.isPending, label: "Queue move", error: assign.error?.message, order: 10,
+    validate: () => { if (reason.length > 2000) throw new Error("Queue move reason must be 2,000 characters or fewer."); },
+    save: () => assign.mutateAsync({ queue_id: moveTo, unassign: false, note: reason || null }) });
 
   // The current assignee may no longer be an owner; still show who it is.
   const people = assignable.data ?? [];
@@ -36,7 +40,7 @@ export function AssignmentCard({ ticket, onChanged }: Props) {
   const options = assignee && !people.some((p) => p.id === assignee.id) ? [assignee, ...people] : people;
 
   return (
-    <div className="card">
+    <fieldset className="card" disabled={savingTicket} data-unsaved-work={moveTo !== null} style={{ minWidth: 0, margin: 0 }}>
       <div className="lbl">Assignment</div>
       <label className="field">
         Queue
@@ -110,7 +114,7 @@ export function AssignmentCard({ ticket, onChanged }: Props) {
       <div style={{ marginTop: 10 }}>
         <SlaChip ticket={ticket} long />
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -139,9 +143,16 @@ export function RequesterCard({ ticket, onChanged }: Props) {
   const dept = ticket.department;
   const deptChoices = dept && !deptOptions.some((d) => d.id === dept.id) ? [dept, ...deptOptions] : deptOptions;
   const error = change.error ?? update.error;
+  const savingTicket = useTicketSaveTask("requester", { dirty: (phone !== null && phone !== (ticket.contact_phone ?? "")) || (mode === "email" && !!(email || name)),
+    busy: change.isPending || update.isPending, label: "Requester/contact", error: error?.message, order: 20,
+    validate: () => { if (mode === "email" && (email || name) && !/^[^\s@]+@[^\s@]+$/.test(email)) throw new Error("Enter the requester's email address."); },
+    save: async () => {
+      if (mode === "email" && (email || name)) await change.mutateAsync({ email, display_name: name || null });
+      if (phone !== null && phone !== (ticket.contact_phone ?? "")) await update.mutateAsync({ contact_phone: phone });
+    } });
 
   return (
-    <div className="card">
+    <fieldset className="card" disabled={savingTicket} data-unsaved-work={(phone !== null && phone !== (ticket.contact_phone ?? "")) || (mode === "email" && !!(email || name))} style={{ minWidth: 0, margin: 0 }}>
       <div className="lbl">Requester and contact</div>
       <div>{ticket.requester.display_name}</div>
       <div className="muted small">{ticket.requester.email}</div>
@@ -243,7 +254,7 @@ export function RequesterCard({ ticket, onChanged }: Props) {
           {error.message}
         </p>
       )}
-    </div>
+    </fieldset>
   );
 }
 
@@ -263,6 +274,11 @@ export function StatusCard({ ticket, onChanged }: Props) {
   });
   const isClosed = CLOSED.includes(ticket.status);
   const asks = (resolutions.data?.length ?? 0) + (reasons.data?.length ?? 0) > 0;
+  const savingTicket = useTicketSaveTask("status", { dirty: closing !== null, busy: update.isPending, label: "Resolution/status", error: update.error?.message, order: 30,
+    validate: () => {
+      if ((resolutions.data?.length ?? 0) > 0 && !resolution) throw new Error("Choose a resolution type before saving.");
+      if ((reasons.data?.length ?? 0) > 0 && !reason) throw new Error("Choose a closure reason before saving.");
+    }, save: () => update.mutateAsync({ status: closing, resolution_type_id: resolution ? Number(resolution) : null, closure_reason_id: reason ? Number(reason) : null }) });
 
   function setStatus(status: TicketStatus) {
     if (CLOSED.includes(status) && !isClosed && asks) {
@@ -275,7 +291,7 @@ export function StatusCard({ ticket, onChanged }: Props) {
   }
 
   return (
-    <div className="card">
+    <fieldset className="card" disabled={savingTicket} data-unsaved-work={closing !== null} style={{ minWidth: 0, margin: 0 }}>
       <div className="lbl">Status</div>
       <div className="stack" style={{ gap: 8 }}>
         <label className="field">
@@ -370,7 +386,7 @@ export function StatusCard({ ticket, onChanged }: Props) {
           {update.error.message}
         </p>
       )}
-    </div>
+    </fieldset>
   );
 }
 
