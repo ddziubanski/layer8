@@ -105,6 +105,8 @@ function TicketView({ me, id }: { me: Me; id: number }) {
   }
   if (!ticket.data) return null;
   const t = ticket.data;
+  const cancellation = (events.data ?? []).filter(event => event.data.canceled === true).slice(-1)[0];
+  const canceled = t.status === "closed" && !!cancellation && !(events.data ?? []).some(event => event.type === "status_changed" && event.id > cancellation.id);
 
   const names: Names = {
     queue: (qid) => queues.data?.find((q) => q.id === qid)?.name ?? `queue ${qid}`,
@@ -239,7 +241,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <h1 className="spacer">{t.subject}</h1>
           <PriorityChip priority={t.priority} />
           <SourceChip source={t.source} />
-          <StatusChip status={t.status} />
+          {canceled ? <span className="chip n">Canceled</span> : <StatusChip status={t.status} />}
           <SlaChip ticket={t} long />
         </div>
         <div className="ticket-workspace-meta">

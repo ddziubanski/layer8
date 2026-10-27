@@ -68,9 +68,13 @@ installer/CLI settings import:
 
 ## Daily ticket actions
 
-The ticket header keeps **Save ticket**, **Edit ticket**, **Assign ticket** and **Close ticket** together on every ticket section. Assign opens a dialog over the conversation, with the same queue ownership and assignee rules as Details. Close opens the configured resolution/closure choices and can also resolve the ticket; closed/resolved tickets offer Reopen. These actions use the existing APIs and audit rules. Assignment and closing change only their own fields: pending notes/edits stay unsaved, and Close offers Save first when needed.
+The sticky ticket toolbar keeps **Save ticket**, **Edit ticket**, **Assign ticket**, **Close ticket** and **Cancel ticket** together on every ticket section. Assign opens a dialog over the conversation, with the same queue ownership and assignee rules as Details. Close opens the configured resolution/closure choices and can also resolve the ticket; closed/resolved tickets offer Reopen. Assignment and closing change only their own fields: pending notes/edits stay unsaved, and Close offers Save first when needed.
 
-**Cancel edits** appears for pending changes. After confirmation, it discards unsaved details, queue moves, contact edits, resolution fields and the draft note/reply. It does not undo already saved changes, delete posted notes, or introduce a new ticket status. Cancel inside an action dialog simply closes that dialog.
+**Cancel ticket** requires a cancellation reason and any configured closure fields. It closes the ticket using the existing lifecycle, retaining its notes, attachments and history, with a distinct cancellation event and internal note. The header displays **Canceled** while this is the current closing outcome. No satisfaction survey is created; ordinary close/resolve behavior is unchanged. Cancellation uses the same staff/queue access and open-child-ticket guard as closing. It never deletes the ticket or silently saves a pending reply. Reopen remains available.
+
+API: `POST /api/tickets/{id}/cancel` with `reason` and optional `resolution_type_id` / `closure_reason_id`. The complete cancellation is committed in one transaction; repeated cancellation of an already closed/resolved/merged ticket is refused. A canceled ticket remains `closed` in the existing status/filter API, with the cancellation outcome in its event history.
+
+**More > Discard unsaved edits** is separate: after confirmation, it discards pending details, queue moves, contact edits, resolution fields and the draft note/reply without changing saved ticket data. Cancel/Keep ticket open inside an action dialog simply closes that dialog.
 
 **More > Delete ticket** appears only with the **Delete tickets** permission. From the queue, select tickets and choose **Delete selected**; the permission is independent of bulk move/reassignment. Admins have it by default; admins can grant it to technicians or groups under Settings > Permissions. Every deletion still checks that permission and queue visibility on the server.
 

@@ -14,6 +14,7 @@ from app.models import (
     Attachment,
     Comment,
     Device,
+    EventType,
     FieldList,
     FieldOption,
     Group,
@@ -35,6 +36,7 @@ from app.models import (
 )
 from app.schemas import (
     AssignIn,
+    CancelTicketIn,
     UnacceptedOut,
     BulkAssignIn,
     BulkResultOut,
@@ -424,6 +426,25 @@ def update_ticket(ticket_id: int, body: TicketUpdate, user: Agent, session: Sess
     if changes.get("parent_id") is not None:
         staff_ticket(session, changes["parent_id"], user)  # only into a ticket you can see
     services.update_ticket(session, ticket, user, changes)
+    session.commit()
+    return ticket
+
+
+@router.post("/{ticket_id}/cancel", response_model=TicketOut)
+def cancel_ticket(ticket_id: int, body: CancelTicketIn, user: Agent, session: SessionDep):
+    """Cancel, retaining the record. Normal closing requirements/child guards still apply."""
+    ticket = staff_ticket(session, ticket_id, user)
+    session.scalar(select(Ticket).where(Ticket.id == ticket.id).with_for_update().execution_options(populate_existing=True))
+    session.expire(ticket, ["queue"])
+    staff_ticket(session, ticket.id, user)
+    if ticket.status in sla.CLOSED_STATUSES or ticket.merged_into_id is not None:
+        raise HTTPException(409, "Ticket is already closed, resolved or merged; reopen it before canceling")
+    changes = body.model_dump(exclude_unset=True, exclude={"reason"})
+    services.update_ticket(session, ticket, user, {**changes, "status": TicketStatus.closed}, send_survey=False)
+    services.add_comment(session, ticket, user, body=f"Canceled ticket: {body.reason}", is_internal=True, email_requester=False, source=TicketSource.agent, as_staff=True)
+    if ticket.status != TicketStatus.closed:
+        raise HTTPException(409, "Ticket rules prevented cancellation; review the ticket rules")
+    services._event(session, ticket, EventType.updated, user, canceled=True, cancellation_reason=body.reason)
     session.commit()
     return ticket
 

@@ -295,7 +295,7 @@ def _set_priority(session: Session, ticket: Ticket, priority: Priority) -> None:
     sla.apply_policy(ticket, _policy_for(session, priority), ticket.created_at)
 
 
-def _set_status(session: Session, ticket: Ticket, status: TicketStatus, actor: User | None) -> None:
+def _set_status(session: Session, ticket: Ticket, status: TicketStatus, actor: User | None, *, send_survey: bool = True) -> None:
     old = ticket.status
     if old == status:
         return
@@ -319,7 +319,7 @@ def _set_status(session: Session, ticket: Ticket, status: TicketStatus, actor: U
     _event(session, ticket, EventType.status_changed, actor, before=old, after=status)
     if status == TicketStatus.resolved and old not in sla.CLOSED_STATUSES:
         outbox.ticket_resolved(session, ticket, actor)
-    if status in sla.CLOSED_STATUSES and old not in sla.CLOSED_STATUSES:
+    if send_survey and status in sla.CLOSED_STATUSES and old not in sla.CLOSED_STATUSES:
         from app import surveys
 
         # One survey per ticket at most: a reopened ticket solved again isn't asked about twice.
@@ -422,7 +422,7 @@ def set_parent(session: Session, ticket: Ticket, actor: User, parent_id: int | N
         _event(session, parent, EventType.child_changed, actor, child=ticket.id, subject=ticket.subject, action="added")
 
 
-def update_ticket(session: Session, ticket: Ticket, actor: User, changes: dict) -> Ticket:
+def update_ticket(session: Session, ticket: Ticket, actor: User, changes: dict, *, send_survey: bool = True) -> Ticket:
     """Apply agent edits. `changes` holds only the fields the caller sent. Resolving or closing
     needs the fields Settings > Ticket fields makes required (they can come in the same edit)."""
     _set_tracked_fields(session, ticket, actor, changes)
@@ -438,7 +438,7 @@ def update_ticket(session: Session, ticket: Ticket, actor: User, changes: dict) 
                 fields.check_closing(session, ticket)
             except fields.FieldError as exc:
                 raise ServiceError(str(exc)) from None
-        _set_status(session, ticket, status, actor)
+        _set_status(session, ticket, status, actor, send_survey=send_survey)
 
     assessed = {f: changes.pop(f) for f in ("urgency", "impact") if f in changes}
     if assessed:

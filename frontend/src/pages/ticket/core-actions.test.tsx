@@ -53,12 +53,31 @@ test("cancel edits clears unsaved details and notes without server writes",async
  const note=await screen.findByLabelText("Work notes and replies");await userEvent.type(note,"Discard me");
  await userEvent.click(screen.getByRole("button",{name:"Edit ticket"}));
  const subject=await screen.findByLabelText("Subject");await userEvent.type(subject," revised");
- await userEvent.click(screen.getByRole("button",{name:"Cancel edits"}));
+ await userEvent.click(screen.getByText("More"));
+ await userEvent.click(screen.getByRole("button",{name:"Discard unsaved edits"}));
  expect(note).toHaveValue("");expect(subject).toHaveValue("Switch port flapping, 2nd floor");
  expect(calls.filter(c=>["POST","PATCH","DELETE"].includes(c.method))).toHaveLength(0);
 });
 test("canceling discard preserves the draft",async()=>{
  setup();vi.spyOn(window,"confirm").mockReturnValue(false);
  const note=await screen.findByLabelText("Work notes and replies");await userEvent.type(note,"Keep me");
- await userEvent.click(screen.getByRole("button",{name:"Cancel edits"}));expect(note).toHaveValue("Keep me");
+ await userEvent.click(screen.getByText("More"));
+ await userEvent.click(screen.getByRole("button",{name:"Discard unsaved edits"}));expect(note).toHaveValue("Keep me");
+});
+
+test("Cancel ticket requires a reason and retains the ticket instead of deleting it",async()=>{
+ const calls=setup({"POST /api/tickets/4821/cancel":ticket({status:"closed"})});
+ const draft=await screen.findByLabelText("Work notes and replies");await userEvent.type(draft,"Keep my unsent note");
+ await userEvent.click(screen.getByRole("button",{name:"Cancel ticket…"}));
+ const dialog=await screen.findByRole("dialog",{name:"Cancel ticket"});
+ expect(within(dialog).getByRole("button",{name:"Cancel ticket"})).toBeDisabled();
+ await userEvent.type(within(dialog).getByLabelText("Cancellation reason"),"Request withdrawn");
+ await userEvent.selectOptions(await within(dialog).findByLabelText("Resolution type"),"1");
+ await userEvent.selectOptions(within(dialog).getByLabelText("Closure reason"),"2");
+ await userEvent.click(within(dialog).getByRole("button",{name:"Cancel ticket"}));
+ await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
+ expect(calls.find(c=>c.path.endsWith("/cancel")&&c.method==="POST")?.body).toEqual({reason:"Request withdrawn",resolution_type_id:1,closure_reason_id:2});
+ expect(calls.filter(c=>c.method==="DELETE")).toHaveLength(0);
+ expect(draft).toHaveValue("Keep my unsent note");
+ expect(screen.getByRole("button",{name:"Reopen ticket"})).toBeInTheDocument();
 });

@@ -43,6 +43,7 @@ export function describe(e: TicketEvent, names: Names): string {
     case "priority_changed":
       return `Priority ${label(PRIORITY_LABEL, d.before)} → ${label(PRIORITY_LABEL, d.after)}`;
     case "updated":
+      if (d.canceled) return `Canceled ticket: ${d.cancellation_reason}`;
       if (d.teams_delivery_id && d.teams_status === "started") return `Started a Teams message to ${d.recipient} as ${d.sender}`;
       if (d.teams_delivery_id) return d.teams_status === "sent" ? `Sent a Teams message to ${d.recipient} as ${d.sender}` : `Teams delivery ${d.teams_status === "pending" ? "pending confirmation" : "not confirmed; check Teams"}`;
       if (d.copilot === "asked") return d.shared_internal ? "Asked Copilot, including internal notes" : d.shared_ticket ? "Asked Copilot, with this ticket's text" : "Asked Copilot";
