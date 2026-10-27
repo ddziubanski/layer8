@@ -66,6 +66,14 @@ installer/CLI settings import:
 {"theme": {"console_theme": "tidepool", "dark_mode": "off"}}
 ```
 
+## Saving a ticket
+
+**Save ticket** is always visible in the ticket header. **Edit ticket details** opens the Details tab, where subject and description edits wait for Save. The button also saves pending queue moves (including the reason), requester/contact edits, resolution details and the current work note/reply, even after switching tabs. The indicator lists what is pending and makes **Email requester** explicit when that delivery option is selected. With no pending edits, Save is disabled and the indicator confirms the saved state.
+
+The existing immediate-save controls (such as assignee and ordinary status/priority changes) and individual action buttons remain available. Save waits for those operations, validates required fields first, then saves details before posting the note. Internal notes remain internal by default; replies follow the portal/email checkboxes. Script, remote-control, merge, escalation and other tool actions still require their own buttons.
+
+If a save fails, pending drafts stay in place and the error identifies that any earlier steps may already have saved. If the note saved but a later time/attachment step fails, retry resumes those remaining items without posting the note again; a failed attachment can be removed if it is no longer needed. These are existing API operations performed in order, not an all-or-nothing transaction. Server-side permission checks, ticket audit and notification rules are unchanged.
+
 ## Update everyone affected
 
 When several reports are one problem, link them under one ticket as its child tickets (from **Related open tickets**, or **Add a child ticket**). Then, from that ticket's **Child tickets** panel, **Update everyone affected**:
