@@ -72,3 +72,11 @@
 @media(max-width:1100px) { .material-console { padding-inline:18px; } .material-account > a > span:last-child { display:none; } .material-topbar { gap:16px; } .ticket-focus-workspace { grid-template-columns:minmax(0,1fr) 210px; gap:18px; } .material-main { padding:22px; } }
 @media(max-width:760px) { .material-console { padding:0 8px 12px; } .material-topbar { flex-wrap:wrap; gap:12px; padding:16px 8px; } .material-topbar .console-command-slot { order:3; flex-basis:100%; max-width:none; } .material-brand .brand { font-size:20px; } .material-workspaces { gap:4px; } .material-workspaces a { font-size:12px; padding:10px 12px; } .material-workspaces .material-portal { margin-left:0; } .material-main { padding:18px 14px; border-radius:22px; } .ticket-focus-workspace { grid-template-columns:minmax(0,1fr); } .ticket-focus-context { position:static; } .material-console .ticket-workspace-title h1 { font-size:25px; min-width:0; flex-basis:100%; } .ticket-focus-main .ticket-message-internal { margin-left:0; } .material-local-nav { gap:4px; } .material-local-nav a { padding:8px 10px; } }
 @media(pointer:coarse) { .material-console :is(button,.material-workspaces a,.material-local-nav a) { min-height:44px; } }
+/* Core ticket actions stay visible; destructive actions require a separate confirmation. */
+.action-dialog { color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:20px; max-width:min(680px,calc(100vw - 32px)); max-height:85dvh; overflow:auto; }
+.action-dialog::backdrop { background:rgba(0,0,0,.48); }
+.ticket-core-actions { display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; position:sticky; top:0; z-index:5; background:var(--surface); padding:10px 0; margin-bottom:16px; border-bottom:1px solid var(--line); }
+.ticket-focus-workspace { scroll-margin-top:110px; }
+.ticket-actions-more { position:relative; }
+.ticket-actions-more > summary { list-style:none; cursor:pointer; display:flex; align-items:center; }
+.ticket-actions-more[open] > .ticket-actions-menu { position:absolute; top:calc(100% + 4px); right:0; z-index:6; min-width:210px; display:grid; gap:8px; padding:8px; border-radius:16px; background:var(--surface); border:1px solid var(--line); box-shadow:0 5px 18px #0003; }

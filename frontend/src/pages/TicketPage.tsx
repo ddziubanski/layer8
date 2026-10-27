@@ -23,8 +23,9 @@ import { SOURCE_LABEL, when } from "../format";
 import { TicketToolsWorkspace, type TicketTool } from "./ticket/TicketToolsWorkspace";
 import { TicketNetworkContext } from "./ticket/TicketNetworkContext";
 import { Composer, useComposerDraft } from "./ticket/Composer";
-import { TicketSaveButton, TicketSaveProvider } from "./ticket/TicketSave";
+import { TicketSaveProvider } from "./ticket/TicketSave";
 import { TicketDetailsEditor } from "./ticket/TicketDetailsEditor";
+import { TicketCoreActions } from "./ticket/TicketCoreActions";
 import { describe, type Names } from "./ticket/history";
 import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
@@ -104,6 +105,8 @@ function TicketView({ me, id }: { me: Me; id: number }) {
   }
   if (!ticket.data) return null;
   const t = ticket.data;
+  const cancellation = (events.data ?? []).filter(event => event.data.canceled === true).slice(-1)[0];
+  const canceled = t.status === "closed" && !!cancellation && !(events.data ?? []).some(event => event.type === "status_changed" && event.id > cancellation.id);
 
   const names: Names = {
     queue: (qid) => queues.data?.find((q) => q.id === qid)?.name ?? `queue ${qid}`,
@@ -238,18 +241,18 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <h1 className="spacer">{t.subject}</h1>
           <TicketPriorityChip ticket={t} />
           <SourceChip source={t.source} />
-          <StatusChip status={t.status} />
+          {canceled ? <span className="chip n">Canceled</span> : <StatusChip status={t.status} />}
           <SlaChip ticket={t} long />
-          <TicketSaveButton />
         </div>
         <div className="ticket-workspace-meta">
           <span>Requested by <strong><PersonLink id={t.requester.id} name={t.requester.display_name} /></strong></span>
           <span>Queue <strong>{t.queue.name}</strong></span>
           <span>Assigned to <strong>{t.assignee?.display_name ?? "Unassigned"}</strong></span>
           <span>Created {when(t.created_at)}</span>
-          <button className="linkish small" type="button" onClick={() => openTool("details")}>Edit ticket details</button>
         </div>
       </div>
+
+      <TicketCoreActions ticket={t} me={activeMe} onEdit={()=>{openTool("details");document.querySelector(".ticket-focus-workspace")?.scrollIntoView?.({block:"start"});}} onChanged={refresh}/>
 
       <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
         context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><TicketPriorityChip ticket={t} /></dd>{t.computer && <><dt>Computer</dt><dd><Link to={`/devices/${t.computer.id}`}>{t.computer.name}</Link></dd></>}</dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />

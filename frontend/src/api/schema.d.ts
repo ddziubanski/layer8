@@ -726,6 +726,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Ticket
+         * @description Cancel, retaining the record. Normal closing requirements/child guards still apply.
+         */
+        post: operations["cancel_ticket_api_tickets__ticket_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/assign": {
         parameters: {
             query?: never;
@@ -6274,6 +6294,15 @@ export interface components {
             code?: string | null;
             /** Error */
             error?: string | null;
+        };
+        /** CancelTicketIn */
+        CancelTicketIn: {
+            /** Reason */
+            reason: string;
+            /** Resolution Type Id */
+            resolution_type_id?: number | null;
+            /** Closure Reason Id */
+            closure_reason_id?: number | null;
         };
         /** CannedReplyIn */
         CannedReplyIn: {
@@ -14483,6 +14512,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildTicketOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_ticket_api_tickets__ticket_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelTicketIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
                 };
             };
             /** @description Validation Error */

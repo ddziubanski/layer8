@@ -953,6 +953,13 @@ class TicketUpdate(BaseModel):
     parent_id: int | None = None
 
 
+class CancelTicketIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+    resolution_type_id: int | None = None
+    closure_reason_id: int | None = None
+
+
 class AssignIn(BaseModel):
     queue_id: int | None = None
     assignee_id: int | None = None

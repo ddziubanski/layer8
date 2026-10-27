@@ -305,6 +305,7 @@ export const api = {
     send: (id: number, body: S["BroadcastIn"]) => request<S["BroadcastOut"]>("POST", `/api/tickets/${id}/broadcast`, body),
   },
   updateTicket: (id: number, body: TicketUpdate) => request<Ticket>("PATCH", `/api/tickets/${id}`, body),
+  cancelTicket: (id: number, body: S["CancelTicketIn"]) => request<Ticket>("POST", `/api/tickets/${id}/cancel`, body),
   assign: (id: number, body: AssignIn) => request<Ticket>("POST", `/api/tickets/${id}/assign`, body),
   escalate: (id: number, reason: string) => request<Ticket>("POST", `/api/tickets/${id}/escalate`, { reason }),
 

@@ -14,7 +14,8 @@ export function TicketDetailsEditor({ ticket, onChanged }: { ticket: Ticket; onC
   }), onSuccess: saved => { client.setQueryData(["ticket", ticket.id], saved); setSubject(null); setDescription(null); }, onSettled: onChanged });
   const dirty = (subject !== null && subject !== ticket.subject) || (description !== null && description !== ticket.description);
   const busy = useTicketSaveTask("details", { dirty, busy: update.isPending, label: "Ticket details", error: update.error?.message,
-    validate: () => { if (!(subject ?? ticket.subject).trim()) throw new Error("Enter a ticket subject."); }, save: () => update.mutateAsync() });
+    validate: () => { if (!(subject ?? ticket.subject).trim()) throw new Error("Enter a ticket subject."); }, save: () => update.mutateAsync(),
+    discard: () => { setSubject(null); setDescription(null); update.reset(); } });
   return <section className="card stack" aria-label="Ticket details" data-unsaved-work={dirty}>
     <div className="lbl">Ticket details</div>
     <label className="field">Subject<input maxLength={300} value={subject ?? ticket.subject} disabled={busy} onChange={e => setSubject(e.target.value)} /></label>

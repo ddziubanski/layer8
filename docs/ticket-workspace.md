@@ -66,6 +66,20 @@ installer/CLI settings import:
 {"theme": {"console_theme": "tidepool", "dark_mode": "off"}}
 ```
 
+## Daily ticket actions
+
+The sticky ticket toolbar keeps **Save ticket**, **Edit ticket**, **Assign ticket**, **Close ticket** and **Cancel ticket** together on every ticket section. Assign opens a dialog over the conversation, with the same queue ownership and assignee rules as Details. Close opens the configured resolution/closure choices and can also resolve the ticket; closed/resolved tickets offer Reopen. Assignment and closing change only their own fields: pending notes/edits stay unsaved, and Close offers Save first when needed.
+
+**Cancel ticket** requires a cancellation reason and any configured closure fields. It closes the ticket using the existing lifecycle, retaining its notes, attachments and history, with a distinct cancellation event and internal note. The header displays **Canceled** while this is the current closing outcome. No satisfaction survey is created; ordinary close/resolve behavior is unchanged. Cancellation uses the same staff/queue access and open-child-ticket guard as closing. It never deletes the ticket or silently saves a pending reply. Reopen remains available.
+
+API: `POST /api/tickets/{id}/cancel` with `reason` and optional `resolution_type_id` / `closure_reason_id`. The complete cancellation is committed in one transaction; repeated cancellation of an already closed/resolved/merged ticket is refused. A canceled ticket remains `closed` in the existing status/filter API, with the cancellation outcome in its event history.
+
+**More > Discard unsaved edits** is separate: after confirmation, it discards pending details, queue moves, contact edits, resolution fields and the draft note/reply without changing saved ticket data. Cancel/Keep ticket open inside an action dialog simply closes that dialog.
+
+**More > Delete ticket** appears only with the **Delete tickets** permission. From the queue, select tickets and choose **Delete selected**; the permission is independent of bulk move/reassignment. Admins have it by default; admins can grant it to technicians or groups under Settings > Permissions. Every deletion still checks that permission and queue visibility on the server.
+
+The deletion review lists the exact tickets and requires typing **DELETE N**. Deletion is permanent and includes replies, notes, history and files; child tickets remain. Batches are limited to 100, each ticket uses the existing audited delete endpoint, and the result reports failures. Authentication/permission/server/connection failures stop remaining requests. Successfully deleted tickets are removed from selection, while failures remain for review; no automatic retries are made.
+
 ## Saving a ticket
 
 **Save ticket** is always visible in the ticket header. **Edit ticket details** opens the Details tab, where subject and description edits wait for Save. The button also saves pending queue moves (including the reason), requester/contact edits, resolution details and the current work note/reply, even after switching tabs. The indicator lists what is pending and makes **Email requester** explicit when that delivery option is selected. With no pending edits, Save is disabled and the indicator confirms the saved state.
