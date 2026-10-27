@@ -13,6 +13,7 @@ function setup(extra:Record<string,unknown>={}){
  "GET /api/field-options":({path}:Call)=>path.includes("resolution_type")?[{id:1,label:"Fixed"}]:path.includes("closure_reason")?[{id:2,label:"Resolved"}]:[],
  "PATCH /api/tickets/4821":({body}:Call)=>(current={...current,...body as object}),
  "POST /api/tickets/4821/assign":()=>current,
+ "POST /api/tickets/4821/cancel":()=>(current={...current,status:"closed"}),
  ...extra});
  renderAt("/tickets/4821",[{path:"/tickets/:ticketId",element:<TicketPage me={ME}/>}]);return calls;
 }
@@ -66,7 +67,7 @@ test("canceling discard preserves the draft",async()=>{
 });
 
 test("Cancel ticket requires a reason and retains the ticket instead of deleting it",async()=>{
- const calls=setup({"POST /api/tickets/4821/cancel":ticket({status:"closed"})});
+ const calls=setup();
  const draft=await screen.findByLabelText("Work notes and replies");await userEvent.type(draft,"Keep my unsent note");
  await userEvent.click(screen.getByRole("button",{name:"Cancel ticket…"}));
  const dialog=await screen.findByRole("dialog",{name:"Cancel ticket"});

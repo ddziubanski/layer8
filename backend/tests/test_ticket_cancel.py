@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy import select
 
-from app import sla
+from app import sla, surveys
 from app.config import settings
 from app.models import Comment, FieldList, FieldOption, Ticket, TicketEvent, TicketSource, TicketSurvey
 from tests.conftest import as_user
@@ -20,6 +20,8 @@ def setup(db, requester, service_desk):
 
 def test_cancel_retains_record_notes_and_audits_reason_without_survey(client, db, agent, setup, monkeypatch):
     ticket, body = setup
+    survey_calls = []
+    monkeypatch.setattr(surveys, "maybe_send", lambda *args: survey_calls.append(True))
     monkeypatch.setattr(settings, "survey_percent", 100)
     db.add(Comment(ticket_id=ticket.id, author_id=agent.id, body="Existing note", is_internal=True, source=TicketSource.agent)); db.commit()
     response = client.post(f"/api/tickets/{ticket.id}/cancel", json=body, headers=as_user(agent))
@@ -32,6 +34,7 @@ def test_cancel_retains_record_notes_and_audits_reason_without_survey(client, db
     assert len(notes) == 2 and all(note.is_internal and not note.emailed for note in notes)
     assert any(note.body == f"Canceled ticket: {body['reason']}" for note in notes)
     assert not db.scalars(select(TicketSurvey).where(TicketSurvey.ticket_id == ticket.id)).all()
+    assert not survey_calls
     events = db.scalars(select(TicketEvent).where(TicketEvent.ticket_id == ticket.id)).all()
     assert any(event.data.get("canceled") and event.data["cancellation_reason"] == body["reason"] for event in events)
     assert client.post(f"/api/tickets/{ticket.id}/cancel", json=body, headers=as_user(agent)).status_code == 409
