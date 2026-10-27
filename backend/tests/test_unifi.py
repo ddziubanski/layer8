@@ -102,13 +102,36 @@ def test_offline_device_opens_one_ticket_after_the_grace_period_and_notes_recove
     db.commit()
     tickets = db.query(Ticket).all()
     assert len(tickets) == 1 and tickets[0].subject == "Offline: UniFi ap Lobby AP"
+    assert tickets[0].recovery_review is False
+    priority = tickets[0].priority
+    fake.devices[1]["state"] = "UNKNOWN"
+    unifi.sync(db, unifi.from_settings())
+    db.commit()
+    db.expire_all()
+    assert db.get(NetworkOutage, ("unifi", "console-1:site-1", "dev-ap")).is_down
+    assert not db.get(Ticket, tickets[0].id).recovery_review
     fake.devices[1]["state"] = "ONLINE"
     unifi.sync(db, unifi.from_settings())
     db.commit()
+    db.expire_all()
     ticket = db.get(Ticket, tickets[0].id)
+    assert ticket.recovery_review and ticket.priority == priority
     assert ticket.status != TicketStatus.resolved
     notes = db.query(Comment).filter_by(ticket_id=ticket.id).all()
     assert any("back online" in c.body and c.is_internal for c in notes)
+    unifi.sync(db, unifi.from_settings())
+    db.commit()
+    assert db.query(Comment).filter_by(ticket_id=ticket.id).count() == len(notes)
+    ticket.status = TicketStatus.closed
+    db.commit()
+    db.expire_all()
+    assert not ticket.recovery_review
+    ticket.status = TicketStatus.open
+    fake.devices[1]["state"] = "OFFLINE"
+    unifi.sync(db, unifi.from_settings())
+    db.commit()
+    db.expire_all()
+    assert not ticket.recovery_review and ticket.priority == priority
 
 
 def test_observations_show_on_documented_ip_records(client, db, agent, fake):
