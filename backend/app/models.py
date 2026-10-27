@@ -22,6 +22,7 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    and_,
     func,
     or_,
     select,
@@ -2011,8 +2012,24 @@ class NetworkOutage(Base):
     device_key: Mapped[str] = mapped_column(String(200), primary_key=True)
     is_down: Mapped[bool] = mapped_column(Boolean, default=False)
     down_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    ticket_id: Mapped[int | None] = mapped_column(ForeignKey("tickets.id", ondelete="SET NULL"))
+    ticket_id: Mapped[int | None] = mapped_column(ForeignKey("tickets.id", ondelete="SET NULL"), index=True)
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+# Derive review state from the latest cache, including for existing outage tickets.
+# Correlated EXISTS keeps list/detail reads in one query and avoids per-ticket vendor calls.
+_outage_online = select(NetworkInventory.device_key).where(
+    NetworkInventory.provider == NetworkOutage.provider,
+    NetworkInventory.source_id == NetworkOutage.source_id,
+    NetworkInventory.device_key == NetworkOutage.device_key,
+    NetworkInventory.state == "online",
+).correlate(NetworkOutage).exists()
+_ticket_outages = select(NetworkOutage.ticket_id).where(NetworkOutage.ticket_id == Ticket.id).correlate(Ticket)
+Ticket.recovery_review = column_property(and_(
+    Ticket.status.not_in((TicketStatus.resolved, TicketStatus.closed)),
+    _ticket_outages.exists(),
+    ~_ticket_outages.where(or_(NetworkOutage.is_down.is_(True), ~_outage_online)).exists(),
+))
 
 
 class NetworkRead(Base):

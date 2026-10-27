@@ -80,3 +80,8 @@ UniFi links use the console/site and device ID (clients use their MAC), not the 
 ## Credits
 
 The map of UniFi's APIs (Site Manager, Connector Proxy, Network Integration and the classic API), and their paging and rate-limit behaviour, comes from **"UniFi best practices" by uchkunr**: https://github.com/uchkunr/unifi-best-practices, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Ubiquiti's own documentation is at https://developer.ui.com. Layer 8's code is its own. UniFi and Ubiquiti are trademarks of Ubiquiti Inc.
+
+### Recovery verification
+
+Automated outage tickets display **Verify** in place of the priority pill after all tracked devices are explicitly reported online in the latest cached API read. The ticket stays open, and its actual priority, sorting and SLA policy do not change. Review the recovery and close the ticket normally. Another offline report restores the normal priority pill; unknown or missing device state does not qualify as recovery. This applies to the shared UniFi, Juniper and Nutanix outage tracker.
+

@@ -999,6 +999,8 @@ class FieldOptionUpdate(BaseModel):
 
 
 class TicketOut(ORM, Labelled):
+    # An open automated outage ticket whose tracked equipment was last reported online.
+    recovery_review: bool = False
     id: int
     subject: str
     description: str

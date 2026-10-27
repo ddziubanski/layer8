@@ -18,6 +18,14 @@ export function PriorityChip({ priority }: { priority: Priority }) {
   return <span className={`chip ${PRIORITY_TONE[priority]}`}>{PRIORITY_LABEL[priority]}</span>;
 }
 
+/** Recovery needs a human check; this does not change priority, sorting or SLA policy. */
+export function TicketPriorityChip({ ticket }: { ticket: Pick<Ticket, "priority" | "status" | "recovery_review"> }) {
+  const closed = ticket.status === "resolved" || ticket.status === "closed";
+  return ticket.recovery_review && !closed
+    ? <span className="chip a" aria-label="Verify recovery" title={`API last reported the tracked device(s) online. Verify recovery before closing. Ticket priority remains ${PRIORITY_LABEL[ticket.priority]}.`}>Verify</span>
+    : <PriorityChip priority={ticket.priority} />;
+}
+
 export function StatusChip({ status }: { status: TicketStatus }) {
   return <span className={`chip ${STATUS_TONE[status]}`}>{STATUS_LABEL[status]}</span>;
 }

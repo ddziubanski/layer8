@@ -68,6 +68,7 @@ export function ticket(over: Partial<Ticket> = {}): Ticket {
   const created = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   return {
     id: 4821,
+    recovery_review: false,
     subject: "Switch port flapping, 2nd floor",
     description: "Desks keep losing connection.",
     imported_fields: {},

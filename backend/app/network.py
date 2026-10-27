@@ -109,7 +109,7 @@ def track_outages(session: Session, provider: str, *, enabled: bool, after_minut
                 )
                 outage.ticket_id = ticket.id
                 counts["opened"] += 1
-        elif outage.is_down:
+        elif item.state == "online" and outage.is_down:
             outage.is_down, outage.changed_at = False, now
             if active:
                 bot = bot or services.automation_user(session)

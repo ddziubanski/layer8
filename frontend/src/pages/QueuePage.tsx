@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { api, type Me, type QueueListPreference, type SavedView, type Ticket, type TicketScope, type TicketSort } from "../api/client";
 import { ruleColor } from "../colors";
-import { PriorityChip, SlaChip, SourceChip } from "../components/Chips";
+import { TicketPriorityChip, SlaChip, SourceChip } from "../components/Chips";
 import { PersonLink } from "../components/PersonCard";
 import { duration, plural, VIEWS } from "../format";
 import { NewTicketDialog } from "./NewTicketDialog";
@@ -107,7 +107,7 @@ function Row({ t, me, selected, onSelect }: { t: Ticket; me: Me; selected: boole
         <div className="sub">{t.queue.name}</div>
       </div>
       <div role="cell">
-        <PriorityChip priority={t.priority} />
+        <TicketPriorityChip ticket={t} />
       </div>
       <div role="cell" title={new Date(t.created_at).toLocaleString()}>
         {duration(Date.now() - new Date(t.created_at).getTime())}

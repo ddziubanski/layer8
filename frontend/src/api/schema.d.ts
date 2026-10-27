@@ -12010,6 +12010,11 @@ export interface components {
         };
         /** TicketOut */
         TicketOut: {
+            /**
+             * Recovery Review
+             * @default false
+             */
+            recovery_review: boolean;
             /** Id */
             id: number;
             /** Subject */
