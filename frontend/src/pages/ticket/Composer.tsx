@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { api } from "../../api/client";
 import { useDropFiles } from "../../components/useDropFiles";
 import { fileSize } from "../../format";
-import { useTicketSaveTask } from "./TicketSave";
+import { TicketSaveHere, useTicketSaveTask } from "./TicketSave";
 
 /** Work notes and replies, with optional files. A note stays internal (technicians and admins)
  * unless it's shown to the requester in the portal, and maybe emailed to them too. */
@@ -77,8 +77,9 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
     },
   });
 
+  const saveLabel = partial ? "Remaining time/attachments (note already saved)" : !toRequester ? "Internal note" : email ? "Email requester" : "Portal reply";
   const savingTicket = useTicketSaveTask("composer", { dirty: !!(body.trim() || files.length || minutes), busy: send.isPending || insert.isPending,
-    label: partial ? "Remaining time/attachments (note already saved)" : !toRequester ? "Internal note" : email ? "Email requester" : "Portal reply",
+    label: saveLabel,
     error: send.error?.message, order: 100, validate, save: () => send.mutateAsync() });
   const frozen = savingTicket || send.isPending || insert.isPending || partial;
   locked.current = frozen;
@@ -158,6 +159,8 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
           {partial ? "Retry remaining items" : action}
         </button>
       </div>
+      {/* Other cards have unsaved changes too: save them all from here, with this note last. */}
+      <TicketSaveHere show={!!body.trim() && !partial} own={saveLabel} onlyWithOthers />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, type Ticket } from "../../api/client";
-import { useTicketSaveTask } from "./TicketSave";
+import { TicketSaveHere, useTicketSaveTask } from "./TicketSave";
 
 export function TicketDetailsEditor({ ticket, onChanged }: { ticket: Ticket; onChanged: () => void }) {
   const [subject, setSubject] = useState<string | null>(null);
@@ -19,7 +19,7 @@ export function TicketDetailsEditor({ ticket, onChanged }: { ticket: Ticket; onC
     <div className="lbl">Ticket details</div>
     <label className="field">Subject<input maxLength={300} value={subject ?? ticket.subject} disabled={busy} onChange={e => setSubject(e.target.value)} /></label>
     <label className="field">Description<textarea rows={4} value={description ?? ticket.description ?? ""} disabled={busy} onChange={e => setDescription(e.target.value)} /></label>
-    <span className="muted small">Use Save ticket above to save these edits and any pending work note or reply.</span>
+    <TicketSaveHere show={dirty} own="Ticket details" />
     {update.error && <p className="error" role="alert">{update.error.message}</p>}
   </section>;
 }
