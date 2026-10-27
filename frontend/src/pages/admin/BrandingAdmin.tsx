@@ -109,6 +109,7 @@ export function BrandingAdmin({ me }: { me: User }) {
           section="branding"
           title="Name and texts"
           embedded
+          preview={values => <SignInPreview brand={brand} values={values} />}
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["branding"] })}
         />
         <SettingsForm
@@ -119,14 +120,14 @@ export function BrandingAdmin({ me }: { me: User }) {
           visibleFields={["console_theme", "dark_mode"]}
           embedded
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["branding"] })}
-          preview={(values) => <ThemePreview values={values} name={brand.product_name} logo={brand.logo_url} />}
+          preview={(values) => <ThemePreview values={values} name={brand.hide_product_name ? "" : brand.product_name} logo={brand.logo_url} />}
         />
         <SettingsForm me={me} section="signin_appearance" title="Sign-in appearance" embedded
           intro="Customize the main sign-in page. Product name and support message are under Name and texts; upload a background or logo below. These options also style password-change and two-factor setup screens, without changing authentication or portal appearance."
           onSaved={() => queryClient.invalidateQueries({queryKey:["branding"]})}
           preview={values => <SignInPreview brand={brand} values={values} />} />
         <ImageSlot name="background" title="Background" hint="Shown behind the sign-in page and the portal (and the console, if chosen above)." url={brand.background_url} />
-        <ImageSlot name="logo" title="Logo" hint="Shown next to the product name." url={brand.logo_url} contain />
+        <ImageSlot name="logo" title="Logo" hint="Shown with the optional product name. Use Name and texts above to hide the name or center the logo." url={brand.logo_url} contain />
         <ImageSlot name="favicon" title="Favicon" hint="The small icon in the browser tab and bookmarks. A square image, 32×32 or larger." url={brand.favicon_url} contain types="ICO, PNG, GIF or JPG" />
       </div>
     </>

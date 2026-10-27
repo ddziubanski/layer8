@@ -6107,6 +6107,16 @@ export interface components {
         BrandingOut: {
             /** Product Name */
             product_name: string;
+            /**
+             * Hide Product Name
+             * @default false
+             */
+            hide_product_name: boolean;
+            /**
+             * Center Brand Logo
+             * @default false
+             */
+            center_brand_logo: boolean;
             /** Sign In Message */
             sign_in_message: string;
             /**

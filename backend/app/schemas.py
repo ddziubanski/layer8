@@ -523,6 +523,8 @@ class BackupVerifyOut(BaseModel):
 
 class BrandingOut(BaseModel):
     product_name: str
+    hide_product_name: bool = False
+    center_brand_logo: bool = False
     sign_in_message: str
     sign_in_heading: str = ""
     sign_in_layout: Literal["center", "left", "right"] = "center"

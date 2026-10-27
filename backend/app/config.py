@@ -242,6 +242,8 @@ class Settings(BaseSettings):
 
     # Branding (Settings > Branding). Images are uploaded there.
     product_name: str = "Layer 8"
+    hide_product_name: bool = False
+    center_brand_logo: bool = False
     sign_in_message: str = ""
     sign_in_heading: str = ""
     sign_in_layout: str = "center"

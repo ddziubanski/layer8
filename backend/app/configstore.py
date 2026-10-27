@@ -395,6 +395,8 @@ SECTIONS: dict[str, list[Field]] = {
     ],
     "branding": [
         Field("product_name", "Product name", "Shown in the header, on the sign-in page and in the browser tab.", check=_length(1, 60)),
+        Field("hide_product_name", "Hide product name", "Hide the name in headers, sign-in and portal branding. The browser tab uses Service desk. Your logo stays visible; the configured name is kept."),
+        Field("center_brand_logo", "Center logo", "Center the logo and any visible product name within their branding area, including the sign-in page and portal."),
         Field("sign_in_message", "Sign-in message", "A line under the sign-in form, e.g. who to call if you can't get in.", check=_length(0, 300)),
         Field("background_in_console", "Show the background behind the agent console too", "It's always shown on the sign-in page and in the portal."),
         Field("portal_welcome", "Portal welcome text", "Shown at the top of the portal's home page, e.g. opening hours or what to try first. Plain text.", check=_length(0, 1000), multiline=True),
