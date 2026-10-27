@@ -143,7 +143,7 @@ test.each([true, false])("manual Windows button below credentials respects brand
   const button = await screen.findByRole("button", { name: "Sign in with my Windows account" });
   expect(button).toHaveClass("windows-sign-in");
   await waitFor(() => expect(button.classList.contains("windows-sign-in-glow")).toBe(glow));
-  expect(screen.getByRole("button", { name: "Sign in", exact: true }).compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Sign in" }).compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(calls.some(c => c.path === "/api/auth/sso")).toBe(false);
   await userEvent.click(button);
   expect(await screen.findByRole("alert")).toHaveTextContent("didn't offer a Windows sign-in");
