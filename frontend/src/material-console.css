@@ -75,4 +75,8 @@
 /* Core ticket actions stay visible; destructive actions require a separate confirmation. */
 .action-dialog { color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:20px; max-width:min(680px,calc(100vw - 32px)); max-height:85dvh; overflow:auto; }
 .action-dialog::backdrop { background:rgba(0,0,0,.48); }
-.ticket-core-actions { display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; }
+.ticket-core-actions { display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; position:sticky; top:0; z-index:5; background:var(--surface); padding:10px 0; margin-bottom:16px; border-bottom:1px solid var(--line); }
+.ticket-focus-workspace { scroll-margin-top:110px; }
+.ticket-actions-more { position:relative; }
+.ticket-actions-more > summary { list-style:none; cursor:pointer; display:flex; align-items:center; }
+.ticket-actions-more[open] > button { position:absolute; top:calc(100% + 4px); right:0; z-index:6; white-space:nowrap; box-shadow:0 5px 18px #0003; }
