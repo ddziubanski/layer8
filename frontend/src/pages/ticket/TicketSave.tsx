@@ -52,8 +52,21 @@ export function TicketSaveButton() {
   if (!context) return null;
   const pending = context.tasks.filter(task => task.dirty);
   const failed = context.tasks.some(task => task.error);
-  return <div className="stack" style={{ gap: 5, maxWidth: 340 }}>
+  return <div className="stack" role="group" aria-label="Save the whole ticket" style={{ gap: 5, maxWidth: 340 }}>
     <button className="btn" type="button" disabled={context.busy || !pending.length} onClick={() => void context.save()}>{context.busy ? "Saving ticket…" : "Save ticket"}</button>
     {context.error ? <span role="alert" className="error small">{context.error}</span> : <span role="status" className="muted small">{pending.length ? `Pending: ${pending.map(task => task.label).join(" · ")}` : failed ? "Review the failed changes below." : context.message || "All ticket changes saved"}</span>}
+  </div>;
+}
+
+/** The same Save ticket, right where the edit is, so nobody has to go back up to the header.
+ * Shown only while this part has unsaved changes; it still saves everything pending, in order. */
+export function TicketSaveHere({ show, own, onlyWithOthers }: { show: boolean; own?: string; onlyWithOthers?: boolean }) {
+  const context = useContext(Context);
+  if (!context || !show) return null;
+  const others = context.tasks.filter(task => task.dirty && task.label !== own).map(task => task.label);
+  if (onlyWithOthers && !others.length) return null;
+  return <div className="row-gap ticket-save-here" role="group" aria-label="Save here">
+    <button className="btn" type="button" disabled={context.busy} onClick={() => void context.save()}>{context.busy ? "Saving ticket…" : "Save ticket"}</button>
+    {context.error ? <span className="error small">{context.error}</span> : others.length > 0 && <span className="muted small">Also saves: {others.join(" · ")}</span>}
   </div>;
 }

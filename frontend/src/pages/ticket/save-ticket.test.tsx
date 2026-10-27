@@ -6,6 +6,7 @@ import { ME, mockApi, renderAt, ticket, type Call } from "../../test/util";
 import { TicketPage } from "../TicketPage";
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+const headerSave = () => within(screen.getByRole("group",{name:"Save the whole ticket"})).getByRole("button");
 
 function setup(extra: Record<string, unknown> = {}) {
   let current = ticket();
@@ -31,19 +32,19 @@ function setup(extra: Record<string, unknown> = {}) {
 test("Save ticket persists details and an internal work note together, across tabs", async () => {
   const calls = setup();
   const note = await screen.findByLabelText("Work notes and replies");
-  expect(screen.getByRole("button",{name:"Save ticket"})).toBeDisabled();
+  expect(headerSave()).toBeDisabled();
   await userEvent.type(note,"Replaced the faulty cable.");
   await userEvent.click(screen.getByRole("tab",{name:"Details"}));
   const subject = await screen.findByLabelText("Subject");
   await userEvent.clear(subject); await userEvent.type(subject,"Cable fault resolved");
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(note).toHaveValue(""));
   const writes = calls.filter(c=>c.method==="PATCH"||c.method==="POST");
   expect(writes.map(c=>c.path)).toEqual(["/api/tickets/4821","/api/tickets/4821/comments"]);
   expect(writes[0].body).toEqual({subject:"Cable fault resolved"});
   expect(writes[1].body).toEqual({body:"Replaced the faulty cable.",is_internal:true,email_requester:false});
   expect(subject).toHaveValue("Cable fault resolved");
-  expect(screen.getByRole("button",{name:"Save ticket"})).toBeDisabled();
+  expect(headerSave()).toBeDisabled();
 });
 
 test("Save ticket honors requester email versus portal-only delivery", async () => {
@@ -52,13 +53,13 @@ test("Save ticket honors requester email versus portal-only delivery", async () 
   await userEvent.type(note,"Please test the connection.");
   await userEvent.click(screen.getByLabelText("Show to the requester in the portal"));
   expect(screen.getByText(/Pending: Email requester/)).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(note).toHaveValue(""));
   expect(calls.find(c=>c.path.endsWith("/comments")&&c.method==="POST")?.body).toEqual({body:"Please test the connection.",is_internal:false,email_requester:true});
   await userEvent.type(note,"Portal update only.");
   await userEvent.click(screen.getByLabelText("Show to the requester in the portal"));
   await userEvent.click(screen.getByLabelText("Email it to them too"));
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(note).toHaveValue(""));
   expect(calls.filter(c=>c.path.endsWith("/comments")&&c.method==="POST").at(-1)?.body).toEqual({body:"Portal update only.",is_internal:false,email_requester:false});
 });
@@ -69,13 +70,13 @@ test("all required fields are checked before changes or replies are sent", async
   await userEvent.click(screen.getByRole("tab",{name:"Details"}));
   await waitFor(()=>expect(calls.some(c=>c.path.includes("closure_reason"))).toBe(true));
   await userEvent.selectOptions(screen.getByLabelText("Status"),"resolved");
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   expect(await screen.findByRole("alert")).toHaveTextContent("Choose a resolution type");
   expect(calls.filter(c=>["POST","PATCH"].includes(c.method))).toHaveLength(0);
   const form=screen.getByRole("form",{name:"Resolution"});
   await userEvent.selectOptions(within(form).getByLabelText("Resolution type"),"1");
   await userEvent.selectOptions(within(form).getByLabelText("Closure reason"),"2");
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(calls.some(c=>c.path.endsWith("/comments")&&c.method==="POST")).toBe(true));
 });
 
@@ -85,7 +86,7 @@ test("a failed detail save retains drafts and does not send the pending note", a
   await userEvent.type(note,"Do not lose me");
   await userEvent.click(screen.getByRole("tab",{name:"Details"}));
   await userEvent.type(await screen.findByLabelText("Subject")," revised");
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(screen.getAllByRole("alert").some(a=>a.textContent?.includes("Remaining changes are kept"))).toBe(true));
   expect(note).toHaveValue("Do not lose me");
   expect(calls.filter(c=>c.method==="POST")).toHaveLength(0);
@@ -99,7 +100,7 @@ test("Save ticket includes pending queue moves and contact changes before the no
   await userEvent.selectOptions(screen.getByLabelText("Queue"),"3");
   await userEvent.type(screen.getByLabelText(/Reason for moving/),"Hardware follow-up");
   await userEvent.type(screen.getByLabelText("Contact phone"),"ext. 4410");
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(calls.some(c=>c.method==="POST"&&c.path.endsWith("/comments"))).toBe(true));
   const writes=calls.filter(c=>["POST","PATCH"].includes(c.method));
   expect(writes.map(c=>c.path)).toEqual(["/api/tickets/4821/assign","/api/tickets/4821","/api/tickets/4821/comments"]);
@@ -113,11 +114,11 @@ test("double clicking Save cannot duplicate a request while saving", async () =>
   await screen.findByLabelText("Work notes and replies");
   await userEvent.click(screen.getByRole("tab",{name:"Details"}));
   await userEvent.type(await screen.findByLabelText("Subject")," changed");
-  await userEvent.dblClick(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.dblClick(headerSave());
   expect(update).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole("button",{name:"Saving ticket…"})).toBeDisabled();
+  for (const b of screen.getAllByRole("button",{name:"Saving ticket…"})) expect(b).toBeDisabled();
   finish(ticket({subject:"Saved title"}));
-  await waitFor(()=>expect(screen.getByRole("button",{name:"Save ticket"})).toBeDisabled());
+  await waitFor(()=>expect(headerSave()).toBeDisabled());
 });
 
 test("retrying an attachment failure does not post the comment twice", async () => {
@@ -126,10 +127,31 @@ test("retrying an attachment failure does not post the comment twice", async () 
   const note=await screen.findByLabelText("Work notes and replies");
   await userEvent.type(note,"See attachment");
   await userEvent.upload(screen.getByTestId("file-input"),new File(["x"],"example.txt",{type:"text/plain"}));
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   expect(await screen.findByRole("button",{name:"Retry remaining items"})).toBeEnabled();
-  await userEvent.click(screen.getByRole("button",{name:"Save ticket"}));
+  await userEvent.click(headerSave());
   await waitFor(()=>expect(note).toHaveValue(""));
   expect(calls.filter(c=>c.method==="POST"&&c.path.endsWith("/comments"))).toHaveLength(1);
   expect(uploads).toBe(2);
+});
+
+test("Save ticket also sits right under the edit, and in the composer when other changes are waiting", async () => {
+  const calls = setup();
+  const note = await screen.findByLabelText("Work notes and replies");
+  expect(screen.queryByRole("group",{name:"Save here"})).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("tab",{name:"Details"}));
+  const subject = await screen.findByLabelText("Subject");
+  await userEvent.clear(subject); await userEvent.type(subject,"Cable fault resolved");
+  const details = screen.getByRole("region",{name:"Ticket details"});
+  const here = within(details).getByRole("group",{name:"Save here"});
+  expect(within(here).queryByText(/Also saves/)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("tab",{name:"Conversation"}));
+  await userEvent.type(await screen.findByLabelText("Work notes and replies"),"Swapped the patch lead.");
+  const composerSave = await screen.findByRole("group",{name:"Save here"});
+  expect(composerSave).toHaveTextContent("Also saves: Ticket details");
+  await userEvent.click(within(composerSave).getByRole("button",{name:"Save ticket"}));
+  await waitFor(()=>expect(screen.getByLabelText("Work notes and replies")).toHaveValue(""));
+  expect(calls.filter(c=>c.method==="PATCH"||c.method==="POST").map(c=>c.path)).toEqual(["/api/tickets/4821","/api/tickets/4821/comments"]);
+  expect(screen.queryByRole("group",{name:"Save here"})).not.toBeInTheDocument();
+  void note;
 });

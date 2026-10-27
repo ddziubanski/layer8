@@ -9,7 +9,7 @@ import { UserPicker } from "../../components/UserPicker";
 import { PRIORITY_LABEL, STATUS_LABEL } from "../../format";
 import { can } from "../../permissions";
 import { ME_KEY } from "../../queryClient";
-import { useTicketSaveTask } from "./TicketSave";
+import { TicketSaveHere, useTicketSaveTask } from "./TicketSave";
 
 const STATUSES = Object.keys(STATUS_LABEL) as TicketStatus[];
 const PRIORITIES = Object.keys(PRIORITY_LABEL) as Priority[];
@@ -114,6 +114,7 @@ export function AssignmentCard({ ticket, onChanged }: Props) {
       <div style={{ marginTop: 10 }}>
         <SlaChip ticket={ticket} long />
       </div>
+      <TicketSaveHere show={moveTo !== null} own="Queue move" />
     </fieldset>
   );
 }
@@ -254,6 +255,7 @@ export function RequesterCard({ ticket, onChanged }: Props) {
           {error.message}
         </p>
       )}
+      <TicketSaveHere show={(phone !== null && phone !== (ticket.contact_phone ?? "")) || (mode === "email" && !!(email || name))} own="Requester/contact" />
     </fieldset>
   );
 }
@@ -386,6 +388,7 @@ export function StatusCard({ ticket, onChanged }: Props) {
           {update.error.message}
         </p>
       )}
+      <TicketSaveHere show={closing !== null} own="Resolution/status" />
     </fieldset>
   );
 }
