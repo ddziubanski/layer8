@@ -6125,6 +6125,11 @@ export interface components {
         };
         /** BrandingOut */
         BrandingOut: {
+            /**
+             * Windows Sign In Glow
+             * @default true
+             */
+            windows_sign_in_glow: boolean;
             /** Product Name */
             product_name: string;
             /**

@@ -252,6 +252,7 @@ class Settings(BaseSettings):
     sign_in_background_position: str = "center"
     sign_in_background_overlay: int = 0
     sign_in_backdrop: str = "plain"
+    windows_sign_in_glow: bool = True
     background_in_console: bool = False
     portal_welcome: str = ""
     email_footer: str = ""

@@ -403,6 +403,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("email_footer", "Email footer", "Added to the end of every email to requesters and every emailed report, e.g. the desk's phone number. Plain text.", check=_length(0, 1000), multiline=True),
     ],
     "signin_appearance": [
+        Field("windows_sign_in_glow", "Highlight Windows sign-in button", "Give the Windows-account button a subtle glow. Turn off for a plain button. Windows sign-in must be configured separately under Windows sign-in."),
         Field("sign_in_heading", "Welcome heading", "Optional plain-text heading above the sign-in form. Authentication and role routing stay unchanged.", check=_length(0, 100)),
         Field("sign_in_layout", "Card placement", choices=(("center", "Center"), ("left", "Left"), ("right", "Right"))),
         Field("sign_in_card_size", "Card width", choices=(("standard", "Standard"), ("wide", "Wide"))),

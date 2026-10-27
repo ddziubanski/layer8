@@ -16,6 +16,7 @@ export const DEFAULT_LIGHT_THEME = {
 
 const DEFAULT: Branding = {
   product_name: "Layer 8",
+  windows_sign_in_glow: true,
   hide_product_name: false,
   center_brand_logo: false,
   console_theme: "tidepool",

@@ -83,6 +83,7 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
 
   function submit(e: FormEvent) {
     e.preventDefault();
+    if (login.isPending || windowsSignIn.isPending) return;
     login.mutate();
   }
 
@@ -110,26 +111,6 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
         {!forConsole && brand.sign_in_heading && <h2 className="sign-in-heading">{brand.sign_in_heading}</h2>}
         {!forConsole && <p className="muted">Sign in once. Your access opens the helpdesk or self-service portal automatically.</p>}
         {forConsole && <p className="muted">The agent console needs your password, not just your Windows sign-in.</p>}
-        {windows && (
-          <>
-            <button
-              className="btn"
-              type="button"
-              disabled={windowsSignIn.isPending}
-              onClick={() => windowsSignIn.mutate({ silent: false })}
-            >
-              Sign in with your Windows account
-            </button>
-            {windowsSignIn.error && !silentAttempt && (
-              <p className="error" role="alert">
-                {windowsSignIn.error.message}
-              </p>
-            )}
-            <div className="or" aria-hidden="true">
-              or
-            </div>
-          </>
-        )}
         {!forConsole && options.data?.entra_sign_in && (
           <>
             <a className={windows ? "btn2" : "btn"} href="/api/auth/entra/start" style={{ textAlign: "center", textDecoration: "none" }}>
@@ -166,9 +147,28 @@ export function Login({ console: forConsole = false }: { console?: boolean }) {
             {login.error.message}
           </p>
         )}
-        <button className={windows ? "btn2" : "btn"} type="submit" disabled={login.isPending}>
+        <button className="btn" type="submit" disabled={login.isPending || windowsSignIn.isPending}>
           Sign in
         </button>
+        {windows && (
+          <>
+            <div className="or" aria-hidden="true">or</div>
+            <button
+              className={`btn2 windows-sign-in${brand.windows_sign_in_glow ? " windows-sign-in-glow" : ""}`}
+              type="button"
+              disabled={windowsSignIn.isPending || login.isPending}
+              onClick={() => windowsSignIn.mutate({ silent: false })}
+            >
+              {windowsSignIn.isPending ? "Signing in with Windows…" : "Sign in with my Windows account"}
+            </button>
+            {windowsSignIn.error && !silentAttempt && (
+              <p className="error" role="alert">
+                {windowsSignIn.error.message}
+              </p>
+            )}
+            <p className="muted small">Use your current Windows session for self-service. For the technician console, sign in above.</p>
+          </>
+        )}
         {forConsole && (
           <a className="muted" href="/">
             Back to the portal

@@ -522,6 +522,7 @@ class BackupVerifyOut(BaseModel):
 
 
 class BrandingOut(BaseModel):
+    windows_sign_in_glow: bool = True
     product_name: str
     hide_product_name: bool = False
     center_brand_logo: bool = False
