@@ -12,3 +12,8 @@ The controls style sign-in, console password entry, required password changes an
 Defaults preserve the centered standard card, original image fit/focus and no image darkening. Remove the uploaded background and choose Theme default to return to the plain background. Image uploads remain shared with the portal; the new placement, fit, focal-point, overlay and backdrop controls affect sign-in only.
 
 The API is `GET/PUT /api/settings/signin_appearance` (admin only); presentation values appear in public `GET /api/branding`. Installer/CLI answers use the `signin_appearance` section. Existing environment override conventions apply, for example `HELPDESK_SIGN_IN_LAYOUT=right`. No database migration is needed; settings use the existing settings store.
+
+### Logo and product name
+
+Under Settings > Branding > Name and texts, **Hide product name** removes the name from the branding areas and uses Service desk for the browser tab. The configured name is retained. **Center logo** centers the logo and any visible name within their branding area. Both are optional and off by default. Uploaded/default logos and source-code links remain available. Save changes to apply them globally.
+

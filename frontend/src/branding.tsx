@@ -16,6 +16,8 @@ export const DEFAULT_LIGHT_THEME = {
 
 const DEFAULT: Branding = {
   product_name: "Layer 8",
+  hide_product_name: false,
+  center_brand_logo: false,
   console_theme: "tidepool",
   sign_in_message: "",
   sign_in_heading: "",
@@ -137,8 +139,8 @@ export function useBranding(): Branding {
   const customDark = useDark(b.dark_mode);
   const dark = b.theme_preset in PRESETS || customDark;
   useEffect(() => {
-    document.title = b.product_name;
-  }, [b.product_name]);
+    document.title = b.hide_product_name ? "Service desk" : b.product_name;
+  }, [b.product_name, b.hide_product_name]);
   useEffect(() => {
     const root = document.documentElement;
     for (const [k, v] of Object.entries(themeTokens(b.theme_brand, b.theme_sidebar, b.theme_preset))) root.style.setProperty(k, v);
@@ -182,9 +184,9 @@ export function backgroundStyle(b: Branding, where: "sign-in" | "portal" | "cons
 /** Logo (if uploaded) and product name. */
 export function Brand({ b, className = "brand" }: { b: Branding; className?: string }) {
   return (
-    <span className={className}>
-      <img className={`brand-logo${b.logo_url ? "" : " brand-logo-default"}`} src={b.logo_url ?? DEFAULT_LOGO} alt="" />
-      {b.product_name}
+    <span className={className} aria-label={b.hide_product_name ? "Service desk" : undefined} style={b.center_brand_logo ? { display: "flex", alignItems: "center", justifyContent: "center", width: "100%", gap: 8 } : undefined}>
+      <img className={`brand-logo${b.logo_url ? "" : " brand-logo-default"}`} src={b.logo_url ?? DEFAULT_LOGO} alt="" style={b.center_brand_logo ? { margin: 0 } : undefined} />
+      {!b.hide_product_name && b.product_name}
     </span>
   );
 }

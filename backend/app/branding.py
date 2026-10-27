@@ -100,6 +100,8 @@ def _choice(name: str) -> str:
 def public(session: Session) -> dict:
     return {
         "product_name": settings.product_name,
+        "hide_product_name": settings.hide_product_name,
+        "center_brand_logo": settings.center_brand_logo,
         "sign_in_message": settings.sign_in_message,
         "sign_in_heading": settings.sign_in_heading,
         "sign_in_layout": _choice("sign_in_layout"),

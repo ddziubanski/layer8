@@ -22,7 +22,7 @@ def test_public_branding_without_signing_in(client, db):
     r = client.get("/api/branding")
     assert r.status_code == 200
     assert r.json() == {
-        "product_name": "Layer 8", "sign_in_message": "", "background_in_console": False, "portal_welcome": "",
+        "product_name": "Layer 8", "hide_product_name": False, "center_brand_logo": False, "sign_in_message": "", "background_in_console": False, "portal_welcome": "",
         "theme_preset": "custom", "console_theme": "tidepool", "theme_brand": "#0f6b5c", "theme_sidebar": "#14211e", "dark_mode": "off",
         "background_url": None, "logo_url": None, "favicon_url": None,
         "sign_in_heading": "", "sign_in_layout": "center", "sign_in_card_size": "standard",
@@ -66,6 +66,20 @@ def test_name_and_message(client, db, admin):
     assert r.status_code == 200, r.text
     assert client.get("/api/branding").json()["product_name"] == "Example Help Desk"
     assert client.put("/api/settings/branding", json={"values": {"product_name": ""}}, headers=as_user(admin)).status_code == 422
+
+
+def test_brand_visibility_and_alignment_are_optional_admin_settings(client, admin, agent):
+    values = {"hide_product_name": True, "center_brand_logo": True}
+    route = "/api/settings/branding"
+    assert client.put(route, json={"values": values}, headers=as_user(agent)).status_code == 403
+    assert client.put(route, json={"values": values}, headers=as_user(admin)).status_code == 200
+    public = client.get("/api/branding").json()
+    assert all(public[key] is True for key in values)
+    assert public["product_name"] == "Layer 8"
+    values = {key: False for key in values}
+    assert client.put(route, json={"values": values}, headers=as_user(admin)).status_code == 200
+    public = client.get("/api/branding").json()
+    assert all(public[key] is False for key in values)
 
 
 def test_signin_appearance_is_admin_only_validated_and_importable(client, db, admin, agent):

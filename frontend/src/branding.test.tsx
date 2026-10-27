@@ -5,6 +5,16 @@ import type { Branding } from "./api/client";
 
 const branding = { product_name: "Layer 8", logo_url: null } as Branding;
 
+test("the product name can be hidden and the logo centered without removing the image", () => {
+  const { container, rerender } = render(<Brand b={{ ...branding, hide_product_name: true, center_brand_logo: true }} />);
+  expect(screen.queryByText("Layer 8")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Service desk")).toHaveStyle({ display: "flex", justifyContent: "center", width: "100%" });
+  expect(container.querySelector("img")).toHaveAttribute("src", DEFAULT_LOGO);
+  rerender(<Brand b={{ ...branding, hide_product_name: false, center_brand_logo: false }} />);
+  expect(screen.getByText("Layer 8")).toBeInTheDocument();
+  expect((container.firstChild as HTMLElement).style.justifyContent).toBe("");
+});
+
 test("default branding shows the human-and-switch mark on a contrast tile", () => {
   const { container } = render(<Brand b={branding} />);
   expect(screen.getByText("Layer 8")).toBeInTheDocument();
