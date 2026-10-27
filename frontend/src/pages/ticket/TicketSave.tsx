@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { createContext, useContext, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 
-type Task = { dirty: boolean; busy: boolean; label: string; error?: string; validate?: () => void; save: () => Promise<unknown>; order?: number };
-type Controller = { register: (id: string, task: MutableRefObject<Task>) => () => void; changed: () => void; busy: boolean; tasks: Task[]; save: () => Promise<void>; message: string; error: string };
+type Task = { dirty: boolean; busy: boolean; label: string; error?: string; validate?: () => void; save: () => Promise<unknown>; discard?: () => void; order?: number };
+type Controller = { register: (id: string, task: MutableRefObject<Task>) => () => void; changed: () => void; busy: boolean; tasks: Task[]; dirtyIds: string[]; discard: () => void; save: () => Promise<void>; message: string; error: string };
 const Context = createContext<Controller | null>(null);
 
 /** Coordinates existing ticket actions; tool execution and destructive actions stay explicit. */
@@ -20,6 +20,12 @@ export function TicketSaveProvider({ children }: { children: ReactNode }) {
   }).current;
   const tasks = [...registry.current.values()].map(ref => ref.current);
   const busy = saving || tasks.some(task => task.busy);
+  const dirtyIds = [...registry.current.entries()].filter(([, ref]) => ref.current.dirty).map(([id]) => id);
+  function discard() {
+    if (locked.current || [...registry.current.values()].some(ref => ref.current.busy)) return;
+    for (const ref of registry.current.values()) if (ref.current.dirty) ref.current.discard?.();
+    setError(""); setMessage("Unsaved edits canceled. Saved changes are unchanged.");
+  }
   async function save() {
     if (locked.current || [...registry.current.values()].some(ref => ref.current.busy)) return;
     const pending = [...registry.current.values()].filter(ref => ref.current.dirty).sort((a, b) => (a.current.order ?? 0) - (b.current.order ?? 0));
@@ -35,8 +41,10 @@ export function TicketSaveProvider({ children }: { children: ReactNode }) {
       setError(`${completed ? "Some changes were saved. " : ""}${failure instanceof Error ? failure.message : "Could not save the ticket"} Remaining changes are kept; review and retry.`);
     } finally { locked.current = false; setSaving(false); }
   }
-  return <Context.Provider value={{ register, changed, busy, tasks, save, message, error }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ register, changed, busy, tasks, dirtyIds, discard, save, message, error }}>{children}</Context.Provider>;
 }
+
+export function useTicketSaveState() { return useContext(Context); }
 
 export function useTicketSaveTask(id: string, task: Task) {
   const context = useContext(Context);

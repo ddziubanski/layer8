@@ -32,7 +32,7 @@ export function AssignmentCard({ ticket, onChanged }: Props) {
   const [reason, setReason] = useState("");
   const savingTicket = useTicketSaveTask("assignment", { dirty: moveTo !== null, busy: assign.isPending, label: "Queue move", error: assign.error?.message, order: 10,
     validate: () => { if (reason.length > 2000) throw new Error("Queue move reason must be 2,000 characters or fewer."); },
-    save: () => assign.mutateAsync({ queue_id: moveTo, unassign: false, note: reason || null }) });
+    save: () => assign.mutateAsync({ queue_id: moveTo, unassign: false, note: reason || null }), discard: () => { setMoveTo(null); setReason(""); assign.reset(); } });
 
   // The current assignee may no longer be an owner; still show who it is.
   const people = assignable.data ?? [];
@@ -150,7 +150,7 @@ export function RequesterCard({ ticket, onChanged }: Props) {
     save: async () => {
       if (mode === "email" && (email || name)) await change.mutateAsync({ email, display_name: name || null });
       if (phone !== null && phone !== (ticket.contact_phone ?? "")) await update.mutateAsync({ contact_phone: phone });
-    } });
+    }, discard: () => { setPhone(null); setMode(null); setEmail(""); setName(""); change.reset(); update.reset(); } });
 
   return (
     <fieldset className="card" disabled={savingTicket} data-unsaved-work={(phone !== null && phone !== (ticket.contact_phone ?? "")) || (mode === "email" && !!(email || name))} style={{ minWidth: 0, margin: 0 }}>
@@ -280,7 +280,8 @@ export function StatusCard({ ticket, onChanged }: Props) {
     validate: () => {
       if ((resolutions.data?.length ?? 0) > 0 && !resolution) throw new Error("Choose a resolution type before saving.");
       if ((reasons.data?.length ?? 0) > 0 && !reason) throw new Error("Choose a closure reason before saving.");
-    }, save: () => update.mutateAsync({ status: closing, resolution_type_id: resolution ? Number(resolution) : null, closure_reason_id: reason ? Number(reason) : null }) });
+    }, save: () => update.mutateAsync({ status: closing, resolution_type_id: resolution ? Number(resolution) : null, closure_reason_id: reason ? Number(reason) : null }),
+    discard: () => { setClosing(null); setResolution(""); setReason(""); update.reset(); } });
 
   function setStatus(status: TicketStatus) {
     if (CLOSED.includes(status) && !isClosed && asks) {

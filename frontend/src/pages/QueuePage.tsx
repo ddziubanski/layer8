@@ -11,6 +11,7 @@ import { duration, plural, VIEWS } from "../format";
 import { NewTicketDialog } from "./NewTicketDialog";
 import { can } from "../permissions";
 import { ME_KEY } from "../queryClient";
+import { DeleteTickets } from "../components/DeleteTickets";
 
 export const DEFAULT_QUEUE_LIST: QueueListPreference = { density: "comfortable", paging: "scroll", page_size: 100 };
 // Past this many loaded batches, stop refreshing them all every 30 s; a new view starts fresh.
@@ -82,7 +83,7 @@ function Row({ t, me, selected, onSelect }: { t: Ticket; me: Me; selected: boole
     // The subject link is the accessible target; the row click is a mouse shortcut.
     <div className={`trow body${tint ? " tinted" : ""}${selected ? " selected" : ""}`} role="row" style={style} onClick={() => navigate(`/tickets/${t.id}`)}>
       <div role="cell" className="pick" onClick={(e) => e.stopPropagation()}>
-        {can(me, "ticket_bulk") && <input type="checkbox" aria-label={`Select #${t.id}`} checked={selected} onChange={(e) => onSelect(e.target.checked)} />}
+        {(can(me, "ticket_bulk") || can(me, "ticket_delete")) && <input type="checkbox" aria-label={`Select #${t.id}`} checked={selected} onChange={(e) => onSelect(e.target.checked)} />}
       </div>
       <div role="cell">{t.label}</div>
       <div role="cell" className="subject">
@@ -131,6 +132,7 @@ export function QueuePage({ me }: { me: Me }) {
   // A remembered queue that's gone (or no longer visible) falls back to all queues.
   const queueId = queueParam && (!queues.data || queues.data.some((q) => String(q.id) === queueParam)) ? Number(queueParam) : undefined;
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [deleteNotice, setDeleteNotice] = useState("");
   const offset = Math.max(0, Number(params.get("offset")) || 0);
   // Searching covers every status (closed history too), most recently opened first unless a column is chosen.
   const q = (params.get("q") ?? "").trim();
@@ -284,8 +286,18 @@ export function QueuePage({ me }: { me: Me }) {
         </p>
       )}
       {error && <p className="error">{error.message}</p>}
-      {selected.size > 0 && can(me, "ticket_bulk") && (
+      {deleteNotice && <p role="status" className="small">{deleteNotice}</p>}
+      {selected.size > 0 && (can(me, "ticket_bulk") || can(me, "ticket_delete")) && (
         <BulkBar
+          me={me}
+          tickets={items.filter(t => selected.has(t.id))}
+          onDeleted={(done, failed) => {
+            setDeleteNotice(`${done.length} deleted. ${failed.length} not confirmed or not attempted; review remaining selections.`);
+            setSelected(new Set(failed));
+            queryClient.invalidateQueries({ queryKey: ["tickets"] });
+            queryClient.invalidateQueries({ queryKey: ["views"] });
+            for (const id of done) queryClient.removeQueries({ queryKey: ["ticket", id] });
+          }}
           ids={[...selected]}
           onDone={() => {
             setSelected(new Set());
@@ -298,7 +310,7 @@ export function QueuePage({ me }: { me: Me }) {
       <div ref={listRef} className={`table-wrap queue-list${prefs.density === "compact" ? " compact" : ""}`} role="table" aria-label="Tickets">
         <div className="trow head" role="row">
           <div role="columnheader" className="pick">
-            {can(me, "ticket_bulk") && (
+            {(can(me, "ticket_bulk") || can(me, "ticket_delete")) && (
               <input type="checkbox" aria-label={scrolling ? "Select all loaded" : "Select all on this page"} checked={allPicked} onChange={(e) => setSelected(e.target.checked ? new Set(items.map((t) => t.id)) : new Set())} />
             )}
           </div>
@@ -352,9 +364,9 @@ export function QueuePage({ me }: { me: Me }) {
 }
 
 /** Move and/or assign the selected tickets. Each change is noted on its ticket, as when done one by one. */
-function BulkBar({ ids, onDone, onClear }: { ids: number[]; onDone: () => void; onClear: () => void }) {
-  const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues });
-  const users = useQuery({ queryKey: ["users"], queryFn: api.users });
+function BulkBar({ ids, me, tickets, onDeleted, onDone, onClear }: { ids: number[]; me: Me; tickets: Ticket[]; onDeleted: (done: number[], failed: number[]) => void; onDone: () => void; onClear: () => void }) {
+  const queues = useQuery({ queryKey: ["queues"], queryFn: api.queues, enabled: can(me,"ticket_bulk") });
+  const users = useQuery({ queryKey: ["users"], queryFn: api.users, enabled: can(me,"ticket_bulk") });
   const [queueId, setQueueId] = useState("");
   const [assignee, setAssignee] = useState("");
   const [note, setNote] = useState("");
@@ -375,6 +387,7 @@ function BulkBar({ ids, onDone, onClear }: { ids: number[]; onDone: () => void; 
   return (
     <div className="card bulk-bar" role="region" aria-label="Selected tickets">
       <strong>{ids.length} selected</strong>
+      {can(me, "ticket_bulk") && <>
       <select aria-label="Move to queue" value={queueId} onChange={(e) => setQueueId(e.target.value)}>
         <option value="">Keep their queues</option>
         {queues.data
@@ -400,6 +413,8 @@ function BulkBar({ ids, onDone, onClear }: { ids: number[]; onDone: () => void; 
       <button className="btn" type="button" disabled={(!queueId && !assignee) || run.isPending} onClick={() => run.mutate()}>
         Apply
       </button>
+      </>}
+      {can(me, "ticket_delete") && <DeleteTickets tickets={tickets} onComplete={onDeleted} disabled={run.isPending} />}
       <button className="linkish small" type="button" onClick={onClear}>
         Clear selection
       </button>

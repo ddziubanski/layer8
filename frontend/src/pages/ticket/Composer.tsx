@@ -80,7 +80,8 @@ export function Composer({ ticketId, onDone, draft }: { ticketId: number; onDone
   const saveLabel = partial ? "Remaining time/attachments (note already saved)" : !toRequester ? "Internal note" : email ? "Email requester" : "Portal reply";
   const savingTicket = useTicketSaveTask("composer", { dirty: !!(body.trim() || files.length || minutes), busy: send.isPending || insert.isPending,
     label: saveLabel,
-    error: send.error?.message, order: 100, validate, save: () => send.mutateAsync() });
+    error: send.error?.message, order: 100, validate, save: () => send.mutateAsync(),
+    discard: () => { progress.current = null; setPartial(false); setBody(""); setFiles([]); setMinutes(""); setToRequester(false); setEmail(true); send.reset(); } });
   const frozen = savingTicket || send.isPending || insert.isPending || partial;
   locked.current = frozen;
   return (

@@ -23,8 +23,9 @@ import { SOURCE_LABEL, when } from "../format";
 import { TicketToolsWorkspace, type TicketTool } from "./ticket/TicketToolsWorkspace";
 import { TicketNetworkContext } from "./ticket/TicketNetworkContext";
 import { Composer, useComposerDraft } from "./ticket/Composer";
-import { TicketSaveButton, TicketSaveProvider } from "./ticket/TicketSave";
+import { TicketSaveProvider } from "./ticket/TicketSave";
 import { TicketDetailsEditor } from "./ticket/TicketDetailsEditor";
+import { TicketCoreActions } from "./ticket/TicketCoreActions";
 import { describe, type Names } from "./ticket/history";
 import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
@@ -240,15 +241,14 @@ function TicketView({ me, id }: { me: Me; id: number }) {
           <SourceChip source={t.source} />
           <StatusChip status={t.status} />
           <SlaChip ticket={t} long />
-          <TicketSaveButton />
         </div>
         <div className="ticket-workspace-meta">
           <span>Requested by <strong><PersonLink id={t.requester.id} name={t.requester.display_name} /></strong></span>
           <span>Queue <strong>{t.queue.name}</strong></span>
           <span>Assigned to <strong>{t.assignee?.display_name ?? "Unassigned"}</strong></span>
           <span>Created {when(t.created_at)}</span>
-          <button className="linkish small" type="button" onClick={() => openTool("details")}>Edit ticket details</button>
         </div>
+        <TicketCoreActions ticket={t} me={activeMe} onEdit={()=>openTool("details")} onChanged={refresh}/>
       </div>
 
       <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
