@@ -1,6 +1,6 @@
 [project]
 name = "helpdesk"
-version = "1.11.1"
+version = "1.11.2"
 license = "AGPL-3.0-or-later"
 license-files = ["../LICENSE"]
 description = "Self-hosted IT service desk"
