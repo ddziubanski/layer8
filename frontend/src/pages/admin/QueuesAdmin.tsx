@@ -355,7 +355,7 @@ function DeleteQueue({ queue, queues, onClose, onDeleted }: { queue: Queue; queu
                 </label>
               ) : <p className="muted">It has no tickets.</p>}
               <label className="field">
-                Type <strong>{queue.name}</strong> to confirm
+                <span>Type <strong>{queue.name}</strong> to confirm</span>
                 <input autoComplete="off" value={typed} disabled={remove.isPending} onChange={(e) => setTyped(e.target.value)} />
               </label>
             </>
