@@ -15,6 +15,14 @@ type Turn = {
   saved?: string;
 };
 
+const SUGGESTIONS = [
+  { id: "subject", label: "Ticket subject", prompt: "Suggest one concise ticket subject based on the supplied ticket text. Return only the subject. Do not invent details." },
+  { id: "classification", label: "Category and priority", prompt: "Suggest a category and priority for this ticket. Explain briefly why, flag uncertainty, and do not invent details. The technician will select from the service desk's available options." },
+  { id: "summary", label: "Ticket summary", prompt: "Summarize the ticket, what has been tried, and any outstanding questions. Distinguish facts from assumptions and do not invent details." },
+  { id: "troubleshooting", label: "Troubleshooting steps", prompt: "Suggest safe troubleshooting steps for this ticket, including checks and questions for the requester. Flag assumptions and potentially disruptive actions." },
+  { id: "reply", label: "Requester reply", prompt: "Draft a concise, helpful reply to the requester based only on the ticket information. Do not promise an outcome or invent details. Return only the draft reply." },
+] as const;
+
 export function CopilotSession({ ticket, account, onChanged }: { ticket: Ticket; account: string; onChanged: () => void }) {
   const [question, setQuestion] = useState("");
   const [share, setShare] = useState(true);
@@ -101,6 +109,16 @@ export function CopilotSession({ ticket, account, onChanged }: { ticket: Ticket;
           context_digest: share ? preview.data!.digest : null, conversation_id: conversation });
       }
     }}>
+      <label className="field">Start with a suggestion
+        <select value="" disabled={busy || !!question.trim()} onChange={e => {
+          const suggestion = SUGGESTIONS.find(item => item.id === e.target.value);
+          if (suggestion) setQuestion(suggestion.prompt);
+        }}>
+          <option value="">Choose a task…</option>
+          {SUGGESTIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+        </select>
+      </label>
+      <p className="small muted">Choosing a task fills the question for you to edit. Clear the question to choose another task. Review suggestions and choose ticket fields yourself; nothing is changed automatically.</p>
       <label className="field">{conversation ? "Ask a follow-up" : "Ask Copilot"}
         <textarea rows={3} maxLength={4000} value={question} disabled={busy} onChange={e => setQuestion(e.target.value)}
           placeholder="e.g. Summarize this ticket or suggest troubleshooting steps." />
