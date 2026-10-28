@@ -33,7 +33,7 @@ existing behavior.
 
 ## Personal themes
 
-**My preferences > Appearance** offers Tidepool, Amethyst, Blue Steel, Terracotta
+**My preferences > Appearance** offers Tidepool, Amethyst, Blue Steel, Terracotta,
 Graphite Lime, Graphite & Ice and Porcelain & Cobalt. Each supports Light, Dark and Follow my device. Both theme and
 appearance can independently follow the organization. Changes are saved to the
 technician account and apply immediately after Save across console routes.
