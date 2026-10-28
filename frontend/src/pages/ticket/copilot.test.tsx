@@ -24,8 +24,9 @@ async function askWithPreview() {
 test("suggestion prompts are editable and still require context review before sending", async () => {
   const calls = mockApi(base);
   renderAt("/", [{ path: "/", element: <CopilotCard ticket={ticket()} onChanged={vi.fn()} /> }]);
-  await userEvent.selectOptions(await screen.findByLabelText("Start with a suggestion"), "classification");
+  await userEvent.click(await screen.findByRole("button", { name: "Category and priority" }));
   expect((screen.getByLabelText("Ask Copilot") as HTMLTextAreaElement).value).toContain("category and priority");
+  expect(screen.getByRole("button", { name: "Ticket subject" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Ask" })).toBeDisabled();
   expect(calls.filter(c => c.method === "POST")).toHaveLength(0);
   await userEvent.click(screen.getByRole("button", { name: "Review ticket context" }));

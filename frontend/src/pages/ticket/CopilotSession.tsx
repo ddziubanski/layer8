@@ -109,16 +109,14 @@ export function CopilotSession({ ticket, account, onChanged }: { ticket: Ticket;
           context_digest: share ? preview.data!.digest : null, conversation_id: conversation });
       }
     }}>
-      <label className="field">Start with a suggestion
-        <select value="" disabled={busy || !!question.trim()} onChange={e => {
-          const suggestion = SUGGESTIONS.find(item => item.id === e.target.value);
-          if (suggestion) setQuestion(suggestion.prompt);
-        }}>
-          <option value="">Choose a task…</option>
-          {SUGGESTIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
-        </select>
-      </label>
-      <p className="small muted">Choosing a task fills the question for you to edit. Clear the question to choose another task. Review suggestions and choose ticket fields yourself; nothing is changed automatically.</p>
+      <div role="group" aria-label="Fill with Copilot" className="stack" style={{ gap: 6 }}>
+        <span className="lbl">Fill with Copilot</span>
+        <div className="row-gap">
+          {SUGGESTIONS.map(item => <button key={item.id} className="btn2" type="button" style={{ borderRadius: 999 }}
+            disabled={busy || !!question.trim()} onClick={() => setQuestion(item.prompt)}>{item.label}</button>)}
+        </div>
+      </div>
+      <p className="small muted">Choose a pill to prepare an editable question. Clear the question to choose another. Review Copilot’s answer and enter ticket fields yourself; nothing is changed automatically.</p>
       <label className="field">{conversation ? "Ask a follow-up" : "Ask Copilot"}
         <textarea rows={3} maxLength={4000} value={question} disabled={busy} onChange={e => setQuestion(e.target.value)}
           placeholder="e.g. Summarize this ticket or suggest troubleshooting steps." />
