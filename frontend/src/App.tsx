@@ -17,6 +17,7 @@ import { ChangePasswordFirst, Login, skipSilentWindowsSignIn } from "./pages/Log
 import { TwoFactorFirst } from "./components/TwoFactor";
 import { QueuePage } from "./pages/QueuePage";
 import { TicketPage } from "./pages/TicketPage";
+import { MobileCompanion } from "./pages/MobileCompanion";
 
 // Reports and Settings load when first opened, so everyone else downloads less.
 const named = <K extends string>(load: () => Promise<Record<K, ComponentType<any>>>, name: K) =>
@@ -290,6 +291,8 @@ const router = (me: Me) =>
   createBrowserRouter([
     // Agents and admins can use the portal as themselves, e.g. to request something.
     portalRoutes(me, "/portal"),
+    { path: "mobile", element: <MobileCompanion me={me} /> },
+    { path: "mobile/tickets/:ticketId", element: <MobileCompanion me={me} /> },
     // Printable, without the console around it.
     {
       path: "purchase-orders/:poId/receiving",

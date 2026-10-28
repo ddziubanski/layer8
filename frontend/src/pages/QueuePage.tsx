@@ -241,7 +241,7 @@ export function QueuePage({ me }: { me: Me }) {
   return (
     <div className="queue-page">
       <div className="page-head">
-        <div className="queue-title"><span className="queue-eyebrow">SERVICE DESK / WORKSPACE</span><h1>Ticket queue</h1></div>
+        <div className="queue-title"><span className="queue-eyebrow">SERVICE DESK / WORKSPACE</span><h1>Ticket queue</h1><Link to="/mobile">Mobile companion</Link></div>
         <div className="views scope" role="group" aria-label="Whose tickets">
           {SCOPES.map((s) => (
             <button key={s.key} type="button" aria-pressed={s.key === scope} onClick={() => go({ scope: s.key })}>
