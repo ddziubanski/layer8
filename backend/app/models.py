@@ -300,6 +300,8 @@ class Queue(Base):
     # Where "escalate" moves a ticket. Null means escalation only raises priority.
     escalation_queue_id: Mapped[int | None] = mapped_column(ForeignKey("queues.id"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    # Archived: retired and hidden from Settings > Queues (always inactive). Its tickets keep it.
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Restricted: only owners, managers, viewers and admins see its tickets (e.g. Human Resources).
     restricted: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     # Opening hours (app.hours lines); empty: the desk hours (Settings > Desk hours).

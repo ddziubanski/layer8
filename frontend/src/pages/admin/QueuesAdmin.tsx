@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { api, type Group, type Queue, type User } from "../../api/client";
+import { ActionDialog } from "../../components/ActionDialog";
 import { can } from "../../permissions";
 
 type PeoplePick = { users: Set<number>; groups: Set<number> };
@@ -55,7 +56,7 @@ function PeoplePicker({
   );
 }
 
-function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queues: Queue[]; me: User; agents: User[]; groups: Group[] }) {
+function QueueEditor({ queue, queues, me, agents, groups, onRetired }: { queue: Queue; queues: Queue[]; me: User; agents: User[]; groups: Group[]; onRetired: () => void }) {
   const queryClient = useQueryClient();
   // Admins, or those given Queues under Settings > Permissions.
   const isAdmin = can(me, "queues_manage");
@@ -120,7 +121,7 @@ function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queu
         <h2 className="spacer">{queue.name}</h2>
         {queue.is_default && <span className="chip g">Default queue</span>}
         {queue.restricted && <span className="chip a">Restricted</span>}
-        {!queue.is_active && <span className="chip n">Inactive</span>}
+        {queue.archived_at ? <span className="chip n">Archived</span> : !queue.is_active && <span className="chip n">Inactive</span>}
       </div>
       {!canEdit && <p className="muted">Only admins and this queue's managers can change it.</p>}
       <fieldset disabled={!canEdit} className="stack card" style={{ margin: 0 }}>
@@ -138,7 +139,7 @@ function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queu
           <select value={form.escalation_queue_id} onChange={set("escalation_queue_id")}>
             <option value="">Nowhere (escalation only raises priority)</option>
             {queues
-              .filter((q) => q.id !== queue.id)
+              .filter((q) => q.id !== queue.id && (!q.archived_at || String(q.id) === form.escalation_queue_id))
               .map((q) => (
                 <option key={q.id} value={q.id}>
                   {q.name}
@@ -149,7 +150,7 @@ function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queu
         {isAdmin && (
           <div className="row-gap">
             <label className="inline">
-              <input type="checkbox" checked={form.is_active} onChange={check("is_active")} /> Active
+              <input type="checkbox" checked={form.is_active} disabled={!!queue.archived_at} onChange={check("is_active")} /> Active
             </label>
             <label className="inline">
               <input type="checkbox" checked={form.is_default} disabled={queue.is_default} onChange={check("is_default")} /> Default queue
@@ -271,7 +272,102 @@ function QueueEditor({ queue, queues, me, agents, groups }: { queue: Queue; queu
           </button>
         </div>
       )}
+      {isAdmin && !queue.is_default && <RetireQueue queue={queue} queues={queues} onSelectOther={onRetired} />}
     </form>
+  );
+}
+
+/** Retire a queue: Archive (hidden, tickets keep it, reversible) or Delete. Delete is only offered
+ * once the queue has been marked inactive and saved: the deliberate extra step. */
+function RetireQueue({ queue, queues, onSelectOther }: { queue: Queue; queues: Queue[]; onSelectOther: () => void }) {
+  const queryClient = useQueryClient();
+  const [dialog, setDialog] = useState<"archive" | "delete" | null>(null);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["queues"] });
+  const archive = useMutation({
+    mutationFn: (archived: boolean) => api.archiveQueue(queue.id, archived),
+    onSuccess: (_, archived) => { setDialog(null); if (archived) onSelectOther(); },
+    onSettled: refresh,
+  });
+  return (
+    <div className="card stack" style={{ margin: 0 }} role="group" aria-label="Retire this queue">
+      <div className="lbl">Retire this queue</div>
+      <p className="muted small" style={{ margin: 0 }}>
+        <strong>Archive</strong> makes it inactive and hides it from this list; its tickets and history keep it, and you can unarchive it later.{" "}
+        <strong>Delete</strong> removes it for good, moving any tickets to another queue. Delete is offered only after the queue is marked inactive and saved.
+      </p>
+      <div className="row-gap">
+        {queue.archived_at
+          ? <button className="btn2" type="button" disabled={archive.isPending} onClick={() => archive.mutate(false)}>Unarchive</button>
+          : <button className="btn2" type="button" onClick={() => setDialog("archive")}>Archive…</button>}
+        <button className="btn2 danger pill-delete" type="button" disabled={queue.is_active} onClick={() => setDialog("delete")}
+          title={queue.is_active ? "Untick Active and save first" : undefined}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" /></svg>
+          Delete queue…
+        </button>
+        {queue.is_active && <span className="muted small">Untick Active and save to enable Delete.</span>}
+      </div>
+      {archive.error && !dialog && <p className="error" role="alert">{archive.error.message}</p>}
+      {dialog === "archive" && (
+        <ActionDialog title={`Archive ${queue.name}?`} busy={archive.isPending} onClose={() => setDialog(null)}>
+          <p>The queue becomes inactive and is hidden from Settings &gt; Queues (tick Show archived to see it again). Its tickets, history and reports keep it. Nothing is deleted.</p>
+          {archive.error && <p className="error" role="alert">{archive.error.message}</p>}
+          <div className="row-gap">
+            <button className="btn2" type="button" disabled={archive.isPending} onClick={() => setDialog(null)}>Cancel</button>
+            <button className="btn" type="button" disabled={archive.isPending} onClick={() => archive.mutate(true)}>Archive queue</button>
+          </div>
+        </ActionDialog>
+      )}
+      {dialog === "delete" && <DeleteQueue queue={queue} queues={queues} onClose={() => setDialog(null)} onDeleted={() => { setDialog(null); onSelectOther(); void refresh(); }} />}
+    </div>
+  );
+}
+
+function DeleteQueue({ queue, queues, onClose, onDeleted }: { queue: Queue; queues: Queue[]; onClose: () => void; onDeleted: () => void }) {
+  const check = useQuery({ queryKey: ["queue-delete-check", queue.id], queryFn: () => api.queueDeleteCheck(queue.id), gcTime: 0 });
+  const [moveTo, setMoveTo] = useState("");
+  const [typed, setTyped] = useState("");
+  const remove = useMutation({ mutationFn: () => api.deleteQueue(queue.id, moveTo ? Number(moveTo) : undefined), onSuccess: onDeleted });
+  const targets = queues.filter((q) => q.id !== queue.id && q.is_active);
+  const c = check.data;
+  const ready = !!c && !c.blockers.length && (!c.tickets || !!moveTo) && typed === queue.name;
+  return (
+    <ActionDialog title={`Delete ${queue.name}?`} busy={remove.isPending} onClose={onClose}>
+      {check.isLoading && <p className="muted">Checking what uses this queue…</p>}
+      {check.error && <p className="error" role="alert">{check.error.message}</p>}
+      {c && (
+        <div className="stack">
+          <p>This permanently deletes the queue and its settings, owners and portal options. It can&apos;t be undone; Archive keeps it instead.</p>
+          {c.blockers.length > 0 ? (
+            <div className="error" role="alert">
+              <p>Still in use, so it can&apos;t be deleted yet:</p>
+              <ul>{c.blockers.map((b) => <li key={b}>{b}</li>)}</ul>
+            </div>
+          ) : (
+            <>
+              {c.tickets > 0 ? (
+                <label className="field">
+                  Move its {c.tickets} ticket{c.tickets === 1 ? "" : "s"} ({c.open_tickets} open) to
+                  <select value={moveTo} disabled={remove.isPending} onChange={(e) => setMoveTo(e.target.value)}>
+                    <option value="">Choose a queue…</option>
+                    {targets.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+                  </select>
+                  <span className="muted small">Open tickets get a note on the move. Closed tickets keep who worked them.</span>
+                </label>
+              ) : <p className="muted">It has no tickets.</p>}
+              <label className="field">
+                Type <strong>{queue.name}</strong> to confirm
+                <input autoComplete="off" value={typed} disabled={remove.isPending} onChange={(e) => setTyped(e.target.value)} />
+              </label>
+            </>
+          )}
+        </div>
+      )}
+      {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+      <div className="row-gap">
+        <button className="btn2" type="button" disabled={remove.isPending} onClick={onClose}>Cancel</button>
+        <button className="btn danger" type="button" disabled={!ready || remove.isPending} onClick={() => remove.mutate()}>Delete permanently</button>
+      </div>
+    </ActionDialog>
   );
 }
 
@@ -301,6 +397,7 @@ export function QueuesAdmin({ me }: { me: User }) {
   const groups = useQuery({ queryKey: ["groups"], queryFn: api.groups });
   const [selected, setSelected] = useState<number | null>(null);
   const [newName, setNewName] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const create = useMutation({
     mutationFn: () => api.createQueue({ name: newName, is_default: false, restricted: false, email_addresses: [], portal_position: 100, show_in_portal: false, categories: [], category_routes: {} }),
     onSuccess: (q) => {
@@ -310,7 +407,9 @@ export function QueuesAdmin({ me }: { me: User }) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["queues"] }),
   });
 
-  const list = queues.data ?? [];
+  const all = queues.data ?? [];
+  const archived = all.filter((q) => q.archived_at).length;
+  const list = showArchived ? all : all.filter((q) => !q.archived_at);
   const current = list.find((q) => q.id === selected) ?? list[0];
   const agents = (users.data ?? []).filter((u) => u.is_active && u.role !== "requester");
 
@@ -329,11 +428,16 @@ export function QueuesAdmin({ me }: { me: User }) {
                   {q.name}
                   {q.show_in_portal && <span className="muted small"> · portal</span>}
                   {q.restricted && <span className="muted small"> · restricted</span>}
-                  {!q.is_active && <span className="muted small"> · inactive</span>}
+                  {q.archived_at ? <span className="muted small"> · archived</span> : !q.is_active && <span className="muted small"> · inactive</span>}
                 </button>
               </li>
             ))}
           </ul>
+          {archived > 0 && (
+            <label className="inline small">
+              <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Show archived ({archived})
+            </label>
+          )}
           {can(me, "queues_manage") && (
             <form
               className="stack"
@@ -354,7 +458,7 @@ export function QueuesAdmin({ me }: { me: User }) {
             </form>
           )}
         </div>
-        {current && <QueueEditor key={current.id} queue={current} queues={list} me={me} agents={agents} groups={groups.data ?? []} />}
+        {current && <QueueEditor key={current.id} queue={current} queues={all} me={me} agents={agents} groups={groups.data ?? []} onRetired={() => setSelected(null)} />}
       </div>
     </>
   );

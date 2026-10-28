@@ -1115,3 +1115,9 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .login .windows-sign-in-glow { border-color:var(--brand); box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 18%,transparent),0 0 14px color-mix(in srgb,var(--brand) 20%,transparent); }
 .login .windows-sign-in-glow:hover:not(:disabled) { box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 32%,transparent),0 0 18px color-mix(in srgb,var(--brand) 30%,transparent); }
 .login .windows-sign-in:focus-visible { outline:3px solid var(--link); outline-offset:4px; }
+
+/* Destructive actions: a red-outlined pill, solid red for the final confirm. */
+.pill-delete { border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; color: var(--error); border-color: color-mix(in srgb, var(--error) 45%, transparent); }
+.pill-delete:hover:not(:disabled) { border-color: var(--error); background: color-mix(in srgb, var(--error) 10%, var(--surface)); }
+.pill-delete:disabled { opacity: .5; cursor: not-allowed; }
+.btn.danger { background: var(--error); color: var(--surface); }

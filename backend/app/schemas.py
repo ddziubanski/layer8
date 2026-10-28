@@ -743,6 +743,7 @@ class QueueOut(ORM):
     is_default: bool
     escalation_queue_id: int | None
     is_active: bool
+    archived_at: datetime | None = None
     show_in_portal: bool
     portal_name: str | None
     portal_description: str | None
@@ -758,6 +759,18 @@ class QueueOut(ORM):
     manager_groups: list[GroupRef]
     viewer_users: list[UserRef]
     viewer_groups: list[GroupRef]
+
+
+class QueueArchiveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    archived: bool
+
+
+class QueueDeleteCheckOut(BaseModel):
+    """What deleting an inactive queue would do, and what stops it."""
+    tickets: int
+    open_tickets: int
+    blockers: list[str]
 
 
 class QueueRef(ORM):

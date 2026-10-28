@@ -340,6 +340,9 @@ export const api = {
   queues: () => request<Queue[]>("GET", "/api/queues"),
   createQueue: (body: QueueCreate) => request<Queue>("POST", "/api/queues", body),
   updateQueue: (id: number, body: QueueUpdate) => request<Queue>("PATCH", `/api/queues/${id}`, body),
+  archiveQueue: (id: number, archived: boolean) => request<Queue>("POST", `/api/queues/${id}/archive`, { archived }),
+  queueDeleteCheck: (id: number) => request<S["QueueDeleteCheckOut"]>("GET", `/api/queues/${id}/delete-check`),
+  deleteQueue: (id: number, moveTo?: number) => request<void>("DELETE", `/api/queues/${id}${moveTo ? `?move_to=${moveTo}` : ""}`),
   setOwners: (id: number, userIds: number[], groupIds: number[]) =>
     request<Queue>("PUT", `/api/queues/${id}/owners`, { user_ids: userIds, group_ids: groupIds }),
   setManagers: (id: number, userIds: number[], groupIds: number[]) =>
