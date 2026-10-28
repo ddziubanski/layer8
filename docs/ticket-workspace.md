@@ -34,7 +34,7 @@ existing behavior.
 ## Personal themes
 
 **My preferences > Appearance** offers Tidepool, Amethyst, Blue Steel, Terracotta
-and Graphite Lime. Each supports Light, Dark and Follow my device. Both theme and
+Graphite Lime, Graphite & Ice and Porcelain & Cobalt. Each supports Light, Dark and Follow my device. Both theme and
 appearance can independently follow the organization. Changes are saved to the
 technician account and apply immediately after Save across console routes.
 They do not modify another technician's preferences or public branding.
@@ -52,8 +52,8 @@ appearance choices in the new technician console.
 {"console_appearance": {"palette": "tidepool", "mode": "dark"}}
 ```
 
-The palette may be one of the five IDs (`tidepool`, `amethyst`, `blue-steel`,
-`terracotta`, `graphite-lime`) or null to follow the organization. Mode is
+The palette may be one of the seven IDs (`tidepool`, `amethyst`, `blue-steel`,
+`terracotta`, `graphite-lime`, `graphite-ice`, `porcelain-cobalt`) or null to follow the organization. Mode is
 `organization`, `light`, `dark` or `system`. Omitting the field preserves it; null
 resets both choices. Requesters cannot change console presentation. Damaged
 stored preferences safely fall back to the organization default. No database

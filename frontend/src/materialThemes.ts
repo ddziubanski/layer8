@@ -8,6 +8,8 @@ export const MATERIAL_THEMES = {
   "blue-steel": { label: "Blue Steel", light: ["#f0f4fb", "#fbfcff", "#e8eef8", "#dfe7f4", "#1b2432", "#596576", "#c6d0e0", "#2b59a5", "#ffffff", "#d6e3ff", "#0a2e63"], dark: ["#111923", "#192330", "#222e3e", "#2e3a4c", "#e6edf7", "#becadb", "#45546a", "#abc7ff", "#083065", "#28487d", "#d9e5ff"] },
   terracotta: { label: "Terracotta", light: ["#fcf1eb", "#fffbf8", "#f6e9df", "#efdfd2", "#302019", "#746056", "#dfc7b7", "#98432f", "#ffffff", "#ffdbca", "#52200e"], dark: ["#211711", "#2e211a", "#3a2b22", "#48362c", "#f8e7db", "#d8bfb0", "#654b3c", "#ffb59b", "#58220f", "#763d2a", "#ffdbca"] },
   "graphite-lime": { label: "Graphite Lime", light: ["#f2f4ec", "#fbfcf6", "#e9eddf", "#e0e5d5", "#24291c", "#5d6552", "#c9d0ba", "#4e681e", "#ffffff", "#d2eca7", "#243800"], dark: ["#171a13", "#20251b", "#2b3024", "#363e2c", "#e9eddf", "#c4cbb8", "#505b42", "#b1d77c", "#263e00", "#3c5420", "#d2eca7"] },
+  "graphite-ice": { label: "Graphite & Ice", light: ["#f0f5f8", "#fbfdff", "#e5edf3", "#d9e4ee", "#17232e", "#526171", "#becbd8", "#006778", "#ffffff", "#c4eff8", "#00343d"], dark: ["#15191f", "#222832", "#292f39", "#343e4c", "#e6edf3", "#abb8c9", "#536174", "#42d5ec", "#00343d", "#124652", "#bceff7"] },
+  "porcelain-cobalt": { label: "Porcelain & Cobalt", light: ["#f5f7fb", "#ffffff", "#edf1f8", "#e2e8f0", "#1f2937", "#526179", "#bcc8da", "#315cd5", "#ffffff", "#dce5ff", "#143270"], dark: ["#141b2a", "#1d273a", "#263147", "#303e56", "#e6ecfa", "#bdc8de", "#50617e", "#b5c7ff", "#0b2c71", "#2b4274", "#e0e8ff"] },
 } as const;
 export type MaterialTheme = keyof typeof MATERIAL_THEMES;
 export const DEFAULT_APPEARANCE = { palette: null, mode: "organization" } as const;

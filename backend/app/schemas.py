@@ -139,7 +139,7 @@ class QueueListPreferences(BaseModel):
 class ConsoleAppearance(BaseModel):
     """Personal technician theme; null palette follows the organization."""
     model_config = ConfigDict(extra="forbid")
-    palette: Literal["tidepool", "amethyst", "blue-steel", "terracotta", "graphite-lime"] | None = None
+    palette: Literal["tidepool", "amethyst", "blue-steel", "terracotta", "graphite-lime", "graphite-ice", "porcelain-cobalt"] | None = None
     mode: Literal["organization", "light", "dark", "system"] = "organization"
 
 
@@ -537,7 +537,7 @@ class BrandingOut(BaseModel):
     background_in_console: bool
     portal_welcome: str
     theme_preset: Literal["custom", "midnight", "ember", "ultraviolet"] = "custom"
-    console_theme: Literal["tidepool", "amethyst", "blue-steel", "terracotta", "graphite-lime"] = "tidepool"
+    console_theme: Literal["tidepool", "amethyst", "blue-steel", "terracotta", "graphite-lime", "graphite-ice", "porcelain-cobalt"] = "tidepool"
     theme_brand: str
     theme_sidebar: str
     dark_mode: str

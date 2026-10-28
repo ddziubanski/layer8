@@ -6199,7 +6199,7 @@ export interface components {
              * @default tidepool
              * @enum {string}
              */
-            console_theme: "tidepool" | "amethyst" | "blue-steel" | "terracotta" | "graphite-lime";
+            console_theme: "tidepool" | "amethyst" | "blue-steel" | "terracotta" | "graphite-lime" | "graphite-ice" | "porcelain-cobalt";
             /** Theme Brand */
             theme_brand: string;
             /** Theme Sidebar */
@@ -6900,7 +6900,7 @@ export interface components {
          */
         ConsoleAppearance: {
             /** Palette */
-            palette?: ("tidepool" | "amethyst" | "blue-steel" | "terracotta" | "graphite-lime") | null;
+            palette?: ("tidepool" | "amethyst" | "blue-steel" | "terracotta" | "graphite-lime" | "graphite-ice" | "porcelain-cobalt") | null;
             /**
              * Mode
              * @default organization
