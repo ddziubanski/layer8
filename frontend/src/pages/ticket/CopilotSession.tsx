@@ -15,6 +15,14 @@ type Turn = {
   saved?: string;
 };
 
+const SUGGESTIONS = [
+  { id: "subject", label: "Ticket subject", prompt: "Suggest one concise ticket subject based on the supplied ticket text. Return only the subject. Do not invent details." },
+  { id: "classification", label: "Category and priority", prompt: "Suggest a category and priority for this ticket. Explain briefly why, flag uncertainty, and do not invent details. The technician will select from the service desk's available options." },
+  { id: "summary", label: "Ticket summary", prompt: "Summarize the ticket, what has been tried, and any outstanding questions. Distinguish facts from assumptions and do not invent details." },
+  { id: "troubleshooting", label: "Troubleshooting steps", prompt: "Suggest safe troubleshooting steps for this ticket, including checks and questions for the requester. Flag assumptions and potentially disruptive actions." },
+  { id: "reply", label: "Requester reply", prompt: "Draft a concise, helpful reply to the requester based only on the ticket information. Do not promise an outcome or invent details. Return only the draft reply." },
+] as const;
+
 export function CopilotSession({ ticket, account, onChanged }: { ticket: Ticket; account: string; onChanged: () => void }) {
   const [question, setQuestion] = useState("");
   const [share, setShare] = useState(true);
@@ -101,6 +109,14 @@ export function CopilotSession({ ticket, account, onChanged }: { ticket: Ticket;
           context_digest: share ? preview.data!.digest : null, conversation_id: conversation });
       }
     }}>
+      <div role="group" aria-label="Fill with Copilot" className="stack" style={{ gap: 6 }}>
+        <span className="lbl">Fill with Copilot</span>
+        <div className="row-gap">
+          {SUGGESTIONS.map(item => <button key={item.id} className="btn2" type="button" style={{ borderRadius: 999 }}
+            disabled={busy || !!question.trim()} onClick={() => setQuestion(item.prompt)}>{item.label}</button>)}
+        </div>
+      </div>
+      <p className="small muted">Choose a pill to prepare an editable question. Clear the question to choose another. Review Copilot’s answer and enter ticket fields yourself; nothing is changed automatically.</p>
       <label className="field">{conversation ? "Ask a follow-up" : "Ask Copilot"}
         <textarea rows={3} maxLength={4000} value={question} disabled={busy} onChange={e => setQuestion(e.target.value)}
           placeholder="e.g. Summarize this ticket or suggest troubleshooting steps." />
