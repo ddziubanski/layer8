@@ -4,7 +4,7 @@ import { consoleAppearance, MATERIAL_THEMES, materialTokens, type MaterialTheme 
 import { ME } from "./test/util";
 import type { Branding } from "./api/client";
 
-test("all five paired palettes preserve readable text and button contrast", () => {
+test("all paired palettes preserve readable text and button contrast", () => {
   for (const name of Object.keys(MATERIAL_THEMES) as MaterialTheme[]) for (const dark of [false, true]) {
     const tokens = materialTokens(name, dark) as Record<string, string>;
     for (const [fg, bg] of [["--ink", "--surface"], ["--muted", "--surface"], ["--muted", "--material-low"], ["--on-brand", "--brand"], ["--material-on-container", "--material-container"], ["--chip-g", "--chip-g-bg"], ["--chip-a", "--chip-a-bg"], ["--chip-r", "--chip-r-bg"]]) {

@@ -26,11 +26,11 @@ test("technicians can save any Material palette and reset to the organization de
   renderAt("/", [{ path: "/", element: <PreferencesPage me={ME} /> }]);
   expect(screen.queryByLabelText("Layout")).not.toBeInTheDocument();
   const palette = screen.getByLabelText("Theme");
-  expect(within(palette).getAllByRole("option")).toHaveLength(6);
-  await userEvent.selectOptions(palette, "graphite-lime");
+  expect(within(palette).getAllByRole("option")).toHaveLength(8);
+  await userEvent.selectOptions(palette, "graphite-ice");
   await userEvent.selectOptions(screen.getByRole("combobox", { name: "Appearance" }), "dark");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
-  await waitFor(() => expect(calls.find(call => call.method === "PUT")?.body).toMatchObject({ console_appearance: { palette: "graphite-lime", mode: "dark" } }));
+  await waitFor(() => expect(calls.find(call => call.method === "PUT")?.body).toMatchObject({ console_appearance: { palette: "graphite-ice", mode: "dark" } }));
   await userEvent.click(screen.getByRole("button", { name: "Use organization default" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(calls.filter(call => call.method === "PUT").at(-1)?.body).toMatchObject({ console_appearance: { palette: null, mode: "organization" } }));
