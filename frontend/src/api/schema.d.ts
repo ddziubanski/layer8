@@ -1072,11 +1072,54 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Queue
+         * @description Permanently delete a queue. It must be marked inactive first (the extra step), and its
+         *     tickets, if any, move to another active queue; nothing else may still point at it.
+         */
+        delete: operations["delete_queue_api_queues__queue_id__delete"];
         options?: never;
         head?: never;
         /** Update Queue */
         patch: operations["update_queue_api_queues__queue_id__patch"];
+        trace?: never;
+    };
+    "/api/queues/{queue_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive Queue
+         * @description Archive: retire a queue and hide it from Settings > Queues. It's made inactive; its tickets,
+         *     history and reports keep it. Unarchiving brings it back, still inactive.
+         */
+        post: operations["archive_queue_api_queues__queue_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/queues/{queue_id}/delete-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Queue Delete Check */
+        get: operations["queue_delete_check_api_queues__queue_id__delete_check_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/queues/{queue_id}/owners": {
@@ -9892,6 +9935,11 @@ export interface components {
              */
             note: string;
         };
+        /** QueueArchiveIn */
+        QueueArchiveIn: {
+            /** Archived */
+            archived: boolean;
+        };
         /** QueueCount */
         QueueCount: {
             /** Name */
@@ -9956,6 +10004,18 @@ export interface components {
             hours?: string | null;
         };
         /**
+         * QueueDeleteCheckOut
+         * @description What deleting an inactive queue would do, and what stops it.
+         */
+        QueueDeleteCheckOut: {
+            /** Tickets */
+            tickets: number;
+            /** Open Tickets */
+            open_tickets: number;
+            /** Blockers */
+            blockers: string[];
+        };
+        /**
          * QueueListPreferences
          * @description How my ticket queue looks and loads. Presentation only.
          */
@@ -9993,6 +10053,8 @@ export interface components {
             escalation_queue_id: number | null;
             /** Is Active */
             is_active: boolean;
+            /** Archived At */
+            archived_at?: string | null;
             /** Show In Portal */
             show_in_portal: boolean;
             /** Portal Name */
@@ -15365,6 +15427,39 @@ export interface operations {
             };
         };
     };
+    delete_queue_api_queues__queue_id__delete: {
+        parameters: {
+            query?: {
+                move_to?: number | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                queue_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_queue_api_queues__queue_id__patch: {
         parameters: {
             query?: never;
@@ -15389,6 +15484,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_queue_api_queues__queue_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                queue_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueueArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    queue_delete_check_api_queues__queue_id__delete_check_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                queue_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueDeleteCheckOut"];
                 };
             };
             /** @description Validation Error */

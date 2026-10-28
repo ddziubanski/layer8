@@ -9,11 +9,16 @@ import logging
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 
-from app import auth, permissions, services
+from app import auth, permissions, services, sla
 from app.auth import Admin, Agent, SessionDep
-from app.models import AuthSource, Group, Priority, PriorityMatrixCell, Queue, RoutingRule, SlaPolicy, User, UserRole
+from app.models import (
+    AuthSource, CannedReply, EventType, Group, Priority, PriorityMatrixCell, Queue, RoutingRule, SlaPolicy, Ticket, TicketTemplate, User,
+    UserRole, Wallboard,
+)
 from app.priority import matrix as priority_matrix
 from app.schemas import (
+    QueueArchiveIn,
+    QueueDeleteCheckOut,
     GroupCreate,
     GroupOut,
     GroupUpdate,
@@ -272,6 +277,8 @@ def update_queue(queue_id: int, body: QueueUpdate, user: Agent, session: Session
     changes = body.model_dump(exclude_unset=True)
     if {"is_default", "is_active", "restricted"} & changes.keys() and (reason := permissions.not_allowed(session, user, "queues_manage")):
         raise HTTPException(status.HTTP_403_FORBIDDEN, f"Changing is_default, is_active or restricted: {reason}")
+    if queue.archived_at is not None and (changes.get("is_active") or changes.get("is_default")):
+        raise HTTPException(status.HTTP_409_CONFLICT, "This queue is archived; unarchive it first")
     if changes.get("escalation_queue_id") == queue.id:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "A queue cannot escalate to itself")
     check_queue(session, changes.get("escalation_queue_id"))
@@ -291,6 +298,95 @@ def update_queue(queue_id: int, body: QueueUpdate, user: Agent, session: Session
         setattr(queue, field, value)
     session.commit()
     return queue
+
+
+@router.post("/queues/{queue_id}/archive", response_model=QueueOut, tags=["queues"])
+def archive_queue(queue_id: int, body: QueueArchiveIn, user: QueueManager, session: SessionDep):
+    """Archive: retire a queue and hide it from Settings > Queues. It's made inactive; its tickets,
+    history and reports keep it. Unarchiving brings it back, still inactive."""
+    queue = get_or_404(session, Queue, queue_id)
+    if body.archived:
+        if queue.is_default:
+            raise HTTPException(status.HTTP_409_CONFLICT, "Make another queue the default before archiving this one")
+        if queue.archived_at is None:
+            queue.archived_at, queue.is_active = sla.utcnow(), False
+            log.info("%s archived queue %r", user.display_name, queue.name, extra={"source": "queues"})
+    elif queue.archived_at is not None:
+        queue.archived_at = None
+        log.info("%s unarchived queue %r", user.display_name, queue.name, extra={"source": "queues"})
+    session.commit()
+    return queue
+
+
+def _delete_blockers(session, queue: Queue) -> list[str]:
+    """Things that point at the queue and would break or silently change if it went."""
+    out = []
+    for q in session.scalars(select(Queue).where(Queue.id != queue.id).order_by(Queue.name)):
+        if q.escalation_queue_id == queue.id:
+            out.append(f"Queue {q.name} escalates to it")
+        if queue.id in (q.category_routes or {}).values():
+            out.append(f"Queue {q.name} routes a category to it")
+    for rule in session.scalars(select(RoutingRule).where((RoutingRule.set_queue_id == queue.id) | (RoutingRule.match_requested_queue_id == queue.id))):
+        out.append(f"Routing rule {rule.name} uses it")
+    for template in session.scalars(select(TicketTemplate).where(TicketTemplate.queue_id == queue.id)):
+        out.append(f"Ticket template {template.name} belongs to it")
+    canned = session.scalar(select(func.count()).select_from(CannedReply).where(CannedReply.queue_id == queue.id))
+    if canned:
+        out.append(f"{canned} canned repl{'y' if canned == 1 else 'ies'} belong to it")
+    return out
+
+
+def _ticket_counts(session, queue: Queue) -> tuple[int, int]:
+    total = session.scalar(select(func.count()).select_from(Ticket).where(Ticket.queue_id == queue.id)) or 0
+    open_ = session.scalar(select(func.count()).select_from(Ticket).where(Ticket.queue_id == queue.id, Ticket.status.not_in(sla.CLOSED_STATUSES))) or 0
+    return total, open_
+
+
+@router.get("/queues/{queue_id}/delete-check", response_model=QueueDeleteCheckOut, tags=["queues"])
+def queue_delete_check(queue_id: int, _: QueueManager, session: SessionDep):
+    queue = get_or_404(session, Queue, queue_id)
+    total, open_ = _ticket_counts(session, queue)
+    return {"tickets": total, "open_tickets": open_, "blockers": _delete_blockers(session, queue)}
+
+
+@router.delete("/queues/{queue_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["queues"])
+def delete_queue(queue_id: int, user: QueueManager, session: SessionDep, move_to: int | None = Query(default=None)):
+    """Permanently delete a queue. It must be marked inactive first (the extra step), and its
+    tickets, if any, move to another active queue; nothing else may still point at it."""
+    queue = session.scalar(select(Queue).where(Queue.id == queue_id).with_for_update())
+    if queue is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
+    if queue.is_active:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Mark the queue inactive and save before deleting it")
+    if queue.is_default:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Make another queue the default before deleting this one")
+    if blockers := _delete_blockers(session, queue):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Still in use: " + "; ".join(blockers))
+    total, _ = _ticket_counts(session, queue)
+    target = None
+    if total:
+        if move_to is None:
+            raise HTTPException(status.HTTP_409_CONFLICT, f"It still holds {total} ticket(s): choose a queue to move them to")
+        target = session.get(Queue, move_to)
+        if target is None or not target.is_active or target.id == queue.id:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Move its tickets to another active queue")
+        for ticket in session.scalars(select(Ticket).where(Ticket.queue_id == queue.id).order_by(Ticket.id)):
+            if ticket.status in sla.CLOSED_STATUSES:
+                # Closed history keeps its assignee; only the queue changes, and the history says why.
+                before = {"queue_id": ticket.queue_id, "assignee_id": ticket.assignee_id}
+                ticket.queue = target
+                services._event(session, ticket, EventType.assigned, user, before=before,
+                                after={"queue_id": target.id, "assignee_id": ticket.assignee_id}, reason=f"Queue {queue.name} deleted")
+            else:
+                services.assign(session, ticket, user, queue_id=target.id, note=f"Queue {queue.name} was deleted.")
+        session.flush()
+    for board in session.scalars(select(Wallboard).where(Wallboard.queue_ids.any(queue.id))):
+        board.queue_ids = [i for i in board.queue_ids if i != queue.id]
+    name = queue.name
+    session.delete(queue)
+    session.commit()
+    log.warning("%s deleted queue %r (%s ticket(s) moved to %s)", user.display_name, name, total, target.name if target else "none",
+                extra={"source": "queues"})
 
 
 @router.put("/queues/{queue_id}/owners", response_model=QueueOut, tags=["queues"])
