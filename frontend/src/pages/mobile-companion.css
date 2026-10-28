@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-.mobile-companion { min-height: 100dvh; background: var(--bg, #f4f7f7); color: var(--text, #142b2a); padding-bottom: 5rem; }
+.mobile-companion { min-height: 100dvh; background: var(--bg, #f4f7f7); color: var(--ink, #142b2a); padding-bottom: 5rem; }
 .mobile-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; background: #142b2a; color: #fff; }
 .mobile-header a { color: inherit; text-decoration: none; font-size: 1.2rem; font-weight: 700; }
 .mobile-header span { font-weight: 400; font-size: .85rem; }

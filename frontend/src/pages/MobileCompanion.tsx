@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
 import { api, type Me, type TicketScope } from "../api/client";
 import { TicketPriorityChip, StatusChip } from "../components/Chips";
+import { useBranding } from "../branding";
 import { when } from "../format";
 import { ME_KEY } from "../queryClient";
 import { skipSilentWindowsSignIn } from "./Login";
@@ -12,13 +13,14 @@ import "./mobile-companion.css";
 export function MobileCompanion({ me }: { me: Me }) {
   const id = Number(useParams().ticketId);
   const client = useQueryClient();
+  const brand = useBranding();
   const logout = useMutation({ mutationFn: api.logout, onSettled: () => {
     skipSilentWindowsSignIn();
     client.removeQueries({ predicate: q => q.queryKey[0] !== ME_KEY[0] });
     client.invalidateQueries({ queryKey: ME_KEY });
   } });
   return <div className="mobile-companion">
-    <header className="mobile-header"><Link to="/mobile">Layer 8 <span>Companion</span></Link><button type="button" onClick={() => logout.mutate()} disabled={logout.isPending}>Sign out</button></header>
+    <header className="mobile-header"><Link to="/mobile">{brand.hide_product_name ? "Service desk" : brand.product_name} <span>Companion</span></Link><button type="button" onClick={() => logout.mutate()} disabled={logout.isPending}>Sign out</button></header>
     <main className="mobile-content">
       {id ? <MobileTicket key={id} id={id} /> : <MobileTickets me={me} />}
     </main>
