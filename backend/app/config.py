@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     workspace_dashboard_enabled: bool = True
     workspace_devices_enabled: bool = True
     workspace_changes_enabled: bool = True
+    workspace_problems_enabled: bool = True
     workspace_purchasing_enabled: bool = True
     workspace_vendors_enabled: bool = True
     workspace_ipam_enabled: bool = True

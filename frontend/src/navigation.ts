@@ -6,6 +6,7 @@ export const OPTIONAL_MODULES: { id: SidebarModule; label: string; to: string; s
   { id: "dashboard", label: "Dashboard", to: "/dashboard", symbol: "◫" },
   { id: "devices", label: "Devices", to: "/devices", symbol: "▣" },
   { id: "changes", label: "Changes", to: "/changes", symbol: "⇄" },
+  { id: "problems", label: "Problems", to: "/problems", symbol: "◉" },
   { id: "purchase-orders", label: "Purchase orders", to: "/purchase-orders", symbol: "▤" },
   { id: "vendors", label: "Vendors", to: "/vendors", symbol: "◈" },
   { id: "ipam", label: "IP addresses", to: "/ipam", symbol: "⌗" },

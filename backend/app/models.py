@@ -1493,10 +1493,24 @@ class ChangeStatus(enum.StrEnum):
     cancelled = "cancelled"
 
 
+class ProblemStatus(enum.StrEnum):
+    open = "open"
+    investigating = "investigating"
+    known_error = "known_error"
+    resolved = "resolved"
+    closed = "closed"
+
+
 change_tickets = Table(
     "change_tickets",
     Base.metadata,
     Column("change_id", ForeignKey("changes.id", ondelete="CASCADE"), primary_key=True),
+    Column("ticket_id", ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True, index=True),
+)
+problem_tickets = Table(
+    "problem_tickets",
+    Base.metadata,
+    Column("problem_id", ForeignKey("problems.id", ondelete="CASCADE"), primary_key=True),
     Column("ticket_id", ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True, index=True),
 )
 change_devices = Table(
@@ -2388,4 +2402,42 @@ class TimeEntry(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped[User | None] = relationship()
+
+
+class Problem(Base):
+    """An investigation that groups incidents and records a known error or durable fix."""
+
+    __tablename__ = "problems"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str] = mapped_column(Text, default="", server_default="")
+    status: Mapped[ProblemStatus] = mapped_column(str_enum(ProblemStatus), default=ProblemStatus.open, server_default="open", index=True)
+    root_cause: Mapped[str] = mapped_column(Text, default="", server_default="")
+    workaround: Mapped[str] = mapped_column(Text, default="", server_default="")
+    resolution: Mapped[str] = mapped_column(Text, default="", server_default="")
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    owner: Mapped[User | None] = relationship(foreign_keys=[owner_id])
+    created_by: Mapped[User | None] = relationship(foreign_keys=[created_by_id])
+    tickets: Mapped[list[Ticket]] = relationship(secondary=problem_tickets, order_by="Ticket.id")
+    updates: Mapped[list["ProblemUpdate"]] = relationship(order_by="ProblemUpdate.id", cascade="all, delete-orphan")
+
+
+class ProblemUpdate(Base):
+    """Append-only discussion and audit timeline for a problem."""
+
+    __tablename__ = "problem_updates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    problem_id: Mapped[int] = mapped_column(ForeignKey("problems.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    type: Mapped[str] = mapped_column(String(32))
+    body: Mapped[str] = mapped_column(Text, default="", server_default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    author: Mapped[User | None] = relationship()
 
