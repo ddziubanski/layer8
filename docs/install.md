@@ -25,6 +25,7 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
    - **Install type**: local helpdesk (recommended), helpdesk with integrations, offline demo, or an existing answers file. Both real-install paths create the same working local helpdesk. The local path skips integration questions; the integrations path offers the existing optional setup questions. Both offer encrypted backups.
    - **Time zone**: backup times, scheduled reports and business hours follow it.
    - **Address**: the service desk's DNS name, e.g. `helpdesk.corp.example`. Create the DNS record pointing to the VM's address. The console shows the address, or use `ip addr`.
+     To keep the address fixed with a DHCP reservation, reserve the lease the appliance actually holds (on Windows DHCP: right-click the lease > *Add to Reservation*). The appliance identifies itself with a DUID client ID rather than its MAC address, so a reservation typed in by MAC doesn't match it.
    - **OS administrator**: a password for `sdadmin`. It's set at once, so you can copy files in with `scp` as `sdadmin` from here on. Until then the account has no password and can't be logged into.
    - **HTTPS**: a certificate and key from your CA (the wizard waits while you `scp` them in as `sdadmin`), or a self-signed certificate for now.
    - **First admin**: a local account that always works, even when AD is down. Keep it as the break-glass account.
