@@ -127,6 +127,8 @@ ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes
+# Other users' processes (the service desk's included) are hidden from it.
+ProtectProc=invisible
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes

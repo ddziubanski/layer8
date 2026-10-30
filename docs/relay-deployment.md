@@ -98,4 +98,4 @@ The PowerShell startup script ran under the default RemoteSigned policy without 
 
 Rights on the target computers: membership of *Remote Management Users* lets the gMSA connect over WinRM and run commands. Scripts that read WMI/CIM (for example `Get-CimInstance`) also need "Remote Enable" on the WMI namespace, or local Administrators. Without it they fail with *Access denied*. Grant only what your scripts need.
 
-Not yet tested in a real deployment: the Linux installer's systemd containment.
+The Linux installer was tested on the appliance itself. With a private CA, it refused to start until given `--ca-file`. A job run through it as `layer8-relay` couldn't read the service desk's settings, secrets, program or TLS key, couldn't write outside `/var/lib/layer8-relay`, couldn't use sudo, and saw only its own processes. `--uninstall` removed the service, account and files.
