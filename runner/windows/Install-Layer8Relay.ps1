@@ -11,7 +11,8 @@
   without taking work; only if that succeeds does it register the "Layer 8 relay" scheduled task,
   which starts at boot as SYSTEM (scripts that run on this host) or as an existing gMSA (scripts
   that reach other computers over WinRM). Running it again only changes what's out of date.
-  It doesn't enable WinRM, change execution policy or grant any domain rights.
+  It doesn't enable WinRM, change execution policy or grant any domain rights. It logs what it did
+  to C:\ProgramData\Layer8Relay\install.log; the relay itself logs to state\relay.log.
 
   Python 3.10+ must already be installed for all users.
 
@@ -32,6 +33,8 @@ $ErrorActionPreference = 'Stop'
 $Home8 = Join-Path $env:ProgramData 'Layer8Relay'
 $TaskName = 'Layer 8 relay'
 $Log = Join-Path $Home8 'install.log'
+# The relay's own log; the only place the task's account can write.
+$State = Join-Path $Home8 'state'
 
 function Write-Log([string]$Text) {
     if (-not (Test-Path $Home8)) { New-Item -ItemType Directory -Path $Home8 -Force | Out-Null }
@@ -84,6 +87,12 @@ $readers = @()
 if ($ServiceAccount) { $readers += $ServiceAccount }
 if (-not (Test-Path $Home8)) { New-Item -ItemType Directory -Path $Home8 -Force | Out-Null }
 Set-PrivateAcl -Path $Home8 -Readers $readers
+if (-not (Test-Path $State)) { New-Item -ItemType Directory -Path $State -Force | Out-Null }
+if ($ServiceAccount) {
+    $acl = Get-Acl $State
+    $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule($ServiceAccount, 'Modify', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+    Set-Acl -Path $State -AclObject $acl
+}
 
 # The program and the CA certificate, when they changed.
 foreach ($name in @('helpdesk_runner.py', 'ca.pem')) {
@@ -117,6 +126,7 @@ $check = & $python @runArgs --check 2>&1
 if ($LASTEXITCODE -ne 0) { Write-Log "Check-in failed: $check"; exit 1 }
 Write-Log "$check"
 
+$runArgs += @('--log-file', (Join-Path $State 'relay.log'))
 $quoted = ($runArgs | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '
 $action = New-ScheduledTaskAction -Execute $python -Argument $quoted -WorkingDirectory $Home8
 $trigger = New-ScheduledTaskTrigger -AtStartup

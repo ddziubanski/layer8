@@ -43,8 +43,11 @@ $installer = Join-Path $here 'Install-Layer8Relay.ps1'
 # The scripts client-side extension, with the GPO editor's tool extension for scripts.
 $ScriptsCse = '[{42B5FAAE-6536-11D2-AE5A-0000F87571E3}{40B6664F-4972-11D1-A7CA-0000F87571E3}]'
 
+if (Get-GPO -Name $Name -ErrorAction SilentlyContinue) {
+    Write-Warning "A GPO called '$Name' already exists; this script never changes existing GPOs. Pick another -Name."
+    exit 1
+}
 $problems = @()
-if (Get-GPO -Name $Name -ErrorAction SilentlyContinue) { $problems += "A GPO called '$Name' already exists; this script never changes existing GPOs. Pick another -Name." }
 $group = Get-ADGroup -Filter "Name -eq '$($ComputerGroup -replace "'", "''")'" -ErrorAction SilentlyContinue
 if (-not $group) { $problems += "No AD group '$ComputerGroup'. Make a group of the relay computers first." }
 foreach ($path in @($KitPath, $TokenPath)) {
@@ -86,6 +89,13 @@ $gpt = "\\$domain\SYSVOL\$domain\Policies\{$($gpo.Id)}\GPT.INI"
 Set-Content -Path $gpt -Value "[General]`r`nVersion=$version`r`n" -Encoding ascii
 
 Write-Output "Created '$Name' ({$($gpo.Id)}), unlinked."
-Write-Output 'Next, when the tokens are on the token share (Set-Layer8RelayToken.ps1), activate it for the relay hosts'' OU:'
-Write-Output "  New-GPLink -Name '$Name' -Target 'OU=Relay hosts,DC=corp,DC=example'"
+Write-Output 'Next, when the tokens are on the token share (Set-Layer8RelayToken.ps1), activate it where the relay hosts are:'
+# The containers holding the group's computers now; the filter keeps everyone else in them out.
+$containers = @(Get-ADGroupMember -Identity $group | Where-Object objectClass -eq 'computer' |
+    ForEach-Object { ($_.distinguishedName -split '(?<!\\),', 2)[1] } | Sort-Object -Unique)
+if (-not $containers) { Write-Output "  ('$ComputerGroup' has no computers yet.) New-GPLink -Name '$Name' -Target '<OU of the relay hosts>'" }
+foreach ($ou in $containers) {
+    if ($ou -like 'CN=*') { Write-Output "  ($ou is a container, which GPOs can't be linked to: move the relay hosts into an OU first.)" }
+    else { Write-Output "  New-GPLink -Name '$Name' -Target '$ou'" }
+}
 Write-Output 'The hosts install the relay at their next restart (or run gpupdate /force and restart).'

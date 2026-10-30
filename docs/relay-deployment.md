@@ -40,14 +40,14 @@ Everything is previewed first. Nothing changes an existing GPO, enables WinRM, b
    - For scripts that reach other PCs over WinRM, an existing **gMSA** installed on those hosts. Without one, the relay runs as SYSTEM, for scripts that run on the host itself.
 2. **Tokens:** in Layer 8, add one relay per host (Settings > Relays). Then, as a domain administrator, run once per host:
    `.\Set-Layer8RelayToken.ps1 -Computer RELAY01 -TokenPath \\fs01\layer8-relay-tokens$`
-   It asks for the token, so it's never on the command line or in SYSVOL, and writes `RELAY01.token`, readable only by `CORP\RELAY01$` and Administrators.
+   It asks for the token, so it's never on the command line or in SYSVOL, and writes `RELAY01.token`, readable only by `CORP\RELAY01$` and Administrators. For a scripted rollout, `-TokenFile <file>` reads the token from a file instead; delete that file afterwards.
 3. **The GPO:**
    `.\New-Layer8RelayGpo.ps1 -ComputerGroup 'Layer 8 relay hosts' -KitPath \\fs01\layer8-relay$ -TokenPath \\fs01\layer8-relay-tokens$ [-ServiceAccount 'CORP\gmsa-relay$']`
    It checks everything and shows the plan. Add `-Apply` to create the GPO:
    - It's a **new**, **unlinked** GPO; the script refuses if one with that name exists.
    - It applies only to the group; Authenticated Users can only read it.
    - It has one computer startup script, `Install-Layer8Relay.ps1`, given only the two share paths and the gMSA name.
-4. **Activate it** yourself by linking the GPO to the OU holding the relay hosts (`New-GPLink`, shown at the end). The hosts install the relay at their next restart.
+4. **Activate it** yourself by linking the GPO to the OU holding the relay hosts. The script ends by printing the `New-GPLink` command for each OU the group's computers are in. The hosts install the relay at their next restart.
 
 At startup, `Install-Layer8Relay.ps1`:
 1. Copies the relay from the kit share when it changed.
@@ -56,11 +56,11 @@ At startup, `Install-Layer8Relay.ps1`:
 4. Checks in.
 5. Only then registers and starts the **Layer 8 relay** scheduled task.
 
-It logs to `C:\ProgramData\Layer8Relay\install.log`. PowerShell startup scripts follow the computers' execution policy: sign `Install-Layer8Relay.ps1`, or allow it as your policy says.
+It logs to `C:\ProgramData\Layer8Relay\install.log`. The relay itself logs to `state\relay.log` in the same folder, including why it stopped (for example a revoked token). `state` is the only place the relay's account can write. PowerShell startup scripts follow the computers' execution policy: sign `Install-Layer8Relay.ps1`, or allow it as your policy says.
 
 ## Health, revoking and removing
 
-- **Health:** Settings > Relays shows each relay's last check-in, host and version. On a host, `--check` checks in on demand. Logs: `journalctl -u layer8-relay` on Linux; `install.log` and the task's history on Windows.
+- **Health:** Settings > Relays shows each relay's last check-in, host and version. On a host, `--check` checks in on demand. Logs: `journalctl -u layer8-relay` on Linux; `install.log` and `state\relay.log` on Windows.
 - **Revoke:** Settings > Relays > **New token** (or delete the relay). The old token stops working at once. Delete the host's token file on the token share as well.
 - **Remove:**
   - Linux: `sh install-relay.sh --uninstall`.
@@ -68,6 +68,16 @@ It logs to `C:\ProgramData\Layer8Relay\install.log`. PowerShell startup scripts 
   - The GPO: unlink and delete it (`Remove-GPO`).
 - **If something fails:** an installer that can't check in leaves the relay stopped and says why. A host whose token isn't on the share yet installs nothing until it is.
 
-## Before trusting it in production
+## Tested
 
-These scripts are checked with synthetic data and a PowerShell syntax check. Applying the GPO in a real domain, and the appliance service's containment, need a test in a disposable environment first.
+The Windows path was tested end to end in the Windows Server 2025 lab (`docs/ad-lab.md`), on a domain with default policies:
+- the token file's ACL;
+- GPO preview, creation and security filtering, including a workstation in a linked OU that was correctly denied;
+- the startup install as a gMSA;
+- check-in;
+- token revocation: one refused claim, then the relay stops and doesn't retry;
+- uninstall.
+
+The PowerShell startup script ran under the default RemoteSigned policy without being signed, because it runs from SYSVOL. If your domain requires signed scripts, sign `Install-Layer8Relay.ps1`.
+
+Not yet tested in a real deployment: the Linux installer's systemd containment, and running jobs that reach other computers through a gMSA relay.

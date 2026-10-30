@@ -7,24 +7,32 @@
   In Layer 8: Settings > Relays > Add a relay (one per host), and copy its token. Then run this as
   a domain administrator; it asks for the token (it's never on the command line or in SYSVOL) and
   writes <TokenPath>\<COMPUTER>.token with permissions for DOMAIN\COMPUTER$ (read) and
-  Administrators only. To revoke, use Settings > Relays > New token (or delete the relay): the old
+  Administrators only. For scripted rollouts, -TokenFile reads the token from a file instead
+  (delete that file afterwards). To revoke, use Settings > Relays > New token (or delete the relay): the old
   token stops working at once. Delete the file too.
 
 .EXAMPLE
   .\Set-Layer8RelayToken.ps1 -Computer RELAY01 -TokenPath \\fs01\layer8-relay-tokens$
+.EXAMPLE
+  .\Set-Layer8RelayToken.ps1 -Computer RELAY01 -TokenPath \\fs01\layer8-relay-tokens$ -TokenFile C:\Temp\relay01.token
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)][string]$Computer,
-    [Parameter(Mandatory)][string]$TokenPath
+    [Parameter(Mandatory)][string]$TokenPath,
+    [string]$TokenFile
 )
 $ErrorActionPreference = 'Stop'
 Import-Module ActiveDirectory
 $account = Get-ADComputer -Identity $Computer
 $domain = (Get-ADDomain).NetBIOSName
 $who = "$domain\$($account.SamAccountName)"
-$secure = Read-Host -AsSecureString "Relay token for $Computer (from Settings > Relays)"
-$token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)).Trim()
+if ($TokenFile) {
+    $token = (Get-Content -Raw -Path $TokenFile).Trim()
+} else {
+    $secure = Read-Host -AsSecureString "Relay token for $Computer (from Settings > Relays)"
+    $token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)).Trim()
+}
 if (-not $token.StartsWith('hdr_')) { throw "That doesn't look like a relay token (hdr_...)." }
 $file = Join-Path $TokenPath "$($account.Name).token"
 if ($PSCmdlet.ShouldProcess($file, "write a token readable only by $who")) {

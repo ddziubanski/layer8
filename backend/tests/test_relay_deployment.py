@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Relay deployment: the no-work check-in, the token-free kit and the installers' syntax."""
+"""Relay deployment: the no-work check-in, the token-free kit, the installers' syntax and the relay's log file."""
 import io
 import json
 import shutil
@@ -70,3 +70,14 @@ def test_windows_scripts_parse():
     for ps1 in (RUNNER / "windows").glob("*.ps1"):
         check = f"$e=$null; [System.Management.Automation.Language.Parser]::ParseFile('{ps1}', [ref]$null, [ref]$e) | Out-Null; exit $e.Count"
         assert subprocess.run(["pwsh", "-NoProfile", "-Command", check]).returncode == 0, ps1.name
+
+
+def test_log_file_records_why_the_relay_stopped(tmp_path):
+    # A scheduled task has no console: with --log-file the reason it stopped is kept.
+    (tmp_path / "token").write_text("hdr_not-a-real-token")
+    log = tmp_path / "relay.log"
+    out = subprocess.run(["python3", "-I", str(RUNNER / "helpdesk_runner.py"), "--url", "https://127.0.0.1:9", "--token-file", str(tmp_path / "token"), "--log-file", str(log), "--check"],
+                         capture_output=True, text=True, timeout=30)
+    assert out.returncode == 1
+    assert "stopped: Can't reach the service desk at https://127.0.0.1:9" in log.read_text()
+    assert "hdr_not-a-real-token" not in log.read_text()
