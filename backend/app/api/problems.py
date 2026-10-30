@@ -74,6 +74,8 @@ def _out(problem: Problem) -> ProblemOut:
     })
 
 
+# The timeline outlives the links (an unlinked or deleted ticket), and visibility only checks the
+# tickets linked now: it names tickets by number only, never a restricted ticket's subject.
 def _update(session, problem: Problem, user: User, kind: str, body: str) -> None:
     session.add(ProblemUpdate(problem_id=problem.id, author_id=user.id, type=kind, body=body))
     problem.updated_at = func.now()
@@ -133,7 +135,7 @@ def create_problem(body: ProblemIn, user: Agent, session: SessionDep):
     session.flush()
     _update(session, problem, user, "created", "Problem created")
     for ticket in problem.tickets:
-        _update(session, problem, user, "ticket_linked", f"Linked ticket #{ticket.id}: {ticket.subject}")
+        _update(session, problem, user, "ticket_linked", f"Linked ticket #{ticket.id}")
     session.commit()
     return _out(_load(session, problem.id, user))
 
@@ -165,10 +167,10 @@ def update_problem(problem_id: int, body: ProblemIn, user: Agent, session: Sessi
     new_ticket_ids = {ticket.id for ticket in new_tickets}
     for ticket_id in sorted(new_ticket_ids - old_ticket_ids):
         ticket = next(ticket for ticket in new_tickets if ticket.id == ticket_id)
-        events.append(("ticket_linked", f"Linked ticket #{ticket.id}: {ticket.subject}"))
+        events.append(("ticket_linked", f"Linked ticket #{ticket.id}"))
     for ticket_id in sorted(old_ticket_ids - new_ticket_ids):
         ticket = next(ticket for ticket in problem.tickets if ticket.id == ticket_id)
-        events.append(("ticket_unlinked", f"Unlinked ticket #{ticket.id}: {ticket.subject}"))
+        events.append(("ticket_unlinked", f"Unlinked ticket #{ticket.id}"))
 
     problem.title = _validate_title(body.title)
     problem.description = body.description

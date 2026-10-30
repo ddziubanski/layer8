@@ -82,3 +82,23 @@ def test_problem_visibility_requires_access_to_every_linked_ticket(client, db, a
 def test_requesters_cannot_access_problem_management(client, requester):
     assert client.get("/api/problems", headers=as_user(requester)).status_code == 403
     assert client.post("/api/problems", json={"title": "Requester-created"}, headers=as_user(requester)).status_code == 403
+
+
+def test_timeline_never_reveals_a_ticket_subject(client, db, admin, agent, requester):
+    # Unlinking a restricted ticket makes the problem visible to everyone; its history must not
+    # carry that ticket's subject along.
+    public_queue = Queue(name="Desk", is_default=True)
+    restricted_queue = Queue(name="People", restricted=True)
+    db.add_all([public_queue, restricted_queue])
+    db.commit()
+    public_ticket = make_ticket(db, requester, public_queue, "Laptop Wi-Fi drops")
+    restricted_ticket = make_ticket(db, requester, restricted_queue, "Confidential account issue")
+    problem = client.post("/api/problems", json={"title": "Driver regression", "ticket_ids": [public_ticket.id, restricted_ticket.id]}, headers=as_user(admin)).json()
+    r = client.put(f"/api/problems/{problem['id']}", json={"title": "Driver regression", "ticket_ids": [public_ticket.id]}, headers=as_user(admin))
+    assert r.status_code == 200, r.text
+
+    seen = client.get(f"/api/problems/{problem['id']}", headers=as_user(agent))
+    assert seen.status_code == 200
+    assert "Confidential" not in seen.text
+    assert [u["body"] for u in seen.json()["updates"] if u["type"].startswith("ticket_")] == [
+        f"Linked ticket #{public_ticket.id}", f"Linked ticket #{restricted_ticket.id}", f"Unlinked ticket #{restricted_ticket.id}"]
