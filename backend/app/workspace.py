@@ -7,6 +7,7 @@ MODULES = (
     ("dashboard", "workspace_dashboard_enabled", "Dashboard", "Workload and SLA overview."),
     ("devices", "workspace_devices_enabled", "Devices", "Standalone device inventory pages."),
     ("changes", "workspace_changes_enabled", "Changes", "Change calendar and change pages."),
+    ("problems", "workspace_problems_enabled", "Problems", "Problem investigations, known errors and linked incidents."),
     ("purchase-orders", "workspace_purchasing_enabled", "Purchase orders", "Purchasing pages and printable receiving sheets."),
     ("vendors", "workspace_vendors_enabled", "Vendors", "Standalone vendor pages."),
     ("ipam", "workspace_ipam_enabled", "IP addresses (IPAM)", "Standalone subnet, VLAN and address pages."),

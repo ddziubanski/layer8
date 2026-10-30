@@ -10,7 +10,7 @@ import { SourceNotice } from "./SourceNotice";
 import { UnacceptedCounter } from "./UnacceptedCounter";
 
 const GROUPS = [
-  { label: "Helpdesk", ids: ["tickets", "dashboard", "changes"] },
+  { label: "Helpdesk", ids: ["tickets", "dashboard", "changes", "problems"] },
   { label: "People & devices", ids: ["devices"] },
   { label: "Operations", ids: ["ipam", "scripts", "purchase-orders", "vendors", "reports"] },
   { label: "Library", ids: ["kb"] },
@@ -21,6 +21,7 @@ const ICONS: Record<string, ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
   devices: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 21h8M12 16v5" /></>,
   changes: <><path d="M4 7h15l-4-4M20 17H5l4 4M19 7l-4 4M5 17l4-4" /></>,
+  problems: <><circle cx="12" cy="12" r="8" /><path d="M12 8v4m0 4h.01" /></>,
   "purchase-orders": <><path d="M3 4h3l3 12h9l3-8H7M10 20h.01M18 20h.01" /></>,
   vendors: <><path d="M4 21V7l8-4 8 4v14M8 21v-5h8v5M8 8h.01M16 8h.01M8 12h.01M16 12h.01" /></>,
   ipam: <><rect x="8" y="3" width="8" height="6" rx="1" /><rect x="2" y="16" width="7" height="5" rx="1" /><rect x="15" y="16" width="7" height="5" rx="1" /><path d="M12 9v4M5.5 16v-3h13v3" /></>,

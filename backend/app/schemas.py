@@ -9,7 +9,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints, computed_field, field_validator, model_validator
 
-from app.models import AuthSource, DeviceSource, EventType, ScriptKind, ScriptLanguage, FieldList, Impact, Priority, RuleMode, RuleTrigger, TicketSource, TicketStatus, Urgency, UserRole
+from app.models import AuthSource, DeviceSource, EventType, ScriptKind, ScriptLanguage, FieldList, Impact, Priority, ProblemStatus, RuleMode, RuleTrigger, TicketSource, TicketStatus, Urgency, UserRole
 from app import numbering, sla
 from app.previews import preview_kind
 from app.reports.engine import MAX_ROWS, ReportSpec
@@ -115,7 +115,7 @@ class UserOut(ORM):
         return self.password_hash is not None
 
 
-SidebarModule = Literal["dashboard", "devices", "changes", "purchase-orders", "vendors", "ipam", "kb", "scripts", "reports", "settings", "portal"]
+SidebarModule = Literal["dashboard", "devices", "changes", "problems", "purchase-orders", "vendors", "ipam", "kb", "scripts", "reports", "settings", "portal"]
 
 
 class TicketWorkspacePreferences(BaseModel):
@@ -184,7 +184,7 @@ class PreferencesIn(BaseModel):
     ticket_color: HexColor | None = None
     color_rules: list[ColorRule] = Field(default_factory=list, max_length=30)
     # Omitted: preserve it, including when an older client saves colours. Null/[]: show all.
-    hidden_modules: list[SidebarModule] | None = Field(default=None, max_length=11)
+    hidden_modules: list[SidebarModule] | None = Field(default=None, max_length=12)
     # Omitted preserves; null resets. Explicit objects replace the presentation preferences.
     ticket_workspace: TicketWorkspacePreferences | None = None
     queue_list: QueueListPreferences | None = None
@@ -2895,6 +2895,57 @@ class ChangeTemplateOut(ORM):
 
 
 # Knowledge base
+
+
+class ProblemIn(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    description: str = ""
+    status: ProblemStatus = ProblemStatus.open
+    root_cause: str = ""
+    workaround: str = ""
+    resolution: str = ""
+    owner_id: int | None = None
+    ticket_ids: list[int] = Field(default_factory=list, max_length=100)
+
+
+class ProblemNoteIn(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class ProblemTicketRef(ORM, Labelled):
+    id: int
+    subject: str
+    status: TicketStatus
+    created_at: datetime
+
+
+class ProblemUpdateOut(ORM):
+    id: int
+    created_at: datetime
+    author: UserRef | None
+    type: str
+    body: str
+
+
+class ProblemSummaryOut(ORM):
+    id: int
+    label: str
+    title: str
+    status: ProblemStatus
+    owner: UserRef | None
+    ticket_count: int
+    updated_at: datetime
+
+
+class ProblemOut(ProblemSummaryOut):
+    description: str
+    root_cause: str
+    workaround: str
+    resolution: str
+    created_by: UserRef | None
+    created_at: datetime
+    tickets: list[ProblemTicketRef]
+    updates: list[ProblemUpdateOut]
 
 
 class KbArticleIn(BaseModel):

@@ -125,6 +125,11 @@ export type ChecklistTemplate = S["ChecklistTemplateOut"];
 export type ChecklistTemplateIn = S["ChecklistTemplateIn"];
 export type TicketChecklist = S["TicketChecklistOut"];
 export type Change = S["ChangeOut"];
+export type Problem = S["ProblemOut"];
+export type ProblemSummary = S["ProblemSummaryOut"];
+export type ProblemIn = S["ProblemIn"];
+export type ProblemNoteIn = S["ProblemNoteIn"];
+export type ProblemUpdate = S["ProblemUpdateOut"];
 export type KbArticle = S["KbArticleOut"];
 export type Survey = S["SurveyOut"];
 export type PermissionRule = S["PermissionOut"];
@@ -573,6 +578,13 @@ export const api = {
     createTemplate: (body: ChangeTemplateIn) => request<ChangeTemplate>("POST", "/api/change-templates", body),
     updateTemplate: (id: number, body: ChangeTemplateIn) => request<ChangeTemplate>("PUT", `/api/change-templates/${id}`, body),
     removeTemplate: (id: number) => request<void>("DELETE", `/api/change-templates/${id}`),
+  },
+  problems: {
+    list: (p: { q?: string; status?: string } = {}) => request<ProblemSummary[]>("GET", `/api/problems${query(p)}`),
+    get: (id: number) => request<Problem>("GET", `/api/problems/${id}`),
+    create: (body: ProblemIn) => request<Problem>("POST", "/api/problems", body),
+    update: (id: number, body: ProblemIn) => request<Problem>("PUT", `/api/problems/${id}`, body),
+    addUpdate: (id: number, body: ProblemNoteIn) => request<ProblemUpdate>("POST", `/api/problems/${id}/updates`, body),
   },
   checklists: {
     templates: (includeInactive = false) => request<ChecklistTemplate[]>("GET", `/api/checklist-templates${query({ include_inactive: includeInactive ? "true" : undefined })}`),

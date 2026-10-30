@@ -14,6 +14,7 @@ export function commandsFor(me: Me): Command[] {
     { label: "Dashboard", to: "/dashboard", keywords: "workload overview" },
     { label: "Devices", to: "/devices", keywords: "assets computers" },
     { label: "Changes", to: "/changes" },
+    { label: "Problems", to: "/problems", keywords: "investigations known errors incidents" },
     { label: "Purchase orders", to: "/purchase-orders" },
     { label: "Vendors", to: "/vendors" },
     { label: "IP addresses", to: "/ipam", keywords: "network subnets ipam" },

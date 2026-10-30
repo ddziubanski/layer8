@@ -4772,6 +4772,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/problems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Problems */
+        get: operations["list_problems_api_problems_get"];
+        put?: never;
+        /** Create Problem */
+        post: operations["create_problem_api_problems_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/problems/{problem_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Problem */
+        get: operations["get_problem_api_problems__problem_id__get"];
+        /** Update Problem */
+        put: operations["update_problem_api_problems__problem_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/problems/{problem_id}/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Problem Update */
+        post: operations["add_problem_update_api_problems__problem_id__updates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/kb/articles": {
         parameters: {
             query?: never;
@@ -8473,7 +8526,7 @@ export interface components {
              * Hidden Modules
              * @default []
              */
-            hidden_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
+            hidden_modules: ("dashboard" | "devices" | "changes" | "problems" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"];
             queue_list?: components["schemas"]["QueueListPreferences"];
             console_appearance?: components["schemas"]["ConsoleAppearance"];
@@ -8481,7 +8534,7 @@ export interface components {
              * Disabled Modules
              * @default []
              */
-            disabled_modules: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
+            disabled_modules: ("dashboard" | "devices" | "changes" | "problems" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[];
             /** Has Password */
             readonly has_password: boolean;
         };
@@ -9863,7 +9916,7 @@ export interface components {
             /** Color Rules */
             color_rules?: components["schemas"]["ColorRule"][];
             /** Hidden Modules */
-            hidden_modules?: ("dashboard" | "devices" | "changes" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
+            hidden_modules?: ("dashboard" | "devices" | "changes" | "problems" | "purchase-orders" | "vendors" | "ipam" | "kb" | "scripts" | "reports" | "settings" | "portal")[] | null;
             ticket_workspace?: components["schemas"]["TicketWorkspacePreferences"] | null;
             queue_list?: components["schemas"]["QueueListPreferences"] | null;
             console_appearance?: components["schemas"]["ConsoleAppearance"] | null;
@@ -9878,6 +9931,131 @@ export interface components {
             impact: components["schemas"]["Impact"];
             urgency: components["schemas"]["Urgency"];
             priority: components["schemas"]["Priority"];
+        };
+        /** ProblemIn */
+        ProblemIn: {
+            /** Title */
+            title: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** @default open */
+            status: components["schemas"]["ProblemStatus"];
+            /**
+             * Root Cause
+             * @default
+             */
+            root_cause: string;
+            /**
+             * Workaround
+             * @default
+             */
+            workaround: string;
+            /**
+             * Resolution
+             * @default
+             */
+            resolution: string;
+            /** Owner Id */
+            owner_id?: number | null;
+            /** Ticket Ids */
+            ticket_ids?: number[];
+        };
+        /** ProblemNoteIn */
+        ProblemNoteIn: {
+            /** Body */
+            body: string;
+        };
+        /** ProblemOut */
+        ProblemOut: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProblemStatus"];
+            owner: components["schemas"]["UserRef"] | null;
+            /** Ticket Count */
+            ticket_count: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Description */
+            description: string;
+            /** Root Cause */
+            root_cause: string;
+            /** Workaround */
+            workaround: string;
+            /** Resolution */
+            resolution: string;
+            created_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Tickets */
+            tickets: components["schemas"]["ProblemTicketRef"][];
+            /** Updates */
+            updates: components["schemas"]["ProblemUpdateOut"][];
+        };
+        /**
+         * ProblemStatus
+         * @enum {string}
+         */
+        ProblemStatus: "open" | "investigating" | "known_error" | "resolved" | "closed";
+        /** ProblemSummaryOut */
+        ProblemSummaryOut: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProblemStatus"];
+            owner: components["schemas"]["UserRef"] | null;
+            /** Ticket Count */
+            ticket_count: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ProblemTicketRef */
+        ProblemTicketRef: {
+            /** Id */
+            id: number;
+            /** Subject */
+            subject: string;
+            status: components["schemas"]["TicketStatus"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Label */
+            readonly label: string;
+        };
+        /** ProblemUpdateOut */
+        ProblemUpdateOut: {
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            author: components["schemas"]["UserRef"] | null;
+            /** Type */
+            type: string;
+            /** Body */
+            body: string;
         };
         /** PublicPOIn */
         PublicPOIn: {
@@ -24256,6 +24434,182 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_problems_api_problems_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                status?: components["schemas"]["ProblemStatus"] | null;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_problem_api_problems_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProblemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_problem_api_problems__problem_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_problem_api_problems__problem_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProblemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_problem_update_api_problems__problem_id__updates_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProblemNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemUpdateOut"];
+                };
             };
             /** @description Validation Error */
             422: {

@@ -75,6 +75,7 @@ const ChecklistsAdmin = named(() => import("./pages/admin/ChecklistsAdmin"), "Ch
 const ChangesAdmin = named(() => import("./pages/admin/ChangesAdmin"), "ChangesAdmin");
 const ChangesPage = named(() => import("./pages/changes/ChangesPage"), "ChangesPage");
 const ChangePage = named(() => import("./pages/changes/ChangesPage"), "ChangePage");
+const ProblemsPage = named(() => import("./pages/problems/ProblemsPage"), "ProblemsPage");
 const GroupsAdmin = named(() => import("./pages/admin/GroupsAdmin"), "GroupsAdmin");
 const NoticesAdmin = named(() => import("./pages/admin/NoticesAdmin"), "NoticesAdmin");
 const QueuesAdmin = named(() => import("./pages/admin/QueuesAdmin"), "QueuesAdmin");
@@ -317,6 +318,8 @@ const router = (me: Me) =>
         { path: "vendors/:tab", element: <VendorsPage me={me} /> },
         { path: "changes", element: <ChangesPage /> },
         { path: "changes/:changeId", element: <ChangePage me={me} /> },
+        { path: "problems", element: <ProblemsPage /> },
+        { path: "problems/:problemId", element: <ProblemsPage /> },
         { path: "ipam", element: <IpamPage me={me} /> },
         { path: "ipam/:tab", element: <IpamPage me={me} /> },
         { path: "scripts", element: <ScriptsPage me={me} /> },
