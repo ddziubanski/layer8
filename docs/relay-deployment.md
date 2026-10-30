@@ -47,7 +47,21 @@ Everything is previewed first. Nothing changes an existing GPO, enables WinRM, b
    - It's a **new**, **unlinked** GPO; the script refuses if one with that name exists.
    - It applies only to the group; Authenticated Users can only read it.
    - It has one computer startup script, `Install-Layer8Relay.ps1`, given only the two share paths and the gMSA name.
-4. **Activate it** yourself by linking the GPO to the OU holding the relay hosts. The script ends by printing the `New-GPLink` command for each OU the group's computers are in. The hosts install the relay at their next restart.
+4. **Check it** before linking, or any time later: the same command with `-Verify` (instead of `-Apply`) confirms the GPO is still exactly what `-Apply` made:
+   - only the group can apply it;
+   - it runs only this kit's `Install-Layer8Relay.ps1`, with these parameters;
+   - it has no other settings.
+
+   It changes nothing and exits 1 if anything differs. The script never edits an existing GPO, so to change one, delete it and run `-Apply` again.
+5. **Activate it** yourself by linking the GPO to the OU holding the relay hosts. The script ends by printing the `New-GPLink` command for each OU the group's computers are in. The hosts install the relay at their next restart.
+
+To check a host before you link the GPO, run this there as an administrator:
+
+```
+.\Install-Layer8Relay.ps1 -KitPath \\fs01\layer8-relay$ -TokenPath \\fs01\layer8-relay-tokens$ -ServiceAccount 'CORP\gmsa-relay$' -Check
+```
+
+It checks Python, the kit share, the address, this host's token, the gMSA and a no-work check-in. It changes nothing and says *Ready* or what to fix. A token written in the last few seconds can briefly show as missing, because Windows caches "file not found" on shares.
 
 At startup, `Install-Layer8Relay.ps1`:
 1. Copies the relay from the kit share when it changed.
@@ -76,8 +90,12 @@ The Windows path was tested end to end in the Windows Server 2025 lab (`docs/ad-
 - the startup install as a gMSA;
 - check-in;
 - token revocation: one refused claim, then the relay stops and doesn't retry;
-- uninstall.
+- uninstall;
+- `-Check` and `-Verify`, including a tampered GPO;
+- a PowerShell job from the appliance that the gMSA relay ran on a workstation over WinRM.
 
 The PowerShell startup script ran under the default RemoteSigned policy without being signed, because it runs from SYSVOL. If your domain requires signed scripts, sign `Install-Layer8Relay.ps1`.
 
-Not yet tested in a real deployment: the Linux installer's systemd containment, and running jobs that reach other computers through a gMSA relay.
+Rights on the target computers: membership of *Remote Management Users* lets the gMSA connect over WinRM and run commands. Scripts that read WMI/CIM (for example `Get-CimInstance`) also need "Remote Enable" on the WMI namespace, or local Administrators. Without it they fail with *Access denied*. Grant only what your scripts need.
+
+Not yet tested in a real deployment: the Linux installer's systemd containment.

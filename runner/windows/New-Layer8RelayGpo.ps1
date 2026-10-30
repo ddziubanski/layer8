@@ -25,6 +25,9 @@
   .\New-Layer8RelayGpo.ps1 -ComputerGroup 'Layer 8 relay hosts' -KitPath \\fs01\layer8-relay$ -TokenPath \\fs01\layer8-relay-tokens$
 .EXAMPLE
   .\New-Layer8RelayGpo.ps1 -ComputerGroup 'Layer 8 relay hosts' -KitPath \\fs01\layer8-relay$ -TokenPath \\fs01\layer8-relay-tokens$ -ServiceAccount 'CORP\gmsa-relay$' -Apply
+.EXAMPLE
+  .\New-Layer8RelayGpo.ps1 -ComputerGroup 'Layer 8 relay hosts' -KitPath \\fs01\layer8-relay$ -TokenPath \\fs01\layer8-relay-tokens$ -ServiceAccount 'CORP\gmsa-relay$' -Verify
+  Before linking (or after anyone edited it): checks the GPO still is exactly what -Apply made.
 #>
 [CmdletBinding()]
 param(
@@ -33,7 +36,9 @@ param(
     [Parameter(Mandatory)][string]$KitPath,
     [Parameter(Mandatory)][string]$TokenPath,
     [string]$ServiceAccount,
-    [switch]$Apply
+    [switch]$Apply,
+    # Check an existing relay GPO against these settings and this kit before you link it; change nothing.
+    [switch]$Verify
 )
 $ErrorActionPreference = 'Stop'
 Import-Module GroupPolicy
@@ -43,8 +48,42 @@ $installer = Join-Path $here 'Install-Layer8Relay.ps1'
 # The scripts client-side extension, with the GPO editor's tool extension for scripts.
 $ScriptsCse = '[{42B5FAAE-6536-11D2-AE5A-0000F87571E3}{40B6664F-4972-11D1-A7CA-0000F87571E3}]'
 
+$params = "-KitPath `"$KitPath`" -TokenPath `"$TokenPath`"" + $(if ($ServiceAccount) { " -ServiceAccount `"$ServiceAccount`"" } else { '' })
+
+if ($Verify) {
+    $gpo = Get-GPO -Name $Name -ErrorAction SilentlyContinue
+    if (-not $gpo) { Write-Warning "No GPO called '$Name'."; exit 1 }
+    $domain = Get-ADDomain
+    $root = "\\$($domain.DNSRoot)\SYSVOL\$($domain.DNSRoot)\Policies\{$($gpo.Id)}"
+    $drift = @()
+    # Only the relay group may apply it; everyone else at most reads (admins keep their edit rights).
+    foreach ($p in Get-GPPermission -Guid $gpo.Id -All) {
+        if ($p.Permission -eq 'GpoApply' -and $p.Trustee.Name -ne $ComputerGroup) { $drift += "$($p.Trustee.Name) can apply it (only '$ComputerGroup' should)." }
+    }
+    if (-not (Get-GPPermission -Guid $gpo.Id -All | Where-Object { $_.Trustee.Name -eq $ComputerGroup -and $_.Permission -eq 'GpoApply' })) { $drift += "'$ComputerGroup' can't apply it." }
+    # Exactly the files -Apply wrote, with the kit's own installer.
+    $expected = @('GPT.INI', 'GPO.cmt', 'Machine\Scripts\psscripts.ini', 'Machine\Scripts\Startup\Install-Layer8Relay.ps1')
+    $files = @(Get-ChildItem $root -Recurse -File -Force | ForEach-Object { $_.FullName.Substring($root.Length + 1) })
+    foreach ($f in $files) { if ($f -notin $expected) { $drift += "Unexpected policy file: $f" } }
+    $script = Join-Path $root 'Machine\Scripts\Startup\Install-Layer8Relay.ps1'
+    if (-not (Test-Path $script)) { $drift += 'The startup script is missing.' }
+    elseif ((Get-FileHash $script).Hash -ne (Get-FileHash $installer).Hash) { $drift += "The startup script differs from this kit's Install-Layer8Relay.ps1." }
+    $ini = Join-Path $root 'Machine\Scripts\psscripts.ini'
+    $want = "[Startup]|0CmdLine=Install-Layer8Relay.ps1|0Parameters=$params"
+    $have = if (Test-Path $ini) { ((Get-Content $ini -Encoding Unicode) | Where-Object { $_ }) -join '|' } else { '' }
+    if ($have -ne $want) { $drift += "psscripts.ini isn't the one startup script with these parameters: $have" }
+    $ad = Get-ADObject -Identity "CN={$($gpo.Id)},CN=Policies,CN=System,$($domain.DistinguishedName)" -Properties gPCMachineExtensionNames, gPCUserExtensionNames
+    if ($ad.gPCMachineExtensionNames -ne $ScriptsCse -or $ad.gPCUserExtensionNames) { $drift += 'It has policy settings besides the startup script.' }
+    [xml]$report = Get-GPOReport -Guid $gpo.Id -ReportType Xml
+    $links = @($report.GPO.LinksTo | Where-Object { $_ } | ForEach-Object { $_.SOMPath })
+    Write-Output "GPO            : $Name ({$($gpo.Id)}), $(if ($links) { 'linked to ' + ($links -join ', ') } else { 'unlinked' })"
+    if ($drift) { $drift | ForEach-Object { Write-Warning $_ }; Write-Output 'It is NOT what New-Layer8RelayGpo.ps1 made: review it before linking (or delete it and run -Apply again).'; exit 1 }
+    Write-Output 'Matches: only the relay group applies it, and it runs only this kit''s Install-Layer8Relay.ps1 with these parameters.'
+    exit 0
+}
+
 if (Get-GPO -Name $Name -ErrorAction SilentlyContinue) {
-    Write-Warning "A GPO called '$Name' already exists; this script never changes existing GPOs. Pick another -Name."
+    Write-Warning "A GPO called '$Name' already exists; this script never changes existing GPOs. Pick another -Name (or check it with -Verify)."
     exit 1
 }
 $problems = @()
@@ -59,7 +98,6 @@ if ((Test-Path $KitPath) -and -not (Test-Path (Join-Path $KitPath 'relay.json'))
 if ($ServiceAccount -and -not $ServiceAccount.EndsWith('$')) { $problems += "$ServiceAccount isn't a gMSA (they end in `$)." }
 if (-not (Test-Path $installer)) { $problems += "Install-Layer8Relay.ps1 isn't next to this script." }
 
-$params = "-KitPath `"$KitPath`" -TokenPath `"$TokenPath`"" + $(if ($ServiceAccount) { " -ServiceAccount `"$ServiceAccount`"" } else { '' })
 Write-Output "New GPO        : $Name (unlinked)"
 Write-Output "Applies to     : members of '$ComputerGroup' only (Authenticated Users: read only)"
 Write-Output "Startup script : Install-Layer8Relay.ps1 $params"
@@ -89,7 +127,7 @@ $gpt = "\\$domain\SYSVOL\$domain\Policies\{$($gpo.Id)}\GPT.INI"
 Set-Content -Path $gpt -Value "[General]`r`nVersion=$version`r`n" -Encoding ascii
 
 Write-Output "Created '$Name' ({$($gpo.Id)}), unlinked."
-Write-Output 'Next, when the tokens are on the token share (Set-Layer8RelayToken.ps1), activate it where the relay hosts are:'
+Write-Output 'Next, when the tokens are on the token share (Set-Layer8RelayToken.ps1), check it with -Verify and activate it where the relay hosts are:'
 # The containers holding the group's computers now; the filter keeps everyone else in them out.
 $containers = @(Get-ADGroupMember -Identity $group | Where-Object objectClass -eq 'computer' |
     ForEach-Object { ($_.distinguishedName -split '(?<!\\),', 2)[1] } | Sort-Object -Unique)
