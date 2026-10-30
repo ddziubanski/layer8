@@ -50,6 +50,9 @@ exports its keytab to `dev/ad/out/http.keytab`. Upload that in Settings > Window
 `POST /api/auth/sso` with `Authorization: Negotiate <token>` signs the user in to the portal only (`portal_only: true`);
 the console needs a password. `tests/test_kerberos_live.py` shows how to get a token from the test KDC.
 
+The same tests run against a real Windows Server 2025 domain with `HELPDESK_TEST_AD=lab`: see
+[docs/ad-lab.md](../docs/ad-lab.md) for the Hyper-V lab and how to build it.
+
 ## Settings
 
 Admins change settings in the app (Settings), which stores them in the database (secrets as files in `HELPDESK_SECRETS_DIR`). A `HELPDESK_*` environment variable overrides a stored value and locks it in the UI. Installers and scripts use the CLI:

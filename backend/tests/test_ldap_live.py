@@ -1,43 +1,44 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The real LdapDirectory against the dev Samba AD (docker compose --profile ad up -d ad).
+"""The real LdapDirectory against the dev Samba AD (docker compose --profile ad up -d ad), or the
+Windows Server lab with HELPDESK_TEST_AD=lab (tests/live_ad.py).
 
 Skipped unless HELPDESK_TEST_LDAP=1. Uses the users and groups from dev/ad/seed.sh.
 """
 
 import os
-from pathlib import Path
 
 import pytest
 
 from app.directory.ldap import LdapDirectory
 from app.directory.types import DirectoryError
+from tests.live_ad import AD
 
 pytestmark = pytest.mark.skipif(os.environ.get("HELPDESK_TEST_LDAP") != "1", reason="set HELPDESK_TEST_LDAP=1 with the dev AD running")
 
-CA = str(Path(__file__).resolve().parents[2] / "dev" / "ad" / "out" / "ca.pem")
+BASE = AD.base_dn
 CFG = dict(
-    bind_dn="CN=svc-helpdesk,CN=Users,DC=corp,DC=local",
+    bind_dn=f"CN=svc-helpdesk,CN=Users,{BASE}",
     bind_password="Svc-readonly-pass-1",
-    base_dn="DC=corp,DC=local",
+    base_dn=BASE,
     user_filter="(&(objectCategory=person)(objectClass=user)(|(mail=*)(userPrincipalName=*)))",
-    ca_file=CA,
+    ca_file=AD.ca_file,
 )
 
 
 @pytest.fixture(scope="module")
 def ad():
-    return LdapDirectory(["ldaps://localhost:1636"], **CFG)
+    return LdapDirectory([AD.url], **CFG)
 
 
 def test_users_aliases_and_disabled(ad):
     users = {u.sam: u for u in ad.users()}
     assert {"jpark", "dcole", "mosei", "ralvarez", "leaver"} <= set(users)
     park = users["jpark"]
-    assert (park.email, park.display_name, park.aliases, park.department) == ("jpark@corp.local", "J. Park", ["j.park@corp.com"], "IT")
+    assert (park.email, park.display_name, park.aliases, park.department) == (f"jpark@{AD.domain}", "J. Park", [AD.alias], "IT")
     assert users["leaver"].enabled is False and park.enabled is True
 
 
-@pytest.mark.parametrize("login", ["jpark", "CORP\\jpark", "jpark@corp.local", "j.park@corp.com", "JPARK"])
+@pytest.mark.parametrize("login", ["jpark", "CORP\\jpark", f"jpark@{AD.domain}", AD.alias, "JPARK"])
 def test_find_user_by_any_name(ad, login):
     assert ad.find_user(login).sam == "jpark"
 
@@ -67,30 +68,30 @@ def test_nested_groups_both_directions(ad):
 
 def test_certificate_is_verified(ad):
     # Without our test CA the self-signed chain must be rejected.
-    untrusted = LdapDirectory(["ldaps://localhost:1636"], **{**CFG, "ca_file": ""})
+    untrusted = LdapDirectory([AD.url], **{**CFG, "ca_file": ""})
     with pytest.raises(DirectoryError):
         untrusted.describe()
 
 
 def test_wrong_service_password(ad):
-    bad = LdapDirectory(["ldaps://localhost:1636"], **{**CFG, "bind_password": "nope"})
+    bad = LdapDirectory([AD.url], **{**CFG, "bind_password": "nope"})
     with pytest.raises(DirectoryError, match="service account was refused"):
         bad.describe()
 
 
 def test_failover_to_second_server(ad):
-    pool = LdapDirectory(["ldaps://localhost:1", "ldaps://localhost:1636"], **{**CFG})
-    assert pool.describe()["base_dn"] == "DC=corp,DC=local"
+    pool = LdapDirectory(["ldaps://localhost:1", AD.url], **{**CFG})
+    assert pool.describe()["base_dn"] == BASE
 
 
 def test_computers(ad):
     """From dev/ad/computers.sh."""
     computers = {c.name: c for c in ad.computers()}
-    assert {"DC1", "WS-0142", "WS-0007"} <= set(computers)
+    assert {AD.dc_name, "WS-0142", "WS-0007"} <= set(computers)
     ws = computers["WS-0142"]
-    assert (ws.os, ws.os_version, ws.dns_hostname, ws.description) == ("Windows 11 Enterprise", "10.0 (22631)", "ws-0142.corp.local", "Finance, 2nd floor")
-    assert ws.managed_by.lower() == "cn=r alvarez,cn=users,dc=corp,dc=local"
-    assert ws.last_logon_at is not None and ws.last_logon_at.year == 2025
+    assert (ws.os, ws.os_version, ws.dns_hostname, ws.description) == ("Windows 11 Enterprise", "10.0 (22631)", f"ws-0142.{AD.domain}", "Finance, 2nd floor")
+    assert ws.managed_by.lower() == f"cn=r alvarez,cn=users,{BASE}".lower()
+    assert (ws.last_logon_at and ws.last_logon_at.year) == AD.ws0142_last_logon_year
     assert ws.enabled and not computers["WS-0007"].enabled
 
 
@@ -102,12 +103,12 @@ def test_direct_groups_nesting_and_ous(ad):
     assert [g.name for g in ad.group_children(admins.dn)] == ["SG-IT-Leads"]
     leads = next(g for g in ad.search_groups("SG-IT-Leads"))
     assert [g.name for g in ad.direct_groups(leads.dn)] == ["SG-Helpdesk-Admins"]
-    assert ("OU=Workstations,DC=corp,DC=local", "Workstations") in ad.search_ous("work", ["DC=corp,DC=local"])
+    assert (f"OU=Workstations,{BASE}", "Workstations") in ad.search_ous("work", [BASE])
 
 
 def test_account_taken_and_group_lists(ad):
     """New accounts (onboarding): names already in use, and "[EMAIL] ..." distribution lists (dev/ad/seed.sh)."""
-    assert ad.account_taken(sam="jpark", upn="", mail="") == [("account name", "CN=J Park,CN=Users,DC=corp,DC=local")]
-    assert ad.account_taken(sam="nobody-here", upn="nobody-here@corp.local", mail="nobody-here@corp.local") == []
-    names = [g.name for g in ad.groups_named("[EMAIL]", ["CN=Users,DC=corp,DC=local"])]
+    assert ad.account_taken(sam="jpark", upn="", mail="") == [("account name", f"CN=J Park,CN=Users,{BASE}")]
+    assert ad.account_taken(sam="nobody-here", upn=f"nobody-here@{AD.domain}", mail=f"nobody-here@{AD.domain}") == []
+    names = [g.name for g in ad.groups_named("[EMAIL]", [f"CN=Users,{BASE}"])]
     assert names == ["[EMAIL] All Staff", "[EMAIL] IT", "[EMAIL] Network Alerts"]
