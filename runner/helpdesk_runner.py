@@ -22,6 +22,7 @@ ended. Parameters reach scripts by name:
 import argparse
 import base64
 import json
+import logging
 import os
 import queue
 import shutil
@@ -36,9 +37,10 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-VERSION = "1.3"
+VERSION = "1.5"
 POST_EVERY = 2.0  # seconds between output updates while a script runs
 
 
@@ -70,8 +72,15 @@ class Api:
             return exc.code, {"detail": detail}
 
 
+# With --log-file, what the runner prints also goes to a rotating file: a scheduled task or
+# service has no console to keep it.
+file_log = logging.getLogger("layer8-relay")
+
+
 def log(msg: str) -> None:
     print(time.strftime("%Y-%m-%d %H:%M:%S"), msg, flush=True)
+    if file_log.handlers:
+        file_log.info(msg)
 
 
 # Building the command for each language
@@ -265,13 +274,21 @@ def main() -> None:
     p.add_argument("--ca-file", help="CA certificate to check the service desk's HTTPS certificate (default: the system's)")
     p.add_argument("--interval", type=float, default=5.0, help="Seconds between checks for work (default 5)")
     p.add_argument("--once", action="store_true", help="Run at most one job, then stop (for testing)")
+    p.add_argument("--check", action="store_true", help="Check in once without taking any work: confirms the address, certificate and token, then exits (0: OK)")
     p.add_argument("--powershell", help="PowerShell to use (default: pwsh, else powershell)")
     p.add_argument("--eos-user", help="eAPI user for Arista EOS scripts")
     p.add_argument("--eos-password-file", help="File with that user's password")
     p.add_argument("--eos-ca-file", help="CA certificate for the switches' eAPI certificates")
     p.add_argument("--eos-insecure", action="store_true", help="Don't check switch certificates (lab use only)")
     p.add_argument("--allow-http", action="store_true", help="Talk to the service desk over plain http (development only: the token would cross the network in the clear)")
+    p.add_argument("--log-file", help="Also log to this file (rotated: three files of 2 MiB), including why the runner stopped")
     args = p.parse_args()
+    if args.log_file:
+        handler = RotatingFileHandler(args.log_file, maxBytes=2 * 1024 * 1024, backupCount=2, encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%Y-%m-%d %H:%M:%S"))
+        file_log.addHandler(handler)
+        file_log.setLevel(logging.INFO)
+        file_log.propagate = False
     token = Path(args.token_file).read_text().strip() if args.token_file else os.environ.get("HELPDESK_RUNNER_TOKEN", "")
     os.environ.pop("HELPDESK_RUNNER_TOKEN", None)
     if not token:
@@ -281,6 +298,16 @@ def main() -> None:
         raise SystemExit("Use the service desk's https:// address (or --allow-http for development)")
     api = Api(args.url, token, args.ca_file)
     host = socket.getfqdn()
+    if args.check:
+        # Deployment verification: never claims a job.
+        try:
+            status, info = api.post("/api/runner/check-in", {"host": host, "version": VERSION})
+        except (urllib.error.URLError, OSError, TimeoutError) as exc:
+            raise SystemExit(f"Can't reach the service desk at {api.url}: {exc}") from None
+        if status != 200 or not info:
+            raise SystemExit(f"Check-in answered {status}: {info}")
+        print(f"OK: relay {info.get('name')!r} checked in from {host} (languages: {', '.join(info.get('languages') or []) or 'none'})")
+        return
     log(f"helpdesk runner {VERSION} on {host}, polling {api.url}")
     backoff = args.interval
     while True:
@@ -304,4 +331,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as exc:
+        # The reason it stopped (a refused token, a bad address), for the log file too.
+        if isinstance(exc.code, str) and file_log.handlers:
+            file_log.error("stopped: %s", exc.code)
+        raise

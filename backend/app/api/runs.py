@@ -5,18 +5,24 @@ Relays authenticate with their own bearer token (Authorization: Bearer hdr_...),
 user session; they can only claim queued runs and report on the runs they hold.
 """
 
+import io
+import json
 import logging
+import zipfile
 from datetime import timedelta
+from pathlib import Path
 
-from fastapi import APIRouter, Header, HTTPException, Query, Response, status
+from fastapi import APIRouter, Header, HTTPException, Query, Request, Response, status
 from sqlalchemy import or_, select
 
 from app import runs, scripts, sla
 from app.api.tickets import staff_ticket, visible_queue_ids
 from app.auth import Admin, Agent, SessionDep
+from app.config import settings
 from app.models import Device, Runner, RunStatus, Script, ScriptKind, ScriptRun, Ticket, User, UserRole
 from app.schemas import (
     RunDetailOut,
+    RunnerCheckInOut,
     RunnerClaimIn,
     RunnerFinishIn,
     RunnerIn,
@@ -71,6 +77,36 @@ def create_runner(body: RunnerIn, admin: Admin, session: SessionDep):
     session.commit()
     log.info("Relay %r added by %s", runner.name, admin.display_name, extra={"source": "settings"})
     return RunnerTokenOut(runner=RunnerOut.model_validate(runner), token=token)
+
+
+RUNNER_DIR = Path(__file__).resolve().parents[3] / "runner"
+KIT_FILES = ["helpdesk_runner.py", "install-relay.sh", "windows/Install-Layer8Relay.ps1", "windows/New-Layer8RelayGpo.ps1", "windows/Set-Layer8RelayToken.ps1"]
+KIT_README = """Layer 8 relay kit (no tokens inside: each relay gets its own from Settings > Relays).
+
+Linux (this appliance or another server):
+  sh install-relay.sh --url {url} --token-file /root/relay.token            (preview)
+  sh install-relay.sh --url {url} --token-file /root/relay.token --apply    (install)
+Windows, deployed by GPO to chosen hosts:
+  1. Put these files on a share the relay hosts can read (the "kit share").
+  2. Set-Layer8RelayToken.ps1 -Computer HOST -TokenPath \\server\tokens$   (per host)
+  3. New-Layer8RelayGpo.ps1 ... (preview), then -Apply; link the new GPO yourself.
+Check any relay: python helpdesk_runner.py --url {url} --token-file <token file> --check
+Full guide: docs/relay-deployment.md in the Layer 8 source (Source code link).
+"""
+
+
+@router.get("/api/runners/kit")
+def relay_kit(_: Admin, request: Request):
+    """The relay kit: the relay, its Linux installer and the Windows GPO scripts, plus relay.json
+    with this service desk's address. It never holds a token."""
+    url = (settings.portal_url or str(request.base_url)).rstrip("/")
+    data = io.BytesIO()
+    with zipfile.ZipFile(data, "w", zipfile.ZIP_DEFLATED) as kit:
+        for name in KIT_FILES:
+            kit.write(RUNNER_DIR / name, name.split("/")[-1])
+        kit.writestr("relay.json", json.dumps({"url": url}, indent=2) + "\n")
+        kit.writestr("README.txt", KIT_README.format(url=url))
+    return Response(data.getvalue(), media_type="application/zip", headers={"Content-Disposition": 'attachment; filename="layer8-relay-kit.zip"'})
 
 
 @router.put("/api/runners/{runner_id}", response_model=RunnerOut)
@@ -268,6 +304,17 @@ def _calling_runner(session, authorization: str | None) -> Runner:
     if runner is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown or disabled relay token", headers={"WWW-Authenticate": "Bearer"})
     return runner
+
+
+@router.post("/api/runner/check-in", response_model=RunnerCheckInOut)
+def runner_check_in(body: RunnerClaimIn, session: SessionDep, authorization: str | None = Header(default=None)):
+    """A relay saying hello without taking work (helpdesk_runner.py --check): proves the address,
+    certificate and token after a deployment. Records it as seen; claims nothing."""
+    runner = _calling_runner(session, authorization)
+    runner.last_seen_at, runner.last_host, runner.last_version = sla.utcnow(), body.host[:255], body.version[:50]
+    session.commit()
+    log.info("Relay %r checked in from %s (version %s)", runner.name, body.host[:255] or "?", body.version[:50] or "?", extra={"source": "scripts"})
+    return RunnerCheckInOut(name=runner.name, languages=list(runner.languages or []), builtins_only=runner.builtins_only)
 
 
 @router.post("/api/runner/claim", response_model=RunnerJobOut, responses={204: {"description": "Nothing to run"}})
