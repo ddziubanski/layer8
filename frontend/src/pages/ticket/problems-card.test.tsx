@@ -41,3 +41,16 @@ test("finds a problem and links it; unlinks too", async () => {
   await waitFor(() => expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/tickets/4821/problems/3")).toBe(true));
   expect(await within(card).findByRole("link", { name: "PRB-00005 Printer jams" })).toBeInTheDocument();
 });
+
+test("an open outage problem at the same site is offered as part of this outage", async () => {
+  const calls = mockApi({
+    "GET /api/tickets/4821/problems": { problems: [], hidden: 0, suggested: [{ problem: { ...PRINT, id: 12, label: "PRB-00012", title: "Branch outage", outage_scope: "Site Branch", workaround: "Use the hotspot." }, scope: "Part of this outage · Site Branch" }] },
+    "POST /api/tickets/4821/problems": { problems: [], hidden: 0, suggested: [] },
+  });
+  renderAt("/", [{ path: "/", element: <ProblemsCard ticket={ticket()} onChanged={() => {}} /> }]);
+  const offer = await screen.findByRole("group", { name: "Suggested: PRB-00012" });
+  expect(offer).toHaveTextContent("Same Site Branch");
+  expect(offer).toHaveTextContent("Workaround: Use the hotspot.");
+  await userEvent.click(within(offer).getByRole("button", { name: "Link to PRB-00012" }));
+  await waitFor(() => expect(calls.find((c) => c.method === "POST")?.body).toEqual({ problem_id: 12 }));
+});

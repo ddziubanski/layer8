@@ -50,6 +50,17 @@ export function ProblemsCard({ ticket, onChanged }: { ticket: Ticket; onChanged:
           </div>
         </div>
       ))}
+      {(linked.data?.suggested ?? []).map(({ problem: p, scope }) => (
+        <div key={`s${p.id}`} className="stack" style={{ gap: 4 }} role="group" aria-label={`Suggested: ${p.label}`}>
+          <div className="row-gap">
+            <span className="spacer small"><strong>Part of this outage?</strong> <Link to={`/problems/${p.id}`}>{p.label} {p.title}</Link></span>
+            <ProblemStatus status={p.status} />
+          </div>
+          <p className="muted small" style={{ margin: 0 }}>{scope.replace(/^Part of this outage · /, "Same ")}</p>
+          {p.workaround && <p className="small" style={{ margin: 0, whiteSpace: "pre-wrap" }}><strong>Workaround:</strong> {p.workaround}</p>}
+          <div><button className="btn2" type="button" disabled={link.isPending} onClick={() => link.mutate(p.id)}>Link to {p.label}</button></div>
+        </div>
+      ))}
       {!!linked.data?.hidden && (
         <p className="muted small" style={{ margin: 0 }}>
           Also part of {linked.data.hidden} problem{linked.data.hidden === 1 ? "" : "s"} you can&apos;t open: {linked.data.hidden === 1 ? "it links" : "they link"} tickets you can&apos;t see.

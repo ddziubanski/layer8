@@ -17,3 +17,19 @@ A ticket's **Work** tab has a **Problems** panel. It shows the problems the tick
 **Delete problem…** on the problem page needs the *Delete problems* permission (admins by default; Settings > Permissions). Its linked tickets stay, and each one's history says the problem was deleted. To keep the record, set the status to Closed instead.
 
 API: `GET/POST /api/tickets/{id}/problems`, `DELETE /api/tickets/{id}/problems/{problem_id}`, `DELETE /api/problems/{id}`.
+
+## Outages: one problem, one notice, one update
+
+When two or more tracked devices (UniFi, Meraki or SNMP gear, Meraki webhook alerts) go down at the same **switch**, **subnet** or **site** within 30 minutes, the Problems page shows the outage under **Outages without a problem**. **Open a problem…** creates one in the Investigating state:
+- **Tickets:** it links the outage tickets you can see.
+- **Scope:** it records the outage scope, for example "Site Branch". You can edit the scope on the problem page.
+- **Draft notice (optional):** it can draft a service notice. The notice stays off until someone turns it on in Settings > Notices. Drafting one needs the *Manage notices* permission.
+
+While the problem is open:
+- **New tickets:** tickets from people at that site, on that switch or in that subnet get a **Part of this outage?** suggestion on their Problems card.
+- **Problem page:** the page lists the same tickets so you can link them in one click.
+- **Outage panel:** this panel shows what is still down and the state of the notice. Recoveries from before the problem don't count.
+
+When everything is back up, **Update everyone affected…** sends one reviewed reply to every open linked ticket. It works like the parent-ticket update: you preview it first, and each person is emailed once. You can choose to resolve all the tickets with it. When the last linked ticket is resolved, the problem becomes Resolved and its service notice ends.
+
+API: `GET /api/problems/outage-clusters`, `POST /api/problems/from-outage`, `POST /api/problems/{id}/broadcast/preview`, `POST /api/problems/{id}/broadcast`. `GET /api/tickets/{id}/problems` also returns `suggested`.

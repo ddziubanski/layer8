@@ -7,11 +7,16 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
-from app import permissions, services
+from app import broadcast, outage_problems, permissions, services, sla
+from app.api.notices import _out as notice_out
 from app.api.tickets import staff_ticket, visible
 from app.auth import Agent, SessionDep
-from app.models import EventType, Problem, ProblemStatus, ProblemUpdate, Ticket, User, UserRole, problem_tickets
+from app.models import EventType, Problem, ProblemStatus, ProblemUpdate, ServiceNotice, Ticket, User, UserRole, problem_tickets
 from app.schemas import (
+    BroadcastIn,
+    BroadcastOut,
+    OutageClusterOut,
+    OutageProblemIn,
     ProblemIn,
     ProblemNoteIn,
     ProblemOut,
@@ -19,6 +24,7 @@ from app.schemas import (
     ProblemUpdateOut,
     TicketProblemLinkIn,
     TicketProblemOut,
+    TicketProblemSuggestionOut,
     TicketProblemsOut,
 )
 
@@ -37,6 +43,7 @@ def _summary(problem: Problem) -> ProblemSummaryOut:
         "label": _label(problem),
         "title": problem.title,
         "status": problem.status,
+        "outage_scope": problem.outage_scope or "",
         "owner": problem.owner,
         "ticket_count": len(problem.tickets),
         "updated_at": problem.updated_at,
@@ -57,7 +64,9 @@ def _load(session, problem_id: int, user: User) -> Problem:
         .options(
             selectinload(Problem.owner),
             selectinload(Problem.created_by),
-            selectinload(Problem.tickets),
+            selectinload(Problem.notice).selectinload(ServiceNotice.created_by),
+            selectinload(Problem.tickets).selectinload(Ticket.queue),
+            selectinload(Problem.tickets).selectinload(Ticket.assignee),
             selectinload(Problem.updates).selectinload(ProblemUpdate.author),
         )
         .where(Problem.id == problem_id)
@@ -68,12 +77,14 @@ def _load(session, problem_id: int, user: User) -> Problem:
     return problem
 
 
-def _out(problem: Problem) -> ProblemOut:
+def _out(session, problem: Problem, user: User) -> ProblemOut:
+    details = outage_problems.problem_outage_details(session, problem, user)
     return ProblemOut.model_validate({
         "id": problem.id,
         "label": _label(problem),
         "title": problem.title,
         "status": problem.status,
+        "outage_scope": problem.outage_scope or "",
         "owner": problem.owner,
         "ticket_count": len(problem.tickets),
         "updated_at": problem.updated_at,
@@ -85,6 +96,8 @@ def _out(problem: Problem) -> ProblemOut:
         "created_at": problem.created_at,
         "tickets": problem.tickets,
         "updates": problem.updates,
+        "notice": notice_out(problem.notice, sla.utcnow()) if problem.notice is not None else None,
+        **details,
     })
 
 
@@ -122,6 +135,59 @@ def _validate_title(title: str) -> str:
     return title
 
 
+@router.get("/api/problems/outage-clusters", response_model=list[OutageClusterOut])
+def list_outage_clusters(user: Agent, session: SessionDep):
+    return outage_problems.outage_clusters(session, user)
+
+
+@router.post("/api/problems/from-outage", response_model=ProblemOut, status_code=status.HTTP_201_CREATED)
+def create_problem_from_outage(body: OutageProblemIn, user: Agent, session: SessionDep):
+    title = _validate_title(body.title)
+    _owner(session, body.owner_id)
+    tickets = _tickets(session, body.ticket_ids, user)
+    scope = body.outage_scope.strip()
+    notice: ServiceNotice | None = None
+    if body.create_draft_notice:
+        if not permissions.allowed(session, user, "notices_manage"):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Drafting a service notice needs the notices permission")
+        notice_title = (body.notice_title.strip() or f"Service outage: {scope or title}")[:200]
+        notice_msg = body.notice_message.strip() or f"We are investigating an outage affecting {scope or title}."
+        notice = ServiceNotice(
+            title=notice_title,
+            message=notice_msg,
+            severity="outage",
+            audience="everyone",
+            starts_at=sla.utcnow(),
+            ends_at=None,
+            enabled=False,
+            created_by_id=user.id,
+        )
+        session.add(notice)
+        session.flush()
+
+    problem = Problem(
+        title=title,
+        description=body.description,
+        status=ProblemStatus.investigating,
+        workaround=body.workaround,
+        outage_scope=scope,
+        notice_id=notice.id if notice else None,
+        owner_id=body.owner_id,
+        created_by_id=user.id,
+        tickets=tickets,
+    )
+    session.add(problem)
+    session.flush()
+    _update(session, problem, user, "created", f"Problem opened from outage ({scope})" if scope else "Problem created")
+    if notice is not None:
+        _update(session, problem, user, "notice_drafted", f"Drafted service notice \"{notice.title}\"")
+    for ticket in problem.tickets:
+        _update(session, problem, user, "ticket_linked", f"Linked ticket #{ticket.id}")
+        _ticket_event(session, ticket, problem, user, True)
+    session.commit()
+    return _out(session, _load(session, problem.id, user), user)
+
+
 @router.get("/api/problems", response_model=list[ProblemSummaryOut])
 def list_problems(
     user: Agent,
@@ -148,6 +214,7 @@ def create_problem(body: ProblemIn, user: Agent, session: SessionDep):
         root_cause=body.root_cause,
         workaround=body.workaround,
         resolution=body.resolution,
+        outage_scope=(body.outage_scope or "").strip(),
         owner_id=body.owner_id,
         created_by_id=user.id,
         tickets=_tickets(session, body.ticket_ids, user),
@@ -159,12 +226,12 @@ def create_problem(body: ProblemIn, user: Agent, session: SessionDep):
         _update(session, problem, user, "ticket_linked", f"Linked ticket #{ticket.id}")
         _ticket_event(session, ticket, problem, user, True)
     session.commit()
-    return _out(_load(session, problem.id, user))
+    return _out(session, _load(session, problem.id, user), user)
 
 
 @router.get("/api/problems/{problem_id}", response_model=ProblemOut)
 def get_problem(problem_id: int, user: Agent, session: SessionDep):
-    return _out(_load(session, problem_id, user))
+    return _out(session, _load(session, problem_id, user), user)
 
 
 @router.put("/api/problems/{problem_id}", response_model=ProblemOut)
@@ -200,6 +267,8 @@ def update_problem(problem_id: int, body: ProblemIn, user: Agent, session: Sessi
     problem.root_cause = body.root_cause
     problem.workaround = body.workaround
     problem.resolution = body.resolution
+    if body.outage_scope is not None:
+        problem.outage_scope = body.outage_scope.strip()
     problem.owner_id = body.owner_id
     problem.tickets = new_tickets
     for kind, note in events:
@@ -209,7 +278,47 @@ def update_problem(problem_id: int, body: ProblemIn, user: Agent, session: Sessi
     for ticket in unlinked:
         _ticket_event(session, ticket, problem, user, False)
     session.commit()
-    return _out(_load(session, problem.id, user))
+    return _out(session, _load(session, problem.id, user), user)
+
+
+@router.post("/api/problems/{problem_id}/broadcast/preview", response_model=BroadcastOut)
+def preview_problem_broadcast(problem_id: int, body: BroadcastIn, user: Agent, session: SessionDep):
+    problem = _load(session, problem_id, user)
+    try:
+        r = broadcast.run_for_problem(
+            session,
+            problem,
+            user,
+            body=body.body,
+            resolve=body.resolve,
+            resolution_type_id=body.resolution_type_id,
+            closure_reason_id=body.closure_reason_id,
+        )
+    except broadcast.BroadcastError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
+    return BroadcastOut(applied=False, **r)
+
+
+@router.post("/api/problems/{problem_id}/broadcast", response_model=BroadcastOut)
+def send_problem_broadcast(problem_id: int, body: BroadcastIn, user: Agent, session: SessionDep):
+    if not body.confirm or not body.fingerprint:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Preview the update and confirm before sending")
+    problem = _load(session, problem_id, user)
+    try:
+        r = broadcast.run_for_problem(
+            session,
+            problem,
+            user,
+            body=body.body,
+            resolve=body.resolve,
+            resolution_type_id=body.resolution_type_id,
+            closure_reason_id=body.closure_reason_id,
+            apply=True,
+            expected=body.fingerprint,
+        )
+    except broadcast.BroadcastError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
+    return BroadcastOut(applied=True, **r)
 
 
 @router.post("/api/problems/{problem_id}/updates", response_model=ProblemUpdateOut, status_code=status.HTTP_201_CREATED)
@@ -239,6 +348,10 @@ def delete_problem(problem_id: int, user: ProblemDeleter, session: SessionDep):
 
 # From the ticket: which problems it belongs to, and linking or unlinking one there.
 
+def _ticket_problem_out(p: Problem) -> TicketProblemOut:
+    return TicketProblemOut.model_validate({**_summary(p).model_dump(), "workaround": p.workaround, "root_cause": p.root_cause})
+
+
 def _ticket_problems(session, ticket: Ticket, user: User) -> TicketProblemsOut:
     linked = session.scalars(
         select(Problem).join(problem_tickets, problem_tickets.c.problem_id == Problem.id)
@@ -247,9 +360,11 @@ def _ticket_problems(session, ticket: Ticket, user: User) -> TicketProblemsOut:
         .order_by(Problem.updated_at.desc(), Problem.id.desc())
     ).all()
     shown = [p for p in linked if _can_see(session, p, user)]
+    suggestions = outage_problems.suggested_problems_for_ticket(session, ticket, user, _can_see)
     return TicketProblemsOut(
-        problems=[TicketProblemOut.model_validate({**_summary(p).model_dump(), "workaround": p.workaround, "root_cause": p.root_cause}) for p in shown],
+        problems=[_ticket_problem_out(p) for p in shown],
         hidden=len(linked) - len(shown),
+        suggested=[TicketProblemSuggestionOut(problem=_ticket_problem_out(p), scope=scope) for p, scope in suggestions],
     )
 
 
