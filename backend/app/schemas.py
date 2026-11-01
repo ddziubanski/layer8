@@ -1418,6 +1418,33 @@ class DeviceTicketOut(Labelled):
     linked_at: datetime
 
 
+class TimelineEntryOut(BaseModel):
+    at: datetime
+    kind: Literal["ticket", "change", "script", "remote", "deployment", "purchase", "network", "lifecycle"]
+    title: str
+    detail: str = ""
+    tone: Literal["info", "ok", "warn", "bad"] = "info"
+    # A console path to the source (ticket, change, purchase order...), when there is one.
+    link: str | None = None
+
+
+class TimelineNowOut(BaseModel):
+    label: str
+    value: str
+    at: datetime | None = None
+    tone: Literal["info", "ok", "warn", "bad"] = "info"
+
+
+class DeviceTimelineOut(BaseModel):
+    """Everything Layer 8 knows happened to a device, newest first; state kept only as "now"; dates ahead."""
+    entries: list[TimelineEntryOut]
+    now: list[TimelineNowOut]
+    upcoming: list[TimelineEntryOut]
+    # Entries left out because they belong to tickets this viewer can't see (counted, never named).
+    hidden: int
+    truncated: bool
+
+
 class DeviceDetailOut(DeviceOut):
     # Linked tickets this person can see, newest first.
     tickets: list[DeviceTicketOut] = []

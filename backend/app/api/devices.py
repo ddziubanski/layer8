@@ -12,6 +12,7 @@ from app.auth import Agent, SessionDep
 from app.config import settings
 from app.models import Device, DeviceSource, DeviceWarranty, EventType, IpAddress, Ticket, TicketDevice, User
 from app.schemas import (
+    DeviceTimelineOut,
     DeviceWarrantyOut,
     DeviceDetailOut,
     DeviceIn,
@@ -116,6 +117,16 @@ def get_device(device_id: int, user: Agent, session: SessionDep):
     ).all()
     out.tickets = [DeviceTicketOut(id=t.id, subject=t.subject, status=t.status, created_at=t.created_at, linked_at=at) for t, at in rows]
     return out
+
+
+@router.get("/api/devices/{device_id}/timeline", response_model=DeviceTimelineOut)
+def device_timeline(device_id: int, user: Agent, session: SessionDep, kinds: str = Query("", max_length=200)):
+    """One history merged from tickets, changes, script runs, remote sessions, deployments, purchase
+    orders, IP records and the device's own dates. ?kinds=ticket,change limits it."""
+    from app import device_timeline as timeline
+
+    wanted = {k.strip() for k in kinds.split(",") if k.strip()} or None
+    return timeline.build(session, _device(session, device_id), user, wanted)
 
 
 def _warranty_out(session, device: Device) -> DeviceWarrantyOut:

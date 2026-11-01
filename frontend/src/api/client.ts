@@ -716,6 +716,7 @@ export const api = {
   },
 
   devices: {
+    timeline: (id: number, kinds?: string[]) => request<S["DeviceTimelineOut"]>("GET", `/api/devices/${id}/timeline${kinds?.length ? `?kinds=${kinds.join(",")}` : ""}`),
     list: (p: { q?: string; include_inactive?: boolean; assigned_user_id?: number; limit?: number; offset?: number }) =>
       request<DevicePage>("GET", `/api/devices${query({ ...p, include_inactive: p.include_inactive ? "true" : undefined })}`),
     sweep: (p: { stale_days?: number; recent_days?: number } = {}) => request<Sweep>("GET", `/api/devices/sweep${query(p)}`),

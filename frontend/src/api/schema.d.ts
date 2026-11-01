@@ -2581,6 +2581,27 @@ export interface paths {
         patch: operations["update_device_api_devices__device_id__patch"];
         trace?: never;
     };
+    "/api/devices/{device_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Device Timeline
+         * @description One history merged from tickets, changes, script runs, remote sessions, deployments, purchase
+         *     orders, IP records and the device's own dates. ?kinds=ticket,change limits it.
+         */
+        get: operations["device_timeline_api_devices__device_id__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices/{device_id}/warranty": {
         parameters: {
             query?: never;
@@ -7418,6 +7439,22 @@ export interface components {
             linked_at: string;
             /** Label */
             readonly label: string;
+        };
+        /**
+         * DeviceTimelineOut
+         * @description Everything Layer 8 knows happened to a device, newest first; state kept only as "now"; dates ahead.
+         */
+        DeviceTimelineOut: {
+            /** Entries */
+            entries: components["schemas"]["TimelineEntryOut"][];
+            /** Now */
+            now: components["schemas"]["TimelineNowOut"][];
+            /** Upcoming */
+            upcoming: components["schemas"]["TimelineEntryOut"][];
+            /** Hidden */
+            hidden: number;
+            /** Truncated */
+            truncated: boolean;
         };
         /** DeviceUpdateIn */
         DeviceUpdateIn: {
@@ -12838,6 +12875,49 @@ export interface components {
             created_at: string;
             /** May Delete */
             may_delete: boolean;
+        };
+        /** TimelineEntryOut */
+        TimelineEntryOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ticket" | "change" | "script" | "remote" | "deployment" | "purchase" | "network" | "lifecycle";
+            /** Title */
+            title: string;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /**
+             * Tone
+             * @default info
+             * @enum {string}
+             */
+            tone: "info" | "ok" | "warn" | "bad";
+            /** Link */
+            link?: string | null;
+        };
+        /** TimelineNowOut */
+        TimelineNowOut: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+            /** At */
+            at?: string | null;
+            /**
+             * Tone
+             * @default info
+             * @enum {string}
+             */
+            tone: "info" | "ok" | "warn" | "bad";
         };
         /** TwoFactorConfirmIn */
         TwoFactorConfirmIn: {
@@ -19234,6 +19314,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    device_timeline_api_devices__device_id__timeline_get: {
+        parameters: {
+            query?: {
+                kinds?: string;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceTimelineOut"];
                 };
             };
             /** @description Validation Error */
