@@ -177,6 +177,12 @@ const SETTINGS: { path: string; label: string; adminOnly?: boolean; permission?:
     page: (me) => <SettingsForm me={me} section="sweeps" title="Device sweeps" intro="When a device counts as stale, and how recent unknown ones must be. The lists are under Devices > Stale and Unknown on the network." />,
   },
   {
+    path: "proactive",
+    label: "Proactive tickets",
+    adminOnly: true,
+    page: (me) => <SettingsForm me={me} section="proactive" title="Proactive tickets" intro="Open one ticket before something lapses: warranties, vendor contracts, service accounts, runners that stop checking in, backups that keep failing. Each ticket shows Verify once its condition is fixed; none closes by itself." />,
+  },
+  {
     path: "warranty",
     label: "Warranty lookups",
     adminOnly: true,
@@ -225,7 +231,7 @@ function LabelPreview({ format, first }: { format: string; first: number }) {
 const SETTINGS_GROUPS: { name: string; paths: string[] }[] = [
   { name: "Helpdesk", paths: ["queues", "rules", "ticket-fields", "canned-replies", "ticket-templates", "library", "requester-emails", "desk-hours", "surveys", "notices"] },
   { name: "Workflows", paths: ["checklists", "onboarding", "changes", "purchasing"] },
-  { name: "Monitoring", paths: ["meraki", "unifi", "juniper", "nutanix", "ipam", "sweeps"] },
+  { name: "Monitoring", paths: ["meraki", "unifi", "juniper", "nutanix", "ipam", "sweeps", "proactive"] },
   { name: "API / Integrations", paths: ["api-keys", "runners", "email", "teams", "action1", "warranty"] },
   { name: "People and access", paths: ["users", "groups", "permissions", "directory", "sign-in", "windows-sign-in"] },
   { name: "Look and feel", paths: ["branding", "modules", "wallboards"] },

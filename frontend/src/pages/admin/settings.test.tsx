@@ -60,7 +60,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
     "Queues", "Ticket rules", "Ticket fields", "Canned replies", "Ticket templates", "Library", "Requester emails", "Desk hours and SLA", "Surveys", "Notices",
     "Checklists", "Onboarding templates", "Changes", "Purchasing",
-    "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps",
+    "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps", "Proactive tickets",
     "API keys", "Relays", "Mailbox (Microsoft 365)", "Teams", "Action1", "Warranty lookups",
     "Users", "Groups", "Permissions", "Directory (AD)", "Sign-in", "Windows sign-in",
     "Branding", "Modules", "Remote displays",
@@ -73,7 +73,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["UniFi", "Juniper"]);
   await userEvent.clear(within(tabs).getByLabelText("Find a setting"));
   await userEvent.type(within(tabs).getByLabelText("Find a setting"), "monitoring");
-  expect(tabs.querySelectorAll("a")).toHaveLength(6);
+  expect(tabs.querySelectorAll("a")).toHaveLength(7);
   expect(screen.getByRole("link", { name: "Settings" })).toHaveClass("active");
   view.unmount();
 

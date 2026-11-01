@@ -17,6 +17,7 @@ from app.models import (
     DevicePatch,
     EventType,
     NutanixVm,
+    ProactiveAlert,
     Ticket,
     TicketCheck,
     TicketDevice,
@@ -30,7 +31,7 @@ Reading = tuple[bool | None, str]
 @dataclass(frozen=True)
 class Kind:
     key: str
-    target: str  # "device" or "user"
+    target: str  # "device", "user", or "alert" (a proactive ticket's own condition; never offered)
     label: Callable[[str], str]
     measure: Callable[..., Reading]
 
@@ -87,7 +88,14 @@ def _enabled(session, user: User) -> Reading:
     return bool(user.is_active), "Account enabled" if user.is_active else "Account still disabled"
 
 
+def _alert(session, alert: ProactiveAlert) -> Reading:
+    if alert.cleared_at is None:
+        return False, "Still applies"
+    return True, alert.cleared_detail or "No longer applies"
+
+
 KINDS: dict[str, Kind] = {k.key: k for k in (
+    Kind("proactive_cleared", "alert", lambda n: f"Fixed: {n}", _alert),
     Kind("reboot_done", "device", lambda n: f"Restart pending clears on {n}", _reboot),
     Kind("updates_installed", "device", lambda n: f"Critical updates installed on {n}", _updates),
     Kind("agent_online", "device", lambda n: f"Action1 agent back online on {n}", _agent),
@@ -103,6 +111,8 @@ class CheckError(ValueError):
 
 
 def _target(session, check: TicketCheck):
+    if KINDS[check.kind].target == "alert":
+        return session.scalar(select(ProactiveAlert).where(ProactiveAlert.ticket_id == check.ticket_id))
     return session.get(Device, check.device_id) if KINDS[check.kind].target == "device" else session.get(User, check.user_id)
 
 
@@ -150,7 +160,12 @@ def add(session, ticket: Ticket, actor: User | None, kind: str, *, device_id: in
     k = KINDS.get(kind)
     if k is None:
         raise CheckError("Unknown condition")
-    if k.target == "device":
+    if k.target == "alert":
+        alert = session.scalar(select(ProactiveAlert).where(ProactiveAlert.ticket_id == ticket.id))
+        if alert is None:
+            raise CheckError("Only proactive tickets watch their own condition")
+        target, device_id, user_id, name = alert, None, None, alert.title
+    elif k.target == "device":
         if device_id is None or device_id not in {d.id for d in ticket_devices(session, ticket)}:
             raise CheckError("Link the device to this ticket first")
         target, user_id = session.get(Device, device_id), None

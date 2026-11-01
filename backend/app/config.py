@@ -314,6 +314,15 @@ class Settings(BaseSettings):
     # otherwise); warranties ending within warranty_warn_days are flagged.
     device_life_years: int = 5
     warranty_warn_days: int = 60
+    # Proactive tickets (app/proactive.py): one ticket per condition before something lapses; each
+    # lead time 0 turns that kind off. Service accounts are matched by sAMAccountName prefix(es).
+    proactive_tickets: bool = False
+    proactive_warranty_days: int = 30
+    proactive_contract_days: int = 60
+    proactive_account_days: int = 14
+    proactive_account_prefixes: str = "svc-, svc_"
+    proactive_runner_hours: int = 2
+    proactive_backup_days: int = 2
     # IPAM scans: a documented address not seen for this many days is flagged.
     ipam_stale_days: int = 30
     # Flag unknown hosts inside a subnet's DHCP pool too (normally they're just leases).

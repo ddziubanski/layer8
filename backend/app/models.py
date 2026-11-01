@@ -2057,6 +2057,20 @@ Ticket.recovery_review = column_property(and_(
 ))
 
 
+class ProactiveAlert(Base):
+    """A condition a proactive ticket was opened for (app/proactive.py), by a stable key such as
+    "warranty:device:12:2026-12-31". cleared_at: when the condition stopped holding."""
+
+    __tablename__ = "proactive_alerts"
+
+    key: Mapped[str] = mapped_column(String(200), primary_key=True)
+    ticket_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("tickets.id", ondelete="SET NULL"), index=True)
+    title: Mapped[str] = mapped_column(String(300))
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    cleared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cleared_detail: Mapped[str] = mapped_column(String(500), default="", server_default="")
+
+
 class TicketCheck(Base):
     """A condition a ticket waits on (restart pending cleared, account unlocked, VM on...), checked
     against data Layer 8 already syncs. When it clears the ticket shows Verify; a technician confirms.
