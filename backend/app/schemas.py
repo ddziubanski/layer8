@@ -2947,11 +2947,39 @@ class ChangeOut(ChangeSummaryOut):
     can_edit: bool = False
     # Other open changes in an overlapping window, and the devices/systems they share with this one.
     conflicts: list["ChangeConflictOut"] = []
+    # Post-change review: linked tickets that arrived after the change started, and unlinked suggestions within the correlation window.
+    follow_up_tickets: list[ChangeTicketRef] = []
+    suggested_tickets: list["ChangeTicketSuggestionOut"] = []
 
 
 class ChangeConflictOut(BaseModel):
     change: ChangeSummaryOut
     shared: list[str]
+
+
+class ChangeTicketSuggestionOut(BaseModel):
+    ticket: ChangeTicketRef
+    scope: str
+
+
+class TicketChangeSuggestionOut(BaseModel):
+    change: ChangeSummaryOut
+    scope: str
+
+
+class ChangeTicketLinkIn(BaseModel):
+    ticket_id: int
+
+
+class ChangeStatsOut(BaseModel):
+    ended_count: int = 0
+    successful_count: int = 0
+    completed_with_incidents_count: int = 0
+    failed_or_rolled_back_count: int = 0
+    follow_up_tickets_count: int = 0
+    unreviewed_suggestions_count: int = 0
+    success_rate_pct: float | None = None
+    correlation_hours: int = 72
 
 
 class ChangeTemplateIn(BaseModel):

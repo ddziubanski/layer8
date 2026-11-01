@@ -291,11 +291,12 @@ class Settings(BaseSettings):
     # Empty disables SQL rules; builder rules still work.
     rules_database_url: str = ""
     rules_statement_timeout_ms: int = 10_000
-    # Changes: their label, the risk at which a normal change needs approval, and who approves
-    # (members of this group, local or synced; empty: admins).
+    # Changes: their label, the risk at which a normal change needs approval, who approves
+    # (members of this group, local or synced; empty: admins), and the post-change ticket correlation window.
     change_label_format: str = "CHG-{n:05}"
     change_approval_level: str = "medium"
     change_approvers_group: str = ""
+    change_correlation_hours: int = 72
     # Device sweeps: stale after this many days without a sign of life; unknown things count when
     # seen in the last sweep_recent_days; a weekly summary ticket if on.
     sweep_stale_days: int = 90

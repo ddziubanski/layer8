@@ -81,5 +81,9 @@ PRESETS = [
     _p("po-open", "Open purchase orders", "Ordered but not all in yet, and which are late.",
        "Purchasing", dataset="purchase_orders", group_by=["vendor", "status"], measures=["open", "late", "value"],
        filters={"status": ["requested", "approved", "ordered", "partially_received"]}, date_field="created"),
+    _p("change-success-by-month", "Change success rate by month", "Ended changes, follow-up tickets linked to them, and the share that completed without incidents.",
+       "Changes", dataset="changes", group_by=["month"], measures=["ended", "successful", "with_incidents", "failed_or_rolled_back", "follow_up_tickets", "success_pct"], date_field="started"),
+    _p("changes-by-kind", "Changes by kind and outcome", "Standard, normal and emergency changes, their outcomes and follow-up tickets.",
+       "Changes", dataset="changes", group_by=["kind"], measures=["count", "ended", "successful", "follow_up_tickets", "success_pct"], date_field="started"),
 ]
 BY_KEY = {p.key: p for p in PRESETS}

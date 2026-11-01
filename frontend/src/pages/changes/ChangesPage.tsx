@@ -33,6 +33,8 @@ export function ChangesPage() {
     queryKey: ["changes", q, filter],
     queryFn: () => api.changes.list({ q, open_only: filter === "open", status: filter !== "open" && filter !== "all" ? filter : undefined }),
   });
+  const stats = useQuery({ queryKey: ["changes", "stats"], queryFn: api.changes.stats, retry: false });
+  const st = stats.data;
   return (
     <>
       <div className="page-head row-gap">
@@ -41,6 +43,26 @@ export function ChangesPage() {
           New change
         </Link>
       </div>
+      {st && (st.ended_count > 0 || st.unreviewed_suggestions_count > 0) && (
+        <dl className="module-summary" aria-label="Change success rate" style={{ marginBottom: 12 }}>
+          <div>
+            <dt>Change success rate</dt>
+            <dd>
+              {st.success_rate_pct !== null ? `${st.success_rate_pct}%` : "–"}{" "}
+              <span className="muted small">
+                ({st.successful_count} of {st.ended_count} ended without follow-up incidents)
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>Follow-up tickets</dt>
+            <dd>
+              {st.follow_up_tickets_count} linked
+              {st.unreviewed_suggestions_count > 0 && <span className="chip a"> · {st.unreviewed_suggestions_count} suggested to review</span>}
+            </dd>
+          </div>
+        </dl>
+      )}
       <div className="tabs" role="tablist" style={{ marginBottom: 12 }}>
         {(["list", "calendar"] as const).map((v) => (
           <a
@@ -260,6 +282,7 @@ export function ChangePage({ me }: { me: Me }) {
           ))}
         </div>
       )}
+      {c && <PostChangeReview change={c} />}
       <div className="po-layout">
         <ChangeForm key={c?.updated_at ?? "new"} change={c} me={me} />
         {c && <History change={c} />}
@@ -541,7 +564,91 @@ const EVENT_LABEL: Record<string, string> = {
   rolled_back: "Rolled back",
   cancelled: "Cancelled",
   reopened: "Reopened",
+  ticket_linked: "Ticket linked",
+  ticket_unlinked: "Ticket unlinked",
 };
+
+function PostChangeReview({ change: c }: { change: Change }) {
+  const queryClient = useQueryClient();
+  const followUps = c.follow_up_tickets ?? [];
+  const suggested = c.suggested_tickets ?? [];
+  const startedOrEnded = ["in_progress", "completed", "failed", "rolled_back"].includes(c.status);
+  const onUpdate = (got: Change) => {
+    queryClient.setQueryData(["change", c.id], got);
+    queryClient.invalidateQueries({ queryKey: ["changes"] });
+  };
+  const link = useMutation({
+    mutationFn: (ticketId: number) => api.changes.linkTicket(c.id, ticketId),
+    onSuccess: onUpdate,
+  });
+  const unlink = useMutation({
+    mutationFn: (ticketId: number) => api.changes.unlinkTicket(c.id, ticketId),
+    onSuccess: onUpdate,
+  });
+  if (!startedOrEnded && followUps.length === 0 && suggested.length === 0) return null;
+  const countText =
+    followUps.length === 0
+      ? "0 tickets followed this change"
+      : followUps.length === 1
+        ? "1 ticket followed this change"
+        : `${followUps.length} tickets followed this change`;
+  const rateNote =
+    c.status === "completed"
+      ? followUps.length === 0
+        ? " · Completed without follow-up incidents (counts as successful)"
+        : " · Completed with follow-up incidents (counts against change success rate)"
+      : ["failed", "rolled_back"].includes(c.status)
+        ? " · Ended unsuccessfully (counts against change success rate)"
+        : "";
+  return (
+    <div className="card stack" style={{ margin: "0 0 12px", padding: 10, gap: 8 }} role="region" aria-label="Post-change review">
+      <div className="row-gap" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
+        <strong>Post-change review</strong>
+        <span className="small muted">
+          {countText}
+          {rateNote}
+        </span>
+      </div>
+      {followUps.length > 0 && (
+        <div className="stack" style={{ gap: 4 }}>
+          <span className="small muted">Confirmed follow-up tickets:</span>
+          {followUps.map((t) => (
+            <div key={t.id} className="row-gap small" style={{ gap: 6, flexWrap: "wrap" }}>
+              <Link to={`/tickets/${t.id}`}>
+                {t.label} {t.subject}
+              </Link>
+              <StatusChip status={t.status} />
+              <span className="muted">· opened {when(t.created_at)}</span>
+              <button className="btn2 small" type="button" disabled={unlink.isPending} onClick={() => unlink.mutate(t.id)}>
+                Unlink
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {suggested.length > 0 && (
+        <div className="stack" style={{ gap: 4 }}>
+          <span className="small muted">Suggestions (arrived after this change on a shared device, system, switch, subnet or site; confirm to link):</span>
+          {suggested.map(({ ticket: t, scope }) => (
+            <div key={t.id} className="row-gap small" style={{ gap: 6, flexWrap: "wrap" }}>
+              <span className="chip a">Possibly related to {c.label}</span>
+              <Link to={`/tickets/${t.id}`}>
+                {t.label} {t.subject}
+              </Link>
+              <StatusChip status={t.status} />
+              <span className="muted">
+                · {scope} · opened {when(t.created_at)}
+              </span>
+              <button className="btn2 small" type="button" disabled={link.isPending} onClick={() => link.mutate(t.id)}>
+                Link ticket
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function History({ change: c }: { change: Change }) {
   return (

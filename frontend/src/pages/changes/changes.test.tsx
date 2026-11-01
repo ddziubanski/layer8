@@ -82,3 +82,55 @@ test("calendar: a month of change windows", async () => {
   expect(await within(day).findByRole("link", { name: /Firmware window/ })).toHaveAttribute("href", "/changes/12");
   expect(calls.some((c) => c.path.includes("starts_from="))).toBe(true);
 });
+
+test("post-change review: suggests follow-up tickets and lets a technician confirm and link them", async () => {
+  const followUp = { id: 105, label: "#105", subject: "2nd floor phones offline", status: "open" as const, created_at: "2026-11-01T23:45:00Z" };
+  const calls = mockApi({
+    "GET /api/changes/12": {
+      ...CHANGE,
+      status: "completed",
+      can_approve: false,
+      can_edit: false,
+      follow_up_tickets: [],
+      suggested_tickets: [{ ticket: followUp, scope: "Switch SW-CORE-1" }],
+    },
+    "GET /api/change-templates": [],
+    "GET /api/users": [],
+    "GET /api/systems": [],
+    "POST /api/changes/12/tickets": () => ({
+      ...CHANGE,
+      status: "completed",
+      can_approve: false,
+      can_edit: false,
+      tickets: [followUp],
+      follow_up_tickets: [followUp],
+      suggested_tickets: [],
+    }),
+  });
+  renderAt("/changes/12", [{ path: "/changes/:changeId", element: <ChangePage me={ADMIN} /> }]);
+  const review = await screen.findByRole("region", { name: "Post-change review" });
+  expect(review).toHaveTextContent("0 tickets followed this change");
+  expect(review).toHaveTextContent("Completed without follow-up incidents (counts as successful)");
+  expect(review).toHaveTextContent("Possibly related to CHG-00012");
+  expect(review).toHaveTextContent("Switch SW-CORE-1");
+  await userEvent.click(within(review).getByRole("button", { name: "Link ticket" }));
+  await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.path === "/api/changes/12/tickets")!.body).toEqual({ ticket_id: 105 }));
+  expect(await within(review).findByText(/1 ticket followed this change/)).toBeInTheDocument();
+  expect(review).toHaveTextContent("Completed with follow-up incidents (counts against change success rate)");
+});
+
+test("ticket changes card: flags a possibly related change and links it on confirmation", async () => {
+  const { ChangesCard } = await import("../ticket/ChangesCard");
+  const { ticket } = await import("../../test/util");
+  const calls = mockApi({
+    "GET /api/tickets/101/changes": [],
+    "GET /api/tickets/101/change-suggestions": [{ change: { ...CHANGE, status: "completed" }, scope: "Switch SW-CORE-1" }],
+    "POST /api/changes/12/tickets": () => ({ ...CHANGE, status: "completed" }),
+  });
+  renderAt("/tickets/101", [{ path: "/tickets/:ticketId", element: <ChangesCard ticket={ticket({ id: 101 })} /> }]);
+  const card = await screen.findByRole("region", { name: "Changes" });
+  expect(await within(card).findByText("Possibly related to CHG-00012")).toBeInTheDocument();
+  expect(card).toHaveTextContent("Switch SW-CORE-1");
+  await userEvent.click(within(card).getByRole("button", { name: "Link" }));
+  await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.path === "/api/changes/12/tickets")!.body).toEqual({ ticket_id: 101 }));
+});

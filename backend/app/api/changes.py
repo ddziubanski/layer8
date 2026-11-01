@@ -8,10 +8,23 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 
 from app import changes, permissions
-from app.api.tickets import staff_ticket
+from app.api.tickets import staff_ticket, visible_queue_ids
 from app.auth import Agent, SessionDep
 from app.models import Change, ChangeKind, ChangeStatus, ChangeTemplate, Device, System, Ticket, User, UserRole, change_tickets
-from app.schemas import ChangeActionIn, ChangeConflictOut, ChangeIn, ChangeOut, ChangeSummaryOut, ChangeTemplateIn, ChangeTemplateOut
+from app.schemas import (
+    ChangeActionIn,
+    ChangeConflictOut,
+    ChangeIn,
+    ChangeOut,
+    ChangeStatsOut,
+    ChangeSummaryOut,
+    ChangeTemplateIn,
+    ChangeTemplateOut,
+    ChangeTicketLinkIn,
+    ChangeTicketRef,
+    ChangeTicketSuggestionOut,
+    TicketChangeSuggestionOut,
+)
 
 router = APIRouter(tags=["changes"])
 TemplatesManager = permissions.require("templates_manage")
@@ -31,9 +44,27 @@ def _summary(c: Change, cls=ChangeSummaryOut, **extra):
 
 
 def _out(session, c: Change, user: User) -> ChangeOut:
+    qids = visible_queue_ids(user)
+    allowed = None if qids is None else set(session.scalars(qids))
+    visible_tickets = [t for t in c.tickets if allowed is None or t.queue_id in allowed]
+    follow_ups = [ChangeTicketRef.model_validate(t) for t in visible_tickets if changes.is_follow_up_ticket(c, t)]
+    suggested = [
+        ChangeTicketSuggestionOut(ticket=ChangeTicketRef.model_validate(t), scope=scope)
+        for t, scope in changes.suggested_tickets(session, c, user)
+    ]
     fields = {k: getattr(c, k) for k in ChangeOut.model_fields if hasattr(c, k) and k not in ChangeSummaryOut.model_fields}
-    return _summary(c, ChangeOut, **fields, needs_approval=changes.needs_approval(c), can_approve=changes.can_approve(session, c, user),
-                    can_edit=c.status in changes.EDITABLE, conflicts=[ChangeConflictOut(change=_summary(o), shared=sh) for o, sh in changes.conflicts(session, c)])
+    fields["tickets"] = visible_tickets
+    return _summary(
+        c,
+        ChangeOut,
+        **fields,
+        needs_approval=changes.needs_approval(c),
+        can_approve=changes.can_approve(session, c, user),
+        can_edit=c.status in changes.EDITABLE,
+        conflicts=[ChangeConflictOut(change=_summary(o), shared=sh) for o, sh in changes.conflicts(session, c)],
+        follow_up_tickets=follow_ups,
+        suggested_tickets=suggested,
+    )
 
 
 @router.get("/api/changes", response_model=list[ChangeSummaryOut])
@@ -68,6 +99,12 @@ def _list(session, q: str = "", status_: ChangeStatus | None = None, open_only: 
             conds.append(Change.id == int(digits))
         stmt = stmt.where(or_(*conds))
     return [_summary(c) for c in session.scalars(stmt.limit(500))]
+
+
+@router.get("/api/changes/stats", response_model=ChangeStatsOut)
+def change_stats(user: Agent, session: SessionDep):
+    """Change success rate and post-change incident summary."""
+    return changes.stats(session, user)
 
 
 @router.get("/api/changes/{change_id}", response_model=ChangeOut)
@@ -143,10 +180,45 @@ def change_action(change_id: int, body: ChangeActionIn, user: Agent, session: Se
     return _out(session, c, user)
 
 
+@router.post("/api/changes/{change_id}/tickets", response_model=ChangeOut)
+def link_change_ticket(change_id: int, body: ChangeTicketLinkIn, user: Agent, session: SessionDep):
+    """Confirm and link a ticket to a change (including during or after the change window)."""
+    c = _change(session, change_id)
+    ticket = staff_ticket(session, body.ticket_id, user)
+    try:
+        changes.link_ticket(session, c, ticket, user)
+    except changes.ChangeError as exc:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from None
+    session.commit()
+    return _out(session, c, user)
+
+
+@router.delete("/api/changes/{change_id}/tickets/{ticket_id}", response_model=ChangeOut)
+def unlink_change_ticket(change_id: int, ticket_id: int, user: Agent, session: SessionDep):
+    c = _change(session, change_id)
+    ticket = staff_ticket(session, ticket_id, user)
+    try:
+        changes.unlink_ticket(session, c, ticket, user)
+    except changes.ChangeError as exc:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from None
+    session.commit()
+    return _out(session, c, user)
+
+
 @router.get("/api/tickets/{ticket_id}/changes", response_model=list[ChangeSummaryOut])
 def ticket_changes(ticket_id: int, user: Agent, session: SessionDep):
     ticket = staff_ticket(session, ticket_id, user)
     return _list(session, ticket_id=ticket.id)
+
+
+@router.get("/api/tickets/{ticket_id}/change-suggestions", response_model=list[TicketChangeSuggestionOut])
+def ticket_change_suggestions(ticket_id: int, user: Agent, session: SessionDep):
+    """Unlinked changes whose correlation window covers this ticket and whose device, system, switch,
+    subnet or site matches the ticket."""
+    ticket = staff_ticket(session, ticket_id, user)
+    return [TicketChangeSuggestionOut(change=_summary(c), scope=scope) for c, scope in changes.suggested_changes(session, ticket)]
 
 
 # Templates (Settings > Change templates)

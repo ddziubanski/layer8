@@ -140,6 +140,8 @@ export type KbArticleSummary = S["KbArticleSummaryOut"];
 export type KbArticleIn = S["KbArticleIn"];
 export type TicketKb = S["TicketKbOut"];
 export type ChangeSummary = S["ChangeSummaryOut"];
+export type ChangeStats = S["ChangeStatsOut"];
+export type TicketChangeSuggestion = S["TicketChangeSuggestionOut"];
 export type ChangeIn = S["ChangeIn"];
 export type ChangeTemplate = S["ChangeTemplateOut"];
 export type ChangeTemplateIn = S["ChangeTemplateIn"];
@@ -574,7 +576,11 @@ export const api = {
     create: (body: ChangeIn) => request<Change>("POST", "/api/changes", body),
     update: (id: number, body: ChangeIn) => request<Change>("PUT", `/api/changes/${id}`, body),
     act: (id: number, action: string, note = "") => request<Change>("POST", `/api/changes/${id}/actions`, { action, note }),
+    stats: () => request<ChangeStats>("GET", "/api/changes/stats"),
+    linkTicket: (changeId: number, ticketId: number) => request<Change>("POST", `/api/changes/${changeId}/tickets`, { ticket_id: ticketId }),
+    unlinkTicket: (changeId: number, ticketId: number) => request<Change>("DELETE", `/api/changes/${changeId}/tickets/${ticketId}`),
     forTicket: (ticketId: number) => request<ChangeSummary[]>("GET", `/api/tickets/${ticketId}/changes`),
+    suggestionsForTicket: (ticketId: number) => request<TicketChangeSuggestion[]>("GET", `/api/tickets/${ticketId}/change-suggestions`),
     templates: (includeInactive = false) => request<ChangeTemplate[]>("GET", `/api/change-templates${query({ include_inactive: includeInactive ? "true" : undefined })}`),
     createTemplate: (body: ChangeTemplateIn) => request<ChangeTemplate>("POST", "/api/change-templates", body),
     updateTemplate: (id: number, body: ChangeTemplateIn) => request<ChangeTemplate>("PUT", `/api/change-templates/${id}`, body),

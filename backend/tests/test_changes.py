@@ -117,3 +117,196 @@ def test_overlapping_windows_and_calendar_range(client, db, agent):
     assert client.get(f"/api/changes/{a['id']}", headers=as_user(agent)).json()["conflicts"] == []
     month = client.get("/api/changes", params={"starts_from": "2026-11-01T00:00:00Z", "starts_before": "2026-11-02T00:00:00Z"}, headers=as_user(agent)).json()
     assert [x["title"] for x in month] == ["Firmware", "Cabling"]
+
+
+def test_post_change_incident_correlation_and_success_rate(client, db, agent, admin, requester, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from app.models import Device, IpAddress, NetworkObservation, Subnet, System, TicketDevice, TicketSystem
+
+    t0 = datetime(2026, 10, 15, 20, 0, tzinfo=timezone.utc)
+    desk = Queue(name="Desk", is_default=True)
+    hr = Queue(name="HR", restricted=True)
+    sw = Device(name="SW-CORE-1")
+    pc = Device(name="PC-JONES", assigned_user_id=requester.id)
+    branch_fw = Device(name="FW-BRANCH-1")
+    branch_pc = Device(name="PC-BRANCH-9")
+    phones = System(name="Phone System")
+    sub_2f = Subnet(network="10.0.20.0/24", name="2nd Floor", site="HQ")
+    sub_br_a = Subnet(network="10.2.0.0/24", name="Branch Core", site="Branch")
+    sub_br_b = Subnet(network="10.2.10.0/24", name="Branch Users", site="Branch")
+    db.add_all([desk, hr, sw, pc, branch_fw, branch_pc, phones, sub_2f, sub_br_a, sub_br_b])
+    db.flush()
+
+    db.add_all([
+        IpAddress(address="10.0.20.2", device_id=sw.id, mac="00:11:22:33:44:01"),
+        IpAddress(address="10.0.20.55", device_id=pc.id, mac="00:11:22:33:44:55"),
+        IpAddress(address="10.2.0.1", device_id=branch_fw.id, mac="00:11:22:33:55:01"),
+        IpAddress(address="10.2.10.99", device_id=branch_pc.id, mac="00:11:22:33:55:99"),
+        NetworkObservation(
+            provider="unifi",
+            source_id="site-hq",
+            source_name="HQ",
+            mac="00:11:22:33:44:55",
+            address="10.0.20.55",
+            uplink_name="SW-CORE-1",
+            port="ge-0/0/12",
+            observed_at=t0,
+        ),
+    ])
+    # Originating request ticket opened BEFORE the change window.
+    req_ticket = Ticket(
+        subject="Schedule switch & phone maintenance",
+        source=TicketSource.agent,
+        queue_id=desk.id,
+        requester_id=requester.id,
+        created_at=t0 - timedelta(days=2),
+    )
+    db.add(req_ticket)
+    db.commit()
+
+    # Change 1: completed on SW-CORE-1 and Phone System, linked to the pre-existing request ticket.
+    c1 = client.post(
+        "/api/changes",
+        json={
+            "title": "Core switch and phone upgrade",
+            "implementation_plan": "Upgrade firmware",
+            "rollback_plan": "Boot backup image",
+            "planned_start": t0.isoformat(),
+            "planned_end": (t0 + timedelta(hours=1)).isoformat(),
+            "ticket_ids": [req_ticket.id],
+            "device_ids": [sw.id],
+            "system_ids": [phones.id],
+        },
+        headers=as_user(agent),
+    ).json()
+    act(client, agent, c1["id"], "submit")
+    act(client, agent, c1["id"], "start")
+    act(client, agent, c1["id"], "complete")
+
+    # Change 2: completed on FW-BRANCH-1 at Site Branch.
+    c2 = client.post(
+        "/api/changes",
+        json={
+            "title": "Branch firewall rule cleanup",
+            "implementation_plan": "Tighten rules",
+            "rollback_plan": "Restore previous ruleset",
+            "planned_start": t0.isoformat(),
+            "planned_end": (t0 + timedelta(hours=1)).isoformat(),
+            "device_ids": [branch_fw.id],
+        },
+        headers=as_user(agent),
+    ).json()
+    act(client, agent, c2["id"], "submit")
+    act(client, agent, c2["id"], "start")
+    act(client, agent, c2["id"], "complete")
+
+    # Both completed without post-change incidents so far -> 100% success rate.
+    st = client.get("/api/changes/stats", headers=as_user(agent)).json()
+    assert st["ended_count"] == 2 and st["successful_count"] == 2 and st["success_rate_pct"] == 100.0
+
+    # Tickets arriving 2 hours after the change window:
+    # 1) On requester's PC-JONES (connected to switch SW-CORE-1 and in subnet 10.0.20.0/24).
+    t_sw = Ticket(
+        subject="No network on 2nd floor",
+        source=TicketSource.portal,
+        queue_id=desk.id,
+        requester_id=requester.id,
+        computer_id=pc.id,
+        created_at=t0 + timedelta(hours=2),
+    )
+    # 2) On System Phone System.
+    t_sys = Ticket(
+        subject="Desk phones not registering",
+        source=TicketSource.agent,
+        queue_id=desk.id,
+        requester_id=requester.id,
+        created_at=t0 + timedelta(hours=3),
+    )
+    # 3) On PC-BRANCH-9 (different subnet 10.2.10.0/24, same Site Branch as FW-BRANCH-1).
+    t_site = Ticket(
+        subject="Branch printer unreachable",
+        source=TicketSource.agent,
+        queue_id=desk.id,
+        requester_id=requester.id,
+        created_at=t0 + timedelta(hours=2),
+    )
+    # 4) In restricted HR queue (hidden from agent).
+    t_hr = Ticket(
+        subject="HR phone down",
+        source=TicketSource.agent,
+        queue_id=hr.id,
+        requester_id=requester.id,
+        computer_id=sw.id,
+        created_at=t0 + timedelta(hours=2),
+    )
+    # 5) Outside the 72h correlation window.
+    t_late = Ticket(
+        subject="Next week glitch",
+        source=TicketSource.agent,
+        queue_id=desk.id,
+        requester_id=requester.id,
+        computer_id=sw.id,
+        created_at=t0 + timedelta(hours=100),
+    )
+    db.add_all([t_sw, t_sys, t_site, t_hr, t_late])
+    db.flush()
+    db.add(TicketSystem(ticket_id=t_sys.id, system_id=phones.id))
+    db.add(TicketDevice(ticket_id=t_site.id, device_id=branch_pc.id))
+    db.commit()
+
+    # Ticket -> change suggestions ("possibly related to CHG-...").
+    sug_sw = client.get(f"/api/tickets/{t_sw.id}/change-suggestions", headers=as_user(agent)).json()
+    assert [(s["change"]["id"], s["scope"]) for s in sug_sw] == [(c1["id"], "Switch SW-CORE-1")]
+    sug_sys = client.get(f"/api/tickets/{t_sys.id}/change-suggestions", headers=as_user(agent)).json()
+    assert [(s["change"]["id"], s["scope"]) for s in sug_sys] == [(c1["id"], "System Phone System")]
+    sug_site = client.get(f"/api/tickets/{t_site.id}/change-suggestions", headers=as_user(agent)).json()
+    assert [(s["change"]["id"], s["scope"]) for s in sug_site] == [(c2["id"], "Site Branch")]
+    assert client.get(f"/api/tickets/{t_late.id}/change-suggestions", headers=as_user(agent)).json() == []
+
+    # Change -> ticket review shows suggested post-change tickets (and hides HR from agent).
+    got_c1 = client.get(f"/api/changes/{c1['id']}", headers=as_user(agent)).json()
+    assert got_c1["follow_up_tickets"] == []
+    assert {(s["ticket"]["id"], s["scope"]) for s in got_c1["suggested_tickets"]} == {
+        (t_sw.id, "Switch SW-CORE-1"),
+        (t_sys.id, "System Phone System"),
+    }
+    # Admin also sees the HR ticket suggestion.
+    got_c1_admin = client.get(f"/api/changes/{c1['id']}", headers=as_user(admin)).json()
+    assert any(s["ticket"]["id"] == t_hr.id and s["scope"] == "Device SW-CORE-1" for s in got_c1_admin["suggested_tickets"])
+
+    # Turning the window down to 0 disables suggestions.
+    monkeypatch.setattr(settings, "change_correlation_hours", 0)
+    assert client.get(f"/api/tickets/{t_sw.id}/change-suggestions", headers=as_user(agent)).json() == []
+    monkeypatch.setattr(settings, "change_correlation_hours", 72)
+
+    # Confirming & linking a suggested ticket works on an already-completed change and feeds the success rate.
+    linked = client.post(f"/api/changes/{c1['id']}/tickets", json={"ticket_id": t_sw.id}, headers=as_user(agent))
+    assert linked.status_code == 200, linked.text
+    after = linked.json()
+    assert [t["id"] for t in after["follow_up_tickets"]] == [t_sw.id]
+    assert [s["ticket"]["id"] for s in after["suggested_tickets"]] == [t_sys.id]
+    notes = [x.body for x in db.query(Comment).filter_by(ticket_id=t_sw.id)]
+    assert any(c1["label"] in n for n in notes)
+
+    # Change 1 now counts as completed with follow-up incidents -> success rate is 1 of 2 (50%).
+    st2 = client.get("/api/changes/stats", headers=as_user(agent)).json()
+    assert (
+        st2["ended_count"] == 2
+        and st2["successful_count"] == 1
+        and st2["completed_with_incidents_count"] == 1
+        and st2["follow_up_tickets_count"] == 1
+        and st2["success_rate_pct"] == 50.0
+    )
+
+    # Reports dataset "changes" reflects the same change success rate.
+    rep = client.post(
+        "/api/reports/run",
+        json={"dataset": "changes", "measures": ["ended", "successful", "with_incidents", "follow_up_tickets", "success_pct"]},
+        headers=as_user(agent),
+    ).json()
+    assert rep["rows"] == [[2, 1, 1, 1, 50.0]]
+
+    # Unlinking restores it.
+    unlinked = client.delete(f"/api/changes/{c1['id']}/tickets/{t_sw.id}", headers=as_user(agent)).json()
+    assert unlinked["follow_up_tickets"] == []
+    assert client.get("/api/changes/stats", headers=as_user(agent)).json()["success_rate_pct"] == 100.0
