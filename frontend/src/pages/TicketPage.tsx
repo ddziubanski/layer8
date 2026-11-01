@@ -31,6 +31,7 @@ import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
 import { ChildTickets } from "./ticket/ChildTickets";
 import { ProblemsCard } from "./ticket/ProblemsCard";
+import { TimeSpentTotal } from "../components/TicketTimers";
 import { RelatedTickets } from "./ticket/RelatedTickets";
 import { ComputerCard } from "./ticket/ComputerCard";
 import { DevicesCard } from "./ticket/DevicesCard";
@@ -257,7 +258,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
       <TicketCoreActions ticket={t} me={activeMe} onEdit={()=>{openTool("details");document.querySelector(".ticket-focus-workspace")?.scrollIntoView?.({block:"start"});}} onChanged={refresh}/>
 
       <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
-        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><TicketPriorityChip ticket={t} /></dd>{t.computer && <><dt>Computer</dt><dd><Link to={`/devices/${t.computer.id}`}>{t.computer.name}</Link></dd></>}</dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />
+        context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><TicketPriorityChip ticket={t} /></dd><dt>Time spent</dt><dd><TimeSpentTotal ticketId={t.id} /></dd>{t.computer && <><dt>Computer</dt><dd><Link to={`/devices/${t.computer.id}`}>{t.computer.name}</Link></dd></>}</dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />
     </div>
   );
 }

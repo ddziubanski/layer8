@@ -1175,3 +1175,18 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 /* A card inside a shaded pane stays plain, so shades don't stack. */
 [data-ticket-panel]:not([data-ticket-panel="conversation"]) .card .card { background: var(--surface); box-shadow: none; }
 [data-ticket-panel]:not([data-ticket-panel="conversation"]) .lbl { color: color-mix(in srgb, var(--pane) 45%, var(--ink)); }
+
+/* Ticket timers: the console's "Active ticket timers" bar and running-timer markers. */
+.active-timers { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; padding: 8px 14px; border-radius: 12px;
+  background: color-mix(in srgb, var(--chip-a, #c48a1a) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--chip-a, #c48a1a) 40%, var(--line)); }
+.active-timers-title { font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+.timer-chip { display: inline-flex; align-items: center; gap: 10px; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; max-width: 100%; min-width: 0; }
+.timer-chip a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; }
+.timer-subject { color: var(--muted); }
+.timer-time { font-variant-numeric: tabular-nums; font-weight: 600; }
+.timer-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--error); display: inline-block; flex: none; animation: timer-pulse 1.6s ease-in-out infinite; }
+.timer-running { font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 8px; }
+.timer-row { align-items: center; }
+.timer-inline { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; font-size: 12px; color: var(--muted); }
+@keyframes timer-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .timer-pulse { animation: none; } }

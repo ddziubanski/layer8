@@ -4455,6 +4455,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/timers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Timers
+         * @description The signed-in technician's running timers (the console's "Active ticket timers" bar).
+         */
+        get: operations["my_timers_api_me_timers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/timer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Timer */
+        post: operations["start_timer_api_tickets__ticket_id__timer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/timer/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop Timer */
+        post: operations["stop_timer_api_tickets__ticket_id__timer_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/time/{entry_id}": {
         parameters: {
             query?: never;
@@ -12728,6 +12782,11 @@ export interface components {
             total_minutes: number;
             /** Entries */
             entries: components["schemas"]["TimeEntryOut"][];
+            /**
+             * Timers
+             * @default []
+             */
+            timers: components["schemas"]["TimerOut"][];
         };
         /** TicketUpdate */
         TicketUpdate: {
@@ -12918,6 +12977,32 @@ export interface components {
              * @enum {string}
              */
             tone: "info" | "ok" | "warn" | "bad";
+        };
+        /** TimerOut */
+        TimerOut: {
+            /** Ticket Id */
+            ticket_id: number;
+            /** Ticket Label */
+            ticket_label: string;
+            /** Subject */
+            subject: string;
+            /** User Id */
+            user_id: number;
+            /** User Name */
+            user_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+        };
+        /** TimerStopIn */
+        TimerStopIn: {
+            /**
+             * Note
+             * @default
+             */
+            note: string;
         };
         /** TwoFactorConfirmIn */
         TwoFactorConfirmIn: {
@@ -23778,6 +23863,107 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_timers_api_me_timers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimerOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_timer_api_tickets__ticket_id__timer_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimerOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_timer_api_tickets__ticket_id__timer_stop_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimerStopIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
