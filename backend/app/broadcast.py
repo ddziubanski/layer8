@@ -11,12 +11,12 @@ requester with several of these tickets is emailed once.
 """
 import hashlib
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app import numbering, services, sla
 from app.config import settings
 from app.api.tickets import visible
-from app.models import Ticket, TicketSource, TicketStatus, User
+from app.models import Problem, ProblemStatus, ProblemUpdate, ServiceNotice, Ticket, TicketSource, TicketStatus, User
 
 
 class BroadcastError(ValueError):
@@ -85,6 +85,82 @@ def run(session, parent: Ticket, user: User, *, body: str, resolve: bool, resolu
                          "why_no_email": None if email else ("email isn't set up (Settings > Mailbox)" if not settings.mailbox
                                                               else "already emailed for another of these tickets" if requester and requester.id in emailed
                                                               else "no email address, or the account is inactive")})
+        session.flush()
+        result = {"fingerprint": print_, "tickets": rows, "emails": len(emailed), "skipped_closed": skipped, "resolve": resolve}
+        if apply:
+            session.commit()
+        return result
+    finally:
+        if savepoint is not None:
+            savepoint.rollback()
+            session.expire_all()
+
+
+def _problem_targets(session, problem: Problem, user: User) -> tuple[list[Ticket], int]:
+    ids = [t.id for t in problem.tickets]
+    if not ids:
+        return [], 0
+    linked = session.scalars(visible(select(Ticket).where(Ticket.id.in_(ids)), user).order_by(Ticket.id)).all()
+    open_tickets = [t for t in linked if t.status not in sla.CLOSED_STATUSES]
+    return open_tickets, len(linked) - len(open_tickets)
+
+
+def problem_fingerprint(problem: Problem, ids: list[int], body: str, resolve: bool, resolution_type_id: int | None, closure_reason_id: int | None = None) -> str:
+    raw = f"problem:{problem.id}\0{','.join(map(str, sorted(ids)))}\0{resolve}\0{resolution_type_id}\0{closure_reason_id}\0{body}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def run_for_problem(session, problem: Problem, user: User, *, body: str, resolve: bool, resolution_type_id: int | None = None,
+                    closure_reason_id: int | None = None, apply: bool = False, expected: str | None = None) -> dict:
+    body = body.strip()
+    if not body:
+        raise BroadcastError("Write the update first")
+    targets, skipped = _problem_targets(session, problem, user)
+    if not targets:
+        raise BroadcastError("Link open tickets to this problem first: there's nobody to update")
+    ids = [t.id for t in targets]
+    print_ = problem_fingerprint(problem, ids, body, resolve, resolution_type_id, closure_reason_id)
+    if apply and expected != print_:
+        raise BroadcastError("The tickets or the message changed since the preview; preview again")
+    savepoint = None if apply else session.begin_nested()
+    emailed: set[int] = set()
+    rows = []
+    try:
+        for t in targets:
+            requester = session.get(User, t.requester_id)
+            email = requester is not None and requester.id not in emailed and _emailable(requester)
+            services.add_comment(session, t, user, body=body, is_internal=False, source=TicketSource.agent, email_requester=email)
+            if email:
+                emailed.add(requester.id)
+            if resolve:
+                changes = {"status": TicketStatus.resolved}
+                if resolution_type_id is not None:
+                    changes["resolution_type_id"] = resolution_type_id
+                if closure_reason_id is not None:
+                    changes["closure_reason_id"] = closure_reason_id
+                try:
+                    services.update_ticket(session, t, user, changes)
+                except services.ServiceError as exc:
+                    raise BroadcastError(f"{numbering.label(t.id, t.created_at)}: {exc}") from None
+            rows.append({"ticket": t, "requester": requester.display_name if requester else "", "emailed": email,
+                         "resolved": resolve, "note": None,
+                         "why_no_email": None if email else ("email isn't set up (Settings > Mailbox)" if not settings.mailbox
+                                                              else "already emailed for another of these tickets" if requester and requester.id in emailed
+                                                              else "no email address, or the account is inactive")})
+        if apply:
+            summary = f"Updated {len(targets)} ticket(s)" + (" and resolved them" if resolve else "") + f": {body}"
+            session.add(ProblemUpdate(problem_id=problem.id, author_id=user.id, type="broadcast", body=summary[:4000]))
+            problem.updated_at = func.now()
+            if resolve:
+                all_ids = [t.id for t in problem.tickets]
+                still_open = bool(all_ids and session.scalar(select(Ticket.id).where(Ticket.id.in_(all_ids), Ticket.status.not_in(sla.CLOSED_STATUSES)).limit(1)))
+                if not still_open and problem.status != ProblemStatus.closed:
+                    problem.status = ProblemStatus.resolved
+                    if problem.notice_id:
+                        notice = session.get(ServiceNotice, problem.notice_id)
+                        now = sla.utcnow()
+                        if notice is not None and (notice.ends_at is None or notice.ends_at > now):
+                            notice.ends_at = max(now, notice.starts_at)
         session.flush()
         result = {"fingerprint": print_, "tickets": rows, "emails": len(emailed), "skipped_closed": skipped, "resolve": resolve}
         if apply:

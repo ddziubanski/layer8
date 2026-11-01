@@ -29,7 +29,7 @@ def test_link_from_the_ticket_shows_the_workaround_and_is_in_its_history(client,
     assert events(db, first) == [("problem_linked", label)]
 
     url = f"/api/tickets/{second.id}/problems"
-    assert client.get(url, headers=as_user(agent)).json() == {"problems": [], "hidden": 0}
+    assert client.get(url, headers=as_user(agent)).json() == {"problems": [], "hidden": 0, "suggested": []}
     linked = client.post(url, json={"problem_id": made["id"]}, headers=as_user(agent))
     assert linked.status_code == 200, linked.text
     [shown] = linked.json()["problems"]
@@ -52,7 +52,7 @@ def test_hidden_problems_are_counted_not_shown(client, db, agent, admin, request
     mine, private = ticket_in(db, requester, desk, "Printer jam"), ticket_in(db, requester, hr, "HR printer jam")
     made = client.post("/api/problems", json={"title": "Printer jams", "ticket_ids": [mine.id, private.id]}, headers=as_user(admin)).json()
     # The agent can see the ticket but not the problem (it also links an HR ticket).
-    assert client.get(f"/api/tickets/{mine.id}/problems", headers=as_user(agent)).json() == {"problems": [], "hidden": 1}
+    assert client.get(f"/api/tickets/{mine.id}/problems", headers=as_user(agent)).json() == {"problems": [], "hidden": 1, "suggested": []}
     assert client.post(f"/api/tickets/{mine.id}/problems", json={"problem_id": made["id"]}, headers=as_user(agent)).status_code == 404
     assert client.get(f"/api/tickets/{private.id}/problems", headers=as_user(agent)).status_code in (403, 404)
     # The ticket's history names the problem by number, never by its title.

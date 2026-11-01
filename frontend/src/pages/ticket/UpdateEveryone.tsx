@@ -3,12 +3,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, type Ticket } from "../../api/client";
+import type { components } from "../../api/schema";
+
+type S = components["schemas"];
 
 type Broadcast = Awaited<ReturnType<typeof api.broadcast.preview>>;
 
-/** One message to everyone affected (this ticket and its open child tickets), previewed first. */
-export function UpdateEveryone({ ticket, onDone }: { ticket: Ticket; onDone: () => void }) {
+/** One message to everyone affected, previewed first: a ticket and its open child tickets,
+ * or (with problemId) every open ticket linked to a problem. */
+export function UpdateEveryone({ ticket, problemId, onDone }: { ticket?: Ticket; problemId?: number; onDone: () => void }) {
   const queryClient = useQueryClient();
+  const forProblem = problemId !== undefined;
+  const api_ = forProblem
+    ? { preview: (b: S["BroadcastIn"]) => api.problems.broadcastPreview(problemId, b), send: (b: S["BroadcastIn"]) => api.problems.broadcastSend(problemId, b) }
+    : { preview: (b: S["BroadcastIn"]) => api.broadcast.preview(ticket!.id, b), send: (b: S["BroadcastIn"]) => api.broadcast.send(ticket!.id, b) };
   const [body, setBody] = useState("");
   const [resolve, setResolve] = useState(false);
   const [resolution, setResolution] = useState("");
@@ -21,11 +29,12 @@ export function UpdateEveryone({ ticket, onDone }: { ticket: Ticket; onDone: () 
     resolution_type_id: resolve && resolution ? Number(resolution) : null,
     closure_reason_id: resolve && closure ? Number(closure) : null,
   });
-  const check = useMutation({ mutationFn: () => api.broadcast.preview(ticket.id, { ...request(), confirm: false }), onSuccess: setPreview });
+  const check = useMutation({ mutationFn: () => api_.preview({ ...request(), confirm: false }), onSuccess: setPreview });
   const send = useMutation({
-    mutationFn: () => api.broadcast.send(ticket.id, { ...request(), fingerprint: preview!.fingerprint, confirm: true }),
+    mutationFn: () => api_.send({ ...request(), fingerprint: preview!.fingerprint, confirm: true }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["ticket", ticket.id] });
+      if (forProblem) void queryClient.invalidateQueries({ queryKey: ["problem", problemId] });
+      else void queryClient.invalidateQueries({ queryKey: ["ticket", ticket!.id] });
       void queryClient.invalidateQueries({ queryKey: ["tickets"] });
       onDone();
     },
@@ -84,7 +93,8 @@ export function UpdateEveryone({ ticket, onDone }: { ticket: Ticket; onDone: () 
             </tbody>
           </table>
           <p className="muted small">
-            Each ticket gets this as a public reply.{preview.skipped_closed > 0 && ` ${preview.skipped_closed} already resolved or closed child ticket(s) are left alone.`}
+            Each ticket gets this as a public reply.{preview.skipped_closed > 0 && ` ${preview.skipped_closed} already resolved or closed ${forProblem ? "linked" : "child"} ticket(s) are left alone.`}
+            {forProblem && preview.resolve && " When every linked ticket is resolved, the problem is marked resolved and its service notice ends."}
             {preview.resolve && " If resolved emails are on, requesters also get the usual resolved email."}
           </p>
           {send.error && <p className="error">{send.error.message}</p>}

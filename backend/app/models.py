@@ -2456,6 +2456,8 @@ class Problem(Base):
     root_cause: Mapped[str] = mapped_column(Text, default="", server_default="")
     workaround: Mapped[str] = mapped_column(Text, default="", server_default="")
     resolution: Mapped[str] = mapped_column(Text, default="", server_default="")
+    outage_scope: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    notice_id: Mapped[int | None] = mapped_column(ForeignKey("service_notices.id", ondelete="SET NULL"))
     owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -2463,6 +2465,7 @@ class Problem(Base):
 
     owner: Mapped[User | None] = relationship(foreign_keys=[owner_id])
     created_by: Mapped[User | None] = relationship(foreign_keys=[created_by_id])
+    notice: Mapped[ServiceNotice | None] = relationship(foreign_keys=[notice_id])
     tickets: Mapped[list[Ticket]] = relationship(secondary=problem_tickets, order_by="Ticket.id")
     updates: Mapped[list["ProblemUpdate"]] = relationship(order_by="ProblemUpdate.id", cascade="all, delete-orphan")
 

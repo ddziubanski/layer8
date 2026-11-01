@@ -3018,8 +3018,34 @@ class ProblemIn(BaseModel):
     root_cause: str = ""
     workaround: str = ""
     resolution: str = ""
+    # None leaves the stored scope alone (older clients); "" clears it.
+    outage_scope: str | None = Field(default=None, max_length=255)
     owner_id: int | None = None
     ticket_ids: list[int] = Field(default_factory=list, max_length=100)
+
+
+class OutageProblemIn(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    description: str = ""
+    workaround: str = ""
+    outage_scope: str = Field(default="", max_length=255)
+    owner_id: int | None = None
+    ticket_ids: list[int] = Field(default_factory=list, max_length=100)
+    create_draft_notice: bool = True
+    notice_title: str = Field(default="", max_length=200)
+    notice_message: str = Field(default="", max_length=4000)
+
+
+class OutageClusterOut(BaseModel):
+    key: str
+    scope_kind: Literal["site", "switch", "subnet"]
+    scope_label: str
+    devices: list[str]
+    down_since: datetime | None = None
+    ticket_ids: list[int] = []
+    suggested_title: str
+    suggested_notice_title: str
+    suggested_notice_message: str
 
 
 class ProblemNoteIn(BaseModel):
@@ -3031,6 +3057,11 @@ class ProblemTicketRef(ORM, Labelled):
     subject: str
     status: TicketStatus
     created_at: datetime
+
+
+class ProblemTicketSuggestionOut(BaseModel):
+    ticket: ProblemTicketRef
+    scope: str
 
 
 class ProblemUpdateOut(ORM):
@@ -3046,6 +3077,7 @@ class ProblemSummaryOut(ORM):
     label: str
     title: str
     status: ProblemStatus
+    outage_scope: str = ""
     owner: UserRef | None
     ticket_count: int
     updated_at: datetime
@@ -3057,10 +3089,16 @@ class TicketProblemOut(ProblemSummaryOut):
     root_cause: str
 
 
+class TicketProblemSuggestionOut(BaseModel):
+    problem: TicketProblemOut
+    scope: str
+
+
 class TicketProblemsOut(BaseModel):
     problems: list[TicketProblemOut]
     # Linked problems this technician can't open (they also link a ticket they can't see).
     hidden: int
+    suggested: list[TicketProblemSuggestionOut] = []
 
 
 class TicketProblemLinkIn(BaseModel):
@@ -3077,6 +3115,11 @@ class ProblemOut(ProblemSummaryOut):
     created_at: datetime
     tickets: list[ProblemTicketRef]
     updates: list[ProblemUpdateOut]
+    notice: NoticeOut | None = None
+    active_outage_devices: list[str] = []
+    recovered_outage_devices: list[str] = []
+    outage_recovered: bool = False
+    suggested_tickets: list[ProblemTicketSuggestionOut] = []
 
 
 class KbArticleIn(BaseModel):

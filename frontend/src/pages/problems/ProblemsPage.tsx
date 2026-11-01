@@ -9,9 +9,14 @@ import { when } from "../../format";
 import { ME_KEY } from "../../queryClient";
 import { can } from "../../permissions";
 import { ActionDialog } from "../../components/ActionDialog";
+import { UpdateEveryone } from "../ticket/UpdateEveryone";
 import { ProblemStatus, STATUS, STATUSES } from "./status";
 
-const BLANK: ProblemIn = { title: "", description: "", status: "open", root_cause: "", workaround: "", resolution: "", owner_id: null, ticket_ids: [] };
+const BLANK: ProblemIn = { title: "", description: "", status: "open", root_cause: "", workaround: "", resolution: "", outage_scope: "", owner_id: null, ticket_ids: [] };
+const CLOSED = new Set(["resolved", "closed"]);
+const NOTICE_STATE: Record<string, string> = { off: "Draft: not shown yet", scheduled: "Scheduled", current: "Showing to users", ended: "Ended" };
+
+type Cluster = Awaited<ReturnType<typeof api.problems.outageClusters>>[number];
 
 
 export function ProblemsPage() {
@@ -30,6 +35,7 @@ function ProblemList() {
       <Link className="btn" to="/problems/new">New problem</Link>
     </div>
     <div className="stack">
+      <OutageClusters />
       <div className="row-gap">
         <input type="search" style={{ maxWidth: 420 }} placeholder="Search problems" aria-label="Search problems" value={q} onChange={(event) => setQ(event.target.value)} />
         <select aria-label="Problem status" value={status} onChange={(event) => setStatus(event.target.value)} style={{ width: "auto" }}>
@@ -49,6 +55,94 @@ function ProblemList() {
       </div>
     </div>
   </>;
+}
+
+/** Several devices down at one switch, subnet or site and no problem for it yet: offer one. */
+function OutageClusters() {
+  const clusters = useQuery({ queryKey: ["problems", "outage-clusters"], queryFn: api.problems.outageClusters, refetchInterval: 60_000 });
+  const [open, setOpen] = useState<Cluster | null>(null);
+  if (!clusters.data?.length) return null;
+  return <section className="card stack" style={{ gap: 8 }} aria-labelledby="outage-clusters-heading">
+    <h2 id="outage-clusters-heading" style={{ margin: 0 }}>Outages without a problem</h2>
+    <p className="muted small" style={{ margin: 0 }}>Several devices dropped in the same place within half an hour. One problem keeps the tickets, the service notice and the update to everyone together.</p>
+    {clusters.data.map((c) => <div key={c.key} className="row-gap" role="group" aria-label={c.scope_label}>
+      <div className="spacer">
+        <strong>{c.scope_label}</strong>{" "}
+        <span className="muted small">{c.devices.length} devices down{c.down_since ? ` since ${when(c.down_since)}` : ""}: {c.devices.join(", ")}</span>
+      </div>
+      <button className="btn2" type="button" onClick={() => setOpen(c)}>Open a problem…</button>
+    </div>)}
+    {open && <FromOutageDialog key={open.key} cluster={open} onClose={() => setOpen(null)} />}
+  </section>;
+}
+
+function FromOutageDialog({ cluster, onClose }: { cluster: Cluster; onClose: () => void }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false }).data;
+  const mayNotice = !!me && can(me, "notices_manage");
+  const [title, setTitle] = useState(cluster.suggested_title);
+  const [notice, setNotice] = useState(mayNotice);
+  const [noticeTitle, setNoticeTitle] = useState(cluster.suggested_notice_title);
+  const [noticeMessage, setNoticeMessage] = useState(cluster.suggested_notice_message);
+  const create = useMutation({
+    mutationFn: () => api.problems.fromOutage({
+      title, description: "", workaround: "", outage_scope: cluster.scope_label, ticket_ids: cluster.ticket_ids,
+      create_draft_notice: notice && mayNotice, notice_title: noticeTitle, notice_message: noticeMessage,
+    }),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(["problem", saved.id], saved);
+      void queryClient.invalidateQueries({ queryKey: ["problems"] });
+      navigate(`/problems/${saved.id}`);
+    },
+  });
+  return <ActionDialog title={`Problem for ${cluster.scope_label}`} busy={create.isPending} onClose={onClose}>
+    <form className="stack" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
+      <label className="field">Title
+        <input required maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} />
+      </label>
+      <p className="muted small" style={{ margin: 0 }}>
+        {cluster.ticket_ids.length ? `Links the ${cluster.ticket_ids.length} outage ticket${cluster.ticket_ids.length === 1 ? "" : "s"} you can see. ` : ""}
+        New tickets from people at {cluster.scope_label} are offered this problem.
+      </p>
+      {mayNotice ? <>
+        <label className="inline"><input type="checkbox" checked={notice} onChange={(event) => setNotice(event.target.checked)} />Draft a service notice</label>
+        {notice && <>
+          <label className="field">Notice title
+            <input maxLength={200} value={noticeTitle} onChange={(event) => setNoticeTitle(event.target.value)} />
+          </label>
+          <label className="field">Notice message
+            <textarea rows={3} maxLength={4000} value={noticeMessage} onChange={(event) => setNoticeMessage(event.target.value)} />
+          </label>
+          <p className="muted small" style={{ margin: 0 }}>The notice starts as a draft: nobody sees it until you turn it on in Settings › Notices.</p>
+        </>}
+      </> : <p className="muted small" style={{ margin: 0 }}>Service notices are drafted by people with the notices permission.</p>}
+      {create.error && <p className="error" role="alert">{create.error.message}</p>}
+      <div className="row-gap">
+        <button className="btn2" type="button" disabled={create.isPending} onClick={onClose}>Cancel</button>
+        <button className="btn" type="submit" disabled={create.isPending || !title.trim()}>{create.isPending ? "Opening…" : "Open problem"}</button>
+      </div>
+    </form>
+  </ActionDialog>;
+}
+
+function OutageStatus({ problem, onUpdateEveryone }: { problem: Problem; onUpdateEveryone: () => void }) {
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false }).data;
+  const active = problem.active_outage_devices ?? [];
+  const recovered = problem.recovered_outage_devices ?? [];
+  return <section className="card stack" style={{ gap: 8 }} aria-labelledby="outage-heading">
+    <div className="row-gap"><h2 id="outage-heading" className="spacer" style={{ margin: 0 }}>Outage</h2>{problem.outage_scope && <span className="muted small">{problem.outage_scope}</span>}</div>
+    {active.length > 0 && <p className="error" style={{ margin: 0 }}>Still down: {active.join(", ")}</p>}
+    {problem.outage_recovered && <div className="row-gap">
+      <p className="spacer" style={{ margin: 0 }}>Back up{recovered.length ? `: ${recovered.join(", ")}` : ""}. Tell everyone affected, and resolve their tickets if it&apos;s fixed.</p>
+      <button className="btn" type="button" onClick={onUpdateEveryone}>Update everyone affected…</button>
+    </div>}
+    {!active.length && !problem.outage_recovered && <p className="muted small" style={{ margin: 0 }}>No tracked devices are down here right now.</p>}
+    {problem.notice && <p className="small" style={{ margin: 0 }}>
+      Service notice: <strong>{problem.notice.title}</strong> · {NOTICE_STATE[problem.notice.state] ?? problem.notice.state}
+      {me && can(me, "notices_manage") && <> · <Link to="/settings/notices">Manage notices</Link></>}
+    </p>}
+  </section>;
 }
 
 function ProblemRow({ problem }: { problem: ProblemSummary }) {
@@ -88,6 +182,7 @@ function inputFor(problem?: Problem): ProblemIn {
     root_cause: problem.root_cause,
     workaround: problem.workaround,
     resolution: problem.resolution,
+    outage_scope: problem.outage_scope,
     owner_id: problem.owner?.id ?? null,
     ticket_ids: problem.tickets.map((ticket) => ticket.id),
   } : BLANK;
@@ -113,6 +208,7 @@ function ProblemEditor({ problem, fromTicket }: { problem?: Problem; fromTicket?
   const [ticketError, setTicketError] = useState("");
   const [linkedTickets, setLinkedTickets] = useState<Problem["tickets"]>(problem?.tickets ?? (fromTicket
     ? [{ id: fromTicket.id, label: fromTicket.label, subject: fromTicket.subject, status: fromTicket.status, created_at: fromTicket.created_at }] : []));
+  const [updating, setUpdating] = useState(false);
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState("");
   const users = useQuery({ queryKey: ["users"], queryFn: api.users });
@@ -153,6 +249,10 @@ function ProblemEditor({ problem, fromTicket }: { problem?: Problem; fromTicket?
       setTicketError(error instanceof Error ? error.message : "Ticket not found or not visible to you.");
     }
   }
+
+  const suggested = (problem?.suggested_tickets ?? []).filter((s) => !(draft.ticket_ids ?? []).includes(s.ticket.id));
+  // Saved links only: the update goes to the tickets the server has linked.
+  const openLinked = (problem?.tickets ?? []).filter((t) => !CLOSED.has(t.status)).length;
 
   function removeTicket(ticketId: number) {
     setLinkedTickets((current) => current.filter((ticket) => ticket.id !== ticketId));
@@ -197,6 +297,10 @@ function ProblemEditor({ problem, fromTicket }: { problem?: Problem; fromTicket?
             </select>
           </label>
         </div>
+        <label className="field">Outage scope
+          <input maxLength={255} value={draft.outage_scope ?? ""} placeholder="e.g. Site Branch, Switch SW-2 or Subnet 10.20.0.0/24"
+            onChange={(event) => setDraft({ ...draft, outage_scope: event.target.value })} />
+        </label>
         <label className="field">Root cause
           <textarea rows={3} value={draft.root_cause} onChange={(event) => setDraft({ ...draft, root_cause: event.target.value })} />
         </label>
@@ -222,8 +326,15 @@ function ProblemEditor({ problem, fromTicket }: { problem?: Problem; fromTicket?
         </div>
       </ActionDialog>}
 
+      {problem && (problem.outage_scope || problem.notice || (problem.active_outage_devices ?? []).length > 0 || problem.outage_recovered) &&
+        <OutageStatus problem={problem} onUpdateEveryone={() => setUpdating(true)} />}
+
       <section className="stack" aria-labelledby="linked-tickets-heading">
-        <div className="row-gap"><h2 id="linked-tickets-heading" className="spacer">Linked tickets</h2><span className="muted small">{linkedTickets.length} linked</span></div>
+        <div className="row-gap">
+          <h2 id="linked-tickets-heading" className="spacer">Linked tickets</h2><span className="muted small">{linkedTickets.length} linked</span>
+          {openLinked > 0 && !updating && <button className="btn2" type="button" onClick={() => setUpdating(true)}>Update everyone affected…</button>}
+        </div>
+        {updating && problem && <UpdateEveryone problemId={problem.id} onDone={() => setUpdating(false)} />}
         <form className="row-gap" onSubmit={(event) => { event.preventDefault(); void addTicket(); }}>
           <label className="field spacer">Ticket number
             <input inputMode="numeric" value={ticketNumber} onChange={(event) => setTicketNumber(event.target.value)} placeholder="e.g. 4821" />
@@ -237,6 +348,18 @@ function ProblemEditor({ problem, fromTicket }: { problem?: Problem; fromTicket?
             <button type="button" className="btn2" aria-label={`Unlink ${ticket.label}`} onClick={() => removeTicket(ticket.id)}>Unlink</button>
           </li>)}
         </ul> : <p className="muted">No tickets linked.</p>}
+        {suggested.length > 0 && <div className="stack" style={{ gap: 6 }} role="group" aria-label="Part of this outage?">
+          <h3 style={{ margin: 0 }}>Part of this outage?</h3>
+          {suggested.map(({ ticket, scope }) => <div key={ticket.id} className="row-gap">
+            <Link className="spacer" to={`/tickets/${ticket.id}`}>{ticket.label} {ticket.subject}</Link>
+            <span className="muted small">{scope.replace(/^Part of this outage · /, "")}</span>
+            <button type="button" className="btn2" aria-label={`Link ${ticket.label}`} onClick={() => {
+              setLinkedTickets((current) => [...current, ticket]);
+              setDraft((current) => ({ ...current, ticket_ids: [...(current.ticket_ids ?? []), ticket.id] }));
+            }}>Link</button>
+          </div>)}
+          <p className="muted small" style={{ margin: 0 }}>Open tickets from people at the same site, switch or subnet. Save the problem to keep the links.</p>
+        </div>}
       </section>
 
       {problem && <section className="stack" aria-labelledby="updates-heading">
@@ -268,5 +391,7 @@ function eventLabel(type: string) {
   if (type === "ticket_linked") return "Ticket linked";
   if (type === "ticket_unlinked") return "Ticket unlinked";
   if (type === "status_changed") return "Status changed";
+  if (type === "notice_drafted") return "Service notice drafted";
+  if (type === "broadcast") return "Everyone affected updated";
   return "Problem updated";
 }

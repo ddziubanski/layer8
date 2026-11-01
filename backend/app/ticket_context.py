@@ -432,6 +432,14 @@ def build(session, ticket: Ticket, user: User) -> dict:
                     if hit_near is not None:
                         scope = hit_near
                         break
+            if not scope and p.outage_scope:
+                os_low = p.outage_scope.strip().lower()
+                if os_low.startswith("switch ") and os_low[7:].strip() in switches:
+                    scope = p.outage_scope.strip()
+                elif os_low.startswith("subnet ") and any(_subnet_label(s).lower() == os_low[7:].strip() for s in subnets.values()):
+                    scope = p.outage_scope.strip()
+                elif os_low.startswith("site ") and os_low[5:].strip() in sites:
+                    scope = p.outage_scope.strip()
             if not scope:
                 continue
             if not can_see_problem(session, p, user):

@@ -4988,6 +4988,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/problems/outage-clusters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Outage Clusters */
+        get: operations["list_outage_clusters_api_problems_outage_clusters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/problems/from-outage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Problem From Outage */
+        post: operations["create_problem_from_outage_api_problems_from_outage_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/problems": {
         parameters: {
             query?: never;
@@ -5023,6 +5057,40 @@ export interface paths {
          * @description For a problem opened by mistake or a duplicate. Linked tickets stay, and say so in their history.
          */
         delete: operations["delete_problem_api_problems__problem_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/problems/{problem_id}/broadcast/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Problem Broadcast */
+        post: operations["preview_problem_broadcast_api_problems__problem_id__broadcast_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/problems/{problem_id}/broadcast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Problem Broadcast */
+        post: operations["send_problem_broadcast_api_problems__problem_id__broadcast_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -9668,6 +9736,72 @@ export interface components {
              */
             updated_at: string;
         };
+        /** OutageClusterOut */
+        OutageClusterOut: {
+            /** Key */
+            key: string;
+            /**
+             * Scope Kind
+             * @enum {string}
+             */
+            scope_kind: "site" | "switch" | "subnet";
+            /** Scope Label */
+            scope_label: string;
+            /** Devices */
+            devices: string[];
+            /** Down Since */
+            down_since?: string | null;
+            /**
+             * Ticket Ids
+             * @default []
+             */
+            ticket_ids: number[];
+            /** Suggested Title */
+            suggested_title: string;
+            /** Suggested Notice Title */
+            suggested_notice_title: string;
+            /** Suggested Notice Message */
+            suggested_notice_message: string;
+        };
+        /** OutageProblemIn */
+        OutageProblemIn: {
+            /** Title */
+            title: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Workaround
+             * @default
+             */
+            workaround: string;
+            /**
+             * Outage Scope
+             * @default
+             */
+            outage_scope: string;
+            /** Owner Id */
+            owner_id?: number | null;
+            /** Ticket Ids */
+            ticket_ids?: number[];
+            /**
+             * Create Draft Notice
+             * @default true
+             */
+            create_draft_notice: boolean;
+            /**
+             * Notice Title
+             * @default
+             */
+            notice_title: string;
+            /**
+             * Notice Message
+             * @default
+             */
+            notice_message: string;
+        };
         /** POAttachmentOut */
         POAttachmentOut: {
             /**
@@ -10290,6 +10424,8 @@ export interface components {
              * @default
              */
             resolution: string;
+            /** Outage Scope */
+            outage_scope?: string | null;
             /** Owner Id */
             owner_id?: number | null;
             /** Ticket Ids */
@@ -10309,6 +10445,11 @@ export interface components {
             /** Title */
             title: string;
             status: components["schemas"]["ProblemStatus"];
+            /**
+             * Outage Scope
+             * @default
+             */
+            outage_scope: string;
             owner: components["schemas"]["UserRef"] | null;
             /** Ticket Count */
             ticket_count: number;
@@ -10335,6 +10476,27 @@ export interface components {
             tickets: components["schemas"]["ProblemTicketRef"][];
             /** Updates */
             updates: components["schemas"]["ProblemUpdateOut"][];
+            notice?: components["schemas"]["NoticeOut"] | null;
+            /**
+             * Active Outage Devices
+             * @default []
+             */
+            active_outage_devices: string[];
+            /**
+             * Recovered Outage Devices
+             * @default []
+             */
+            recovered_outage_devices: string[];
+            /**
+             * Outage Recovered
+             * @default false
+             */
+            outage_recovered: boolean;
+            /**
+             * Suggested Tickets
+             * @default []
+             */
+            suggested_tickets: components["schemas"]["ProblemTicketSuggestionOut"][];
         };
         /**
          * ProblemStatus
@@ -10350,6 +10512,11 @@ export interface components {
             /** Title */
             title: string;
             status: components["schemas"]["ProblemStatus"];
+            /**
+             * Outage Scope
+             * @default
+             */
+            outage_scope: string;
             owner: components["schemas"]["UserRef"] | null;
             /** Ticket Count */
             ticket_count: number;
@@ -10373,6 +10540,12 @@ export interface components {
             created_at: string;
             /** Label */
             readonly label: string;
+        };
+        /** ProblemTicketSuggestionOut */
+        ProblemTicketSuggestionOut: {
+            ticket: components["schemas"]["ProblemTicketRef"];
+            /** Scope */
+            scope: string;
         };
         /** ProblemUpdateOut */
         ProblemUpdateOut: {
@@ -12882,6 +13055,11 @@ export interface components {
             /** Title */
             title: string;
             status: components["schemas"]["ProblemStatus"];
+            /**
+             * Outage Scope
+             * @default
+             */
+            outage_scope: string;
             owner: components["schemas"]["UserRef"] | null;
             /** Ticket Count */
             ticket_count: number;
@@ -12895,12 +13073,23 @@ export interface components {
             /** Root Cause */
             root_cause: string;
         };
+        /** TicketProblemSuggestionOut */
+        TicketProblemSuggestionOut: {
+            problem: components["schemas"]["TicketProblemOut"];
+            /** Scope */
+            scope: string;
+        };
         /** TicketProblemsOut */
         TicketProblemsOut: {
             /** Problems */
             problems: components["schemas"]["TicketProblemOut"][];
             /** Hidden */
             hidden: number;
+            /**
+             * Suggested
+             * @default []
+             */
+            suggested: components["schemas"]["TicketProblemSuggestionOut"][];
         };
         /** TicketRuleIn */
         TicketRuleIn: {
@@ -25408,6 +25597,72 @@ export interface operations {
             };
         };
     };
+    list_outage_clusters_api_problems_outage_clusters_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutageClusterOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_problem_from_outage_api_problems_from_outage_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutageProblemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_problems_api_problems_get: {
         parameters: {
             query?: {
@@ -25566,6 +25821,80 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_problem_broadcast_api_problems__problem_id__broadcast_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BroadcastIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BroadcastOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_problem_broadcast_api_problems__problem_id__broadcast_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BroadcastIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BroadcastOut"];
+                };
             };
             /** @description Validation Error */
             422: {
