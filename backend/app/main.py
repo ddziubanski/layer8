@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from app.api import updates as updates_api
 from app.api import imports as imports_api
 from app.api import library as library_api
-from app.api import action1, admin, attachments, auth, branding, changes, checklists, devices, directory, fields, integrations, ipam, kb, meraki, network, notices, portal, problems, reports, rules, search, surveys, system, ticket_checks, tickets, vendors
+from app.api import action1, admin, attachments, auth, branding, changes, checklists, devices, directory, fields, integrations, ipam, kb, meraki, network, notices, portal, problems, reports, live, rules, search, surveys, system, ticket_checks, tickets, vendors
 from app.api import adchanges as adchanges_api
 from app.api import people as people_api
 from app.api import ticket_templates as ticket_templates_api
@@ -81,6 +81,7 @@ app.include_router(action1_remote_api.router)
 app.include_router(vendors.router)
 app.include_router(search.router)
 app.include_router(ticket_checks.router)
+app.include_router(live.router)
 app.include_router(ipam.router)
 app.include_router(network.router)
 app.include_router(integrations.router)

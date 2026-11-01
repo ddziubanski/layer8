@@ -22,3 +22,8 @@ def get_session() -> Iterator[Session]:
         # Pick up settings changed in another process (throttled).
         configstore.refresh(session)
         yield session
+
+# Commits tell open browsers what changed (app/live.py).
+from app import live as _live  # noqa: E402
+
+_live.install()
