@@ -466,6 +466,15 @@ SECTIONS: dict[str, list[Field]] = {
         Field("warranty_warn_days", "Flag warranties ending within (days)", check=_between(7, 365)),
         Field("sweep_weekly_ticket", "Open a ticket with the sweep each week", "One ticket listing stale and unknown devices, when there are any, through the routing rules (subject \"Device sweep\")."),
     ],
+    "proactive": [
+        Field("proactive_tickets", "Open proactive tickets", "One ticket per condition, through the routing rules, before something lapses. Each one shows Verify once it's fixed; none closes by itself."),
+        Field("proactive_warranty_days", "Device warranties ending within (days)", "From Devices (warranty lookups or entered by hand). 0: off.", check=_between(0, 365)),
+        Field("proactive_contract_days", "Vendor contracts ending within (days)", "From Vendors (contract end date). 0: off.", check=_between(0, 365)),
+        Field("proactive_account_days", "Service accounts expiring within (days)", "Directory accounts with an expiry date whose account name starts with one of the prefixes below. 0: off.", check=_between(0, 365)),
+        Field("proactive_account_prefixes", "Service account name prefixes", "Comma-separated, e.g. svc-, svc_. Empty: no account tickets."),
+        Field("proactive_runner_hours", "Runner silent for (hours)", "An active runner that hasn't checked in for this long. 0: off.", check=_between(0, 720)),
+        Field("proactive_backup_days", "No successful backup for (days)", "Only when backups are set up (Settings > Backup). 0: off.", check=_between(0, 60)),
+    ],
     "surveys": [
         Field(
             "survey_percent", "Send a survey for this % of solved tickets",
