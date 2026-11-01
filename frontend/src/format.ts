@@ -30,6 +30,7 @@ export const VIEWS: { key: SavedView; label: string }[] = [
   { key: "waiting_on_user", label: "Waiting on user" },
   { key: "from_email", label: "From email" },
   { key: "from_portal", label: "From portal" },
+  { key: "closed", label: "Closed" },
 ];
 
 /** "0h 42m", or "2d 4h" past a day. */

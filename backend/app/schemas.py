@@ -1098,6 +1098,8 @@ class TicketOut(ORM, Labelled):
     closure_reason: FieldOptionRef | None = None
     department: FieldOptionRef | None = None
     contact_phone: str | None = None
+    resolved_at: datetime | None = None
+    closed_at: datetime | None = None
     # Fields an import (Track-It!) brought that Layer 8 has no field for; shown on this ticket only.
     imported_fields: dict[str, str] = {}
     computer: "ComputerRef | None" = None
@@ -1166,6 +1168,8 @@ class SavedView(StrEnum):
     waiting_on_user = "waiting_on_user"
     from_email = "from_email"
     from_portal = "from_portal"
+    # History: resolved and closed tickets.
+    closed = "closed"
 
 
 class CommentCreate(BaseModel):

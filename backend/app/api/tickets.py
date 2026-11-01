@@ -162,6 +162,8 @@ def apply_view(stmt: Select, view: SavedView, user: User) -> Select:
             return stmt.where(OPEN, Ticket.source == TicketSource.email)
         case SavedView.from_portal:
             return stmt.where(OPEN, Ticket.source == TicketSource.portal)
+        case SavedView.closed:
+            return stmt.where(Ticket.status.in_(sla.CLOSED_STATUSES))
 
 
 def _computer(session, device_id: int | None) -> Device | None:
@@ -224,10 +226,10 @@ def find_user(session, email: str) -> User | None:
     return find_by_address(session, [email])
 
 
-SortKey = Literal["due", "id", "subject", "requester", "source", "assignee", "queue", "priority", "status", "age", "updated"]
+SortKey = Literal["due", "id", "subject", "requester", "source", "assignee", "queue", "priority", "status", "age", "updated", "closed"]
 # Without a direction: what people usually want first for each column.
 DEFAULT_DIR = {"due": "asc", "id": "desc", "subject": "asc", "requester": "asc", "source": "asc", "assignee": "asc",
-               "queue": "asc", "priority": "desc", "status": "asc", "age": "desc", "updated": "desc"}
+               "queue": "asc", "priority": "desc", "status": "asc", "age": "desc", "updated": "desc", "closed": "desc"}
 PRIORITY_RANK = {Priority.low: 1, Priority.medium: 2, Priority.high: 3, Priority.critical: 4}
 STATUS_RANK = {TicketStatus.new: 1, TicketStatus.open: 2, TicketStatus.waiting_on_user: 3, TicketStatus.resolved: 4, TicketStatus.closed: 5}
 
@@ -258,6 +260,8 @@ def sorted_by(stmt: Select, sort: SortKey, direction: Literal["asc", "desc"] | N
             # Oldest first is "longest open first".
             "age": Ticket.created_at,
             "updated": Ticket.updated_at,
+            # When it left the open queue: closed, else resolved.
+            "closed": func.coalesce(Ticket.closed_at, Ticket.resolved_at),
         }[sort]
         if sort == "age":
             asc = not asc

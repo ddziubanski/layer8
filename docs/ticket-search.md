@@ -2,7 +2,7 @@
 
 Type in the **Search tickets** box at the top of the ticket queue, or press **Ctrl+K / ⌘K** and choose **Search tickets for "…"**.
 
-- **What's searched:** every ticket's subject, description and notes, including internal notes and closed history (imported Track-It! tickets too). The scope and queue you've picked still apply. The saved views (All open, Unassigned…) don't, so a closed ticket from years ago is found.
+- **What's searched:** every ticket's subject, description and notes, including internal notes and closed history (imported Track-It! tickets too). The scope and queue you've picked still apply. The saved views (All open, Unassigned…) don't, so a closed ticket from years ago is found. To browse history without a search, use the **Closed** view.
 - **Words:** all of them must appear, in any order. Put a phrase in quotes (`"paper jam"`), use `or` for either word (`toner or ink`), and `-word` to leave tickets out (`vpn -cisco`). Words are matched exactly as typed (no stemming), which suits names, hostnames and error codes.
 - **Numbers:** a number (or `#number`) also finds that Layer 8 ticket. An old Track-It! number finds the imported ticket, since its description ends with "(Track-It! ticket 12345)".
 - **Order:** results are most recently opened first; click a column heading to sort by it. **Clear search**, or choosing a view, goes back to the queue.

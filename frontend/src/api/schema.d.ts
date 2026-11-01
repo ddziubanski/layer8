@@ -11705,7 +11705,7 @@ export interface components {
          * SavedView
          * @enum {string}
          */
-        SavedView: "open" | "unassigned" | "mine" | "my_queues" | "sla_at_risk" | "waiting_on_user" | "from_email" | "from_portal";
+        SavedView: "open" | "unassigned" | "mine" | "my_queues" | "sla_at_risk" | "waiting_on_user" | "from_email" | "from_portal" | "closed";
         /**
          * ScanKind
          * @enum {string}
@@ -12966,6 +12966,10 @@ export interface components {
             department?: components["schemas"]["FieldOptionRef"] | null;
             /** Contact Phone */
             contact_phone?: string | null;
+            /** Resolved At */
+            resolved_at?: string | null;
+            /** Closed At */
+            closed_at?: string | null;
             /**
              * Imported Fields
              * @default {}
@@ -12996,10 +13000,6 @@ export interface components {
             resolution_due_at: string | null;
             /** First Responded At */
             first_responded_at: string | null;
-            /** Resolved At */
-            resolved_at: string | null;
-            /** Closed At */
-            closed_at: string | null;
             /** Sla At Risk At */
             sla_at_risk_at: string | null;
             /** Sla Paused At */
@@ -15103,7 +15103,7 @@ export interface operations {
                 source?: components["schemas"]["TicketSource"] | null;
                 requester_id?: number | null;
                 q?: string | null;
-                sort?: "due" | "id" | "subject" | "requester" | "source" | "assignee" | "queue" | "priority" | "status" | "age" | "updated";
+                sort?: "due" | "id" | "subject" | "requester" | "source" | "assignee" | "queue" | "priority" | "status" | "age" | "updated" | "closed";
                 dir?: ("asc" | "desc") | null;
                 limit?: number;
                 offset?: number;

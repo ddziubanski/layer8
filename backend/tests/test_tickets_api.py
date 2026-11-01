@@ -252,7 +252,7 @@ def test_saved_views_and_counts(client, db, agent, requester, service_desk, slas
     assert ids("from_portal") == {a["id"], c["id"]}
 
     counts = client.get("/api/tickets/views", headers=as_user(agent)).json()
-    assert counts == {"open": 3, "unassigned": 2, "mine": 1, "my_queues": 0, "sla_at_risk": 1, "waiting_on_user": 1, "from_email": 1, "from_portal": 2}
+    assert counts == {"open": 3, "unassigned": 2, "mine": 1, "my_queues": 0, "sla_at_risk": 1, "waiting_on_user": 1, "from_email": 1, "from_portal": 2, "closed": 0}
 
     at_risk = client.get(f"/api/tickets/{a['id']}", headers=as_user(agent)).json()
     assert at_risk["sla_state"] == "at_risk"
@@ -363,3 +363,18 @@ def test_view_counts_for_one_queue(client, db, agent, requester):
     only = client.get("/api/tickets/views", params={"queue_id": maint.id}, headers=as_user(agent)).json()["open"]
     assert (all_open, only) == (5, 3)
     assert client.get("/api/tickets", params={"queue_id": maint.id}, headers=as_user(agent)).json()["total"] == 3
+
+
+def test_closed_view_lists_history_newest_closed_first(client, db, agent, requester, service_desk):
+    old = create(client, requester, subject="Old printer jam").json()
+    recent = create(client, requester, subject="Recent VPN issue").json()
+    still_open = create(client, requester, subject="Still open").json()
+    now = utcnow()
+    db.execute(update(Ticket).where(Ticket.id == old["id"]).values(status="closed", resolved_at=now - timedelta(days=9), closed_at=now - timedelta(days=2)))
+    db.execute(update(Ticket).where(Ticket.id == recent["id"]).values(status="resolved", resolved_at=now - timedelta(hours=1)))
+    db.commit()
+    page = client.get("/api/tickets", params={"view": "closed", "sort": "closed"}, headers=as_user(agent)).json()
+    assert [t["id"] for t in page["items"]] == [recent["id"], old["id"]]
+    assert page["items"][1]["closed_at"] is not None
+    assert still_open["id"] not in {t["id"] for t in page["items"]}
+    assert client.get("/api/tickets/views", headers=as_user(agent)).json()["closed"] == 2
