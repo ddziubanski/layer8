@@ -201,6 +201,9 @@ def sync(session: Session, client: Client, now: datetime | None = None) -> dict:
         if row is None:
             row = DevicePatch(action1_id=a1_id)
             session.add(row)
+            before = None
+        else:
+            before = (row.device_id, row.status, row.last_boot_at, row.reboot_required, row.missing_critical)
         row.name = str(e.get("name") or "")[:255]
         row.status = str(e.get("status") or "")[:50]
         row.os = str(e.get("OS") or "")[:255]
@@ -235,6 +238,8 @@ def sync(session: Session, client: Client, now: datetime | None = None) -> dict:
                     other.device_id = None
                 session.flush()
                 row.device_id = device.id
+        if before is not None and before[0] is not None and before[0] == row.device_id:
+            _note_patch_changes(session, row, before)
         counts["machines"] += 1
         counts["matched"] += row.device_id is not None
         counts["critical"] += row.missing_critical > 0
@@ -244,6 +249,30 @@ def sync(session: Session, client: Client, now: datetime | None = None) -> dict:
     for gone in session.scalars(select(DevicePatch).where(DevicePatch.in_action1, DevicePatch.action1_id.not_in(seen or {""}))):
         gone.in_action1 = False
     return counts
+
+
+def _note_patch_changes(session: Session, row: DevicePatch, before: tuple) -> None:
+    """Timeline events for what changed since the last Action1 read (never on first sight)."""
+    from app import device_events
+
+    _, status, booted, reboot, critical = before
+
+    def note(title, detail="", tone="info", at=None):
+        device_events.record(session, row.device_id, "patch", title, detail, tone, at=at, source="action1")
+
+    if status and row.status and status.lower() != row.status.lower():
+        online = row.status.lower() in ("connected", "online")
+        note(f"Action1 agent {row.status.lower()}", f"Was {status.lower()}", "ok" if online else "bad")
+    if row.last_boot_at and booted and row.last_boot_at > booted:
+        note("Restarted", "Reported by Action1", at=min(row.last_boot_at, sla.utcnow()))
+    if row.reboot_required and not reboot:
+        note("Restart needed to finish updates", tone="warn")
+    elif reboot and not row.reboot_required:
+        note("No restart pending any more", tone="ok")
+    if row.missing_critical and not critical:
+        note(f"{row.missing_critical} critical update{'s' if row.missing_critical != 1 else ''} missing", tone="bad")
+    elif critical and not row.missing_critical:
+        note("Critical updates installed", tone="ok")
 
 
 def _ticket_if_overdue(session: Session, row: DevicePatch, now: datetime) -> int:

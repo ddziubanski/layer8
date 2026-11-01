@@ -2388,6 +2388,26 @@ class CannedReply(Base):
     queue: Mapped[Queue | None] = relationship()
 
 
+class DeviceEvent(Base):
+    """Something a sync noticed about a device (an OS upgrade, a restart, a switch-port move, going
+    offline), kept for its timeline. Written only when something changed, never on first sight."""
+
+    __tablename__ = "device_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    device_id: Mapped[int] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"))
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Timeline kind: directory, patch or network.
+    kind: Mapped[str] = mapped_column(String(16))
+    title: Mapped[str] = mapped_column(String(300))
+    detail: Mapped[str] = mapped_column(String(500), default="", server_default="")
+    tone: Mapped[str] = mapped_column(String(8), default="info", server_default="info")
+    # Which sync saw it: directory, action1, unifi, meraki...
+    source: Mapped[str] = mapped_column(String(32), default="", server_default="")
+
+    __table_args__ = (Index("ix_device_events_device_at", "device_id", "at"),)
+
+
 class TicketTimer(Base):
     """A technician's running timer on a ticket. Stopping it logs a TimeEntry; resolving or closing the
     ticket stops every timer still running on it."""

@@ -7,7 +7,8 @@ are counted in `hidden`, never named. Script output, deployment details and note
 own pages; the timeline says what happened, when and by whom, and links there.
 
 Entries come from dated records (tickets, changes, script runs, remote sessions, software
-deployments, purchase orders, IP records, the device's own dates). State that's only kept as
+deployments, purchase orders, IP records, the device's own dates) and from device events: what the
+directory, Action1 and network syncs noticed changing (app/device_events.py). State that's only kept as
 "now" (Action1's status, pending reboot, critical patches) goes in `now`, and dates still ahead
 (warranty end, replace by) in `upcoming`.
 """
@@ -21,6 +22,7 @@ from app.config import settings
 from app.models import (
     Change,
     Device,
+    DeviceEvent,
     DevicePatch,
     IpAddress,
     PurchaseOrder,
@@ -35,7 +37,7 @@ from app.models import (
     po_devices,
 )
 
-KINDS = ("ticket", "change", "script", "remote", "deployment", "purchase", "network", "lifecycle")
+KINDS = ("ticket", "change", "script", "remote", "deployment", "purchase", "network", "patch", "directory", "lifecycle")
 LIMIT = 300
 REMOTE_TOOLS = {"msra": "Remote Assistance", "rdp": "Remote Desktop", "action1": "Action1 remote desktop"}
 
@@ -127,6 +129,13 @@ def build(session, device: Device, user: User, kinds: set[str] | None = None) ->
     if "network" in want:
         for ip in ips:
             entries.append(_entry(ip.first_seen_at, "network", f"First seen at {ip.address}", ip.hostname, "info", "/ipam"))
+
+    # What the syncs noticed changing (OS, OU, restarts, updates, switch-port moves, outages).
+    noticed = want & {"network", "patch", "directory"}
+    if noticed:
+        q = select(DeviceEvent).where(DeviceEvent.device_id == device.id, DeviceEvent.kind.in_(noticed)).order_by(DeviceEvent.at.desc()).limit(LIMIT)
+        for ev in session.scalars(q):
+            entries.append(_entry(ev.at, ev.kind, ev.title, ev.detail, ev.tone if ev.tone in ("info", "ok", "warn", "bad") else "info"))
 
     if "lifecycle" in want:
         how = {"directory": "from Active Directory", "manual": "by hand"}.get(device.source.value, f"from {device.source.value}")

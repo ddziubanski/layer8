@@ -1420,7 +1420,7 @@ class DeviceTicketOut(Labelled):
 
 class TimelineEntryOut(BaseModel):
     at: datetime
-    kind: Literal["ticket", "change", "script", "remote", "deployment", "purchase", "network", "lifecycle"]
+    kind: Literal["ticket", "change", "script", "remote", "deployment", "purchase", "network", "patch", "directory", "lifecycle"]
     title: str
     detail: str = ""
     tone: Literal["info", "ok", "warn", "bad"] = "info"
