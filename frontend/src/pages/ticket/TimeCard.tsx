@@ -24,7 +24,7 @@ export function TimeCard({ ticketId }: { ticketId: number }) {
   const remove = useMutation({ mutationFn: (id: number) => api.time.remove(ticketId, id), onSettled: refresh });
   const valid = Number(minutes) >= 1 && Number(minutes) <= 1440;
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="card stack" style={{ gap: 8 }}>
       <div className="lbl" style={{ margin: 0 }}>Time spent{time.data ? `: ${minutesText(time.data.total_minutes)}` : ""}</div>
       {time.data?.entries.map((e) => (
         <div key={e.id} className="row-gap small">
