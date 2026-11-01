@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { api, type Me } from "../api/client";
 import { can } from "../permissions";
@@ -8,7 +8,7 @@ import { moduleEnabled, moduleForPath } from "../navigation";
 import { TicketPreview } from "./TicketPreview";
 
 // A page, or a ticket (shown with a preview while highlighted).
-type Command = { label: string; to: string; keywords?: string; ticket?: number; detail?: string };
+type Command = { label: string; to: string; keywords?: string; ticket?: number; detail?: string; group?: string };
 
 function useDebounced<T>(value: T, ms: number): T {
   const [settled, setSettled] = useState(value);
@@ -64,6 +64,12 @@ export function CommandPalette({ me }: { me: Me }) {
   if (words && words.toLowerCase() === needle) {
     for (const t of found.data?.items ?? []) matches.push({ label: `${t.label} ${t.subject}`, to: `/tickets/${t.id}`, ticket: t.id, detail: t.status.replace("_", " ") });
   }
+  // Everything else (devices by name, IP, MAC or serial; people; problems; changes; articles; POs; vendors; systems).
+  const term = useDebounced(open && staff && needle.length >= 2 ? query.trim() : "", 250);
+  const everything = useQuery({ queryKey: ["palette-search", term], queryFn: () => api.search(term), enabled: !!term, staleTime: 15_000, retry: false });
+  if (term && term.toLowerCase() === needle) {
+    for (const g of everything.data?.groups ?? []) for (const h of g.hits) matches.push({ label: h.label, to: h.to, detail: h.detail || undefined, group: g.label });
+  }
   // Staff can always search ticket text (subject, description, notes), closed history included.
   if (staff && needle.length >= 2) matches.push({ label: `Search tickets for “${query.trim()}”`, to: `/?scope=all&q=${encodeURIComponent(query.trim())}` });
   const selected = Math.min(active, Math.max(0, matches.length - 1));
@@ -108,9 +114,9 @@ export function CommandPalette({ me }: { me: Me }) {
       <div className={`command-palette${previewId ? " with-preview" : ""}`} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} ref={dialog}>
         <div className="command-main">
         <div className="row-gap"><h2 id={`${id}-title`} className="spacer">Go anywhere</h2><button type="button" className="linkish" onClick={close}>Close</button></div>
-        <label className="field">Find a page or a ticket
+        <label className="field">Find a page, ticket, device, person or anything else
           <input ref={input} role="combobox" aria-expanded={matches.length > 0} aria-autocomplete="list" aria-controls={`${id}-results`} aria-activedescendant={matches.length ? `${id}-result-${selected}` : undefined}
-            value={query} onChange={e => { setQuery(e.target.value); setActive(0); }} placeholder="Try devices, #4821 or printer offline"
+            value={query} onChange={e => { setQuery(e.target.value); setActive(0); }} placeholder="Try #4821, printer offline, 10.20.0.5 or a name"
             onKeyDown={e => {
               if (e.nativeEvent.isComposing) return;
               if (matches.length && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); setActive((selected + (e.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length); }
@@ -118,13 +124,15 @@ export function CommandPalette({ me }: { me: Me }) {
             }} />
         </label>
         <ul id={`${id}-results`} role="listbox" aria-label="Destinations" className="command-results">
-          {matches.map((command, i) => <li id={`${id}-result-${i}`} key={command.to} role="option" aria-selected={i === selected} onMouseDown={e => e.preventDefault()}
+          {matches.map((command, i) => <Fragment key={`${i}:${command.to}`}>
+          {command.group && command.group !== matches[i - 1]?.group && <li role="presentation" className="command-group muted small">{command.group}</li>}
+          <li id={`${id}-result-${i}`} role="option" aria-selected={i === selected} onMouseDown={e => e.preventDefault()}
             onMouseEnter={() => command.ticket && setActive(i)} onClick={() => choose(command)}
             className={command.ticket && !command.label.startsWith("Open ticket") ? "command-ticket" : undefined}>
             <span className="command-label">{command.label}</span>{command.detail ? <span className="muted small">{command.detail}</span> : <span aria-hidden="true">↗</span>}
-          </li>)}
+          </li></Fragment>)}
         </ul>
-        {words && found.isFetching && <p role="status" className="muted small" style={{ margin: 0 }}>Looking up tickets…</p>}
+        {((words && found.isFetching) || (term && everything.isFetching)) && <p role="status" className="muted small" style={{ margin: 0 }}>Searching…</p>}
         {!matches.length && <p role="status" className="muted">No matching destination.</p>}
         <p className="muted small">↑ ↓ to browse and preview tickets · Enter to open · Esc to close · Ctrl K / ⌘ K</p>
         </div>

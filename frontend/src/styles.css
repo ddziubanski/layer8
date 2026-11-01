@@ -1145,6 +1145,8 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .command-results li { gap: 12px; align-items: baseline; }
 .command-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .command-results li.command-ticket .command-label::before { content: "▤ "; color: var(--muted); }
+.command-results li.command-group { cursor: default; padding: 10px 12px 2px; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.command-results li.command-group:hover { background: none; color: var(--muted); }
 .ticket-preview { display: grid; gap: 10px; align-content: start; border-left: 1px solid var(--line); padding-left: 18px; min-width: 0; overflow-wrap: anywhere; }
 .ticket-preview-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; margin: 0; font-size: 13px; }
 .ticket-preview-facts dt { color: var(--muted); font-size: 12px; }

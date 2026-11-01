@@ -3399,6 +3399,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Everything */
+        get: operations["search_everything_api_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ipam/vlans": {
         parameters: {
             query?: never;
@@ -12025,6 +12042,38 @@ export interface components {
             created_at: string;
             /** Is Current */
             is_current: boolean;
+        };
+        /** SearchGroup */
+        SearchGroup: {
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Hits */
+            hits: components["schemas"]["SearchHit"][];
+        };
+        /** SearchHit */
+        SearchHit: {
+            /** Kind */
+            kind: string;
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** To */
+            to: string;
+        };
+        /** SearchOut */
+        SearchOut: {
+            /** Q */
+            q: string;
+            /** Groups */
+            groups: components["schemas"]["SearchGroup"][];
         };
         /** SendIn */
         SendIn: {
@@ -21908,6 +21957,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketSystemOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_everything_api_search_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchOut"];
                 };
             };
             /** @description Validation Error */
