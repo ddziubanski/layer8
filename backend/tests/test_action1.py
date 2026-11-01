@@ -345,3 +345,27 @@ def test_off_hides_and_reads_nothing(client, db, agent, admin, fake, monkeypatch
     assert client.get(f"/api/action1/devices/{d.id}", headers=as_user(agent)).json() is None
     assert client.get("/api/auth/me", headers=as_user(agent)).json()["features"] == []
     assert not action1.on() and action1.enabled()
+
+
+def test_a_patching_ticket_watches_what_it_was_opened_for(db, fake, monkeypatch):
+    from app import ticket_checks
+    from app.models import TicketCheck
+
+    db.add(Queue(name="Desk", is_default=True))
+    db.add(Device(name="WS-0142"))
+    db.commit()
+    monkeypatch.setattr(settings, "action1_critical_days", 14)
+    fake.machines = [machine("a1", "WS-0142", critical=2)]
+    action1.sync(db, action1.from_settings())
+    db.query(DevicePatch).one().critical_since = sla.utcnow() - timedelta(days=15)
+    db.commit()
+    action1.sync(db, action1.from_settings())
+    db.commit()
+    check = db.query(TicketCheck).one()
+    assert (check.kind, check.state) == ("updates_installed", "waiting")
+    fake.machines = [machine("a1", "WS-0142", critical=0)]
+    action1.sync(db, action1.from_settings())
+    db.commit()
+    ticket_checks.evaluate(db)
+    db.commit()
+    assert db.get(TicketCheck, check.id).state == "cleared"

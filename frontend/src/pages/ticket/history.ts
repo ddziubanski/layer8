@@ -72,6 +72,14 @@ export function describe(e: TicketEvent, names: Names): string {
       return d.action === "added" ? `Child ticket #${d.child} added: ${d.subject}` : `Child ticket #${d.child} moved elsewhere`;
     case "problem_linked":
       return `Linked to problem ${d.problem}`;
+    case "check_added":
+      return `Watching: ${d.label}`;
+    case "check_cleared":
+      return `Condition cleared: ${d.label}` + (d.seen ? ` (${d.seen}). Verify before closing` : ". Verify before closing");
+    case "check_confirmed":
+      return `Verified: ${d.label}`;
+    case "check_cancelled":
+      return `Stopped watching: ${d.label}`;
     case "problem_unlinked":
       return d.deleted ? `Problem ${d.problem} was deleted` : `Unlinked from problem ${d.problem}`;
     case "kb_linked":

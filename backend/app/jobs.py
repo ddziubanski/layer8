@@ -40,6 +40,7 @@ LABELS = {
     "script_schedules": "Scheduled scripts",
     "housekeeping": "Housekeeping",
     "unaccepted": "Tickets nobody has taken: alert technicians",
+    "ticket_checks": "Self-checking tickets: see whether watched conditions cleared",
     "backup": "Backup",
     "ipam": "IP address scans (scheduled)",
     "meraki": "Meraki: read client observations",
@@ -186,6 +187,14 @@ def build_jobs(session_factory, mail) -> list[Job]:
         finally:
             client.close()
 
+    def ticket_checks_run(forced: bool):
+        from app import ticket_checks
+
+        with session_factory() as session:
+            cleared = ticket_checks.evaluate(session)
+            session.commit()
+            return (f"{cleared} watched condition(s) cleared" if cleared else "Nothing cleared"), True
+
     def unaccepted_alerts(forced: bool):
         from app import unaccepted
 
@@ -314,6 +323,7 @@ def build_jobs(session_factory, mail) -> list[Job]:
         Job("script_schedules", "scripts", _every(60), scheduled_scripts),
         Job("housekeeping", "worker", _every(600), housekeeping),
         Job("unaccepted", "worker", _every(60), unaccepted_alerts),
+        Job("ticket_checks", "worker", _every(300), ticket_checks_run),
         # Daily at backup_time: the next due time is worked out after each run.
         Job("backup", "backup", until_backup, backup),
         Job("ipam", "ipam", _every(300), ipam_scans),

@@ -3416,6 +3416,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Checks */
+        get: operations["list_checks_api_tickets__ticket_id__checks_get"];
+        put?: never;
+        /** Add Check */
+        post: operations["add_check_api_tickets__ticket_id__checks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/checks/{check_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Check */
+        post: operations["confirm_check_api_tickets__ticket_id__checks__check_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/checks/{check_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancel Check */
+        delete: operations["cancel_check_api_tickets__ticket_id__checks__check_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ipam/vlans": {
         parameters: {
             query?: never;
@@ -7193,6 +7245,28 @@ export interface components {
             /** Recipient */
             recipient: string;
         };
+        /** CheckIn */
+        CheckIn: {
+            /** Kind */
+            kind: string;
+            /** Device Id */
+            device_id?: number | null;
+            /** User Id */
+            user_id?: number | null;
+        };
+        /** CheckOption */
+        CheckOption: {
+            /** Kind */
+            kind: string;
+            /** Device Id */
+            device_id: number | null;
+            /** User Id */
+            user_id: number | null;
+            /** Label */
+            label: string;
+            /** Now */
+            now: string;
+        };
         /** ChecklistDateIn */
         ChecklistDateIn: {
             /**
@@ -7980,7 +8054,7 @@ export interface components {
          * EventType
          * @enum {string}
          */
-        EventType: "created" | "routed" | "assigned" | "escalated" | "status_changed" | "priority_changed" | "updated" | "comment_added" | "attachment_added" | "requester_changed" | "device_linked" | "device_unlinked" | "script_run" | "remote_session" | "merged" | "system_linked" | "system_unlinked" | "parent_changed" | "child_changed" | "kb_linked" | "survey_sent" | "survey_answered" | "problem_linked" | "problem_unlinked";
+        EventType: "created" | "routed" | "assigned" | "escalated" | "status_changed" | "priority_changed" | "updated" | "comment_added" | "attachment_added" | "requester_changed" | "device_linked" | "device_unlinked" | "script_run" | "remote_session" | "merged" | "system_linked" | "system_unlinked" | "parent_changed" | "child_changed" | "kb_linked" | "survey_sent" | "survey_answered" | "problem_linked" | "problem_unlinked" | "check_added" | "check_cleared" | "check_confirmed" | "check_cancelled";
         /** ExpenseIn */
         ExpenseIn: {
             /** Description */
@@ -12748,6 +12822,36 @@ export interface components {
             /** Scope */
             scope: string;
         };
+        /** TicketCheckOut */
+        TicketCheckOut: {
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** State */
+            state: string;
+            /** Detail */
+            detail: string;
+            /** Device Id */
+            device_id: number | null;
+            /** User Id */
+            user_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Checked At */
+            checked_at: string | null;
+            /** Cleared At */
+            cleared_at: string | null;
+            /** Confirmed At */
+            confirmed_at: string | null;
+            created_by: components["schemas"]["UserRef"] | null;
+            confirmed_by: components["schemas"]["UserRef"] | null;
+        };
         /** TicketChecklistOut */
         TicketChecklistOut: {
             /** Id */
@@ -12772,6 +12876,13 @@ export interface components {
             created_at: string;
             /** Items */
             items: components["schemas"]["ChecklistItemOut"][];
+        };
+        /** TicketChecksOut */
+        TicketChecksOut: {
+            /** Checks */
+            checks: components["schemas"]["TicketCheckOut"][];
+            /** Available */
+            available: components["schemas"]["CheckOption"][];
         };
         /** TicketContextAccountOut */
         TicketContextAccountOut: {
@@ -12992,6 +13103,11 @@ export interface components {
              * @default false
              */
             recovery_review: boolean;
+            /**
+             * Check Review
+             * @default false
+             */
+            check_review: boolean;
             /** Id */
             id: number;
             /** Subject */
@@ -21990,6 +22106,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_checks_api_tickets__ticket_id__checks_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketChecksOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_check_api_tickets__ticket_id__checks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketChecksOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_check_api_tickets__ticket_id__checks__check_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketChecksOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_check_api_tickets__ticket_id__checks__check_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketChecksOut"];
                 };
             };
             /** @description Validation Error */

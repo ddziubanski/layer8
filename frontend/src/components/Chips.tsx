@@ -19,10 +19,11 @@ export function PriorityChip({ priority }: { priority: Priority }) {
 }
 
 /** Recovery needs a human check; this does not change priority, sorting or SLA policy. */
-export function TicketPriorityChip({ ticket }: { ticket: Pick<Ticket, "priority" | "status" | "recovery_review"> }) {
+export function TicketPriorityChip({ ticket }: { ticket: Pick<Ticket, "priority" | "status" | "recovery_review"> & { check_review?: boolean } }) {
   const closed = ticket.status === "resolved" || ticket.status === "closed";
-  return ticket.recovery_review && !closed
-    ? <span className="chip a" aria-label="Verify recovery" title={`API last reported the tracked device(s) online. Verify recovery before closing. Ticket priority remains ${PRIORITY_LABEL[ticket.priority]}.`}>Verify</span>
+  const why = ticket.recovery_review ? "API last reported the tracked device(s) online." : "A watched condition cleared (see Watching on the ticket).";
+  return (ticket.recovery_review || ticket.check_review) && !closed
+    ? <span className="chip a" aria-label="Verify recovery" title={`${why} Verify before closing. Ticket priority remains ${PRIORITY_LABEL[ticket.priority]}.`}>Verify</span>
     : <PriorityChip priority={ticket.priority} />;
 }
 
