@@ -2845,6 +2845,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/runners/kit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relay Kit
+         * @description The relay kit: the relay, its Linux installer and the Windows GPO scripts, plus relay.json
+         *     with this service desk's address. It never holds a token.
+         */
+        get: operations["relay_kit_api_runners_kit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/runners/{runner_id}": {
         parameters: {
             query?: never;
@@ -2999,6 +3020,27 @@ export interface paths {
         put?: never;
         /** Cancel Run */
         post: operations["cancel_run_api_runs__run_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runner/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Runner Check In
+         * @description A relay saying hello without taking work (helpdesk_runner.py --check): proves the address,
+         *     certificate and token after a deployment. Records it as seen; claims nothing.
+         */
+        post: operations["runner_check_in_api_runner_check_in_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4802,7 +4844,11 @@ export interface paths {
         /** Update Problem */
         put: operations["update_problem_api_problems__problem_id__put"];
         post?: never;
-        delete?: never;
+        /**
+         * Delete Problem
+         * @description For a problem opened by mistake or a duplicate. Linked tickets stay, and say so in their history.
+         */
+        delete: operations["delete_problem_api_problems__problem_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4820,6 +4866,41 @@ export interface paths {
         /** Add Problem Update */
         post: operations["add_problem_update_api_problems__problem_id__updates_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/problems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ticket Problems */
+        get: operations["ticket_problems_api_tickets__ticket_id__problems_get"];
+        put?: never;
+        /** Link Ticket Problem */
+        post: operations["link_ticket_problem_api_tickets__ticket_id__problems_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/problems/{problem_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink Ticket Problem */
+        delete: operations["unlink_ticket_problem_api_tickets__ticket_id__problems__problem_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7563,7 +7644,7 @@ export interface components {
          * EventType
          * @enum {string}
          */
-        EventType: "created" | "routed" | "assigned" | "escalated" | "status_changed" | "priority_changed" | "updated" | "comment_added" | "attachment_added" | "requester_changed" | "device_linked" | "device_unlinked" | "script_run" | "remote_session" | "merged" | "system_linked" | "system_unlinked" | "parent_changed" | "child_changed" | "kb_linked" | "survey_sent" | "survey_answered";
+        EventType: "created" | "routed" | "assigned" | "escalated" | "status_changed" | "priority_changed" | "updated" | "comment_added" | "attachment_added" | "requester_changed" | "device_linked" | "device_unlinked" | "script_run" | "remote_session" | "merged" | "system_linked" | "system_unlinked" | "parent_changed" | "child_changed" | "kb_linked" | "survey_sent" | "survey_answered" | "problem_linked" | "problem_unlinked";
         /** ExpenseIn */
         ExpenseIn: {
             /** Description */
@@ -11040,6 +11121,15 @@ export interface components {
             /** Target */
             target: string | null;
         };
+        /** RunnerCheckInOut */
+        RunnerCheckInOut: {
+            /** Name */
+            name: string;
+            /** Languages */
+            languages: string[];
+            /** Builtins Only */
+            builtins_only: boolean;
+        };
         /** RunnerClaimIn */
         RunnerClaimIn: {
             /**
@@ -12383,6 +12473,43 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
+        };
+        /** TicketProblemLinkIn */
+        TicketProblemLinkIn: {
+            /** Problem Id */
+            problem_id: number;
+        };
+        /**
+         * TicketProblemOut
+         * @description A problem as the ticket shows it: what to do now (the workaround) and why.
+         */
+        TicketProblemOut: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProblemStatus"];
+            owner: components["schemas"]["UserRef"] | null;
+            /** Ticket Count */
+            ticket_count: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Workaround */
+            workaround: string;
+            /** Root Cause */
+            root_cause: string;
+        };
+        /** TicketProblemsOut */
+        TicketProblemsOut: {
+            /** Problems */
+            problems: components["schemas"]["TicketProblemOut"][];
+            /** Hidden */
+            hidden: number;
         };
         /** TicketRuleIn */
         TicketRuleIn: {
@@ -19762,6 +19889,37 @@ export interface operations {
             };
         };
     };
+    relay_kit_api_runners_kit_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_runner_api_runners__runner_id__put: {
         parameters: {
             query?: never;
@@ -20092,6 +20250,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    runner_check_in_api_runner_check_in_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunnerClaimIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunnerCheckInOut"];
                 };
             };
             /** @description Validation Error */
@@ -24585,6 +24778,37 @@ export interface operations {
             };
         };
     };
+    delete_problem_api_problems__problem_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_problem_update_api_problems__problem_id__updates_post: {
         parameters: {
             query?: never;
@@ -24609,6 +24833,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemUpdateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ticket_problems_api_tickets__ticket_id__problems_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketProblemsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_ticket_problem_api_tickets__ticket_id__problems_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketProblemLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketProblemsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_ticket_problem_api_tickets__ticket_id__problems__problem_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+                problem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketProblemsOut"];
                 };
             };
             /** @description Validation Error */

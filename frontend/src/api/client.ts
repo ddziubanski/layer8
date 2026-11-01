@@ -585,6 +585,10 @@ export const api = {
     create: (body: ProblemIn) => request<Problem>("POST", "/api/problems", body),
     update: (id: number, body: ProblemIn) => request<Problem>("PUT", `/api/problems/${id}`, body),
     addUpdate: (id: number, body: ProblemNoteIn) => request<ProblemUpdate>("POST", `/api/problems/${id}/updates`, body),
+    remove: (id: number) => request<void>("DELETE", `/api/problems/${id}`),
+    forTicket: (ticketId: number) => request<S["TicketProblemsOut"]>("GET", `/api/tickets/${ticketId}/problems`),
+    link: (ticketId: number, problemId: number) => request<S["TicketProblemsOut"]>("POST", `/api/tickets/${ticketId}/problems`, { problem_id: problemId }),
+    unlink: (ticketId: number, problemId: number) => request<S["TicketProblemsOut"]>("DELETE", `/api/tickets/${ticketId}/problems/${problemId}`),
   },
   checklists: {
     templates: (includeInactive = false) => request<ChecklistTemplate[]>("GET", `/api/checklist-templates${query({ include_inactive: includeInactive ? "true" : undefined })}`),

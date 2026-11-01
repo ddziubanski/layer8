@@ -22,7 +22,7 @@ export const TICKET_TOOLS: { id: TicketTool; label: string; symbol: string; pane
 const SECTIONS = [
   { id: "conversation", label: "Conversation", panels: ["conversation"] },
   { id: "details", label: "Details", panels: ["status", "assignment", "requester", "actions"] },
-  { id: "work", label: "Work", panels: ["children", "related", "checklists", "expenses", "time", "changes"] },
+  { id: "work", label: "Work", panels: ["children", "problems", "related", "checklists", "expenses", "time", "changes"] },
   { id: "history", label: "History", panels: ["history"] },
 ];
 
