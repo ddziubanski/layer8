@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 
-import { api, type Problem, type ProblemIn, type ProblemSummary, type ProblemUpdate, type User } from "../../api/client";
+import { api, type Problem, type ProblemIn, type ProblemSummary, type ProblemUpdate, type Ticket, type User } from "../../api/client";
 import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { when } from "../../format";
+import { ME_KEY } from "../../queryClient";
+import { can } from "../../permissions";
+import { ActionDialog } from "../../components/ActionDialog";
+import { ProblemStatus, STATUS, STATUSES } from "./status";
 
-const STATUS: Record<Problem["status"], string> = {
-  open: "Open",
-  investigating: "Investigating",
-  known_error: "Known error",
-  resolved: "Resolved",
-  closed: "Closed",
-};
-const STATUS_TONE: Record<Problem["status"], string> = {
-  open: "n",
-  investigating: "a",
-  known_error: "b",
-  resolved: "g",
-  closed: "",
-};
-const STATUSES = Object.keys(STATUS) as Problem["status"][];
 const BLANK: ProblemIn = { title: "", description: "", status: "open", root_cause: "", workaround: "", resolution: "", owner_id: null, ticket_ids: [] };
 
-function Status({ status }: { status: Problem["status"] }) {
-  return <span className={`chip ${STATUS_TONE[status]}`}>{STATUS[status]}</span>;
-}
 
 export function ProblemsPage() {
   const { problemId } = useParams();
@@ -68,7 +54,7 @@ function ProblemList() {
 function ProblemRow({ problem }: { problem: ProblemSummary }) {
   return <tr>
     <td><Link to={`/problems/${problem.id}`}>{problem.label} {problem.title}</Link></td>
-    <td><Status status={problem.status} /></td>
+    <td><ProblemStatus status={problem.status} /></td>
     <td className="small">{problem.owner?.display_name ?? "Unassigned"}</td>
     <td>{problem.ticket_count}</td>
     <td className="small">{when(problem.updated_at)}</td>
@@ -78,7 +64,15 @@ function ProblemRow({ problem }: { problem: ProblemSummary }) {
 function ProblemRecord({ problemId }: { problemId: string }) {
   const isNew = problemId === "new";
   const id = Number(problemId);
+  // "Create problem from this ticket" opens /problems/new?ticket=<id>: start from that ticket.
+  const fromId = Number(useSearchParams()[0].get("ticket"));
+  const from = useQuery({ queryKey: ["ticket", fromId], queryFn: () => api.ticket(fromId), enabled: isNew && Number.isSafeInteger(fromId) && fromId > 0 });
   const problem = useQuery({ queryKey: ["problem", id], queryFn: () => api.problems.get(id), enabled: !isNew && Number.isSafeInteger(id) && id > 0 });
+  if (isNew && fromId > 0) {
+    if (from.error) return <p className="error" role="alert">{from.error.message}</p>;
+    if (!from.data) return <p className="muted">Loading the ticket…</p>;
+    return <ProblemEditor key={`from-${fromId}`} fromTicket={from.data} />;
+  }
   if (isNew) return <ProblemEditor />;
   if (!Number.isSafeInteger(id) || id < 1) return <p className="error">Problem not found.</p>;
   if (problem.error) return <p className="error" role="alert">{problem.error.message}</p>;
@@ -99,13 +93,26 @@ function inputFor(problem?: Problem): ProblemIn {
   } : BLANK;
 }
 
-function ProblemEditor({ problem }: { problem?: Problem }) {
+function ProblemEditor({ problem, fromTicket }: { problem?: Problem; fromTicket?: Ticket }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<ProblemIn>(() => inputFor(problem));
+  const me = useQuery({ queryKey: ME_KEY, queryFn: api.me, enabled: false }).data;
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const remove = useMutation({
+    mutationFn: () => api.problems.remove(problem!.id),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ["problem", problem!.id] });
+      void queryClient.invalidateQueries({ queryKey: ["problems"] });
+      navigate("/problems");
+    },
+  });
+  const [draft, setDraft] = useState<ProblemIn>(() => fromTicket
+    ? { ...BLANK, title: fromTicket.subject, description: fromTicket.description ?? "", ticket_ids: [fromTicket.id] }
+    : inputFor(problem));
   const [ticketNumber, setTicketNumber] = useState("");
   const [ticketError, setTicketError] = useState("");
-  const [linkedTickets, setLinkedTickets] = useState<Problem["tickets"]>(problem?.tickets ?? []);
+  const [linkedTickets, setLinkedTickets] = useState<Problem["tickets"]>(problem?.tickets ?? (fromTicket
+    ? [{ id: fromTicket.id, label: fromTicket.label, subject: fromTicket.subject, status: fromTicket.status, created_at: fromTicket.created_at }] : []));
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState("");
   const users = useQuery({ queryKey: ["users"], queryFn: api.users });
@@ -166,7 +173,7 @@ function ProblemEditor({ problem }: { problem?: Problem }) {
       <div className="spacer">
         <div className="small"><Link to="/problems">Problems</Link></div>
         <p className="workspace-area">PROBLEM WORKSPACE</p>
-        <h1 style={{ marginTop: 4 }}>{problem ? <>{problem.label} {problem.title} <Status status={problem.status} /></> : "New problem"}</h1>
+        <h1 style={{ marginTop: 4 }}>{problem ? <>{problem.label} {problem.title} <ProblemStatus status={problem.status} /></> : "New problem"}</h1>
       </div>
     </div>
     <div className="stack">
@@ -202,9 +209,18 @@ function ProblemEditor({ problem }: { problem?: Problem }) {
         {save.error && <p className="error" role="alert">{save.error.message}</p>}
         <div className="row-gap">
           <button className="btn" type="submit" disabled={save.isPending}>{save.isPending ? "Saving…" : problem ? "Save problem" : "Create problem"}</button>
-          <Link className="btn2" to="/problems">Cancel</Link>
+          <Link className="btn2" to={fromTicket ? `/tickets/${fromTicket.id}` : "/problems"}>Cancel</Link>
+          {problem && me && can(me, "problem_delete") && <button className="btn2 danger pill-delete" type="button" onClick={() => setConfirmDelete(true)}>Delete problem…</button>}
         </div>
       </form>
+      {confirmDelete && problem && <ActionDialog title={`Delete ${problem.label}?`} busy={remove.isPending} onClose={() => setConfirmDelete(false)}>
+        <p>This permanently deletes the problem, its root cause, workaround and investigation updates. Its {problem.tickets.length} linked ticket{problem.tickets.length === 1 ? "" : "s"} stay; each one's history notes that the problem was deleted. To keep the record, set its status to Closed instead.</p>
+        {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+        <div className="row-gap">
+          <button className="btn2" type="button" disabled={remove.isPending} onClick={() => setConfirmDelete(false)}>Cancel</button>
+          <button className="btn danger" type="button" disabled={remove.isPending} onClick={() => remove.mutate()}>Delete problem</button>
+        </div>
+      </ActionDialog>}
 
       <section className="stack" aria-labelledby="linked-tickets-heading">
         <div className="row-gap"><h2 id="linked-tickets-heading" className="spacer">Linked tickets</h2><span className="muted small">{linkedTickets.length} linked</span></div>

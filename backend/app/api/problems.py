@@ -1,16 +1,30 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Problem management: investigations, linked tickets and an internal update timeline."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
+from app import permissions, services
 from app.api.tickets import staff_ticket, visible
 from app.auth import Agent, SessionDep
-from app.models import Problem, ProblemStatus, ProblemUpdate, Ticket, User, UserRole
-from app.schemas import ProblemIn, ProblemNoteIn, ProblemOut, ProblemSummaryOut, ProblemUpdateOut
+from app.models import EventType, Problem, ProblemStatus, ProblemUpdate, Ticket, User, UserRole, problem_tickets
+from app.schemas import (
+    ProblemIn,
+    ProblemNoteIn,
+    ProblemOut,
+    ProblemSummaryOut,
+    ProblemUpdateOut,
+    TicketProblemLinkIn,
+    TicketProblemOut,
+    TicketProblemsOut,
+)
 
 router = APIRouter(tags=["problems"])
+log = logging.getLogger(__name__)
+ProblemDeleter = permissions.require("problem_delete")
 
 
 def _label(problem: Problem) -> str:
@@ -81,6 +95,13 @@ def _update(session, problem: Problem, user: User, kind: str, body: str) -> None
     problem.updated_at = func.now()
 
 
+def _ticket_event(session, ticket: Ticket, problem: Problem, user: User, linked: bool, **extra) -> None:
+    """Every link change is in the ticket's own history too. By number only: someone who can see the
+    ticket may not be allowed to see the problem (it can also link tickets they can't see)."""
+    services._event(session, ticket, EventType.problem_linked if linked else EventType.problem_unlinked, user,
+                    problem_id=problem.id, problem=_label(problem), **extra)
+
+
 def _tickets(session, ticket_ids: list[int], user: User) -> list[Ticket]:
     return [staff_ticket(session, ticket_id, user) for ticket_id in dict.fromkeys(ticket_ids)]
 
@@ -136,6 +157,7 @@ def create_problem(body: ProblemIn, user: Agent, session: SessionDep):
     _update(session, problem, user, "created", "Problem created")
     for ticket in problem.tickets:
         _update(session, problem, user, "ticket_linked", f"Linked ticket #{ticket.id}")
+        _ticket_event(session, ticket, problem, user, True)
     session.commit()
     return _out(_load(session, problem.id, user))
 
@@ -165,11 +187,11 @@ def update_problem(problem_id: int, body: ProblemIn, user: Agent, session: Sessi
         events.append(("edited", "Problem details updated"))
     old_ticket_ids = {ticket.id for ticket in problem.tickets}
     new_ticket_ids = {ticket.id for ticket in new_tickets}
-    for ticket_id in sorted(new_ticket_ids - old_ticket_ids):
-        ticket = next(ticket for ticket in new_tickets if ticket.id == ticket_id)
+    linked = [t for t in new_tickets if t.id not in old_ticket_ids]
+    unlinked = [t for t in problem.tickets if t.id not in new_ticket_ids]
+    for ticket in sorted(linked, key=lambda t: t.id):
         events.append(("ticket_linked", f"Linked ticket #{ticket.id}"))
-    for ticket_id in sorted(old_ticket_ids - new_ticket_ids):
-        ticket = next(ticket for ticket in problem.tickets if ticket.id == ticket_id)
+    for ticket in sorted(unlinked, key=lambda t: t.id):
         events.append(("ticket_unlinked", f"Unlinked ticket #{ticket.id}"))
 
     problem.title = _validate_title(body.title)
@@ -182,6 +204,10 @@ def update_problem(problem_id: int, body: ProblemIn, user: Agent, session: Sessi
     problem.tickets = new_tickets
     for kind, note in events:
         _update(session, problem, user, kind, note)
+    for ticket in linked:
+        _ticket_event(session, ticket, problem, user, True)
+    for ticket in unlinked:
+        _ticket_event(session, ticket, problem, user, False)
     session.commit()
     return _out(_load(session, problem.id, user))
 
@@ -197,3 +223,62 @@ def add_problem_update(problem_id: int, body: ProblemNoteIn, user: Agent, sessio
     session.commit()
     session.refresh(update)
     return update
+
+
+@router.delete("/api/problems/{problem_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_problem(problem_id: int, user: ProblemDeleter, session: SessionDep):
+    """For a problem opened by mistake or a duplicate. Linked tickets stay, and say so in their history."""
+    problem = _load(session, problem_id, user)
+    for ticket in problem.tickets:
+        _ticket_event(session, ticket, problem, user, False, deleted=True)
+    label, title, count = _label(problem), problem.title, len(problem.tickets)
+    session.delete(problem)
+    session.commit()
+    log.warning("%s deleted problem %s %r (%s linked ticket(s) kept)", user.display_name, label, title, count, extra={"source": "problems"})
+
+
+# From the ticket: which problems it belongs to, and linking or unlinking one there.
+
+def _ticket_problems(session, ticket: Ticket, user: User) -> TicketProblemsOut:
+    linked = session.scalars(
+        select(Problem).join(problem_tickets, problem_tickets.c.problem_id == Problem.id)
+        .where(problem_tickets.c.ticket_id == ticket.id)
+        .options(selectinload(Problem.owner), selectinload(Problem.tickets))
+        .order_by(Problem.updated_at.desc(), Problem.id.desc())
+    ).all()
+    shown = [p for p in linked if _can_see(session, p, user)]
+    return TicketProblemsOut(
+        problems=[TicketProblemOut.model_validate({**_summary(p).model_dump(), "workaround": p.workaround, "root_cause": p.root_cause}) for p in shown],
+        hidden=len(linked) - len(shown),
+    )
+
+
+@router.get("/api/tickets/{ticket_id}/problems", response_model=TicketProblemsOut)
+def ticket_problems(ticket_id: int, user: Agent, session: SessionDep):
+    return _ticket_problems(session, staff_ticket(session, ticket_id, user), user)
+
+
+@router.post("/api/tickets/{ticket_id}/problems", response_model=TicketProblemsOut)
+def link_ticket_problem(ticket_id: int, body: TicketProblemLinkIn, user: Agent, session: SessionDep):
+    ticket = staff_ticket(session, ticket_id, user)
+    problem = _load(session, body.problem_id, user)
+    if ticket not in problem.tickets:
+        if len(problem.tickets) >= 100:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "A problem links at most 100 tickets")
+        problem.tickets.append(ticket)
+        _update(session, problem, user, "ticket_linked", f"Linked ticket #{ticket.id}")
+        _ticket_event(session, ticket, problem, user, True)
+        session.commit()
+    return _ticket_problems(session, ticket, user)
+
+
+@router.delete("/api/tickets/{ticket_id}/problems/{problem_id}", response_model=TicketProblemsOut)
+def unlink_ticket_problem(ticket_id: int, problem_id: int, user: Agent, session: SessionDep):
+    ticket = staff_ticket(session, ticket_id, user)
+    problem = _load(session, problem_id, user)
+    if ticket in problem.tickets:
+        problem.tickets.remove(ticket)
+        _update(session, problem, user, "ticket_unlinked", f"Unlinked ticket #{ticket.id}")
+        _ticket_event(session, ticket, problem, user, False)
+        session.commit()
+    return _ticket_problems(session, ticket, user)

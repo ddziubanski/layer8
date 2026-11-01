@@ -70,6 +70,10 @@ export function describe(e: TicketEvent, names: Names): string {
       return d.after ? `Made part of ticket #${d.after}` + (d.before ? ` (was #${d.before})` : "") : `No longer part of ticket #${d.before}`;
     case "child_changed":
       return d.action === "added" ? `Child ticket #${d.child} added: ${d.subject}` : `Child ticket #${d.child} moved elsewhere`;
+    case "problem_linked":
+      return `Linked to problem ${d.problem}`;
+    case "problem_unlinked":
+      return d.deleted ? `Problem ${d.problem} was deleted` : `Unlinked from problem ${d.problem}`;
     case "kb_linked":
       return d.drafted ? `Drafted knowledge base article "${d.title}" from this ticket` : `Used knowledge base article "${d.title}"`;
     case "survey_sent":

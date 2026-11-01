@@ -2937,6 +2937,23 @@ class ProblemSummaryOut(ORM):
     updated_at: datetime
 
 
+class TicketProblemOut(ProblemSummaryOut):
+    """A problem as the ticket shows it: what to do now (the workaround) and why."""
+    workaround: str
+    root_cause: str
+
+
+class TicketProblemsOut(BaseModel):
+    problems: list[TicketProblemOut]
+    # Linked problems this technician can't open (they also link a ticket they can't see).
+    hidden: int
+
+
+class TicketProblemLinkIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    problem_id: int
+
+
 class ProblemOut(ProblemSummaryOut):
     description: str
     root_cause: str

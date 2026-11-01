@@ -133,6 +133,8 @@ class EventType(enum.StrEnum):
     kb_linked = "kb_linked"  # a knowledge base article used on it
     survey_sent = "survey_sent"  # the requester was asked how it went
     survey_answered = "survey_answered"
+    problem_linked = "problem_linked"  # data: problem id and label
+    problem_unlinked = "problem_unlinked"
 
 
 class User(Base):
