@@ -28,7 +28,7 @@ ACCOUNTDISABLE = 0x2
 USER_ATTRS = {
     "ad": ["objectGUID", "mail", "proxyAddresses", "displayName", "givenName", "sn", "userPrincipalName",
            "sAMAccountName", "department", "title", "telephoneNumber", "userAccountControl",
-           "mobile", "physicalDeliveryOfficeName", "company", "manager"],
+           "mobile", "physicalDeliveryOfficeName", "company", "manager", "lockoutTime", "accountExpires"],
     "generic": ["entryUUID", "mail", "cn", "displayName", "givenName", "sn", "uid", "departmentNumber", "title", "telephoneNumber",
                 "mobile", "physicalDeliveryOfficeName", "o", "manager"],
 }
@@ -164,6 +164,10 @@ class LdapDirectory:
             aliases.append(primary)
         name = _first(entry, "displayName") or " ".join(filter(None, [_first(entry, "givenName"), _first(entry, "sn")])) or _first(entry, "cn") or email
         uac = int(_first(entry, "userAccountControl") or 0)
+        raw_lock = (entry.get("raw_attributes") or {}).get("lockoutTime")
+        raw_lock = raw_lock[0] if isinstance(raw_lock, list) and raw_lock else raw_lock
+        raw_exp = (entry.get("raw_attributes") or {}).get("accountExpires")
+        raw_exp = raw_exp[0] if isinstance(raw_exp, list) and raw_exp else raw_exp
         return DirectoryUser(
             guid=self._guid(entry),
             dn=entry["dn"],
@@ -179,6 +183,8 @@ class LdapDirectory:
             office=_first(entry, "physicalDeliveryOfficeName"),
             company=_first(entry, "company") or _first(entry, "o"),
             manager_dn=_first(entry, "manager"),
+            locked=filetime(raw_lock.decode() if isinstance(raw_lock, bytes) else raw_lock) is not None,
+            account_expires_at=filetime(raw_exp.decode() if isinstance(raw_exp, bytes) else raw_exp),
             aliases=sorted({x for x in aliases if x.lower() != email.lower()}, key=str.lower),
         )
 

@@ -9,7 +9,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints, computed_field, field_validator, model_validator
 
-from app.models import AuthSource, DeviceSource, EventType, ScriptKind, ScriptLanguage, FieldList, Impact, Priority, ProblemStatus, RuleMode, RuleTrigger, TicketSource, TicketStatus, Urgency, UserRole
+from app.models import AuthSource, ChangeStatus, DeviceSource, EventType, ScriptKind, ScriptLanguage, FieldList, Impact, Priority, ProblemStatus, RuleMode, RuleTrigger, TicketSource, TicketStatus, Urgency, UserRole
 from app import numbering, sla
 from app.previews import preview_kind
 from app.reports.engine import MAX_ROWS, ReportSpec
@@ -908,6 +908,65 @@ class RelatedTicketOut(BaseModel):
     """An open ticket that may be the same problem, and why it was suggested."""
     ticket: ChildTicketOut
     reasons: list[str]
+
+
+class TicketContextAccountOut(BaseModel):
+    kind: Literal["disabled", "locked", "expired", "expiring"]
+    label: str
+    tone: Literal["warn", "bad"]
+    at: datetime | None = None
+
+
+class TicketContextDeviceOut(BaseModel):
+    id: int
+    name: str
+    role: Literal["computer", "linked", "requester"]
+    online: bool | None = None
+    last_seen_at: datetime | None = None
+    switch_port: str = ""
+    subnet: str = ""
+    site: str = ""
+    pending_reboot: bool = False
+    critical_patches: int = 0
+    ad_disabled: bool = False
+
+
+class TicketContextOutageOut(BaseModel):
+    provider_label: str
+    name: str
+    kind: str
+    down_since: datetime | None = None
+    scope: str
+    ticket_id: int | None = None
+    ticket_label: str | None = None
+
+
+class TicketContextProblemOut(BaseModel):
+    id: int
+    label: str
+    title: str
+    status: ProblemStatus
+    workaround: str = ""
+    scope: str
+    linked: bool = False
+
+
+class TicketContextChangeOut(BaseModel):
+    id: int
+    label: str
+    title: str
+    status: ChangeStatus
+    at: datetime | None = None
+    scope: str
+
+
+class TicketContextOut(BaseModel):
+    account: list[TicketContextAccountOut]
+    devices: list[TicketContextDeviceOut]
+    outages: list[TicketContextOutageOut]
+    problems: list[TicketContextProblemOut]
+    hidden_problems: int = 0
+    changes: list[TicketContextChangeOut]
 
 
 class BroadcastIn(BaseModel):

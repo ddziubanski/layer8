@@ -26,6 +26,7 @@ import { Composer, useComposerDraft } from "./ticket/Composer";
 import { TicketSaveProvider } from "./ticket/TicketSave";
 import { TicketDetailsEditor } from "./ticket/TicketDetailsEditor";
 import { TicketCoreActions } from "./ticket/TicketCoreActions";
+import { TicketContext } from "./ticket/TicketContext";
 import { describe, type Names } from "./ticket/history";
 import { ChangesCard } from "./ticket/ChangesCard";
 import { ChecklistsCard } from "./ticket/ChecklistsCard";
@@ -204,12 +205,7 @@ function TicketView({ me, id }: { me: Me; id: number }) {
               <ComputerCard
                 ticket={t}
                 onChanged={refresh}
-                onRunScript={() => {
-                  { openTool("scripts"); return; }
-                  const section = document.querySelector<HTMLElement>("[aria-label='Scripts']");
-                  section?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  section?.querySelector<HTMLSelectElement>("select")?.focus();
-                }}
+                onRunScript={() => openTool("scripts")}
               />
             ),
           },
@@ -256,6 +252,8 @@ function TicketView({ me, id }: { me: Me; id: number }) {
       </div>
 
       <TicketCoreActions ticket={t} me={activeMe} onEdit={()=>{openTool("details");document.querySelector(".ticket-focus-workspace")?.scrollIntoView?.({block:"start"});}} onChanged={refresh}/>
+
+      <TicketContext ticketId={t.id} />
 
       <TicketToolsWorkspace me={activeMe} panels={panels} layout={effectiveLayout} request={toolRequest}
         context={<><h2>At a glance</h2><dl><dt>Requester</dt><dd><PersonLink id={t.requester.id} name={t.requester.display_name} /></dd><dt>Queue</dt><dd>{t.queue.name}</dd><dt>Assigned to</dt><dd>{t.assignee?.display_name ?? "Unassigned"}</dd><dt>Status</dt><dd><StatusChip status={t.status} /></dd><dt>Priority</dt><dd><TicketPriorityChip ticket={t} /></dd><dt>Time spent</dt><dd><TimeSpentTotal ticketId={t.id} /></dd>{t.computer && <><dt>Computer</dt><dd><Link to={`/devices/${t.computer.id}`}>{t.computer.name}</Link></dd></>}</dl>{t.computer && <Action1RemoteControl me={activeMe} ticketId={t.id} deviceId={t.computer.id} onChanged={refresh} />}</>} />

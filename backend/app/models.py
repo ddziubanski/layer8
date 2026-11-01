@@ -201,6 +201,9 @@ class User(Base):
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     failed_logins: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # From AD (lockoutTime > 0 and accountExpires when not never).
+    ad_locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    account_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

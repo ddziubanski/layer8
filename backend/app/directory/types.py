@@ -28,6 +28,9 @@ class DirectoryUser:
     company: str | None = None
     # The manager's DN; sync links it to their account once everyone is in.
     manager_dn: str | None = None
+    # From AD: lockoutTime > 0, and accountExpires when it's a real date.
+    locked: bool = False
+    account_expires_at: datetime | None = None
     # Other addresses (proxyAddresses), not including email.
     aliases: list[str] = field(default_factory=list)
 

@@ -17,6 +17,12 @@ A compact **At a glance** panel summarizes the requester, assignment, status and
 priority, with shortcuts into the same existing ticket controls. On narrow
 screens it moves below the main content. Header SLA and ticket metadata remain.
 
+Above the tabs, **Around this ticket** (`GET /api/tickets/{id}/context`) shows what Layer 8 already knows around the ticket without making any vendor calls:
+- whether the requester's Active Directory account is locked (`lockoutTime`), disabled, or expiring (`accountExpires`);
+- the live state of the ticket's computer, linked devices, or the requester's assigned computers: online/offline, last seen, switch port, subnet and site, pending reboot, and missing critical updates;
+- any open network outage, open problem (with its workaround) or recent change touching that device, its switch, its subnet or its site.
+When nothing is linked or amiss around the ticket, the card stays hidden.
+
 Activated tab and tool contents remain mounted while hidden. Unsent replies,
 selected attachments and in-progress forms survive switching sections. Drafts
 remain in memory, scoped to the account and ticket; leaving the ticket can reset
