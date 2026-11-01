@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 
 import { api, type DeviceDetail, type DeviceIn, type Me } from "../../api/client";
 import { StatusChip } from "../../components/Chips";
+import { DeviceTimeline } from "../../components/DeviceTimeline";
 import { DeviceIps } from "../../components/DeviceIps";
 import { DeviceVms, NutanixVmList } from "../../components/Nutanix";
 import { PatchStatus } from "../../components/PatchStatus";
@@ -606,6 +607,7 @@ export function DevicePage({ me }: { me: Me }) {
                 ))}
             </dl>
           </section>
+          <DeviceTimeline deviceId={d.id} />
           <LifecycleCard key={`${d.warranty_ends}-${d.purchased_on}-${d.model}`} device={d} onSaved={() => queryClient.invalidateQueries({ queryKey: ["device", id] })} />
           <MakerWarranty device={d} onChanged={() => queryClient.invalidateQueries({ queryKey: ["device", id] })} />
           <section id="device-notes" tabIndex={-1} className="card stack" aria-label="Notes" style={{ gap: 8 }}>

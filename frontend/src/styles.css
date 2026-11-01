@@ -1121,3 +1121,20 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
 .pill-delete:hover:not(:disabled) { border-color: var(--error); background: color-mix(in srgb, var(--error) 10%, var(--surface)); }
 .pill-delete:disabled { opacity: .5; cursor: not-allowed; }
 .btn.danger { background: var(--error); color: var(--surface); }
+
+/* Device timeline: day headings, a dot per entry coloured by outcome, facts about right now. */
+.timeline-now { display: flex; flex-wrap: wrap; gap: 8px; }
+.timeline-fact { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 13px; display: inline-flex; gap: 6px; align-items: baseline; }
+.timeline-fact.tone-warn { border-color: color-mix(in srgb, var(--warn, #b7791f) 60%, var(--line)); }
+.timeline-fact.tone-bad { border-color: color-mix(in srgb, var(--error) 60%, var(--line)); }
+.timeline-fact.tone-ok { border-color: color-mix(in srgb, var(--ok, #2f855a) 50%, var(--line)); }
+.timeline-filter { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.timeline-filter[aria-pressed="true"] { background: var(--surface); color: var(--ink); border-color: var(--muted); }
+.timeline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 560px; overflow: auto; }
+.timeline-day { font-size: 12px; font-weight: 600; color: var(--muted); margin: 10px 0 4px; letter-spacing: .02em; }
+.timeline-row { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: start; padding: 4px 0; }
+.timeline-body { min-width: 0; overflow-wrap: anywhere; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; background: var(--line); border: 2px solid var(--muted); box-sizing: border-box; }
+.tone-ok > .timeline-row .timeline-dot { border-color: var(--ok, #2f855a); background: color-mix(in srgb, var(--ok, #2f855a) 35%, transparent); }
+.tone-warn > .timeline-row .timeline-dot { border-color: var(--warn, #b7791f); background: color-mix(in srgb, var(--warn, #b7791f) 35%, transparent); }
+.tone-bad > .timeline-row .timeline-dot { border-color: var(--error); background: color-mix(in srgb, var(--error) 35%, transparent); }
