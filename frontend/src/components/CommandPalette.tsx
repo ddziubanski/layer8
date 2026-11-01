@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import type { Me } from "../api/client";
+import { api, type Me } from "../api/client";
 import { can } from "../permissions";
 import { moduleEnabled, moduleForPath } from "../navigation";
+import { TicketPreview } from "./TicketPreview";
 
-type Command = { label: string; to: string; keywords?: string };
+// A page, or a ticket (shown with a preview while highlighted).
+type Command = { label: string; to: string; keywords?: string; ticket?: number; detail?: string };
+
+function useDebounced<T>(value: T, ms: number): T {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => { const t = setTimeout(() => setSettled(value), ms); return () => clearTimeout(t); }, [value, ms]);
+  return settled;
+}
 export function commandsFor(me: Me): Command[] {
   const commands: Command[] = [
     { label: "Ticket queue", to: "/", keywords: "tickets service desk" },
@@ -43,13 +52,22 @@ export function CommandPalette({ me }: { me: Me }) {
   const navigate = useNavigate();
   const id = useId();
   const available = commandsFor(me);
+  const staff = me.role !== "requester" && !me.portal_only;
   const needle = query.trim().toLowerCase();
   const matches = available.filter(c => `${c.label} ${c.keywords ?? ""}`.toLowerCase().includes(needle));
   const number = /^(?:#|ticket\s*)?(\d+)$/i.exec(query.trim());
-  if (number && Number.isSafeInteger(Number(number[1])) && Number(number[1]) > 0) matches.unshift({ label: `Open ticket #${Number(number[1])}`, to: `/tickets/${Number(number[1])}` });
+  const ticketNumber = number && Number.isSafeInteger(Number(number[1])) && Number(number[1]) > 0 ? Number(number[1]) : null;
+  if (ticketNumber) matches.unshift({ label: `Open ticket #${ticketNumber}`, to: `/tickets/${ticketNumber}`, ticket: staff ? ticketNumber : undefined });
+  // Quick lookup: the best few tickets for the words typed so far (any status), each with a preview.
+  const words = useDebounced(open && staff && !ticketNumber && needle.length >= 3 ? query.trim() : "", 250);
+  const found = useQuery({ queryKey: ["palette-tickets", words], queryFn: () => api.tickets({ scope: "all", q: words, limit: 6 }), enabled: !!words, staleTime: 15_000, retry: false });
+  if (words && words.toLowerCase() === needle) {
+    for (const t of found.data?.items ?? []) matches.push({ label: `${t.label} ${t.subject}`, to: `/tickets/${t.id}`, ticket: t.id, detail: t.status.replace("_", " ") });
+  }
   // Staff can always search ticket text (subject, description, notes), closed history included.
-  if (me.role !== "requester" && !me.portal_only && needle.length >= 2) matches.push({ label: `Search tickets for “${query.trim()}”`, to: `/?scope=all&q=${encodeURIComponent(query.trim())}` });
+  if (staff && needle.length >= 2) matches.push({ label: `Search tickets for “${query.trim()}”`, to: `/?scope=all&q=${encodeURIComponent(query.trim())}` });
   const selected = Math.min(active, Math.max(0, matches.length - 1));
+  const previewId = useDebounced(open ? matches[selected]?.ticket ?? null : null, 150);
   const show = () => { returnTo.current = document.activeElement as HTMLElement | null; setQuery(""); setActive(0); setOpen(true); };
   const close = () => setOpen(false);
   const choose = (command: Command) => { close(); navigate(command.to); };
@@ -85,13 +103,14 @@ export function CommandPalette({ me }: { me: Me }) {
   }, [open]);
 
   return <>
-    <button className="btn2 command-trigger" type="button" onClick={show} aria-keyshortcuts="Control+K Meta+K">Find a page <kbd>Ctrl K</kbd></button>
+    <button className="btn2 command-trigger" type="button" onClick={show} aria-keyshortcuts="Control+K Meta+K">Find a page or ticket <kbd>Ctrl K</kbd></button>
     {open && <div className="overlay command-overlay" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}>
-      <div className="command-palette" role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} ref={dialog}>
+      <div className={`command-palette${previewId ? " with-preview" : ""}`} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} ref={dialog}>
+        <div className="command-main">
         <div className="row-gap"><h2 id={`${id}-title`} className="spacer">Go anywhere</h2><button type="button" className="linkish" onClick={close}>Close</button></div>
-        <label className="field">Find a page or ticket number
+        <label className="field">Find a page or a ticket
           <input ref={input} role="combobox" aria-expanded={matches.length > 0} aria-autocomplete="list" aria-controls={`${id}-results`} aria-activedescendant={matches.length ? `${id}-result-${selected}` : undefined}
-            value={query} onChange={e => { setQuery(e.target.value); setActive(0); }} placeholder="Try devices, SLA, or #4821"
+            value={query} onChange={e => { setQuery(e.target.value); setActive(0); }} placeholder="Try devices, #4821 or printer offline"
             onKeyDown={e => {
               if (e.nativeEvent.isComposing) return;
               if (matches.length && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); setActive((selected + (e.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length); }
@@ -99,10 +118,17 @@ export function CommandPalette({ me }: { me: Me }) {
             }} />
         </label>
         <ul id={`${id}-results`} role="listbox" aria-label="Destinations" className="command-results">
-          {matches.map((command, i) => <li id={`${id}-result-${i}`} key={command.to} role="option" aria-selected={i === selected} onMouseDown={e => e.preventDefault()} onClick={() => choose(command)}>{command.label}<span aria-hidden="true">↗</span></li>)}
+          {matches.map((command, i) => <li id={`${id}-result-${i}`} key={command.to} role="option" aria-selected={i === selected} onMouseDown={e => e.preventDefault()}
+            onMouseEnter={() => command.ticket && setActive(i)} onClick={() => choose(command)}
+            className={command.ticket && !command.label.startsWith("Open ticket") ? "command-ticket" : undefined}>
+            <span className="command-label">{command.label}</span>{command.detail ? <span className="muted small">{command.detail}</span> : <span aria-hidden="true">↗</span>}
+          </li>)}
         </ul>
+        {words && found.isFetching && <p role="status" className="muted small" style={{ margin: 0 }}>Looking up tickets…</p>}
         {!matches.length && <p role="status" className="muted">No matching destination.</p>}
-        <p className="muted small">↑ ↓ to browse · Enter to open · Esc to close · Ctrl K / ⌘ K</p>
+        <p className="muted small">↑ ↓ to browse and preview tickets · Enter to open · Esc to close · Ctrl K / ⌘ K</p>
+        </div>
+        {previewId && <TicketPreview key={previewId} id={previewId} />}
       </div>
     </div>}
   </>;

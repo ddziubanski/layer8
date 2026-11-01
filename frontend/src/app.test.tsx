@@ -57,8 +57,8 @@ test("global off blocks a bookmarked module before loading its page API", async 
   expect(nav.queryByRole("link", { name: "Scripts" })).not.toBeInTheDocument();
   expect(nav.getByRole("link", { name: "Helpdesk" })).toBeInTheDocument();
   expect(calls.some(c => c.path.startsWith("/api/scripts"))).toBe(false);
-  await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
-  await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
+  await userEvent.click(screen.getByRole("button", { name: "Find a page or ticket Ctrl K" }));
+  await userEvent.type(screen.getByRole("combobox", { name: "Find a page or a ticket" }), "scripts");
   expect(screen.queryByRole("option", { name: "Scripts" })).not.toBeInTheDocument();
   await userEvent.keyboard("{Escape}");
   window.history.replaceState(null, "", "/");
@@ -182,8 +182,8 @@ test("minimal navigation applies on save without rebuilding the route; show all 
     expect(nav.getByRole("link", { name })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "My preferences" })).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Find a page Ctrl K" }));
-  await userEvent.type(screen.getByRole("combobox", { name: "Find a page or ticket number" }), "scripts");
+  await userEvent.click(screen.getByRole("button", { name: "Find a page or ticket Ctrl K" }));
+  await userEvent.type(screen.getByRole("combobox", { name: "Find a page or a ticket" }), "scripts");
   expect(within(screen.getByRole("listbox")).getByRole("option", { name: "Scripts" })).toBeInTheDocument();
   await userEvent.keyboard("{Escape}");
   await userEvent.click(screen.getByRole("button", { name: "Show all modules" }));
