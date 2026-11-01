@@ -106,3 +106,11 @@ When several reports are one problem, link them under one ticket as its child ti
 Child tickets in queues you can't see are left out, and the preview doesn't count or name them. If one of them is still open, this ticket stays open when you resolve the rest. Changing the message or the ticket list after a preview needs a new preview.
 
 API: `POST /api/tickets/{id}/broadcast/preview`, then `POST /api/tickets/{id}/broadcast` with the preview's `fingerprint` and `"confirm": true`.
+
+## Change → incident correlation
+
+Tickets opened within a configurable window after a change starts or finishes (`change_correlation_hours`, default 72 hours under **Settings > Changes**; `0` turns it off) on the same device, system, switch, subnet or site are flagged as **Possibly related to CHG-…**:
+
+- On the ticket's **Changes** card (`GET /api/tickets/{id}/change-suggestions`), each matching change is shown with the shared scope (device, system, switch, subnet or site) and a one-click **Link** button.
+- On the change's **Post-change review** panel (`GET /api/changes/{id}`), technicians see how many confirmed tickets followed the change alongside any unreviewed suggestions, and can confirm & link (`POST /api/changes/{id}/tickets`) or unlink (`DELETE /api/changes/{id}/tickets/{ticket_id}`) them even after the change has completed.
+- Confirmed follow-up tickets feed the **Change success rate** (`GET /api/changes/stats` and the **Changes** report dataset): a completed change with no confirmed follow-up incidents counts as a clean success, whereas completed changes with follow-up tickets (or changes that failed or rolled back) count against the change success rate.

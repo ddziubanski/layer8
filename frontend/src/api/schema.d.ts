@@ -4819,6 +4819,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/changes/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Change Stats
+         * @description Change success rate and post-change incident summary.
+         */
+        get: operations["change_stats_api_changes_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/changes/{change_id}": {
         parameters: {
             query?: never;
@@ -4857,6 +4877,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/changes/{change_id}/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link Change Ticket
+         * @description Confirm and link a ticket to a change (including during or after the change window).
+         */
+        post: operations["link_change_ticket_api_changes__change_id__tickets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/changes/{change_id}/tickets/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink Change Ticket */
+        delete: operations["unlink_change_ticket_api_changes__change_id__tickets__ticket_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/changes": {
         parameters: {
             query?: never;
@@ -4866,6 +4923,27 @@ export interface paths {
         };
         /** Ticket Changes */
         get: operations["ticket_changes_api_tickets__ticket_id__changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/change-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ticket Change Suggestions
+         * @description Unlinked changes whose correlation window covers this ticket and whose device, system, switch,
+         *     subnet or site matches the ticket.
+         */
+        get: operations["ticket_change_suggestions_api_tickets__ticket_id__change_suggestions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6818,6 +6896,56 @@ export interface components {
              * @default []
              */
             conflicts: components["schemas"]["ChangeConflictOut"][];
+            /**
+             * Follow Up Tickets
+             * @default []
+             */
+            follow_up_tickets: components["schemas"]["ChangeTicketRef"][];
+            /**
+             * Suggested Tickets
+             * @default []
+             */
+            suggested_tickets: components["schemas"]["ChangeTicketSuggestionOut"][];
+        };
+        /** ChangeStatsOut */
+        ChangeStatsOut: {
+            /**
+             * Ended Count
+             * @default 0
+             */
+            ended_count: number;
+            /**
+             * Successful Count
+             * @default 0
+             */
+            successful_count: number;
+            /**
+             * Completed With Incidents Count
+             * @default 0
+             */
+            completed_with_incidents_count: number;
+            /**
+             * Failed Or Rolled Back Count
+             * @default 0
+             */
+            failed_or_rolled_back_count: number;
+            /**
+             * Follow Up Tickets Count
+             * @default 0
+             */
+            follow_up_tickets_count: number;
+            /**
+             * Unreviewed Suggestions Count
+             * @default 0
+             */
+            unreviewed_suggestions_count: number;
+            /** Success Rate Pct */
+            success_rate_pct?: number | null;
+            /**
+             * Correlation Hours
+             * @default 72
+             */
+            correlation_hours: number;
         };
         /**
          * ChangeStatus
@@ -6947,6 +7075,11 @@ export interface components {
              */
             updated_at: string;
         };
+        /** ChangeTicketLinkIn */
+        ChangeTicketLinkIn: {
+            /** Ticket Id */
+            ticket_id: number;
+        };
         /** ChangeTicketRef */
         ChangeTicketRef: {
             /** Id */
@@ -6961,6 +7094,12 @@ export interface components {
             created_at: string;
             /** Label */
             readonly label: string;
+        };
+        /** ChangeTicketSuggestionOut */
+        ChangeTicketSuggestionOut: {
+            ticket: components["schemas"]["ChangeTicketRef"];
+            /** Scope */
+            scope: string;
         };
         /** ChatOut */
         ChatOut: {
@@ -12380,6 +12519,12 @@ export interface components {
             created_at?: string | null;
             /** Label */
             readonly label: string;
+        };
+        /** TicketChangeSuggestionOut */
+        TicketChangeSuggestionOut: {
+            change: components["schemas"]["ChangeSummaryOut"];
+            /** Scope */
+            scope: string;
         };
         /** TicketChecklistOut */
         TicketChecklistOut: {
@@ -24852,6 +24997,37 @@ export interface operations {
             };
         };
     };
+    change_stats_api_changes_stats_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeStatsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_change_api_changes__change_id__get: {
         parameters: {
             query?: never;
@@ -24959,6 +25135,77 @@ export interface operations {
             };
         };
     };
+    link_change_ticket_api_changes__change_id__tickets_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                change_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeTicketLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_change_ticket_api_changes__change_id__tickets__ticket_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                change_id: number;
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     ticket_changes_api_tickets__ticket_id__changes_get: {
         parameters: {
             query?: never;
@@ -24979,6 +25226,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChangeSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ticket_change_suggestions_api_tickets__ticket_id__change_suggestions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketChangeSuggestionOut"][];
                 };
             };
             /** @description Validation Error */

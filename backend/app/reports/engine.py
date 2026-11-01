@@ -13,11 +13,11 @@ from datetime import date, datetime, time, timedelta
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from sqlalchemy import ColumnElement, Select, and_, case, extract, false, func, or_, select
+from sqlalchemy import ColumnElement, Select, and_, case, exists, extract, false, func, or_, select
 from sqlalchemy.orm import Session, aliased, join
 
 from app import sla
-from app.models import Comment, FieldOption, TimeEntry, InboundEmail, OutboundEmail, POLine, POStatus, PurchaseOrder, Queue, Ticket, TicketStatus, TicketSurvey, User, UserRole, Vendor
+from app.models import Change, ChangeEvent, ChangeStatus, Comment, FieldOption, TimeEntry, InboundEmail, OutboundEmail, POLine, POStatus, PurchaseOrder, Queue, Ticket, TicketStatus, TicketSurvey, User, UserRole, Vendor, change_tickets
 
 MAX_ROWS = 1000
 
@@ -74,6 +74,9 @@ ENUM_CHOICES: dict[str, list[tuple[str, str]]] = {
     "yesno": [("true", "Yes"), ("false", "No")],
     "po_status": [("draft", "Draft"), ("requested", "Requested"), ("approved", "Approved"), ("ordered", "Ordered"),
                   ("partially_received", "Partially received"), ("received", "Received"), ("cancelled", "Cancelled"), ("closed", "Closed")],
+    "change_status": [("draft", "Draft"), ("awaiting_approval", "Awaiting approval"), ("approved", "Approved"), ("rejected", "Rejected"),
+                      ("in_progress", "In progress"), ("completed", "Completed"), ("failed", "Failed"), ("rolled_back", "Rolled back"), ("cancelled", "Cancelled")],
+    "change_kind": [("standard", "Standard"), ("normal", "Normal"), ("emergency", "Emergency")],
 }
 
 
@@ -542,6 +545,70 @@ def time_dataset() -> Dataset:
     )
 
 
+# Changes and change success rate
+
+
+def _change_follow_ups():
+    start_expr = func.coalesce(func.least(Change.started_at, Change.planned_start), Change.created_at)
+    confirmed_event = exists(
+        select(1).where(
+            ChangeEvent.change_id == Change.id,
+            ChangeEvent.type == "ticket_linked",
+            ChangeEvent.note.like(func.concat("%", Ticket.id, "%")),
+        )
+    )
+    return (
+        select(func.count())
+        .select_from(change_tickets.join(Ticket, Ticket.id == change_tickets.c.ticket_id))
+        .where(change_tickets.c.change_id == Change.id, or_(Ticket.created_at >= start_expr, confirmed_event))
+        .correlate(Change)
+        .scalar_subquery()
+    )
+
+
+def changes_dataset() -> Dataset:
+    def base():
+        owner = aliased(User, name="owner")
+        frm = Change.__table__.outerjoin(owner, owner.id == Change.owner_id)
+        return frm, {"owner": owner}
+
+    follow_ups = _change_follow_ups()
+    ended = Change.status.in_([ChangeStatus.completed, ChangeStatus.failed, ChangeStatus.rolled_back])
+    clean_success = and_(Change.status == ChangeStatus.completed, follow_ups == 0)
+    with_incidents = and_(Change.status == ChangeStatus.completed, follow_ups > 0)
+    when_col = func.coalesce(Change.started_at, Change.planned_start, Change.created_at)
+    return Dataset(
+        name="changes",
+        label="Changes",
+        base=base,
+        dimensions={
+            "status": Dimension("Status", lambda a: Change.status, code=True),
+            "kind": Dimension("Kind", lambda a: Change.kind, code=True),
+            "owner": Dimension("Owner", lambda a: a["owner"].display_name, empty="Unassigned"),
+            "month": Dimension("Month", lambda a: func.date_trunc("month", when_col), "time"),
+        },
+        measures={
+            "count": Measure("Changes", lambda a: func.count()),
+            "ended": Measure("Ended", lambda a: _count_if(ended)),
+            "successful": Measure("Succeeded without incidents", lambda a: _count_if(clean_success)),
+            "with_incidents": Measure("Completed with follow-up tickets", lambda a: _count_if(with_incidents)),
+            "failed_or_rolled_back": Measure("Failed or rolled back", lambda a: _count_if(Change.status.in_([ChangeStatus.failed, ChangeStatus.rolled_back]))),
+            "follow_up_tickets": Measure("Follow-up tickets", lambda a: func.coalesce(func.sum(follow_ups), 0)),
+            "success_pct": Measure("Success rate (%)", lambda a: 100.0 * _count_if(clean_success) / func.nullif(_count_if(ended), 0), "percent"),
+        },
+        filters={
+            "status": Filter("Status", lambda a: Change.status, "enum:change_status"),
+            "kind": Filter("Kind", lambda a: Change.kind, "enum:change_kind"),
+            "owner": Filter("Owner", lambda a: Change.owner_id, "agents"),
+        },
+        dates={
+            "started": ("Started or planned", lambda a: when_col),
+            "created": ("Created", lambda a: Change.created_at),
+        },
+        default_measures=["ended", "successful", "follow_up_tickets", "success_pct"],
+    )
+
+
 DATASETS: dict[str, Callable[[], Dataset]] = {
     "tickets": tickets_dataset,
     "activity": activity_dataset,
@@ -549,6 +616,7 @@ DATASETS: dict[str, Callable[[], Dataset]] = {
     "email_in": email_in_dataset,
     "email_out": email_out_dataset,
     "purchase_orders": purchase_orders_dataset,
+    "changes": changes_dataset,
     "surveys": surveys_dataset,
     "time": time_dataset,
     "sql": sql_dataset,

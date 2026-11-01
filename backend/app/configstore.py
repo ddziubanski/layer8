@@ -452,6 +452,12 @@ SECTIONS: dict[str, list[Field]] = {
             choices=(("low", "Low and up (every change)"), ("medium", "Medium and up"), ("high", "High only")),
         ),
         Field("change_approvers_group", "Who approves changes", "A group's name as on Settings > Groups (local, or synced from AD), e.g. Change Board. Empty: admins. Nobody approves their own change.", check=_length(0, 200)),
+        Field(
+            "change_correlation_hours",
+            "Flag tickets within (hours) after a change",
+            "Tickets opened within this long after a change starts or finishes on the same device, system, switch, subnet or site are suggested on the ticket and on the change for review. 0: off.",
+            check=_between(0, 720),
+        ),
     ],
     "sweeps": [
         Field("sweep_stale_days", "A device is stale after (days)", "With no sign of life from any source: AD's last logon (up to ~14 days behind), Action1's last seen, or a network scan seeing its address.", check=_between(7, 3650)),
