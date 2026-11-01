@@ -59,7 +59,7 @@ test("configuration lives under Settings, with tabs by role", async () => {
   const tabs = screen.getByRole("navigation", { name: "Settings" });
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
     "Queues", "Ticket rules", "Ticket fields", "Canned replies", "Ticket templates", "Library", "Requester emails", "Desk hours and SLA", "Surveys", "Notices",
-    "Checklists", "Onboarding templates", "Changes", "Purchasing",
+    "Checklists", "Onboarding templates", "Changes", "Problems", "Purchasing",
     "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps", "Proactive tickets",
     "API keys", "Relays", "Mailbox (Microsoft 365)", "Teams", "Action1", "Warranty lookups",
     "Users", "Groups", "Permissions", "Directory (AD)", "Sign-in", "Windows sign-in",

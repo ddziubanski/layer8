@@ -466,6 +466,10 @@ SECTIONS: dict[str, list[Field]] = {
         Field("warranty_warn_days", "Flag warranties ending within (days)", check=_between(7, 365)),
         Field("sweep_weekly_ticket", "Open a ticket with the sweep each week", "One ticket listing stale and unknown devices, when there are any, through the routing rules (subject \"Device sweep\")."),
     ],
+    "problems": [
+        Field("problem_suggest_tickets", "Suggest a problem when this many tickets share something", "Open tickets not in a problem yet, sharing a device model, system, switch, subnet, site or a distinctive subject word. 0: no suggestions.", check=_between(0, 50)),
+        Field("problem_suggest_hours", "Within (hours)", "How close together those tickets must arrive.", check=_between(1, 720)),
+    ],
     "proactive": [
         Field("proactive_tickets", "Open proactive tickets", "One ticket per condition, through the routing rules, before something lapses. Each one shows Verify once it's fixed; none closes by itself."),
         Field("proactive_warranty_days", "Device warranties ending within (days)", "From Devices (warranty lookups or entered by hand). 0: off.", check=_between(0, 365)),

@@ -3042,6 +3042,18 @@ class OutageProblemIn(BaseModel):
     notice_message: str = Field(default="", max_length=4000)
 
 
+class ProblemSuggestionDismissIn(BaseModel):
+    key: str = Field(min_length=1, max_length=200)
+
+
+class ProblemSuggestionOut(BaseModel):
+    key: str
+    kind: Literal["model", "system", "switch", "subnet", "site", "words"]
+    evidence: str
+    suggested_title: str
+    tickets: list["ProblemTicketRef"]
+
+
 class OutageClusterOut(BaseModel):
     key: str
     scope_kind: Literal["site", "switch", "subnet"]
@@ -3386,3 +3398,5 @@ class TicketTemplateOut(BaseModel):
     checklist_name: str | None
     is_active: bool
     updated_at: datetime
+
+ProblemSuggestionOut.model_rebuild()

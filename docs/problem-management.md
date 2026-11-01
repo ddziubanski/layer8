@@ -33,3 +33,20 @@ While the problem is open:
 When everything is back up, **Update everyone affected…** sends one reviewed reply to every open linked ticket. It works like the parent-ticket update: you preview it first, and each person is emailed once. You can choose to resolve all the tickets with it. When the last linked ticket is resolved, the problem becomes Resolved and its service notice ends.
 
 API: `GET /api/problems/outage-clusters`, `POST /api/problems/from-outage`, `POST /api/problems/{id}/broadcast/preview`, `POST /api/problems/{id}/broadcast`. `GET /api/tickets/{id}/problems` also returns `suggested`.
+
+## Suggested from patterns
+
+The Problems page shows **These look like one problem** when enough open tickets arrive close together and share something:
+- a device model;
+- a system;
+- a switch, subnet or site;
+- a distinctive word in the subject.
+
+The thresholds are in Settings > Problems: how many tickets (default 3; 0 turns suggestions off) within how many hours (default 48).
+
+Rules:
+- Only tickets you can see count, and tickets already in a problem are left out.
+- **Create problem** opens one in the Investigating state with those tickets linked.
+- **Dismiss** hides that exact group of tickets until another ticket joins it.
+
+API: `GET /api/problems/suggestions`, `POST /api/problems/suggestions/dismiss`.

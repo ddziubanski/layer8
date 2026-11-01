@@ -17,6 +17,7 @@ const CLOSED = new Set(["resolved", "closed"]);
 const NOTICE_STATE: Record<string, string> = { off: "Draft: not shown yet", scheduled: "Scheduled", current: "Showing to users", ended: "Ended" };
 
 type Cluster = Awaited<ReturnType<typeof api.problems.outageClusters>>[number];
+type Suggestion = Awaited<ReturnType<typeof api.problems.suggestions>>[number];
 
 
 export function ProblemsPage() {
@@ -36,6 +37,7 @@ function ProblemList() {
     </div>
     <div className="stack">
       <OutageClusters />
+      <PatternSuggestions />
       <div className="row-gap">
         <input type="search" style={{ maxWidth: 420 }} placeholder="Search problems" aria-label="Search problems" value={q} onChange={(event) => setQ(event.target.value)} />
         <select aria-label="Problem status" value={status} onChange={(event) => setStatus(event.target.value)} style={{ width: "auto" }}>
@@ -55,6 +57,38 @@ function ProblemList() {
       </div>
     </div>
   </>;
+}
+
+/** Open tickets that share something and arrived close together: a suggestion, never automatic. */
+function PatternSuggestions() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const suggestions = useQuery({ queryKey: ["problems", "suggestions"], queryFn: api.problems.suggestions, refetchInterval: 120_000 });
+  const create = useMutation({
+    mutationFn: (s: Suggestion) => api.problems.create({ ...BLANK, title: s.suggested_title, status: "investigating", ticket_ids: s.tickets.map((t) => t.id) }),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(["problem", saved.id], saved);
+      void queryClient.invalidateQueries({ queryKey: ["problems"] });
+      navigate(`/problems/${saved.id}`);
+    },
+  });
+  const dismiss = useMutation({ mutationFn: (key: string) => api.problems.dismissSuggestion(key), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["problems", "suggestions"] }) });
+  if (!suggestions.data?.length) return null;
+  return <section className="card stack" style={{ gap: 10 }} aria-labelledby="pattern-heading">
+    <h2 id="pattern-heading" style={{ margin: 0 }}>These look like one problem</h2>
+    <p className="muted small" style={{ margin: 0 }}>Suggestions only. Thresholds are in Settings › Problems.</p>
+    {suggestions.data.map((s) => <div key={s.key} className="stack" style={{ gap: 4 }} role="group" aria-label={s.evidence}>
+      <div className="row-gap">
+        <strong className="spacer">{s.evidence}</strong>
+        <button className="btn2" type="button" disabled={create.isPending} onClick={() => create.mutate(s)}>Create problem</button>
+        <button className="linkish small" type="button" disabled={dismiss.isPending} onClick={() => dismiss.mutate(s.key)}>Dismiss</button>
+      </div>
+      <ul className="small" style={{ margin: 0 }}>
+        {s.tickets.map((t) => <li key={t.id}><Link to={`/tickets/${t.id}`}>{t.label} {t.subject}</Link> <span className="muted">{when(t.created_at)}</span></li>)}
+      </ul>
+    </div>)}
+    {(create.error ?? dismiss.error) && <p className="error" role="alert">{(create.error ?? dismiss.error)!.message}</p>}
+  </section>;
 }
 
 /** Several devices down at one switch, subnet or site and no problem for it yet: offer one. */
