@@ -2057,6 +2057,17 @@ Ticket.recovery_review = column_property(and_(
 ))
 
 
+class ProblemSuggestionDismissal(Base):
+    """A "these look like one problem" suggestion someone dismissed (app/problem_suggestions.py).
+    The key covers the exact tickets, so a new ticket joining brings it back."""
+
+    __tablename__ = "problem_suggestion_dismissals"
+
+    key: Mapped[str] = mapped_column(String(200), primary_key=True)
+    dismissed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    dismissed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class ProactiveAlert(Base):
     """A condition a proactive ticket was opened for (app/proactive.py), by a stable key such as
     "warranty:device:12:2026-12-31". cleared_at: when the condition stopped holding."""

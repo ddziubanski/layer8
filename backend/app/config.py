@@ -316,6 +316,9 @@ class Settings(BaseSettings):
     warranty_warn_days: int = 60
     # Proactive tickets (app/proactive.py): one ticket per condition before something lapses; each
     # lead time 0 turns that kind off. Service accounts are matched by sAMAccountName prefix(es).
+    # Problem suggestions: this many open tickets within problem_suggest_hours that share something (0: off).
+    problem_suggest_tickets: int = 3
+    problem_suggest_hours: int = 48
     proactive_tickets: bool = False
     proactive_warranty_days: int = 30
     proactive_contract_days: int = 60

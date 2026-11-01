@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
-from app import broadcast, outage_problems, permissions, services, sla
+from app import broadcast, outage_problems, permissions, problem_suggestions, services, sla
 from app.api.notices import _out as notice_out
 from app.api.tickets import staff_ticket, visible
 from app.auth import Agent, SessionDep
@@ -17,6 +17,8 @@ from app.schemas import (
     BroadcastOut,
     OutageClusterOut,
     OutageProblemIn,
+    ProblemSuggestionDismissIn,
+    ProblemSuggestionOut,
     ProblemIn,
     ProblemNoteIn,
     ProblemOut,
@@ -133,6 +135,18 @@ def _validate_title(title: str) -> str:
     if not title:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Enter a problem title")
     return title
+
+
+@router.get("/api/problems/suggestions", response_model=list[ProblemSuggestionOut])
+def list_problem_suggestions(user: Agent, session: SessionDep):
+    """Open tickets that look like one problem (shared device model, system, switch, subnet, site or wording)."""
+    return problem_suggestions.suggestions(session, user)
+
+
+@router.post("/api/problems/suggestions/dismiss", status_code=status.HTTP_204_NO_CONTENT)
+def dismiss_problem_suggestion(body: ProblemSuggestionDismissIn, user: Agent, session: SessionDep):
+    problem_suggestions.dismiss(session, body.key, user)
+    session.commit()
 
 
 @router.get("/api/problems/outage-clusters", response_model=list[OutageClusterOut])

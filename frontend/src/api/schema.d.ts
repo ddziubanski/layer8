@@ -5057,6 +5057,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/problems/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Problem Suggestions
+         * @description Open tickets that look like one problem (shared device model, system, switch, subnet, site or wording).
+         */
+        get: operations["list_problem_suggestions_api_problems_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/problems/suggestions/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss Problem Suggestion */
+        post: operations["dismiss_problem_suggestion_api_problems_suggestions_dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/problems/outage-clusters": {
         parameters: {
             query?: never;
@@ -10594,6 +10631,27 @@ export interface components {
          * @enum {string}
          */
         ProblemStatus: "open" | "investigating" | "known_error" | "resolved" | "closed";
+        /** ProblemSuggestionDismissIn */
+        ProblemSuggestionDismissIn: {
+            /** Key */
+            key: string;
+        };
+        /** ProblemSuggestionOut */
+        ProblemSuggestionOut: {
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "model" | "system" | "switch" | "subnet" | "site" | "words";
+            /** Evidence */
+            evidence: string;
+            /** Suggested Title */
+            suggested_title: string;
+            /** Tickets */
+            tickets: components["schemas"]["ProblemTicketRef"][];
+        };
         /** ProblemSummaryOut */
         ProblemSummaryOut: {
             /** Id */
@@ -25914,6 +25972,70 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_problem_suggestions_api_problems_suggestions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemSuggestionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_problem_suggestion_api_problems_suggestions_dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProblemSuggestionDismissIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             204: {

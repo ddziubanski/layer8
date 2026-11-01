@@ -134,3 +134,26 @@ test("a recovered outage offers one update to everyone affected, sent from the p
   expect(await screen.findByRole("button", { name: "Send to 1 person" })).toBeInTheDocument();
   expect(calls.some((c) => c.path === "/api/problems/8/broadcast/preview")).toBe(true);
 });
+
+test("tickets that share something are suggested as one problem, created in one click or dismissed", async () => {
+  const T = (id: number, subject: string) => ({ id, label: `#${id}`, subject, status: "open", created_at: "2026-11-01T09:00:00Z" });
+  const SUGGESTION = { key: "tickets:abc", kind: "model", evidence: "3 tickets in 48 hours share Device model Latitude 5440", suggested_title: "Device model Latitude 5440: Dock not charging",
+    tickets: [T(4801, "Dock not charging"), T(4802, "No display on dock"), T(4803, "USB-C dock dead")] };
+  const calls = mockApi({
+    "GET /api/problems": [],
+    "GET /api/problems/outage-clusters": [],
+    "GET /api/problems/suggestions": [SUGGESTION],
+    "POST /api/problems/suggestions/dismiss": () => null,
+    "POST /api/problems": { ...PROBLEM, id: 14, label: "PRB-00014", title: SUGGESTION.suggested_title },
+    "GET /api/problems/14": { ...PROBLEM, id: 14, label: "PRB-00014", title: SUGGESTION.suggested_title },
+    "GET /api/users": [],
+  });
+  renderAt("/problems", [{ path: "/problems", element: <ProblemsPage /> }, { path: "/problems/:problemId", element: <ProblemsPage /> }]);
+  const group = await screen.findByRole("group", { name: SUGGESTION.evidence });
+  expect(within(group).getAllByRole("link")).toHaveLength(3);
+  await userEvent.click(within(group).getByRole("button", { name: "Dismiss" }));
+  await waitFor(() => expect(calls.find((c) => c.path === "/api/problems/suggestions/dismiss")?.body).toEqual({ key: "tickets:abc" }));
+  await userEvent.click(within(group).getByRole("button", { name: "Create problem" }));
+  await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.path === "/api/problems")?.body).toMatchObject({ ticket_ids: [4801, 4802, 4803], status: "investigating" }));
+  expect(await screen.findByRole("heading", { name: /PRB-00014/ })).toBeInTheDocument();
+});
