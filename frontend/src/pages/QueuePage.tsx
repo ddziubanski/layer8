@@ -58,12 +58,17 @@ const COLUMNS: { key: TicketSort; label: string; first: "asc" | "desc" }[] = [
   { key: "age", label: "Age", first: "desc" },
   { key: "due", label: "SLA", first: "asc" },
 ];
+// The Closed view is history: when it closed replaces the SLA column.
+const CLOSED_COLUMNS = COLUMNS.map((c) => (c.key === "due" ? { key: "closed" as TicketSort, label: "Closed", first: "desc" as const } : c));
+const ALL_COLUMNS = [...COLUMNS, ...CLOSED_COLUMNS.filter((c) => c.key === "closed")];
+const columnsFor = (view: SavedView, search: string) => (view === "closed" && !search ? CLOSED_COLUMNS : COLUMNS);
+const defaultSortFor = (view: SavedView, search: string): TicketSort => (search ? "age" : view === "closed" ? "closed" : "due");
 
 function isSort(v: string | null): v is TicketSort {
-  return COLUMNS.some((c) => c.key === v);
+  return ALL_COLUMNS.some((c) => c.key === v);
 }
 
-function Row({ t, me, selected, onSelect }: { t: Ticket; me: Me; selected: boolean; onSelect: (on: boolean) => void }) {
+function Row({ t, me, selected, onSelect, closedView }: { t: Ticket; me: Me; selected: boolean; onSelect: (on: boolean) => void; closedView: boolean }) {
   const navigate = useNavigate();
   // The assignee's colour as a stripe (everyone sees it); my own rules tint the row (only I do).
   const tint = ruleColor(t, me.color_rules ?? [], me.id);
@@ -114,10 +119,16 @@ function Row({ t, me, selected, onSelect }: { t: Ticket; me: Me; selected: boole
         {duration(Date.now() - new Date(t.created_at).getTime())}
       </div>
       <div role="cell">
-        <SlaChip ticket={t} />
+        {closedView ? <ClosedWhen ticket={t} /> : <SlaChip ticket={t} />}
       </div>
     </div>
   );
+}
+
+function ClosedWhen({ ticket }: { ticket: Ticket }) {
+  const at = ticket.closed_at ?? ticket.resolved_at;
+  if (!at) return <span className="muted">{ticket.status === "closed" ? "Closed" : "Resolved"}</span>;
+  return <span title={new Date(at).toLocaleString()}>{ticket.status === "closed" ? "Closed" : "Resolved"} {duration(Date.now() - new Date(at).getTime())} ago</span>;
 }
 
 export function QueuePage({ me }: { me: Me }) {
@@ -138,9 +149,11 @@ export function QueuePage({ me }: { me: Me }) {
   const q = (params.get("q") ?? "").trim();
   const [typed, setTyped] = useState(q);
   const rawSort = params.get("sort");
-  const defaultSort: TicketSort = q ? "age" : "due";
-  const sort: TicketSort = isSort(rawSort) ? rawSort : defaultSort;
-  const column = COLUMNS.find((c) => c.key === sort)!;
+  const columns = columnsFor(view, q);
+  const defaultSort = defaultSortFor(view, q);
+  const sort: TicketSort = isSort(rawSort) && columns.some((c) => c.key === rawSort) ? rawSort : defaultSort;
+  const column = ALL_COLUMNS.find((c) => c.key === sort)!;
+  const closedView = view === "closed" && !q;
   const dir: "asc" | "desc" = params.get("dir") === "asc" || params.get("dir") === "desc" ? (params.get("dir") as "asc" | "desc") : q && !rawSort ? "asc" : column.first;
   const [creating, setCreating] = useState(false);
 
@@ -183,8 +196,12 @@ export function QueuePage({ me }: { me: Me }) {
     // Choosing a view leaves the search; a new search starts from its own default order.
     const search = next.view ? "" : (next.q ?? q);
     if (next.view) setTyped("");
-    const s = next.sort ?? (next.q !== undefined && !rawSort ? (search ? "age" : "due") : sort);
-    const d = next.dir ?? (next.sort ? undefined : dir);
+    const v = next.view ?? view;
+    const def = defaultSortFor(v, search);
+    // A new search or view starts from its own default order, unless a column was chosen that it also has.
+    const keep = !((next.q !== undefined || next.view) && !rawSort) && columnsFor(v, search).some((c) => c.key === sort);
+    const s = next.sort ?? (keep ? sort : def);
+    const d = next.dir ?? (next.sort || !keep ? undefined : dir);
     if (next.scope) {
       try {
         localStorage.setItem(SCOPE_KEY, next.scope);
@@ -204,10 +221,10 @@ export function QueuePage({ me }: { me: Me }) {
     setParams({
       scope: next.scope ?? scope,
       ...(queueChoice ? { queue: queueChoice } : {}),
-      view: next.view ?? view,
+      view: v,
       ...(search ? { q: search } : {}),
-      ...(s !== (search ? "age" : "due") ? { sort: s } : {}),
-      ...(d && d !== COLUMNS.find((c) => c.key === s)!.first ? { dir: d } : {}),
+      ...(s !== def ? { sort: s } : {}),
+      ...(d && d !== ALL_COLUMNS.find((c) => c.key === s)!.first ? { dir: d } : {}),
       ...(next.offset ? { offset: String(next.offset) } : {}),
     });
   }
@@ -314,7 +331,7 @@ export function QueuePage({ me }: { me: Me }) {
               <input type="checkbox" aria-label={scrolling ? "Select all loaded" : "Select all on this page"} checked={allPicked} onChange={(e) => setSelected(e.target.checked ? new Set(items.map((t) => t.id)) : new Set())} />
             )}
           </div>
-          {COLUMNS.map((c) => (
+          {columns.map((c) => (
             <div key={c.key} role="columnheader" aria-sort={c.key === sort ? (dir === "asc" ? "ascending" : "descending") : "none"}>
               <button type="button" className="sort" onClick={() => sortBy(c.key)}>
                 {c.label}
@@ -326,9 +343,9 @@ export function QueuePage({ me }: { me: Me }) {
           ))}
         </div>
         {items.map((t) => (
-          <Row key={t.id} t={t} me={me} selected={selected.has(t.id)} onSelect={(on) => pick(t.id, on)} />
+          <Row key={t.id} t={t} me={me} selected={selected.has(t.id)} onSelect={(on) => pick(t.id, on)} closedView={closedView} />
         ))}
-        {loaded && items.length === 0 && <div className="empty">{q ? "No tickets match. Try fewer words, or a ticket number." : "No tickets in this view."}</div>}
+        {loaded && items.length === 0 && <div className="empty">{q ? "No tickets match. Try fewer words, or a ticket number." : closedView ? "No resolved or closed tickets yet." : "No tickets in this view."}</div>}
         {scrolling && <div ref={endRef} className="queue-end" aria-hidden="true" />}
       </div>
 
