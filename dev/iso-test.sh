@@ -27,10 +27,15 @@ qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 $FIRMWARE \
   -netdev user,id=n0,hostfwd=tcp:127.0.0.1:8443-:443,hostfwd=tcp:127.0.0.1:2222-:22 -device virtio-net-pci,netdev=n0 \
   -display none -serial file:"$LOG" -monitor unix:"$DIR/vm-$FW.mon",server,nowait -daemonize -pidfile "$DIR/vm.pid"
 echo "VM started (pid $(cat "$DIR/vm.pid")); installing. Serial log: $LOG"
+health() {  # the API itself answers: HTTP 200 and its own JSON. Nginx's maintenance page (502/503
+  # while the API is down) also mentions "ok" in its script, so matching the text alone isn't enough.
+  [ "$(curl -sk --max-time 5 -o /dev/null -w '%{http_code}' https://localhost:8443/api/health)" = 200 ] &&
+    curl -sk --max-time 5 https://localhost:8443/api/health | grep -q '"status": *"ok"'
+}
 up() {  # wait until the app answers; $1: what we're waiting for
   start=$(date +%s)
   while :; do
-    if curl -sk --max-time 5 https://localhost:8443/api/health | grep -q ok; then
+    if health; then
       echo "$1: up after $(( $(date +%s) - start )) s"
       return 0
     fi
@@ -39,12 +44,26 @@ up() {  # wait until the app answers; $1: what we're waiting for
     sleep 10
   done
 }
+sign_in() {  # the demo admin signs in (this also needs the database); retries for 3 minutes
+  start=$(date +%s) codes=""
+  while :; do
+    code=$(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' -H "Content-Type: application/json" \
+      -d '{"email":"admin@demo.local","password":"Demo-helpdesk-2026"}' https://localhost:8443/api/auth/login || true)
+    codes="$codes $code"
+    if [ "$code" = 200 ]; then
+      echo "$1: demo sign-in HTTP 200 after $(( $(date +%s) - start )) s (answers:$codes)"
+      return 0
+    fi
+    [ $(( $(date +%s) - start )) -gt 180 ] && { echo "$1: demo sign-in failed (answers:$codes)"; exit 1; }
+    sleep 5
+  done
+}
 up "Install"
+sign_in "Install"
 # The worst case: power cut right after setup. It must come back on its own.
 python3 -c "
 import socket, time
 s = socket.socket(socket.AF_UNIX); s.connect('$DIR/vm-$FW.mon'); time.sleep(0.3); s.recv(4096); s.send(b'system_reset\\n'); time.sleep(1)"
 sleep 20
 up "After a hard reset"
-curl -sk -o /dev/null -w "Demo sign-in: HTTP %{http_code}\n" -H "Content-Type: application/json" \
-  -d '{"email":"admin@demo.local","password":"Demo-helpdesk-2026"}' https://localhost:8443/api/auth/login
+sign_in "After a hard reset"
