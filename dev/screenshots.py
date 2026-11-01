@@ -202,7 +202,15 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         ("09j-settings-juniper", "admin", "/settings/juniper", "Settings > Juniper: EX switches read over Junos REST through a runner"),
         ("09g-settings-meraki", "admin", "/settings/meraki", "Settings > Meraki: read-only discovery by API key or OAuth, diagnostics and outage alerts, each opt-in"),
         ("12c-workspace", "admin", "/preferences", "My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)"),
+        ("02e-queue-closed", "admin", "/?view=closed", "Agent queue > Closed: resolved and closed history, newest closed first, with when each closed"),
+        ("02f-command-search", "admin", "/", "Ctrl K: one search for pages, tickets (with a preview), devices by name, IP or MAC, people, problems, changes, articles, POs, vendors and systems",
+         fill_then_click({"Find a page, ticket, device": "ws-0"}, "Find a page or ticket", "__wait__", "__wait__")),
+        ("13-problems", "admin", "/problems", "Problems: outages without a problem, tickets that look like one problem (with the evidence), and every problem record"),
+        ("09n-settings-problems", "admin", "/settings/problems", "Settings > Problems: when tickets that share a device model, system, switch, subnet, site or wording are suggested as one problem"),
+        ("09o-settings-proactive", "admin", "/settings/proactive", "Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time"),
     ]
+    if ticket_id:
+        out.append(("03i-ticket-watching", "admin", f"/tickets/{ticket_id}", "Ticket > Work > Watching: wait on a restart, updates, an agent, an account or a VM; the ticket shows Verify when it clears", in_ticket("Work")))
     return out
 
 

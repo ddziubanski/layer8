@@ -1,6 +1,6 @@
 # Screenshots
 
-From the dev app, 2026-10-26. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-11-01. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 
@@ -281,6 +281,30 @@ From the dev app, 2026-10-26. Regenerate with `backend/.venv/bin/python dev/scre
 ## My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)
 
 ![My preferences > My workspace: a minimal sidebar or chosen modules (hidden ones stay reachable with Ctrl+K)](12c-workspace.png)
+
+## Agent queue > Closed: resolved and closed history, newest closed first, with when each closed
+
+![Agent queue > Closed: resolved and closed history, newest closed first, with when each closed](02e-queue-closed.png)
+
+## Ctrl K: one search for pages, tickets (with a preview), devices by name, IP or MAC, people, problems, changes, articles, POs, vendors and systems
+
+![Ctrl K: one search for pages, tickets (with a preview), devices by name, IP or MAC, people, problems, changes, articles, POs, vendors and systems](02f-command-search.png)
+
+## Problems: outages without a problem, tickets that look like one problem (with the evidence), and every problem record
+
+![Problems: outages without a problem, tickets that look like one problem (with the evidence), and every problem record](13-problems.png)
+
+## Settings > Problems: when tickets that share a device model, system, switch, subnet, site or wording are suggested as one problem
+
+![Settings > Problems: when tickets that share a device model, system, switch, subnet, site or wording are suggested as one problem](09n-settings-problems.png)
+
+## Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time
+
+![Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time](09o-settings-proactive.png)
+
+## Ticket > Work > Watching: wait on a restart, updates, an agent, an account or a VM; the ticket shows Verify when it clears
+
+![Ticket > Work > Watching: wait on a restart, updates, an agent, an account or a VM; the ticket shows Verify when it clears](03i-ticket-watching.png)
 
 # Dark mode
 
