@@ -9,6 +9,7 @@ import { consoleAppearance, materialTokens } from "../materialThemes";
 import { SourceNotice } from "./SourceNotice";
 import { UnacceptedCounter } from "./UnacceptedCounter";
 import { ActiveTimers } from "./TicketTimers";
+import { useLiveUpdates } from "../live";
 
 const GROUPS = [
   { label: "Helpdesk", ids: ["tickets", "dashboard", "changes", "problems"] },
@@ -43,6 +44,7 @@ function Icon({ name }: { name: string }) {
 export function ConsoleLayout({ me, brand, onLogout, logoutPending, children }: {
   me: Me; brand: Branding; onLogout: () => void; logoutPending: boolean; children: ReactNode;
 }) {
+  useLiveUpdates();
   const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   useEffect(() => {
     const query = window.matchMedia?.("(prefers-color-scheme: dark)");
