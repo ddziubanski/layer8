@@ -305,6 +305,7 @@ export const api = {
   merge: (id: number, body: S["MergeIn"]) => request<Ticket>("POST", `/api/tickets/${id}/merge`, body),
   children: (id: number) => request<S["ChildTicketOut"][]>("GET", `/api/tickets/${id}/children`),
   related: (id: number) => request<S["RelatedTicketOut"][]>("GET", `/api/tickets/${id}/related`),
+  ticketContext: (id: number) => request<S["TicketContextOut"]>("GET", `/api/tickets/${id}/context`),
   broadcast: {
     preview: (id: number, body: S["BroadcastIn"]) => request<S["BroadcastOut"]>("POST", `/api/tickets/${id}/broadcast/preview`, body),
     send: (id: number, body: S["BroadcastIn"]) => request<S["BroadcastOut"]>("POST", `/api/tickets/${id}/broadcast`, body),

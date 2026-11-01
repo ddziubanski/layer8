@@ -84,7 +84,7 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
             run.created += 1
             _note(run, "created", du.email, du.display_name)
 
-    before = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.mobile, user.office, user.company, user.directory_dn, user.is_active)
+    before = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.mobile, user.office, user.company, user.directory_dn, user.is_active, bool(user.ad_locked), user.account_expires_at)
     if du.email and du.email.lower() != (user.email or "").lower():
         owner = _address_owner(session, du.email)
         if owner and owner != user.id:
@@ -96,6 +96,7 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
     user.department, user.title, user.phone = du.department, du.title, du.phone
     user.mobile, user.office, user.company = du.mobile, du.office, du.company
     user.directory_id, user.directory_dn = du.guid, du.dn
+    user.ad_locked, user.account_expires_at = bool(du.locked), du.account_expires_at
     user.auth_source = AuthSource.directory
     # AD holds the password now; a stale local hash must never work again,
     # unless it's this technician's deliberate AD-down fallback.
@@ -129,7 +130,7 @@ def upsert_user(session: Session, du: DirectoryUser, now: datetime, run: Directo
         session.add(UserEmail(user_id=user.id, email=address))
     session.flush()
 
-    after = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.mobile, user.office, user.company, user.directory_dn, user.is_active)
+    after = (user.email, user.display_name, user.upn, user.sam_account_name, user.department, user.title, user.phone, user.mobile, user.office, user.company, user.directory_dn, user.is_active, bool(user.ad_locked), user.account_expires_at)
     if not created and not linked and before != after:
         run.updated += 1
     return user

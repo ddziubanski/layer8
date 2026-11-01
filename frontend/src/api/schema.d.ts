@@ -665,6 +665,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ticket Context
+         * @description Cached context around the ticket: requester account state, device state, and nearby outages,
+         *     problems and recent changes. No vendor calls.
+         */
+        get: operations["get_ticket_context_api_tickets__ticket_id__context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets/{ticket_id}/broadcast/preview": {
         parameters: {
             query?: never;
@@ -12385,6 +12406,140 @@ export interface components {
             /** Items */
             items: components["schemas"]["ChecklistItemOut"][];
         };
+        /** TicketContextAccountOut */
+        TicketContextAccountOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "disabled" | "locked" | "expired" | "expiring";
+            /** Label */
+            label: string;
+            /**
+             * Tone
+             * @enum {string}
+             */
+            tone: "warn" | "bad";
+            /** At */
+            at?: string | null;
+        };
+        /** TicketContextChangeOut */
+        TicketContextChangeOut: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ChangeStatus"];
+            /** At */
+            at?: string | null;
+            /** Scope */
+            scope: string;
+        };
+        /** TicketContextDeviceOut */
+        TicketContextDeviceOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "computer" | "linked" | "requester";
+            /** Online */
+            online?: boolean | null;
+            /** Last Seen At */
+            last_seen_at?: string | null;
+            /**
+             * Switch Port
+             * @default
+             */
+            switch_port: string;
+            /**
+             * Subnet
+             * @default
+             */
+            subnet: string;
+            /**
+             * Site
+             * @default
+             */
+            site: string;
+            /**
+             * Pending Reboot
+             * @default false
+             */
+            pending_reboot: boolean;
+            /**
+             * Critical Patches
+             * @default 0
+             */
+            critical_patches: number;
+            /**
+             * Ad Disabled
+             * @default false
+             */
+            ad_disabled: boolean;
+        };
+        /** TicketContextOut */
+        TicketContextOut: {
+            /** Account */
+            account: components["schemas"]["TicketContextAccountOut"][];
+            /** Devices */
+            devices: components["schemas"]["TicketContextDeviceOut"][];
+            /** Outages */
+            outages: components["schemas"]["TicketContextOutageOut"][];
+            /** Problems */
+            problems: components["schemas"]["TicketContextProblemOut"][];
+            /**
+             * Hidden Problems
+             * @default 0
+             */
+            hidden_problems: number;
+            /** Changes */
+            changes: components["schemas"]["TicketContextChangeOut"][];
+        };
+        /** TicketContextOutageOut */
+        TicketContextOutageOut: {
+            /** Provider Label */
+            provider_label: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Down Since */
+            down_since?: string | null;
+            /** Scope */
+            scope: string;
+            /** Ticket Id */
+            ticket_id?: number | null;
+            /** Ticket Label */
+            ticket_label?: string | null;
+        };
+        /** TicketContextProblemOut */
+        TicketContextProblemOut: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProblemStatus"];
+            /**
+             * Workaround
+             * @default
+             */
+            workaround: string;
+            /** Scope */
+            scope: string;
+            /**
+             * Linked
+             * @default false
+             */
+            linked: boolean;
+        };
         /** TicketCreate */
         TicketCreate: {
             /** Subject */
@@ -14942,6 +15097,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RelatedTicketOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ticket_context_api_tickets__ticket_id__context_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketContextOut"];
                 };
             };
             /** @description Validation Error */

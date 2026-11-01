@@ -42,6 +42,7 @@ from app.schemas import (
     BulkResultOut,
     ChildTicketOut,
     RelatedTicketOut,
+    TicketContextOut,
     BroadcastIn,
     BroadcastOut,
     MergeIn,
@@ -375,6 +376,15 @@ def related_tickets(ticket_id: int, user: Agent, session: SessionDep):
     from app import related
 
     return related.suggestions(session, staff_ticket(session, ticket_id, user), user)
+
+
+@router.get("/{ticket_id}/context", response_model=TicketContextOut)
+def get_ticket_context(ticket_id: int, user: Agent, session: SessionDep):
+    """Cached context around the ticket: requester account state, device state, and nearby outages,
+    problems and recent changes. No vendor calls."""
+    from app import ticket_context
+
+    return ticket_context.build(session, staff_ticket(session, ticket_id, user), user)
 
 
 @router.post("/{ticket_id}/broadcast/preview", response_model=BroadcastOut)
