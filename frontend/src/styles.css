@@ -1154,3 +1154,17 @@ li.breached .wb-age { color: var(--wb-alarm); } li.late .wb-age, li.risk .wb-age
   .command-palette.with-preview { grid-template-columns: 1fr; }
   .ticket-preview { border-left: 0; border-top: 1px solid var(--line); padding: 14px 0 0; }
 }
+
+/* Ticket > Details: each pane its own light shade of the theme, with a matching edge, so ticket
+   details, assignment, requester and actions are easy to tell apart at a glance. */
+[data-ticket-panel="status"] { --pane: var(--brand); }
+[data-ticket-panel="assignment"] { --pane: #3f6fd1; }
+[data-ticket-panel="requester"] { --pane: #c48a1a; }
+[data-ticket-panel="actions"] { --pane: #6b7a8c; }
+:is([data-ticket-panel="status"], [data-ticket-panel="assignment"], [data-ticket-panel="requester"], [data-ticket-panel="actions"]) > .card,
+:is([data-ticket-panel="status"], [data-ticket-panel="assignment"], [data-ticket-panel="requester"], [data-ticket-panel="actions"]) > * > .card {
+  background: color-mix(in srgb, var(--pane) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--pane) 30%, var(--line));
+  box-shadow: inset 4px 0 0 color-mix(in srgb, var(--pane) 70%, transparent);
+}
+:is([data-ticket-panel="status"], [data-ticket-panel="assignment"], [data-ticket-panel="requester"], [data-ticket-panel="actions"]) .lbl { color: color-mix(in srgb, var(--pane) 45%, var(--ink)); }
