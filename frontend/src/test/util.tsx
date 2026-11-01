@@ -69,6 +69,7 @@ export function ticket(over: Partial<Ticket> = {}): Ticket {
   return {
     id: 4821,
     recovery_review: false,
+    check_review: false,
     subject: "Switch port flapping, 2nd floor",
     description: "Desks keep losing connection.",
     imported_fields: {},

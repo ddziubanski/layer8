@@ -135,6 +135,10 @@ class EventType(enum.StrEnum):
     survey_answered = "survey_answered"
     problem_linked = "problem_linked"  # data: problem id and label
     problem_unlinked = "problem_unlinked"
+    check_added = "check_added"  # a watched condition (see TicketCheck): data kind, label
+    check_cleared = "check_cleared"  # the condition cleared; waits for a technician to verify
+    check_confirmed = "check_confirmed"
+    check_cancelled = "check_cancelled"
 
 
 class User(Base):
@@ -2050,6 +2054,40 @@ Ticket.recovery_review = column_property(and_(
     Ticket.status.not_in((TicketStatus.resolved, TicketStatus.closed)),
     _ticket_outages.exists(),
     ~_ticket_outages.where(or_(NetworkOutage.is_down.is_(True), ~_outage_online)).exists(),
+))
+
+
+class TicketCheck(Base):
+    """A condition a ticket waits on (restart pending cleared, account unlocked, VM on...), checked
+    against data Layer 8 already syncs. When it clears the ticket shows Verify; a technician confirms.
+    It never closes the ticket by itself (app/ticket_checks.py)."""
+
+    __tablename__ = "ticket_checks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    label: Mapped[str] = mapped_column(String(300))
+    # waiting -> cleared -> confirmed; or cancelled.
+    state: Mapped[str] = mapped_column(String(16), default="waiting", server_default="waiting", index=True)
+    detail: Mapped[str] = mapped_column(String(500), default="", server_default="")
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cleared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    confirmed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    created_by: Mapped[User | None] = relationship(foreign_keys=[created_by_id])
+    confirmed_by: Mapped[User | None] = relationship(foreign_keys=[confirmed_by_id])
+
+
+# A watched condition cleared and nobody has verified it yet.
+Ticket.check_review = column_property(and_(
+    Ticket.status.not_in((TicketStatus.resolved, TicketStatus.closed)),
+    select(TicketCheck.id).where(TicketCheck.ticket_id == Ticket.id, TicketCheck.state == "cleared").correlate(Ticket).exists(),
 ))
 
 

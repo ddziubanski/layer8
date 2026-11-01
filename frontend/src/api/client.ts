@@ -299,6 +299,12 @@ export const api = {
     request<TicketPage>("GET", `/api/tickets${query(p)}`),
   unaccepted: () => request<S["UnacceptedOut"]>("GET", "/api/tickets/unaccepted"),
   person: (id: number) => request<Person>("GET", `/api/people/${id}`),
+  checks: {
+    list: (ticketId: number) => request<S["TicketChecksOut"]>("GET", `/api/tickets/${ticketId}/checks`),
+    add: (ticketId: number, body: S["CheckIn"]) => request<S["TicketChecksOut"]>("POST", `/api/tickets/${ticketId}/checks`, body),
+    confirm: (ticketId: number, id: number) => request<S["TicketChecksOut"]>("POST", `/api/tickets/${ticketId}/checks/${id}/confirm`),
+    cancel: (ticketId: number, id: number) => request<S["TicketChecksOut"]>("DELETE", `/api/tickets/${ticketId}/checks/${id}`),
+  },
   search: (q: string) => request<S["SearchOut"]>("GET", `/api/search${query({ q })}`),
   viewCounts: (scope: TicketScope = "all", queueId?: number) => request<Record<SavedView, number>>("GET", `/api/tickets/views${query({ scope, queue_id: queueId })}`),
   bulkAssign: (body: S["BulkAssignIn"]) => request<S["BulkResultOut"]>("POST", "/api/tickets/bulk/assign", body),

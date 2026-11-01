@@ -306,6 +306,11 @@ def _ticket_if_overdue(session: Session, row: DevicePatch, now: datetime) -> int
         session.add(TicketDevice(ticket_id=ticket.id, device_id=device.id, linked_by_id=bot.id))
         services._event(session, ticket, EventType.device_linked, bot, device_id=device.id, device=device.name)
     row.ticket_id = ticket.id
+    if device is not None:
+        from app import ticket_checks
+
+        # It waits on what it was opened for, and shows Verify once Action1 reports it done.
+        ticket_checks.watch_for_patching(session, ticket, row, bot)
     log.info("Action1: opened ticket #%s for %s (%s)", ticket.id, row.name, "; ".join(reasons), extra={"source": "action1"})
     return 1
 
