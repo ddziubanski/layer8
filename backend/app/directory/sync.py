@@ -233,11 +233,43 @@ def upsert_device(session: Session, dc: DirectoryComputer, users_by_dn: dict[str
         "assigned_user_id": users_by_dn.get(dc.managed_by.lower()) if dc.managed_by else None,
     }
     changed = device.id is None
+    if device.id is not None:
+        _note_device_changes(session, device, values)
     for k, v in values.items():
         if getattr(device, k) != v:
             setattr(device, k, v)
             changed = True
     return changed
+
+
+def _ou(dn: str | None) -> str:
+    """The OU path of a DN, without the object's own name: OU=Laptops,OU=Staff."""
+    parts = (dn or "").split(",")
+    return ",".join(p for p in parts[1:] if p.strip().upper().startswith("OU="))
+
+
+def _note_device_changes(session: Session, device: Device, values: dict) -> None:
+    """Timeline events for what changed in AD since the last sync (not last sign-in: that's noise)."""
+    from app import device_events
+
+    def note(title, detail="", tone="info"):
+        device_events.record(session, device.id, "directory", title, detail, tone, source="directory")
+
+    os_before = " ".join(x for x in (device.os, device.os_version) if x)
+    os_after = " ".join(x for x in (values["os"], values["os_version"]) if x)
+    if os_before != os_after and os_after:
+        note(f"Operating system now {os_after}", f"Was {os_before or 'unknown'}")
+    if device.enabled != values["enabled"]:
+        note("Enabled in Active Directory" if values["enabled"] else "Disabled in Active Directory", tone="ok" if values["enabled"] else "warn")
+    if not device.is_active:
+        note("Back in Active Directory", tone="ok")
+    if device.name != values["name"]:
+        note(f"Renamed to {values['name']}", f"Was {device.name}")
+    if _ou(device.directory_dn) != _ou(values["directory_dn"]) and values["directory_dn"]:
+        note("Moved to another OU", _ou(values["directory_dn"]) or values["directory_dn"])
+    if device.assigned_user_id != values["assigned_user_id"]:
+        who = session.get(User, values["assigned_user_id"]) if values["assigned_user_id"] else None
+        note(f"Assigned to {who.display_name}" if who else "No longer assigned to anyone")
 
 
 def sync_devices(session: Session, directory: Directory, run: DirectorySyncRun) -> None:
@@ -251,10 +283,14 @@ def sync_devices(session: Session, directory: Directory, run: DirectorySyncRun) 
     if not seen and known:
         _note(run, "skipped", "computers", "The directory returned no computers; devices were left as they were. Check the computer search base and filter.")
         return
+    from app import device_events
+
     for device in known:
         if device.directory_id not in seen:
             device.is_active = False
             _note(run, "removed", device.name, "computer no longer in the directory scope")
+            device_events.record(session, device.id, "directory", "No longer in Active Directory", "Gone from the synced computers", "warn", source="directory")
+    device_events.prune(session)
 
 
 def full_sync(session: Session, directory: Directory, now: datetime | None = None, *, dry_run: bool = False) -> DirectorySyncRun:

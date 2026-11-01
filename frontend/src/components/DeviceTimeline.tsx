@@ -16,6 +16,8 @@ const KINDS: { id: Kind; label: string }[] = [
   { id: "remote", label: "Remote" },
   { id: "deployment", label: "Software" },
   { id: "network", label: "Network" },
+  { id: "patch", label: "Updates" },
+  { id: "directory", label: "Directory" },
   { id: "purchase", label: "Purchases" },
   { id: "lifecycle", label: "Lifecycle" },
 ];

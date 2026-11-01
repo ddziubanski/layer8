@@ -12946,7 +12946,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "ticket" | "change" | "script" | "remote" | "deployment" | "purchase" | "network" | "lifecycle";
+            kind: "ticket" | "change" | "script" | "remote" | "deployment" | "purchase" | "network" | "patch" | "directory" | "lifecycle";
             /** Title */
             title: string;
             /**

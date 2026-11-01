@@ -36,11 +36,15 @@ def clip(value, size: int) -> str:
 
 def replace_snapshot(session: Session, provider: str, observations: list[NetworkObservation], inventory: list[NetworkInventory]) -> None:
     """Swap in one provider's complete read. Call only after every source was read successfully."""
+    from app import device_events
+
     seen, unique = set(), []
     for o in observations:
         if o.mac and (o.source_id, o.mac) not in seen:
             seen.add((o.source_id, o.mac))
             unique.append(o)
+    before = device_events.snapshot(session, NetworkObservation, provider)
+    device_events.note_moves(session, provider, before, unique)
     session.execute(delete(NetworkObservation).where(NetworkObservation.provider == provider))
     session.execute(delete(NetworkInventory).where(NetworkInventory.provider == provider))
     session.add_all(unique)
@@ -55,7 +59,16 @@ def replace_snapshot(session: Session, provider: str, observations: list[Network
 def replace_sources(session: Session, provider: str, sources: set[str], observations: list[NetworkObservation], inventory: list[NetworkInventory], *, all_inventory: bool = False) -> None:
     """Swap in the clients of the sources that answered (others keep theirs, going stale), and the
     inventory: of those sources, or of every source when the read reports all of them (`all_inventory`)."""
+    from app import device_events
+
     if sources:
+        before = device_events.snapshot(session, NetworkObservation, provider, sources)
+        fresh, keys = [], set()
+        for o in observations:
+            if o.mac and o.source_id in sources and (o.source_id, o.mac) not in keys:
+                keys.add((o.source_id, o.mac))
+                fresh.append(o)
+        device_events.note_moves(session, provider, before, fresh)
         session.execute(delete(NetworkObservation).where(NetworkObservation.provider == provider, NetworkObservation.source_id.in_(sources)))
     inv = delete(NetworkInventory).where(NetworkInventory.provider == provider)
     session.execute(inv if all_inventory else inv.where(NetworkInventory.source_id.in_(sources or {""})))
@@ -80,9 +93,20 @@ def track_outages(session: Session, provider: str, *, enabled: bool, after_minut
     states = {(i.source_id, i.device_key): i for i in session.scalars(select(NetworkInventory).where(NetworkInventory.provider == provider))}
     outages = {(o.source_id, o.device_key): o for o in session.scalars(select(NetworkOutage).where(NetworkOutage.provider == provider))}
     bot = None
+    from app import device_events
+
+    mapped = device_events.devices_by_mac(session, {i.mac for i in states.values()})
     for key, item in states.items():
         outage = outages.get(key)
         down = item.state == "offline"
+        was_down = outage.is_down if outage is not None else False
+        # Unknown state is neither: only a reported "online" ends an outage.
+        if down and not was_down:
+            device_events.record(session, mapped.get(item.mac), "network", f"Went offline ({LABELS.get(provider, provider)})",
+                                 item.source_name or "", "bad", source=provider)
+        elif was_down and item.state == "online":
+            device_events.record(session, mapped.get(item.mac), "network", f"Back online ({LABELS.get(provider, provider)})",
+                                 item.source_name or "", "ok", source=provider)
         if outage is None:
             if not down:
                 continue
