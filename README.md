@@ -1,44 +1,21 @@
 # Layer 8
 
-The technician console uses **Ticket Focus**, a Material-inspired workspace with
-Conversation, Details, Tools, Work and History. **Tidepool** is the default theme;
-each technician can choose from five light/dark theme pairs, or follow the
-organization default. Optional modules stay governed by administrator switches
-and personal navigation preferences. [Workspace guide](docs/ticket-workspace.md).
-
-
 *The service desk for the layer every network has: its people.*
 
-Layer 8 is a self-hosted IT service desk that brings tickets, people, devices and technician tools into one workspace. Connect Microsoft Entra ID, Teams and Microsoft 365 Copilot to work from the ticket: see who is available, message the requester, investigate the problem and keep a record of the response. It runs on a single Linux appliance you control, with an offline installer and local accounts for standalone operation. Microsoft 365 and other integrations are optional.
+Layer 8 is a self-hosted IT service desk where tickets, people, devices and the network are connected instead of filed in separate places. A device that drops off the network opens a ticket, and its recovery shows up on it. A ticket shows the workaround from the problem it belongs to. A device's page tells its whole story. It runs on one Linux appliance you control, installs offline, and works with local accounts alone; every integration is optional.
 
 > **Version 1.15.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
 ![The technician's queue](screenshots/02-queue.png)
 
-## Microsoft 365, right where the work happens
+## Highlights
 
-Keep the conversation and the troubleshooting together. Technicians connect their own Microsoft work accounts; the service desk's mailbox and portal-presence jobs use separate application access.
-
-| Feature | What it brings to the service desk |
-| --- | --- |
-| **Microsoft Entra ID sign-in** | Sign in with Microsoft using an existing Layer 8 account, with Entra MFA and Conditional Access. Existing roles open the helpdesk for technicians and self-service for requesters; local break-glass access remains available. [Sign-in guide](docs/entra-sign-in.md). |
-| **Who's in? Desk hours and Teams presence** | The portal shows each queue's desk hours and technicians' availability: available, busy, away, offline or unknown. Requesters can see when support is open and when someone is next expected. Presence is status only, not attendance tracking or a portal chat button. [Desk hours and presence](docs/desk-hours.md). |
-| **Teams chat from a ticket** | Message the requester as the connected technician in an existing one-to-one Teams chat. The sent message is recorded as a public ticket reply, keeping the support record with the ticket. [Teams setup](docs/teams.md#send-ticket-messages-as-a-technician). |
-| **Microsoft 365 Copilot on tickets — preview** | Ask questions and follow up as the connected technician, review sources, then edit and save an answer as an internal note or send it as a reviewed requester reply. Review ticket context before sharing; internal notes require a separate choice. Requires the technician's Microsoft 365 Copilot licence and tenant setup; the Microsoft Chat API is a preview. [Copilot setup](docs/microsoft-365.md#5-copilot-on-tickets-preview). |
-| **Email becomes work** | Exchange Online email creates tickets; replies, acknowledgements and notifications go through the service desk mailbox. Technicians can also assign, prioritise or close tickets by email commands. [Email setup](docs/email-setup.md). |
-| **Keep the team informed** | Optional Teams Workflows cards share queue counts, while unaccepted-ticket alerts help surface work that needs an owner. Queue summaries exclude restricted queues. [Teams notifications](docs/teams.md). |
-
-Each connection is optional and configured separately. Start with the [Microsoft 365 setup guide](docs/microsoft-365.md); enabling an integration never grants extra Layer 8 permissions.
-
-**At a glance**
-
-- **One queue** for tickets from email and the self-service portal, with queues, SLAs in desk hours, routing rules, checklists, canned replies, time tracking, alerts for tickets nobody takes, full-text search across all history, and an arrangeable ticket page.
-- **The work around tickets:** devices from AD, IP address management with network scans, purchase orders, vendors, changes, a knowledge base, reports and a script library with relays.
-- **Your network and tools:** Cisco Meraki, Ubiquiti UniFi and Juniper EX discovery and outage tickets, Nutanix VMs with power actions from tickets, Action1 patch status and reviewed software deployment, Dell and Lenovo warranties, all opt-in and read-only unless you say otherwise.
-- **For the room:** a remote display for a big screen, desk hours on the portal, a Ctrl+K palette, dark mode and three dark themes (Midnight, Ember, Ultraviolet), and a sidebar each technician can trim.
-- **Sign-in your way:** one entry screen routes requesters to self-service and technicians/admins to the helpdesk using their existing roles. Local accounts with two-factor, AD, Windows sign-in to the portal, and Sign in with Microsoft remain available. Windows portal-only sessions still require a separate console sign-in.
-- **Make the welcome page yours:** uploaded backgrounds and logos, image fit/focus/darkening, card placement and width, optional gradient/grid backdrops and a welcome heading, with a live preview and a Restore default light theme option in Settings > Branding ([customization guide](docs/login-branding.md)).
-- **Runs on one box you control:** an offline appliance ISO (Debian 13) with a setup wizard and a recovery console, encrypted backups, signed updates from GitHub releases, and no cloud required.
+- **Connected tickets.** Related-ticket suggestions, parent and child tickets, problems with their workaround on every linked ticket, and one reviewed update to everyone affected by an outage.
+- **Find anything fast.** Ctrl K jumps to any page or ticket; the highlighted ticket opens a preview (status, SLA, requester, latest note, workaround) without leaving the page. Full-text search covers every ticket, closed history included.
+- **Time that counts itself.** Start a timer on a ticket; an *Active ticket timers* bar follows you across the console, and closing the ticket logs what's still running.
+- **Devices with a history.** One timeline per device from tickets, changes, scripts, remote sessions, software deployments and IP records, with what's true right now (online, pending reboot, missing updates) and what's coming (warranty end).
+- **A network that raises its hand.** Meraki, UniFi, Juniper and Nutanix outages open tickets; when the equipment comes back the ticket says *Verify*.
+- **Yours to run.** An offline appliance ISO with a setup wizard, encrypted backups, signed updates and a recovery console. No cloud required.
 
 <p>
   <img src="screenshots/03-ticket.png" width="49%" alt="A ticket: conversation, assignment, requester and devices">
@@ -49,96 +26,82 @@ Each connection is optional and configured separately. Start with the [Microsoft
 
 All screenshots, from the demo data: [screenshots/](screenshots/README.md).
 
-## What it does
+## Feature sets
 
-**Tickets**
-- Reviewed [ticket templates](docs/ticket-templates.md) fill empty fields in New ticket while preserving requester details, drafts and explicit queue/priority choices. Shared templates are managed under Settings > Helpdesk.
-- Email (Microsoft 365 / Exchange Online through Graph) and a self-service portal feed one queue and one routing engine. Requesters hear back in your words: the acknowledgement, and optional resolved and assigned emails, are editable with a preview.
-- Queues with owners, managers and restricted visibility; priorities from urgency × impact; SLAs that count desk hours, stop while waiting on the user, and show the time left ([docs/desk-hours.md](docs/desk-hours.md#the-sla-clock)).
-- Alerts when nobody takes a ticket: an email to everyone who could, or a post in a Teams channel, and a counter in the console ([docs/desk-hours.md](docs/desk-hours.md#tickets-nobody-has-taken)).
-- Search every ticket's subject, description and notes, closed history and imported Track-It! numbers included ([docs/ticket-search.md](docs/ticket-search.md)).
-- Click a requester for their contact card (title, department, phone, mobile, office, manager from AD); their page lists their devices, AD groups and every ticket they've logged ([docs/people.md](docs/people.md)).
-- A queue that keeps loading as you scroll, with compact or comfortable rows, chosen per technician in My preferences ([docs/workspace-preferences.md](docs/workspace-preferences.md#ticket-list)).
-- Custom ticket rules: run on save, on a schedule, or through guarded SQL.
-- Merge, parent and child tickets, bulk changes, and a personal widget workspace: searchable library, essentials-only starting point, saved placement and administrator defaults ([guide](docs/widget-workspace.md)).
-- **Library:** local knowledge articles alongside optional SharePoint runbook/FAQ page search, using the technician’s Microsoft account and an approved IT site. Review a source link before adding it as an internal ticket reference ([setup and access](docs/library.md)).
-- Canned replies, shared or personal and per queue, with the ticket's details filled in ([docs/canned-replies.md](docs/canned-replies.md)).
-- Time tracking: log minutes with a note or in a ticket's Time panel; the *Time spent* report adds them up by technician, queue, category or day.
-- A grouped, collapsible technician sidebar and contextual header shared across the console; module pages use consistent headings, toolbars and tables. Settings has searchable setup groups and automatically compacts the main sidebar, restoring it when you leave. Existing branding, module visibility and ticket layouts are preserved ([layout review](docs/application-layout.md)).
-- Related open-ticket suggestions on the Work tab explain shared devices, systems, VMs or meaningful subject matches. Only tickets the technician may see are considered; parent/child linking requires review ([ticket workspace](docs/ticket-workspace.md#related-open-tickets)).
-- Problem management: staff-only investigations group explicitly linked tickets and keep root cause, workaround, resolution and internal updates together. A problem is not a knowledge article; reviewed reusable guidance belongs in the Library ([guide](docs/problem-management.md)).
-- One update to everyone affected: from a ticket with linked child tickets, preview and send one message to all their requesters (one email each, a public reply on every ticket), and optionally resolve them all ([ticket workspace](docs/ticket-workspace.md#update-everyone-affected)).
-- A ticket page that puts the conversation first, with Work and History tabs and a drawer of tools (details, devices, directory, scripts, network…); the classic arranged layout is still there ([docs/ticket-workspace.md](docs/ticket-workspace.md)).
-- Act on tickets by replying to email (`#close`, `#assign`, `#priority`).
-- Checklists for onboarding and offboarding, where each step becomes a child ticket due on its day.
-- A remote display for a big screen in the IT office: live counts, alerts (SLA breaches, unassigned tickets) and the tickets that need someone, opened by a secret link.
-- Desk hours per queue on the portal, with an after-hours message saying when someone is next in, and technicians' Teams status (status only).
+### Tickets
 
-**People and access**
+- **One queue, two doors:** email and the self-service portal feed the same queue and routing engine. Requesters hear back in your words (editable acknowledgement, resolved and assigned emails with a preview).
+- **Queues, SLAs and routing:** queues with owners, managers and restricted visibility; priority from urgency × impact; SLAs that count desk hours, pause while waiting on the user and show time left ([desk hours](docs/desk-hours.md#the-sla-clock)); routing and custom ticket rules (on save, on a schedule, or guarded SQL).
+- **The ticket workspace:** Conversation, Details, Work, Tools and History tabs, a sticky action bar (Save, Edit, Assign, Close, Cancel), Save ticket next to every edit, and each pane in its own shade ([guide](docs/ticket-workspace.md)).
+- **Working the ticket:** canned replies with the ticket's details filled in, [ticket templates](docs/ticket-templates.md), checklists that turn into child tickets, merge, bulk changes, email commands (`#close`, `#assign`, `#priority`), and Remote Assistance logged on the ticket.
+- **Time tracking:** [ticket timers](docs/ticket-timers.md) with an *Active ticket timers* bar, manual entries with notes, a total on every ticket, and a *Time spent* report by technician, queue, category or day.
+- **Nobody left waiting:** alerts when nobody takes a ticket (email or a Teams channel) and a counter in the console ([guide](docs/desk-hours.md#tickets-nobody-has-taken)).
+- **Search:** subject, description and notes across all history, imported ticket numbers included ([guide](docs/ticket-search.md)), plus the Ctrl K quick lookup with preview.
+- **Mobile companion:** a compact `/mobile` view for checking and answering tickets away from the desk ([guide](docs/mobile-companion.md)).
 
-- Local accounts that need nothing else, or AD/LDAP sign-in with roles from AD groups.
-- Silent Windows sign-in (Kerberos) to the portal.
-- Two-factor sign-in with an authenticator app (required for local admins if you choose), and Sign in with Microsoft (Entra ID) for existing accounts ([docs/entra-sign-in.md](docs/entra-sign-in.md)).
-- Creating AD accounts from a ticket: onboarding templates, group lists, a start date, and the password shown once.
-- Finer permissions: who may delete, merge, publish or manage each area, by group.
-- Admins choose which areas the organization uses (Settings > Modules), and each technician can trim their own sidebar further ([docs/workspace-preferences.md](docs/workspace-preferences.md)).
+### Problems, changes and knowledge
 
-**Devices and network**
+- **Problem management:** problems group the tickets behind one root cause, with status (open → known error → resolved), owner, root cause, workaround and an internal timeline. Tickets show their problem's workaround; link or create one from the ticket ([guide](docs/problem-management.md)).
+- **Update everyone affected:** from a parent ticket, preview and send one message to every requester of its child tickets, and optionally resolve them all.
+- **Change management:** approvals, a calendar, overlap warnings, templates and standard changes, linked to tickets, devices and systems.
+- **Knowledge:** a local knowledge base with versions and images, suggested in the portal as people type, and an optional SharePoint Library search for runbooks and FAQs ([guide](docs/library.md)).
 
-- Devices from AD computer objects, with tickets, IP addresses, switch port and lifecycle on each.
-- Patch status read from Action1, and opt-in software deployment through Action1: one reviewed package to one ticket-linked computer, logged on the ticket ([docs/action1.md](docs/action1.md)).
-- Cisco Meraki, read-only and opt-in: client discovery (switch port, VLAN, SSID) on IP records, devices and tickets; port and wireless diagnostics; and device outage tickets from Meraki alerts.
-- Ubiquiti UniFi, opt-in, through the cloud or a local console: equipment with its state, client discovery on IP records, devices and tickets, outage tickets for offline equipment, and guest Wi-Fi vouchers from a ticket ([docs/unifi.md](docs/unifi.md)).
-- Juniper EX switches (configured one by one), opt-in and read-only: a relay on the LAN reads each switch's Junos REST API, so clients show with their switch, port and VLAN; outage tickets for switches that stop answering ([docs/juniper.md](docs/juniper.md)).
-- Nutanix AHV through Prism Central, opt-in: VMs with their power state, host and addresses, matched to devices and linked to tickets; optional restart, power on and power cycle from a ticket, each noted on it; outage tickets and a remote display tile for critical VMs ([docs/nutanix.md](docs/nutanix.md)).
-- Dell and Lenovo warranty lookups through their official APIs.
-- IP address management:
-  - subnets and VLANs, with a used/free map
-  - scans by a relay on the LAN (ping, reverse DNS, ARP)
-  - Windows DHCP leases and DNS records
-  - SNMP discovery with LLDP neighbours and switch MAC tables
+### People and access
 
-  Scans flag differences; they never change your records by themselves.
-- Stale and unknown device sweeps, and warranty and replacement forecasting.
+- **Sign-in your way:** local accounts with two-factor, AD/LDAP with roles from AD groups, silent Windows sign-in (Kerberos) to the portal, and Sign in with Microsoft. One entry screen sends requesters to self-service and technicians to the console.
+- **People pages:** contact cards from AD (title, department, phone, manager), with each person's devices, groups and tickets ([guide](docs/people.md)).
+- **AD from the ticket:** create accounts from onboarding templates, with group lists and a start date.
+- **Fine-grained permissions** by group (delete, merge, publish, manage each area), admin-chosen modules, and a sidebar each technician can trim ([guide](docs/workspace-preferences.md)).
+- **Your look:** seven theme palettes in light and dark, organisation and personal defaults, and a customisable sign-in page ([branding](docs/login-branding.md)).
 
-**Automation**
+### Devices and network
 
-- A script library: PowerShell (locally or over WinRM), bash, Python and Arista EOS.
-- 27 ready-made SQL queries to add from the Scripts page: ticket throughput and ageing, reopened and moved tickets, first-response and resolution times, busiest requesters and hours, warranties, replacements, duplicate serials and more. Device and people queries double as dynamic groups.
-- Scripts run on "relays" that pull work over HTTPS, so no inbound ports are needed.
-- Versions with diffs, approval for high-risk scripts, schedules, and every run logged on its ticket.
-- A Remote Assistance button on tickets, logged as well.
+- **Devices from AD**, each with a [timeline](docs/device-timeline.md), tickets, IP addresses, switch port, lifecycle, warranty (Dell and Lenovo lookups) and replacement forecasting; stale and unknown device sweeps.
+- **IP address management:** subnets and VLANs with a used/free map; scans by a relay on the LAN (ping, reverse DNS, ARP), Windows DHCP leases and DNS records, SNMP with LLDP neighbours and switch MAC tables. Scans flag differences; they never change your records by themselves.
+- **Network discovery and outage tickets**, each opt-in: Cisco Meraki (clients, port and wireless diagnostics, alert webhooks), Ubiquiti UniFi (cloud or local console, guest Wi-Fi vouchers from a ticket), Juniper EX (Junos REST through a relay) and Nutanix AHV (VM state, and optional power actions from a ticket). Scanned equipment, clients and IP records can be linked to tickets.
 
-**Everything else a desk needs**
+### Automation
 
-- Knowledge base with versions and images, suggested in the portal as people type.
-- Satisfaction surveys on a random share of solved tickets.
-- Change management: approvals, a calendar, overlap warnings, and Action1 patch nights as standard changes.
-- Purchase orders, with receiving by the clerk, vendors and systems.
-- Reports with charts, PDF/CSV export and scheduled email delivery; a system log and status page.
-- Integration health in Settings > Status: configuration gaps, failed/overdue worker passes, last successes and relay check-ins, with recovery links ([guide](docs/integration-health.md)).
-- Encrypted backups to SMB/NFS with restore; a recovery console on the appliance; import from Track-It! and Spiceworks Cloud Help Desk ([docs/spiceworks-import.md](docs/spiceworks-import.md)).
-- Admin **Settings > System > Imports** adds KACE ticket-bundle preview and confirmed import, with a separate read-only API exporter. Live KACE appliance validation is pending ([docs/kace-import.md](docs/kace-import.md)).
-- Signed updates: Settings > Updates checks Layer 8's stable GitHub releases, verifies the publisher's signature, backs up first and checks the result. Open pages reconnect after restarts; a changed frontend refreshes automatically when no edited controls remain. A maintenance page also reconnects fresh browser visits ([docs/github-updates.md](docs/github-updates.md)).
+- **Script library:** PowerShell (locally or over WinRM), bash, Python and EOS-style CLI, with versions and diffs, approval for high-risk scripts, schedules, and every run logged on its ticket.
+- **Relays** pull work over HTTPS, so no inbound ports are needed. A deployment kit installs them as a locked-down Linux service or through a Windows GPO ([guide](docs/relay-deployment.md)).
+- **27 ready-made SQL queries** (throughput, ageing, response times, warranties, duplicate serials and more); device and people queries double as dynamic groups.
+- **Action1:** patch status, the patch calendar as standard changes, reviewed single-device software deployment, and remote desktop from a ticket, each opt-in ([guide](docs/action1.md)).
 
-Screenshots of every page, in light and dark and in each theme: [screenshots/](screenshots/README.md) (an earlier gallery: [command-center](screenshots/command-center/README.md)). The full requirements and decisions are in [SPEC.md](SPEC.md).
+### Reporting and visibility
 
+- Reports with charts, PDF/CSV export and scheduled email delivery; satisfaction surveys on a share of solved tickets.
+- A remote display for a big screen (live counts, SLA breaches, unassigned tickets), desk hours and technicians' availability on the portal, and service notices.
+- Integration health, a system log and a status page ([guide](docs/integration-health.md)).
+
+### Microsoft 365 (optional)
+
+Email intake and notifications through Exchange Online, Sign in with Microsoft (Entra ID), technicians' Teams presence on the portal, Teams chat with the requester from a ticket, Teams queue summaries, SharePoint Library search, and Microsoft 365 Copilot on tickets (preview). Each piece is set up separately and grants no extra Layer 8 permissions. Start with the [Microsoft 365 guide](docs/microsoft-365.md).
+
+### The appliance
+
+- An offline appliance ISO (Debian 13) with a setup wizard, or an answers file for unattended installs; every setting is also editable in the app and importable.
+- Signed updates from GitHub releases that back up first and verify the result ([guide](docs/github-updates.md)); encrypted backups to SMB/NFS with restore; a recovery console.
+- Imports from Track-It!, Spiceworks Cloud Help Desk and KACE.
+
+The full requirements and decisions are in [SPEC.md](SPEC.md).
 
 ## Try it
 
-- **Appliance ISO (recommended):** download `layer8-v<version>.iso` from the [latest release](https://github.com/ddziubanski/layer8/releases/latest) and check it against `SHA256SUMS`. It's Debian 13 plus Layer 8, installs with no internet access, and asks its questions in a setup wizard on first boot (or choose the offline demo there). The boot menu defaults to choosing the disk and partitioning; erasing the first disk is a separate choice. To build it yourself: `iso/build.sh` (needs Docker and npm). See [docs/install.md](docs/install.md).
+- **Appliance ISO (recommended):** download `layer8-v<version>.iso` from the [latest release](https://github.com/ddziubanski/layer8/releases/latest) and check it against `SHA256SUMS`. It installs with no internet access and asks its questions in a setup wizard on first boot (or choose the offline demo there). The boot menu waits for you to choose the disk; erasing the first disk is a separate choice. To build it yourself: `iso/build.sh` (needs Docker and npm). See [docs/install.md](docs/install.md).
 - **On an existing Debian 13 server:** `install/install.sh`, same doc.
 - **For development:** [backend/README.md](backend/README.md) covers the dev database (Docker Compose), the API, the web UI, tests and migrations.
 
-Every setting can be changed in the app (Settings), and also imported from an answers file, so installs can be scripted end to end.
+## What's next
 
-## Planned and under review
+Layer 8 already holds a lot of connected data; the roadmap joins more of it up:
+- **Device timeline, part 2 ([#156](https://github.com/ddziubanski/layer8/issues/156)):** online/offline, switch-port, IP, patch and AD changes recorded as they happen.
+- **Context on every ticket ([#157](https://github.com/ddziubanski/layer8/issues/157)):** the requester's device state, open outages, problems and recent changes nearby.
+- **Change → incident correlation ([#158](https://github.com/ddziubanski/layer8/issues/158))** and **outage → problem → everyone ([#159](https://github.com/ddziubanski/layer8/issues/159)).**
+- **Self-checking tickets ([#160](https://github.com/ddziubanski/layer8/issues/160))** and **problem suggestions from patterns ([#161](https://github.com/ddziubanski/layer8/issues/161)).**
+- **One search for everything ([#162](https://github.com/ddziubanski/layer8/issues/162)),** **live updates ([#163](https://github.com/ddziubanski/layer8/issues/163))** and **proactive tickets ([#164](https://github.com/ddziubanski/layer8/issues/164)).**
+- **Action1 bulk and scheduled deployments ([#33](https://github.com/ddziubanski/layer8/issues/33))** and **updates without internet access** (a signed package from USB or a file share).
 
-
-- **Updates without internet access:** importing a signed update package from a USB stick or file share (online updates from GitHub releases are in 1.2).
-- **Action1 deployment, later slices ([#33](https://github.com/ddziubanski/layer8/issues/33)):** bulk/group targets, scheduled deployments and onboarding software bundles. One reviewed package to one ticket-linked computer is already available (opt-in, Settings > Action1).
-
-## Integrations (all optional)
+## Setup guides
 
 | | Guide |
 |---|---|
@@ -162,7 +125,11 @@ Every setting can be changed in the app (Settings), and also imported from an an
 | Juniper EX switches (Junos REST, through a relay) | [docs/juniper.md](docs/juniper.md) |
 | Nutanix AHV (Prism Central v4 API) | [docs/nutanix.md](docs/nutanix.md) |
 | Desk hours and technicians' Teams status on the portal | [docs/desk-hours.md](docs/desk-hours.md) |
-| **Microsoft 365, step by step** (email, Teams, technician connections, Copilot) | [docs/microsoft-365.md](docs/microsoft-365.md) |
+| Microsoft 365, step by step (email, Teams, technician connections, Copilot) | [docs/microsoft-365.md](docs/microsoft-365.md) |
+| Relay deployment kit (Linux service, Windows GPO) | [docs/relay-deployment.md](docs/relay-deployment.md) |
+| Problem management | [docs/problem-management.md](docs/problem-management.md) |
+| Ticket timers | [docs/ticket-timers.md](docs/ticket-timers.md) |
+| Device timeline | [docs/device-timeline.md](docs/device-timeline.md) |
 
 ## Built with
 
