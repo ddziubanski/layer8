@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { api, type AssignIn, type Me, type Ticket, type TicketUpdate } from "../../api/client";
 import { ActionDialog } from "../../components/ActionDialog";
 import { DeleteTickets } from "../../components/DeleteTickets";
+import { TimerButton } from "../../components/TicketTimers";
 import { can } from "../../permissions";
 import { TicketSaveButton, useTicketSaveState, useTicketSaveTask } from "./TicketSave";
 
@@ -18,6 +19,7 @@ export function TicketCoreActions({ ticket, me, onEdit, onChanged }: { ticket: T
   const closed = ticket.status === "closed" || ticket.status === "resolved";
   return <div className="ticket-core-actions" role="group" aria-label="Ticket actions">
     <TicketSaveButton />
+    <TimerButton ticketId={ticket.id} myId={me.id} closed={ticket.status === "closed" || ticket.status === "resolved"} />
     <button className="btn2" type="button" disabled={save?.busy} onClick={onEdit}>Edit ticket</button>
     <button className="btn2" type="button" disabled={save?.busy || save?.dirtyIds.includes("assignment")} title={save?.dirtyIds.includes("assignment") ? "Save or cancel the pending queue move first" : undefined} onClick={()=>setPanel("assign")}>Assign ticket</button>
     {closed ? <button className="btn2" type="button" disabled={save?.busy} onClick={()=>reopened.mutate()}>Reopen ticket</button>

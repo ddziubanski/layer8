@@ -609,6 +609,9 @@ export const api = {
     forTicket: (ticketId: number) => request<S["TicketTimeOut"]>("GET", `/api/tickets/${ticketId}/time`),
     log: (ticketId: number, body: S["TimeEntryIn"]) => request<S["TimeEntryOut"]>("POST", `/api/tickets/${ticketId}/time`, body),
     remove: (ticketId: number, entryId: number) => request<void>("DELETE", `/api/tickets/${ticketId}/time/${entryId}`),
+    start: (ticketId: number) => request<S["TimerOut"]>("POST", `/api/tickets/${ticketId}/timer`),
+    stop: (ticketId: number, note = "") => request<S["TimeEntryOut"]>("POST", `/api/tickets/${ticketId}/timer/stop`, { note }),
+    mine: () => request<S["TimerOut"][]>("GET", "/api/me/timers"),
   },
   ticketTemplates: {
     list: (all = false) => request<TicketTemplate[]>("GET", `/api/ticket-templates${query({ all: all ? "true" : undefined })}`),

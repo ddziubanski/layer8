@@ -8,10 +8,10 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
-from app import services, sla
-from app.api.tickets import staff_ticket
+from app import numbering, services, sla, timers
+from app.api.tickets import staff_ticket, visible
 from app.auth import Agent, SessionDep
-from app.models import Comment, EventType, TimeEntry, UserRole
+from app.models import Comment, EventType, Ticket, TicketTimer, TimeEntry, UserRole
 
 router = APIRouter(tags=["time"])
 
@@ -35,9 +35,24 @@ class TimeEntryOut(BaseModel):
     may_delete: bool
 
 
+class TimerOut(BaseModel):
+    ticket_id: int
+    ticket_label: str
+    subject: str
+    user_id: int
+    user_name: str
+    started_at: datetime
+
+
 class TicketTimeOut(BaseModel):
     total_minutes: int
     entries: list[TimeEntryOut]
+    # Timers running on this ticket now (everyone's: "D. Cole is timing this too").
+    timers: list[TimerOut] = []
+
+
+class TimerStopIn(BaseModel):
+    note: str = Field(default="", max_length=400)
 
 
 def _out(e: TimeEntry, user) -> dict:
@@ -46,12 +61,52 @@ def _out(e: TimeEntry, user) -> dict:
             "may_delete": e.user_id == user.id or user.role == UserRole.admin}
 
 
+def _timer_out(t: TicketTimer, ticket: Ticket) -> TimerOut:
+    return TimerOut(ticket_id=ticket.id, ticket_label=numbering.label(ticket.id, ticket.created_at), subject=ticket.subject,
+                    user_id=t.user_id, user_name=t.user.display_name, started_at=t.started_at)
+
+
 @router.get("/api/tickets/{ticket_id}/time", response_model=TicketTimeOut)
 def ticket_time(ticket_id: int, user: Agent, session: SessionDep):
     ticket = staff_ticket(session, ticket_id, user)
     entries = session.scalars(select(TimeEntry).where(TimeEntry.ticket_id == ticket.id).order_by(TimeEntry.worked_on.desc(), TimeEntry.id.desc()))
     rows = [_out(e, user) for e in entries]
-    return {"total_minutes": sum(r["minutes"] for r in rows), "entries": rows}
+    running = session.scalars(select(TicketTimer).where(TicketTimer.ticket_id == ticket.id).order_by(TicketTimer.started_at))
+    return {"total_minutes": sum(r["minutes"] for r in rows), "entries": rows, "timers": [_timer_out(t, ticket) for t in running]}
+
+
+@router.get("/api/me/timers", response_model=list[TimerOut])
+def my_timers(user: Agent, session: SessionDep):
+    """The signed-in technician's running timers (the console's "Active ticket timers" bar)."""
+    rows = session.execute(visible(select(TicketTimer, Ticket).join(Ticket, Ticket.id == TicketTimer.ticket_id)
+                                   .where(TicketTimer.user_id == user.id), user).order_by(TicketTimer.started_at)).all()
+    return [_timer_out(t, ticket) for t, ticket in rows]
+
+
+@router.post("/api/tickets/{ticket_id}/timer", response_model=TimerOut, status_code=201)
+def start_timer(ticket_id: int, user: Agent, session: SessionDep):
+    ticket = staff_ticket(session, ticket_id, user)
+    if ticket.status in sla.CLOSED_STATUSES:
+        raise HTTPException(409, "Reopen the ticket before timing work on it")
+    timer = session.scalar(select(TicketTimer).where(TicketTimer.ticket_id == ticket.id, TicketTimer.user_id == user.id))
+    if timer is None:
+        timer = TicketTimer(ticket_id=ticket.id, user_id=user.id, started_at=sla.utcnow())
+        session.add(timer)
+        session.commit()
+        session.refresh(timer)
+    return _timer_out(timer, ticket)
+
+
+@router.post("/api/tickets/{ticket_id}/timer/stop", response_model=TimeEntryOut)
+def stop_timer(ticket_id: int, body: TimerStopIn, user: Agent, session: SessionDep):
+    ticket = staff_ticket(session, ticket_id, user)
+    timer = session.scalar(select(TicketTimer).where(TicketTimer.ticket_id == ticket.id, TicketTimer.user_id == user.id).with_for_update())
+    if timer is None:
+        raise HTTPException(404, "No timer is running on this ticket for you")
+    entry = timers.stop(session, timer, user, body.note)
+    session.commit()
+    session.refresh(entry)
+    return _out(entry, user)
 
 
 @router.post("/api/tickets/{ticket_id}/time", response_model=TimeEntryOut, status_code=201)

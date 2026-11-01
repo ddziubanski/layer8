@@ -2388,6 +2388,21 @@ class CannedReply(Base):
     queue: Mapped[Queue | None] = relationship()
 
 
+class TicketTimer(Base):
+    """A technician's running timer on a ticket. Stopping it logs a TimeEntry; resolving or closing the
+    ticket stops every timer still running on it."""
+
+    __tablename__ = "ticket_timers"
+    __table_args__ = (UniqueConstraint("ticket_id", "user_id", name="uq_ticket_timers_ticket_user"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship()
+
+
 class TimeEntry(Base):
     """Time a technician spent on a ticket (its Time panel; the Time spent report)."""
 

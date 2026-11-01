@@ -27,7 +27,7 @@ def test_log_list_and_remove_time(client, db, admin, agent, requester, service_d
     assert client.delete(f"{url}/{theirs['id']}", headers=as_user(agent)).status_code == 403
     assert client.delete(f"{url}/{mine['id']}", headers=as_user(agent)).status_code == 204
     assert client.delete(f"{url}/{theirs['id']}", headers=as_user(admin)).status_code == 204
-    assert client.get(url, headers=as_user(agent)).json() == {"total_minutes": 0, "entries": []}
+    assert client.get(url, headers=as_user(agent)).json() == {"total_minutes": 0, "entries": [], "timers": []}
     assert client.get(url, headers=as_user(requester)).status_code == 403
 
 

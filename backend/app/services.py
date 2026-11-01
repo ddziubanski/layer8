@@ -317,6 +317,11 @@ def _set_status(session: Session, ticket: Ticket, status: TicketStatus, actor: U
         ticket.resolution_type = None
         ticket.closure_reason = None
     _event(session, ticket, EventType.status_changed, actor, before=old, after=status)
+    if status in sla.CLOSED_STATUSES and old not in sla.CLOSED_STATUSES:
+        from app import timers
+
+        # Closing rule: running timers stop and their time is logged with the ticket.
+        timers.stop_all(session, ticket, actor, status.value)
     if status == TicketStatus.resolved and old not in sla.CLOSED_STATUSES:
         outbox.ticket_resolved(session, ticket, actor)
     if send_survey and status in sla.CLOSED_STATUSES and old not in sla.CLOSED_STATUSES:
