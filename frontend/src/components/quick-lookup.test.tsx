@@ -55,3 +55,25 @@ test("a ticket number previews that ticket straight away", async () => {
   expect(await within(preview).findByRole("heading", { name: "Printer offline on 2nd floor" })).toBeInTheDocument();
   await waitFor(() => expect(screen.getAllByRole("option")[0]).toHaveTextContent("Open ticket #4821"));
 });
+
+test("the same box finds devices, people and more, grouped by type", async () => {
+  const calls = mockApi({
+    "GET /api/tickets": { items: [], total: 0 },
+    "GET /api/search": { q: "10.20.0.5", groups: [
+      { kind: "device", label: "Devices", hits: [{ kind: "device", id: 7, label: "WS-0142", detail: "10.20.0.55 · aa:bb:cc:00:09:55", to: "/devices/7" }] },
+      { kind: "person", label: "People", hits: [{ kind: "person", id: 9, label: "R. Alvarez", detail: "r@corp.example", to: "/people/9" }] },
+    ] },
+  });
+  renderAt("/", [{ path: "/", element: <><CommandPalette me={ME} /><Outlet /></>, children: [
+    { index: true, element: <h1>Queue</h1> }, { path: "devices/:id", element: <h1>Device page</h1> },
+  ] }]);
+  await userEvent.keyboard("{Control>}k{/Control}");
+  await userEvent.type(screen.getByRole("combobox"), "10.20.0.5");
+  await waitFor(() => expect(calls.map((c) => c.path).join(" ")).toContain("/api/search"));
+  const device = await screen.findByRole("option", { name: /WS-0142/ });
+  expect(screen.getByText("Devices")).toHaveClass("command-group");
+  expect(screen.getByRole("option", { name: /R\. Alvarez/ })).toBeInTheDocument();
+  expect(calls.find((c) => c.path.startsWith("/api/search?"))?.path).toContain("q=10.20.0.5");
+  await userEvent.click(device);
+  expect(await screen.findByRole("heading", { name: "Device page" })).toBeInTheDocument();
+});

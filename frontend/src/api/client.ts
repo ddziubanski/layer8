@@ -299,6 +299,7 @@ export const api = {
     request<TicketPage>("GET", `/api/tickets${query(p)}`),
   unaccepted: () => request<S["UnacceptedOut"]>("GET", "/api/tickets/unaccepted"),
   person: (id: number) => request<Person>("GET", `/api/people/${id}`),
+  search: (q: string) => request<S["SearchOut"]>("GET", `/api/search${query({ q })}`),
   viewCounts: (scope: TicketScope = "all", queueId?: number) => request<Record<SavedView, number>>("GET", `/api/tickets/views${query({ scope, queue_id: queueId })}`),
   bulkAssign: (body: S["BulkAssignIn"]) => request<S["BulkResultOut"]>("POST", "/api/tickets/bulk/assign", body),
   savePreferences: (body: S["PreferencesIn"]) => request<Me>("PUT", "/api/auth/me/preferences", body),

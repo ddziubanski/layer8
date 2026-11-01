@@ -2,7 +2,7 @@
 import { WorkspaceTitle } from "../../components/WorkspaceTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 
 import { api, type Device, type Me, type SystemIn, type SystemItem, type Vendor, type VendorIn } from "../../api/client";
 import { DevicePicker } from "../../components/DevicePicker";
@@ -28,7 +28,9 @@ type Pane = { kind: "vendor"; id: number | "new" } | { kind: "system"; id: numbe
 /** Vendors (who to call and how) and the systems they support. */
 export function VendorsPage({ me }: { me: Me }) {
   const tab = useParams().tab === "systems" ? "systems" : "vendors";
-  const [q, setQ] = useState("");
+  // Ctrl K links here with ?q= (a vendor or system by name).
+  const [linked] = useSearchParams();
+  const [q, setQ] = useState(() => linked.get("q") ?? "");
   const [pane, setPane] = useState<Pane>(null);
   const vendors = useQuery({ queryKey: ["vendors", q], queryFn: () => api.vendors.list({ q }) });
   const systems = useQuery({ queryKey: ["systems", q], queryFn: () => api.systems.list({ q }) });
