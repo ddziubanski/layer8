@@ -27,7 +27,7 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
    - **Address**: the service desk's DNS name, e.g. `helpdesk.corp.example`. Create the DNS record pointing to the VM's address. The console shows the address, or use `ip addr`.
      To keep the address fixed with a DHCP reservation, reserve the lease the appliance actually holds (on Windows DHCP: right-click the lease > *Add to Reservation*). The appliance identifies itself with a DUID client ID rather than its MAC address, so a reservation typed in by MAC doesn't match it.
    - **OS administrator**: a password for `sdadmin`. It's set at once, so you can copy files in with `scp` as `sdadmin` from here on. Until then the account has no password and can't be logged into.
-   - **HTTPS**: a certificate and key from your CA (the wizard waits while you `scp` them in as `sdadmin`), or a self-signed certificate for now.
+   - **HTTPS**: a certificate and key from your CA (the wizard waits while you `scp` them in as `sdadmin`), or a self-signed certificate for now (the default). The wizard checks the files (that they're there, PEM, and that the key matches the certificate) and offers self-signed if they aren't usable; an unusable certificate in an answers file also falls back to self-signed, with a warning, rather than stopping the install.
    - **First admin**: a local account that always works, even when AD is down. Keep it as the break-glass account.
    - **Ticket numbers**: the first number and the label, e.g. `HD-{n}` or `INC{n:06}`.
    - **Microsoft Entra / Exchange Online** (integrations path, optional): tenant ID, application (client) ID, client secret, the service desk mailbox and the email domains to accept. This configures email through Microsoft Graph, not Entra user sign-in. See [email-setup.md](email-setup.md) for the app registration. The wizard tests the connection when it finishes.
@@ -35,6 +35,8 @@ The ISO is Debian 13 plus the service desk and everything it needs, so the OS an
    - **Windows sign-in for the portal** (optional): the keytab for `HTTP/<name>`. See [windows-sign-in.md](windows-sign-in.md).
    - **Backups** (optional): an SMB or NFS share (mounted at `/mnt/helpdesk-backup`), the daily time and the backup passphrase. Keep a copy of the passphrase away from the server.
 4. Open `https://<name>/` and sign in as the admin.
+
+**If the browser shows nginx's own "Welcome to nginx!" page,** the install didn't finish: nginx is installed first and only switched to Layer 8 near the end. The wizard keeps the installer's output in `/var/log/layer8-install.log` and says on the console why it stopped. Fix that, then run it again as `sdadmin` (it's safe to repeat): `sudo /opt/helpdesk-setup/bundle/install/install.sh --answers /root/helpdesk-answers.json`. Delete the answers file afterwards; it holds the passwords.
 
 **Start locally, connect later.** With the recommended local path, no AD or Microsoft credentials are needed. After signing in, configure Exchange Online in Settings > Email, directory sync and AD password sign-in in Settings > Directory, and Kerberos portal sign-in in Settings > Windows sign-in. Action1 is optional under Settings > General. Skipping integration setup does not clear existing settings when updating an existing installation. Teams notifications are not implemented by this wizard.
 
