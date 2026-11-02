@@ -71,6 +71,26 @@ TLS=$(ans tls); TLS=${TLS:-self-signed}
 if [ "$(ans demo)" != true ] && [ -z "$(ans admin.password)" ]; then
   die "the answers file needs install.admin (email, name and password) for the first admin"
 fi
+# Your own certificate is checked now. One that can't be used doesn't stop the install: it gets a
+# self-signed certificate instead (as when none was given), and says how to put yours in later.
+TLS_PROBLEM=""
+if [ "$TLS" != self-signed ]; then
+  CERT=$(ans tls.cert) KEY=$(ans tls.key)
+  if [ -z "$CERT" ] || [ -z "$KEY" ]; then TLS_PROBLEM='install.tls is neither "self-signed" nor {"cert": FILE, "key": FILE}'
+  elif [ ! -f "$CERT" ]; then TLS_PROBLEM="there's no certificate file at $CERT"
+  elif [ ! -f "$KEY" ]; then TLS_PROBLEM="there's no key file at $KEY"
+  elif command -v openssl >/dev/null; then
+    if ! openssl x509 -in "$CERT" -noout 2>/dev/null; then TLS_PROBLEM="$CERT isn't a PEM certificate"
+    elif ! openssl pkey -in "$KEY" -noout -passin pass: 2>/dev/null; then TLS_PROBLEM="$KEY isn't a PEM private key without a passphrase"
+    elif [ "$(openssl x509 -in "$CERT" -noout -pubkey | openssl sha256)" != "$(openssl pkey -in "$KEY" -pubout -passin pass: | openssl sha256)" ]; then
+      TLS_PROBLEM="the key in $KEY doesn't belong to the certificate in $CERT"
+    fi
+  fi
+  if [ -n "$TLS_PROBLEM" ]; then
+    echo "Warning: your HTTPS certificate can't be used: $TLS_PROBLEM. Installing with a self-signed certificate instead." >&2
+    TLS=self-signed
+  fi
+fi
 
 # --- Time zone (backup times and scheduled reports follow it)
 
@@ -301,6 +321,10 @@ sync
 
 say "Done"
 echo "Open https://$HOST/"
+if [ -n "$TLS_PROBLEM" ]; then
+  echo "HTTPS: a self-signed certificate is in use, because $TLS_PROBLEM."
+  echo "  To use yours: copy it to /etc/helpdesk/tls/cert.pem and key.pem (key mode 0600), then: sudo systemctl reload nginx"
+fi
 if [ "$(ans demo)" = true ]; then
   echo "Offline demo: sign in as admin@demo.local with the password on the sign-in page."
 fi

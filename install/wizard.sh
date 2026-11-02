@@ -11,6 +11,7 @@ set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 ANSWERS=/root/helpdesk-answers.json
+INSTALL_LOG=/var/log/layer8-install.log
 TITLE="Layer 8 | 1 of 8 | Welcome"
 export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan checkbox=black,lightgray actcheckbox=black,cyan entry=black,white label=black,lightgray listbox=black,lightgray actlistbox=black,cyan sellistbox=black,lightgray actsellistbox=black,cyan textbox=black,lightgray'
 # Backtitle remains visible across every dialog, including optional integrations.
@@ -39,6 +40,35 @@ scroll() { [ "$(printf '%b\n' "$1" | wc -l)" -gt "$2" ] && echo --scrolltext || 
 yesno() { dialog ${2:+"$2"} $(scroll "$1" 13) --yesno "$1" 20 76; }  # yesno "Question" [--defaultno]
 note() { dialog $(scroll "$1" 11) --msgbox "$1" 18 76; }
 
+# Run install.sh, keeping its output in INSTALL_LOG as well as on the console. If it stops, say so
+# in a box: otherwise the console's sign-in prompt replaces the error and nothing explains why
+# the browser shows nginx's own page.
+run_install() {
+  ( umask 077; : >> "$INSTALL_LOG" ) 2>/dev/null || true
+  rc_file=$(mktemp)
+  { "$HERE/install.sh" "$@" 2>&1 && echo 0 > "$rc_file" || echo $? > "$rc_file"; } | tee -a "$INSTALL_LOG" || true
+  rc=$(cat "$rc_file"); rm -f "$rc_file"
+  [ "$rc" = 0 ] && return 0
+  why=$(grep '^install: ' "$INSTALL_LOG" 2>/dev/null | tail -1 || true)
+  TITLE="Layer 8 | Install stopped"
+  msg="The install stopped before it finished:\n\n${why:-install.sh exited with status $rc}\n\nThe full output is in $INSTALL_LOG.\nFix the problem, then run it again (sign in as sdadmin):\n\n  sudo $HERE/install.sh $*"
+  [ "$1" = --answers ] && msg="$msg\n\nThe answers file is kept for that, with its passwords: delete it once the install is done."
+  note "$msg" || true
+  printf '\n%b\n' "$msg" >&2
+  exit "$rc"
+}
+
+# Why a certificate and key can't be used, or nothing when they can.
+tls_problem() {  # tls_problem CERT KEY
+  [ -f "$1" ] || { echo "There's no certificate file at $1."; return 0; }
+  [ -f "$2" ] || { echo "There's no key file at $2."; return 0; }
+  command -v openssl >/dev/null || return 0
+  openssl x509 -in "$1" -noout 2>/dev/null || { echo "$1 isn't a PEM certificate."; return 0; }
+  openssl pkey -in "$2" -noout -passin pass: 2>/dev/null || { echo "$2 isn't a PEM private key without a passphrase."; return 0; }
+  [ "$(openssl x509 -in "$1" -noout -pubkey | openssl sha256)" = "$(openssl pkey -in "$2" -pubout -passin pass: | openssl sha256)" ] ||
+    echo "The key in $2 doesn't belong to the certificate in $1."
+}
+
 # Answers are kept as KEY=VALUE lines, then turned into JSON by Python (proper escaping).
 VALUES=$(mktemp)
 trap 'rm -f "$VALUES"' EXIT
@@ -55,11 +85,13 @@ MODE=$(dialog --menu "Welcome to Layer 8, the service desk for the layer every n
 
 if [ "$MODE" = demo ]; then
   yesno "Install the offline demo?\n\nSample people, tickets, devices and scripts, with local accounts only and no email or AD. It's clearly marked as a demo. You can reinstall for real later." || exit 1
-  exec "$HERE/install.sh" --demo
+  run_install --demo
+  exit 0
 fi
 if [ "$MODE" = file ]; then
   path=$(ask "Path to the answers file (see docs/install.md):" "$ANSWERS")
-  exec "$HERE/install.sh" --answers "$path"
+  run_install --answers "$path"
+  exit 0
 fi
 
 step 2 "Server access"
@@ -82,10 +114,24 @@ step 3 "Address and HTTPS"
 HOST=$(ask "The service desk's DNS name. People open https://<this name>, and Windows sign-in needs it.\n\nExample: helpdesk.corp.example" "$(hostname -f 2>/dev/null || hostname)")
 put install.hostname "$HOST"
 put general.portal_url "https://$HOST"
-if yesno "HTTPS certificate:\n\nYes: I have a certificate and key file (PEM) for $HOST from our CA.\nNo: make a self-signed one for now (browsers will warn until it's replaced)."; then
+# Self-signed is the default: Enter mustn't send the install looking for files that aren't there.
+if yesno "HTTPS certificate:\n\nYes: I have a certificate and key file (PEM) for $HOST from our CA.\nNo (default): make a self-signed one for now (browsers will warn until it's replaced)." --defaultno; then
   note "Copy the files onto this machine now if they aren't here yet, e.g. from your PC:\n\n  scp cert.pem key.pem sdadmin@<this machine's address>:\n\n(this machine's address: $(hostname -I 2>/dev/null | cut -d' ' -f1))"
-  put install.tls.cert "$(ask "Path to the certificate file (PEM, with any intermediate certificates):" "/home/sdadmin/cert.pem")"
-  put install.tls.key "$(ask "Path to its private key file (PEM):" "/home/sdadmin/key.pem")"
+  cert=/home/sdadmin/cert.pem key=/home/sdadmin/key.pem
+  while :; do
+    cert=$(ask "Path to the certificate file (PEM, with any intermediate certificates):" "$cert")
+    key=$(ask "Path to its private key file (PEM):" "$key")
+    problem=$(tls_problem "$cert" "$key")
+    if [ -z "$problem" ]; then
+      put install.tls.cert "$cert"
+      put install.tls.key "$key"
+      break
+    fi
+    if ! yesno "$problem\n\nYes: give the paths again (copy the files first, from another window or PC).\nNo: make a self-signed certificate for now; you can replace it later (docs/install.md)."; then
+      put install.tls self-signed
+      break
+    fi
+  done
 else
   put install.tls self-signed
 fi
@@ -256,7 +302,7 @@ yesno "$SUMMARY\n\nThe answers (including passwords) are in $ANSWERS, readable b
 
 TITLE="Layer 8 | Installing"
 printf '\nLayer 8 | Installing the service desk\nProgress and any errors follow below. Please keep this console open.\n\n'
-"$HERE/install.sh" --answers "$ANSWERS"
+run_install --answers "$ANSWERS"
 
 # --- Checks with what was saved
 
