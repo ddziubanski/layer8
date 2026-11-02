@@ -89,6 +89,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports/trackit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trackit Upload
+         * @description Stage a bundle made by tools/trackit-export/trackit-export.ps1 and list the fields it has.
+         */
+        post: operations["trackit_upload_api_imports_trackit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/trackit/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trackit Status */
+        get: operations["trackit_status_api_imports_trackit__job_id__get"];
+        put?: never;
+        post?: never;
+        /** Trackit Discard */
+        delete: operations["trackit_discard_api_imports_trackit__job_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/trackit/{job_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trackit Run
+         * @description A dry run (apply false), or the import: after a finished dry run with the same choices, and confirm.
+         */
+        post: operations["trackit_run_api_imports_trackit__job_id__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/library/status": {
         parameters: {
             query?: never;
@@ -3468,6 +3526,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Live Updates
+         * @description Events: `data: {"t": "ticket"|"device"|"outage", "id": n}`. Staff only. Re-checks the sign-in every minute.
+         */
+        get: operations["live_updates_api_live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ipam/vlans": {
         parameters: {
             query?: never;
@@ -6620,6 +6698,11 @@ export interface components {
             file: string;
             /** Queue Id */
             queue_id: number;
+        };
+        /** Body_trackit_upload_api_imports_trackit_post */
+        Body_trackit_upload_api_imports_trackit_post: {
+            /** File */
+            file: string;
         };
         /** Body_upload_attachment_api_tickets__ticket_id__attachments_post */
         Body_upload_attachment_api_tickets__ticket_id__attachments_post: {
@@ -13716,6 +13799,143 @@ export interface components {
              */
             note: string;
         };
+        /** TrackitChoices */
+        TrackitChoices: {
+            /**
+             * Queue
+             * @description Default queue for the tickets (blank: the default queue)
+             */
+            queue?: string | null;
+            /**
+             * Groups
+             * @description Track-It! opened group -> queue name
+             */
+            groups?: {
+                [key: string]: string;
+            };
+            /**
+             * Labels
+             * @description Track-It! field -> name on imported tickets
+             */
+            labels?: {
+                [key: string]: string;
+            };
+            /**
+             * Skip
+             * @description Track-It! fields to leave out
+             */
+            skip?: string[];
+            /**
+             * Departments
+             * @default match
+             * @enum {string}
+             */
+            departments: "match" | "add" | "skip";
+            /**
+             * Apply
+             * @default false
+             */
+            apply: boolean;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /** TrackitField */
+        TrackitField: {
+            /** Column */
+            column: string;
+            /** Name */
+            name: string;
+            /** Used */
+            used: number;
+            /** Total */
+            total: number;
+            /** Distinct */
+            distinct: number;
+            /** Top */
+            top: [
+                string,
+                number
+            ][];
+            /** Becomes */
+            becomes: string;
+        };
+        /** TrackitJob */
+        TrackitJob: {
+            /** Id */
+            id: string;
+            /** Server */
+            server?: string | null;
+            /** Database */
+            database?: string | null;
+            /** Exported At */
+            exported_at?: string | null;
+            /** Since */
+            since?: string | null;
+            /** Size */
+            size: number;
+            /** Fields */
+            fields: components["schemas"]["TrackitField"][];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "staged" | "running" | "done" | "failed";
+            /**
+             * Apply
+             * @default false
+             */
+            apply: boolean;
+            /** Error */
+            error?: string | null;
+            report?: components["schemas"]["TrackitReport"] | null;
+            dry_run?: components["schemas"]["TrackitReport"] | null;
+            /** @description The choices of the last run (an import needs a dry run with the same) */
+            used?: components["schemas"]["TrackitUsed"] | null;
+        };
+        /** TrackitReport */
+        TrackitReport: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Lines */
+            lines: string[];
+            /** Problems */
+            problems: number;
+        };
+        /** TrackitUsed */
+        TrackitUsed: {
+            /** Queue */
+            queue?: string | null;
+            /**
+             * Groups
+             * @default {}
+             */
+            groups: {
+                [key: string]: string;
+            };
+            /**
+             * Labels
+             * @default {}
+             */
+            labels: {
+                [key: string]: string;
+            };
+            /**
+             * Skip
+             * @default []
+             */
+            skip: string[];
+            /**
+             * Departments
+             * @default match
+             * @enum {string}
+             */
+            departments: "match" | "add" | "skip";
+        };
         /** TwoFactorConfirmIn */
         TwoFactorConfirmIn: {
             /** Code */
@@ -14527,6 +14747,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trackit_upload_api_imports_trackit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_trackit_upload_api_imports_trackit_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackitJob"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trackit_status_api_imports_trackit__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackitJob"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trackit_discard_api_imports_trackit__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trackit_run_api_imports_trackit__job_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrackitChoices"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackitJob"];
                 };
             };
             /** @description Validation Error */
@@ -22302,6 +22658,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketChecksOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    live_updates_api_live_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-dev-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
                 };
             };
             /** @description Validation Error */

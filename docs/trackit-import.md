@@ -3,7 +3,7 @@
 Layer 8 can take over your Track-It! (Ivanti/BMC) history in two steps:
 
 1. **Export, on the Track-It! server:** `tools/trackit-export/trackit-export.ps1` reads the database read-only and writes one .zip bundle.
-2. **Import, on the Layer 8 appliance:** `python -m app.cli import-trackit bundle.zip` does a dry run. Add `--apply` to import.
+2. **Import, in Layer 8:** **Settings › Imports › Track-It!** (upload, choose, dry run, import), or on the appliance `python -m app.cli import-trackit bundle.zip` (a dry run; add `--apply` to import).
 
 The bundle holds your real data. Copy it across on site, by USB or a share, not by email. Delete it once the import is done. It's never part of the Layer 8 ISO or the code.
 
@@ -25,6 +25,17 @@ On the Track-It! server, or any Windows machine that can reach its SQL Server, i
 - **`-Since`:** exports only tickets opened or changed since that date, with their notes, work orders and attachments. The reference tables come in full every time: requesters, technicians, categories, solutions, assets.
 
 ## 2. Import
+
+### From Settings › Imports
+
+1. **Upload and check:** choose the .zip. Layer 8 stages it on the server (mode 0600, next to the storage folder, so never in backups) and lists the Track-It! fields that have data, with how full they are and their commonest values.
+2. **Choose:** the queue for tickets; a queue for each Track-It! group that opened tickets (a group named like a queue goes there by itself); departments (match your existing choices, add missing ones, or leave out); and for every other field: keep, keep under another name, or leave out. These are the same choices as `--interactive` below.
+3. **Dry run:** runs the whole import and rolls it back, in the background. A long history can take several minutes; you can leave the page and come back (the address keeps the bundle).
+4. **Import:** only after a dry run with exactly the same choices, and after ticking that you've reviewed it and have a backup.
+
+The staged bundle is deleted once imported, when you discard it, or after 24 hours. One import runs at a time. Uploads go up to 1 GiB; for a bigger export use `-Since` batches or the command line.
+
+### From the command line
 
 Copy the .zip to the appliance, then (as the helpdesk user, in /opt/helpdesk/backend):
 

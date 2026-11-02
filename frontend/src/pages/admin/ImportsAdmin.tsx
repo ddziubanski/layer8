@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { api, type ImportReport, type Me } from "../../api/client";
+import { TrackitImport } from "./TrackitImport";
 
 const LABELS: Record<string,string> = {tickets_created:"Tickets to create",tickets_updated:"Existing tickets to update",people_created_inactive:"Inactive historical accounts to create",people_matched:"Existing people matched",comments_created:"Comments to create",comments_updated:"Imported comments to update",attachments_created:"Files to import",attachments_existing:"Files already imported",work_created:"Internal work notes to create",work_existing:"Work already imported",time_entries_created:"Time entries to create"};
 Object.assign(LABELS,{internal_comments:"Internal comments",public_comments:"Public comments",work_updated:"Imported work notes to update",status_new:"Status: New",status_open:"Status: Open",status_waiting_on_user:"Status: Waiting on user",status_resolved:"Status: Resolved",status_closed:"Status: Closed",priority_low:"Priority: Low",priority_medium:"Priority: Medium",priority_high:"Priority: High",priority_critical:"Priority: Critical"});
@@ -64,5 +65,6 @@ export function ImportsAdmin({me}:{me:Me}) {
       </>}
       {result&&<p><Link to={`/?q=KACE&scope=all&queue=${queue}`}>Find KACE tickets in this queue (all statuses)</Link> · Select another file above for the next batch.</p>}
     </section>}
+    <TrackitImport/>
   </div>;
 }
