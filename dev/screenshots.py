@@ -96,7 +96,7 @@ def fill_then_click(values: dict[str, str], *texts: str) -> str:
     }})()""".format(first=json.dumps(list(texts[:1])), values=json.dumps(values), rest=json.dumps(list(texts[1:])))
 
 
-def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = None, person_id: int | None = None) -> list[tuple]:
+def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = None, person_id: int | None = None, trackit_job: str | None = None) -> list[tuple]:
     """(file, who, path, caption[, script run before the shot]): who is admin, requester or none."""
     out = [
         ("01-sign-in", "none", "/", "Sign-in page with branding (product name, message)"),
@@ -209,6 +209,14 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         ("09n-settings-problems", "admin", "/settings/problems", "Settings > Problems: when tickets that share a device model, system, switch, subnet, site or wording are suggested as one problem"),
         ("09o-settings-proactive", "admin", "/settings/proactive", "Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time"),
     ]
+    if trackit_job:
+        out.append(("09p-settings-import-trackit", "admin", f"/settings/imports?trackit={trackit_job}",
+                     "Settings > Imports > Track-It!: the fields found in an export, where tickets go, keep or rename each field, and the dry run before importing",
+                     """(async () => {
+          await new Promise(r => setTimeout(r, 900));
+          document.querySelector('[aria-label="Track-It! ticket import"] h3')?.scrollIntoView();
+          await new Promise(r => setTimeout(r, 400));
+        })()"""))
     if ticket_id:
         out.append(("03i-ticket-watching", "admin", f"/tickets/{ticket_id}", "Ticket > Work > Watching: wait on a restart, updates, an agent, an account or a VM; the ticket shows Verify when it clears", in_ticket("Work")))
     return out
@@ -331,6 +339,55 @@ DEMO_VMS = [
 ]
 
 
+def trackit_demo(token: str) -> str | None:
+    """Stage a made-up Track-It! bundle and dry run it (rolled back: nothing is saved). Returns its id."""
+    import io
+    import time
+    import zipfile
+
+    from app import trackit
+
+    rows = {
+        "_CUSTOMER_": [{"SEQUENCE": i, "FNAME": f, "NAME": n, "_EMAILID_": f"{f.lower()}.{n.lower()}@corp.example", "DEPT": d}
+                       for i, (f, n, d) in enumerate([("Ana", "Lopez", 1), ("Ben", "Ortiz", 2), ("Cara", "Nguyen", 1), ("Dev", "Patel", 3)], 1)],
+        "_PERSONNEL_": [{"SEQUENCE": 10, "FNAME": "Sam", "NAME": "Reyes", "_EMAILID_": "sreyes@corp.example"}],
+        "_DEPART_": [{"SEQUENCE": 1, "NAME": "Finance"}, {"SEQUENCE": 2, "NAME": "Operations"}, {"SEQUENCE": 3, "NAME": "Sales"}],
+        "_LOCATION_": [{"SEQUENCE": 1, "NAME": "HQ"}, {"SEQUENCE": 2, "NAME": "Warehouse"}],
+        "_PRIORITY_": [{"SEQUENCE": 2, "PRIORITY_ID": "2 - High"}, {"SEQUENCE": 3, "PRIORITY_ID": "3 - Normal"}],
+        "_TELMASTE_": [
+            {"SEQUENCE": 2000 + i, "DESCRIPTION": subject, "STATUS": "C" if i % 3 else "O", "CLIENT": 1 + i % 4, "SENT TO": 10, "SEQ_PRIORITY": 2 + i % 2,
+             "DATE OPEN": f"2025-0{1 + i % 9}-1{i % 9}T09:00:00", "OPENED_GROUP:": ["HELP DESK", "NETWORK", "FACILITIES"][i % 3],
+             "CONTACT_TYPE": ["Phone", "Email", "Self Service"][i % 3], "LOCATION": 1 + i % 2, "DEPT": 1 + i % 3,
+             "HD_LOOKUP01": ["Building A", "Building B", ""][i % 3], "HD_LOOKUP02": ["Laptop", "Desktop", "Printer"][i % 3]}
+            for i, subject in enumerate(["Printer offline", "VPN drops", "New starter laptop", "Badge reader", "Shared drive full",
+                                         "Outlook keeps asking for a password", "Projector in room 2", "Wi-Fi slow in the warehouse", "Reset MFA"])
+        ],
+        "_TELDETAI_": [{"SEQUENCE": i, "PROBLEM #": 2000 + i, "NOTETYPE": "Technician Note", "NOTE": "Checked and updated the user.", "PERSON": 10, "PDATE": "2025-09-01T10:00:00"} for i in range(9)],
+    }
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("manifest.json", json.dumps({"format": trackit.FORMAT, "version": 1, "server": "TRACKITSRV\\TRACKIT", "database": "TRACKIT", "exported_at": "2026-11-01T09:30:00"}))
+        for name, table in rows.items():
+            z.writestr(f"tables/{name}.jsonl", "\n".join(json.dumps(r) for r in table) + "\n")
+    client = httpx.Client(base_url=BASE, cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=60)
+    staged = client.post("/api/imports/trackit", files={"file": ("trackit.zip", buf.getvalue(), "application/zip")})
+    if staged.status_code != 200:
+        print(f"Track-It! demo skipped: {staged.status_code} {staged.text[:200]}")
+        return None
+    job = staged.json()["id"]
+    client.post(f"/api/imports/trackit/{job}/run", json={"labels": {"HD_LOOKUP01": "Building"}, "skip": ["HD_LOOKUP02"]})
+    for _ in range(60):
+        if client.get(f"/api/imports/trackit/{job}").json()["state"] != "running":
+            break
+        time.sleep(0.5)
+    return job
+
+
+def trackit_undo(token: str, job: str | None) -> None:
+    if job:
+        httpx.delete(f"{BASE}/api/imports/trackit/{job}", cookies={COOKIE: token}, headers={"X-Helpdesk-CSRF": "1"}, timeout=10)
+
+
 def nutanix_demo(session, token: str, ticket_id: int | None, device_id: int | None) -> dict:
     """Turn Nutanix on with a made-up Prism Central (nothing reads it: no worker runs during capture)
     and add the demo VMs; returns what to put back."""
@@ -405,8 +462,10 @@ def main() -> None:
         session.add(Wallboard(name="Service desk TV", token_hash=_hash(WALLBOARD_TOKEN), prefix=WALLBOARD_TOKEN[:8]))
         session.commit()
         nutanix_was = nutanix_demo(session, tokens["admin"], ticket_id, device_id)
+    trackit_job = None
     try:
-        plan = shots(ticket_id, device_id, ad_ticket, person_id)
+        trackit_job = trackit_demo(tokens["admin"])
+        plan = shots(ticket_id, device_id, ad_ticket, person_id, trackit_job)
         done = asyncio.run(capture(tokens, plan))
         was = dark_mode(tokens["admin"], "on")
         try:
@@ -426,6 +485,7 @@ def main() -> None:
     finally:
         with SessionLocal() as session:
             nutanix_undo(session, tokens["admin"], nutanix_was)  # while the admin session still works
+            trackit_undo(tokens["admin"], trackit_job)
             session.execute(delete(UserSession).where(UserSession.token_hash.in_([_hash_token(t) for t in tokens.values()])))
             session.execute(delete(Wallboard).where(Wallboard.token_hash == _hash(WALLBOARD_TOKEN)))
             session.commit()
