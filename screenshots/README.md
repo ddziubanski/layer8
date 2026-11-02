@@ -302,6 +302,10 @@ From the dev app, 2026-11-01. Regenerate with `backend/.venv/bin/python dev/scre
 
 ![Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time](09o-settings-proactive.png)
 
+## Settings > Imports > Track-It!: the fields found in an export, where tickets go, keep or rename each field, and the dry run before importing
+
+![Settings > Imports > Track-It!: the fields found in an export, where tickets go, keep or rename each field, and the dry run before importing](09p-settings-import-trackit.png)
+
 ## Ticket > Work > Watching: wait on a restart, updates, an agent, an account or a VM; the ticket shows Verify when it clears
 
 ![Ticket > Work > Watching: wait on a restart, updates, an agent, an account or a VM; the ticket shows Verify when it clears](03i-ticket-watching.png)
