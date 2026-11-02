@@ -6,6 +6,8 @@ import type { components } from "./schema";
 type S = components["schemas"];
 export type UpdateStatus = S["UpdateStatusOut"];
 export type ImportReport = S["ImportReport"];
+export type TrackitJob = S["TrackitJob"];
+export type TrackitChoices = S["TrackitChoices"];
 export type SoftwareDeployment = S["DeploymentOut"];
 export type SoftwarePackage = S["SoftwarePackageOut"];
 export type Ticket = S["TicketOut"];
@@ -263,6 +265,14 @@ export const api = {
       if (fingerprint) { form.append("fingerprint", fingerprint); form.append("confirm", "true"); }
       return request<ImportReport>("POST", `/api/imports/kace/${fingerprint ? "apply" : "preview"}`, form);
     },
+    trackitUpload: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return request<TrackitJob>("POST", "/api/imports/trackit", form);
+    },
+    trackit: (id: string) => request<TrackitJob>("GET", `/api/imports/trackit/${id}`),
+    trackitRun: (id: string, body: TrackitChoices) => request<TrackitJob>("POST", `/api/imports/trackit/${id}/run`, body),
+    trackitDiscard: (id: string) => request<void>("DELETE", `/api/imports/trackit/${id}`),
   },
   branding: () => request<Branding>("GET", "/api/branding"),
   about: () => request<{ product: string; version: string; license: string; source_download: string | null; source_repository: string | null }>("GET", "/api/about"),

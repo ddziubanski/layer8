@@ -4,6 +4,8 @@
 .import-counts dt { color:var(--muted); font-size:13px; }
 .import-counts dd { margin:6px 0 0; font-size:24px; font-weight:600; }
 .import-command { white-space:pre-wrap; overflow-wrap:anywhere; }
+.import-report { white-space:pre-wrap; overflow-wrap:anywhere; max-height:28rem; overflow:auto; }
+.row-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 /* Ported from gui-sample/. Desktop first; usable on a tablet. */
 :root, .theme-preview[data-theme="light"] {
   --ink: #1b2421;
