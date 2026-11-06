@@ -1,6 +1,6 @@
 # Screenshots
 
-From the dev app, 2026-11-01. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-11-05. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 

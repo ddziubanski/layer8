@@ -130,7 +130,7 @@ export function TrackitImport() {
       {upload.error && <p className="error" role="alert">{upload.error.message}</p>}
     </>}
 
-    {jobId && job.error && <p className="error" role="alert">{job.error.message} <button type="button" onClick={() => setJob(null)}>Start again</button></p>}
+    {jobId && job.error && <p className="error" role="alert">{job.error.message} <button className="btn2 small" type="button" onClick={() => setJob(null)}>Start again</button></p>}
 
     {data && <>
       <p>Export of <strong>{data.database ?? "Track-It!"}</strong>{data.server && <> on <strong>{data.server}</strong></>}{data.exported_at && <>, made {data.exported_at.slice(0, 16).replace("T", " ")}</>}
@@ -171,7 +171,7 @@ export function TrackitImport() {
       {!imported && <div className="stack">
         <div className="row-actions">
           <button className="btn2" type="button" disabled={busy} onClick={() => run.mutate(false)}>{dryRunDone ? "Dry run again" : "Dry run"}</button>
-          <button type="button" disabled={busy} onClick={() => discard.mutate()}>Discard bundle</button>
+          <button className="btn2" type="button" disabled={busy} onClick={() => discard.mutate()}>Discard bundle</button>
         </div>
         {dryRunDone && <>
           <label className="inline"><input type="checkbox" checked={confirm} disabled={busy} onChange={e => setConfirm(e.target.checked)} />I reviewed this dry run and have a current backup. Import this bundle with these choices.</label>
@@ -180,7 +180,7 @@ export function TrackitImport() {
         {data.state === "done" && !data.apply && !sameChoices && <p className="muted small">The choices changed since this dry run: run it again before importing.</p>}
       </div>}
 
-      {imported && <p>Done: the bundle was deleted from the server. <Link to="/?q=Track-It&scope=all">Find imported tickets (all statuses)</Link> · <button type="button" onClick={() => discard.mutate()}>Import another bundle</button></p>}
+      {imported && <p>Done: the bundle was deleted from the server. <Link to="/?q=Track-It&scope=all">Find imported tickets (all statuses)</Link> · <button className="btn2 small" type="button" onClick={() => discard.mutate()}>Import another bundle</button></p>}
     </>}
   </section>;
 }
