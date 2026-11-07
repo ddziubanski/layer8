@@ -6,6 +6,8 @@
 .import-command { white-space:pre-wrap; overflow-wrap:anywhere; }
 .import-report { white-space:pre-wrap; overflow-wrap:anywhere; max-height:28rem; overflow:auto; }
 .row-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.deploy-machines { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 16px; max-height:18rem; overflow:auto; }
+.deploy-run { border-top:1px solid var(--line, #ddd); padding-top:8px; }
 /* Ported from gui-sample/. Desktop first; usable on a tablet. */
 :root, .theme-preview[data-theme="light"] {
   --ink: #1b2421;

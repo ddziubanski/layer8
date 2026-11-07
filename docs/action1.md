@@ -44,7 +44,7 @@ On 2026-10-20 the API returned the counts nested (`missing_updates: {critical, o
 - Action1 asks for fewer than 30 API requests a minute. A read is one request per 50 machines, plus signing in.
 - Patch changes cost one request per organization, one per endpoint group an automation targets, and one per run that has started.
 
-## Reviewed software deployment (first slice)
+## Reviewed software deployment
 
 From a ticket's **Requester's computer** card or a device's **Patching (Action1)** section, authorised technicians can open **Install software through Action1**. Search the organisation's available packages, select an exact version and review the computer, Action1 endpoint ID, organisation, platform and reported installed-software matches. Search and review do not start installation. **Deploy reviewed software** is the explicit external action.
 
@@ -58,7 +58,7 @@ From a ticket's **Requester's computer** card or a device's **Patching (Action1)
 
 ### Boundaries and outcomes
 
-- Windows and Mac packages only; one package/version to one endpoint, immediately. Scheduling, groups, bulk installs and onboarding bundles are later work.
+- Windows and Mac packages only. From a ticket or device: one package/version to one endpoint, immediately. For several machines, an Action1 group, bundles or a set time, see **Several machines, groups, bundles and a set time** below.
 - Automatic reboot is disabled. Packages declaring additional actions are rejected in this slice; run those from Action1. A package with an unaccepted EULA must be reviewed there first. Layer 8 does not accept licences on your behalf.
 - Action1 retries disconnected endpoints for 30 minutes. **Accepted/pending is not installed**. The worker reads results once a minute, up to ten active runs per pass. Success can also mean the required software was already present; warnings require inspecting Action1. The cached inventory search is informational, not proof of absence or installation.
 - A review expires after ten minutes. Package/version settings, target identity and deployment configuration are checked again at submission. A change requires a fresh review.
@@ -67,7 +67,21 @@ From a ticket's **Requester's computer** card or a device's **Patching (Action1)
 - On a ticket, submission and status changes add internal notes and history events without requester email. Deployments started directly from Devices are kept in deployment history and the system log. The history shows the current technician's deployments (admins may see all in the selected device/ticket context).
 - Disabling deployment stops catalogue/submission/provider refresh calls. Existing local history stays available. Rotating deployment settings requires checking older outstanding runs in Action1; Layer 8 does not query a different credential scope automatically.
 
-The optional feature does not deploy patches, change Action1 schedules or alter the existing patch-status worker. Primary contract: [Action1 REST API](https://app.action1.com/apidocs/), checked 22 October 2026: catalogue/versions, installed-software inventory, `POST /automations/instances/{orgId}` with `deploy_package`, and instance status reads. Implementation and tests are original; no PSAction1 code is copied.
+The optional feature does not deploy patches, change existing Action1 schedules or alter the existing patch-status worker. Primary contract: [Action1 REST API](https://app.action1.com/apidocs/), checked 22 October 2026: catalogue/versions, installed-software inventory, `POST /automations/instances/{orgId}` with `deploy_package`, and instance status reads. Implementation and tests are original; no PSAction1 code is copied.
+
+### Several machines, groups, bundles and a set time
+
+**Devices > Deploy software** (shown to people with the deployment permission while Action1 is in use):
+
+1. **Where:** up to 50 machines matched to Action1 endpoints in one allowed organization, or one Action1 endpoint group (up to 500 machines). All must be one platform (Windows or Mac).
+2. **What:** up to 10 packages, each an exact published version, or a **bundle**: a named set such as "New starter", kept per organization. Admins save and delete bundles; anyone with the deployment permission can use them. A bundle's packages are checked again at every review.
+3. **When:** now, or once at a date and time at least 10 minutes and at most 90 days ahead (sent to Action1 as a one-time schedule, in UTC). **Keep trying offline machines for** 30 minutes, 8 hours or 24 hours.
+4. **Ticket** (optional): submission and results are noted on it, staff only.
+5. **Review** checks every machine against Action1's endpoint list (one request per 50 machines, not one each), the group and its members, and every package and version, and sends nothing. **Deploy** (or **Schedule in Action1**) is the one write, after ticking that you've reviewed the machines, packages and licences.
+
+The single-device rules apply: the review expires after 10 minutes and everything is checked again at submission; intent is saved before the one write, which is never retried or repeated; a lost answer leaves the run **Unconfirmed** and **Refresh** looks up the uniquely named `Layer8 <reference>` run or schedule instead of sending again; a deployment overlapping a waiting or running one (same machine and package) is refused; automatic reboot is off. **Recent deployments** shows each run's state and, once it has run, a result per machine from Action1 (success, warning, error, pending for offline machines). A scheduled deployment shows **Scheduled** until Action1 runs it, then follows that run.
+
+**What was checked against a live tenant, and what wasn't.** On 6 November 2026 the API was read with view-only credentials (GET requests only; structure, not data): runs and schedules list their targets as `{id, type}` with `type` `Endpoint` or `EndpointGroup`; `GET /endpoints/groups/{org}`, `/{group}` and `/{group}/contents` list groups and their machines; `deploy_package` takes a list of packages; schedules use `settings` such as `ENABLED ONCE AT:07-30-00 DATE:2026-11-08` with `settings_timezone` and `retry_minutes`; a run's `endpoint_results` link lists one result per machine (status `Success`, `Warning`, `Error`, `Stopped`, `Running`). The two writes, `POST /automations/instances/{org}` (as the single-device deployment) and `POST /automations/schedules/{org}`, follow the API documentation and those shapes but **haven't been sent to a live tenant**. Before relying on them, try one package on one test machine you're happy to install on, first now and then scheduled, and check the run in Action1.
 
 [View the mocked deployment screenshots](../screenshots/action1/README.md).
 
