@@ -8,8 +8,18 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 ANSWERS=${LAYER8_ANSWERS:-/opt/helpdesk-setup/answers.json}
 LOG=${LAYER8_INSTALL_LOG:-/var/log/layer8-install.log}
 ISSUE_DIR=${LAYER8_ISSUE_DIR:-/etc/issue.d}
+INSTALLED=${LAYER8_INSTALLED:-/var/lib/helpdesk/.installed}
 if [ ! -f "$ANSWERS" ]; then
-  exec "$HERE/wizard.sh"
+  "$HERE/wizard.sh"
+  rc=$?
+  if [ ! -f "$INSTALLED" ] && mkdir -p "$ISSUE_DIR" 2>/dev/null; then
+    # Left the wizard, or an install stopped: say how to carry on above the sign-in prompt.
+    why=$(grep -E '^(install: |Nothing saved: )' "$LOG" 2>/dev/null | tail -1)
+    printf '\n*** Layer 8: setup did not finish ***\n%sRestart the server to start setup again, or sign in as sdadmin and run:\n  sudo %s/wizard.sh\n\n' \
+      "${why:+$why
+}" "$HERE" > "$ISSUE_DIR/layer8-install.issue"
+  fi
+  exit "$rc"
 fi
 ( umask 077; : >> "$LOG" ) 2>/dev/null || true
 rc_file=$(mktemp)

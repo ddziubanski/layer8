@@ -22,7 +22,7 @@ class FirstbootTests(unittest.TestCase):
             if answers:
                 (root / "answers.json").write_text("{}")
             env = {**os.environ, "LAYER8_ANSWERS": str(root / "answers.json"), "LAYER8_INSTALL_LOG": str(root / "install.log"),
-                   "LAYER8_ISSUE_DIR": str(root / "issue.d")}
+                   "LAYER8_ISSUE_DIR": str(root / "issue.d"), "LAYER8_INSTALLED": str(root / ".installed")}
             result = subprocess.run(["sh", str(root / "firstboot.sh")], capture_output=True, text=True, env=env)
             log = (root / "install.log").read_text() if (root / "install.log").exists() else ""
             issue = root / "issue.d" / "layer8-install.issue"
@@ -53,6 +53,11 @@ class FirstbootTests(unittest.TestCase):
     def test_no_answers_runs_the_wizard(self):
         result, _ = self.run_firstboot("echo INSTALL", answers=False)
         self.assertEqual(result.stdout.strip(), "WIZARD")
+
+    def test_wizard_left_unfinished_says_how_to_carry_on(self):
+        result, _ = self.run_firstboot("echo INSTALL", answers=False)
+        self.assertIn("setup did not finish", self.issue)
+        self.assertIn("Restart the server to start setup again", self.issue)
 
 
 if __name__ == "__main__":

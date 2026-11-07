@@ -15,7 +15,7 @@ import unittest
 
 @unittest.skipUnless(os.name == "posix", "wizard requires a POSIX shell")
 class WizardFlowTests(unittest.TestCase):
-    def run_wizard(self, mode, cancel=False, tls=None, fail=False, files=None):
+    def run_wizard(self, mode, cancel=False, tls=None, fail=False, files=None, script=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             binaries = root / "bin"
@@ -42,6 +42,26 @@ with open(os.environ['QA_LOG'], 'a') as log:
     log.write(repr(args) + '\\n')
 def answer(value):
     print(value, file=sys.stderr, end='')
+import json
+def scripted(question):
+    path = os.environ.get('QA_SCRIPT')
+    if not path or not os.path.exists(path):
+        return None
+    steps = json.load(open(path))
+    for i, (prefix, reply) in enumerate(steps):
+        if question.startswith(prefix):
+            json.dump(steps[:i] + steps[i + 1:], open(path, 'w'))
+            return reply
+    return None
+if '--inputbox' in args or '--yesno' in args:
+    q = args[args.index('--inputbox' if '--inputbox' in args else '--yesno') + 1]
+    reply = scripted(q)
+    if reply == '__cancel__' or reply == '__no__':
+        sys.exit(1)
+    if reply == '__yes__':
+        sys.exit(0)
+    if reply is not None:
+        answer(reply); sys.exit(0)
 if '--menu' in args:
     answer(os.environ['QA_MODE'])
 elif '--passwordbox' in args:
@@ -67,7 +87,9 @@ elif '--yesno' in args:
             executable(root / "install.sh", '''#!/bin/sh
 printf '%s\\n' "$@" > "$QA_CALL"
 if [ "$1" = --answers ]; then cp "$2" "$QA_RESULT"; fi
+echo x >> "$QA_CALL.count"
 if [ "${QA_FAIL:-}" = 1 ]; then echo "install: synthetic failure"; exit 5; fi
+if [ "${QA_FAIL:-}" = once ] && [ "$(wc -l < "$QA_CALL.count")" -eq 1 ]; then echo "Nothing saved: Ticket label: Put the number in once"; exit 1; fi
 echo "== Done"
 ''')
             if mode == "file":
@@ -75,7 +97,10 @@ echo "== Done"
             env = {**os.environ, "PATH": f"{binaries}:{os.environ['PATH']}",
                    "QA_MODE": mode, "QA_CANCEL": str(int(cancel)),
                    "QA_LOG": str(root / "dialogs"), "QA_CALL": str(root / "call"),
-                   "QA_RESULT": str(root / "result"), "QA_TLS": tls or "", "QA_FAIL": str(int(fail))}
+                   "QA_RESULT": str(root / "result"), "QA_TLS": tls or "", "QA_FAIL": fail if isinstance(fail, str) else str(int(fail)),
+                   "QA_SCRIPT": str(root / "script.json")}
+            if script:
+                (root / "script.json").write_text(json.dumps(script))
             for name, make in (files or {}).items():
                 env[name] = str(make(root))
             result = subprocess.run(["sh", str(wizard)], env=env, capture_output=True, text=True)
@@ -83,6 +108,7 @@ echo "== Done"
             call = (root / "call").read_text() if (root / "call").exists() else None
             answers = json.loads((root / "result").read_text()) if (root / "result").exists() else None
             self.log = (root / "install.log").read_text() if (root / "install.log").exists() else ""
+            self.installs = len((root / "call.count").read_text().split()) if (root / "call.count").exists() else 0
             return result, dialogs, call, answers
 
     def test_local_install_skips_integrations_and_keeps_backup_choice(self):
@@ -178,6 +204,35 @@ echo "== Done"
         result, _, _, _ = self.run_wizard("install")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("== Done", self.log)
+
+    def test_a_wrong_answer_is_explained_and_asked_again(self):
+        # The field report: a non-number here crashed the wizard to the sign-in prompt.
+        result, dialogs, _, answers = self.run_wizard("install", script=[["First ticket number:", "abc"], ["First ticket number:", "1000x"],
+                                                                         ["How ticket numbers", "HD-"], ["How ticket numbers", "HD-{n}"]])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Use a whole number, e.g. 1000.", dialogs)
+        self.assertIn("Put the number in once", dialogs)
+        self.assertEqual(answers["general"]["ticket_first_number"], 1000)
+        self.assertEqual(answers["general"]["ticket_label_format"], "HD-{n}")
+
+    def test_cancel_asks_before_leaving(self):
+        result, dialogs, _, answers = self.run_wizard("install", script=[["The service desk's DNS name", "__cancel__"], ["Leave setup?", "__no__"]])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Leave setup?", dialogs)
+        self.assertEqual(answers["install"]["hostname"], "helpdesk.corp.example")
+
+    def test_cancel_then_leave_installs_nothing(self):
+        result, dialogs, call, _ = self.run_wizard("install", script=[["The service desk's DNS name", "__cancel__"], ["Leave setup?", "__yes__"]])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(call)
+        self.assertIn("restart the server to start it again", result.stderr)
+
+    def test_failed_install_offers_to_start_again(self):
+        result, dialogs, _, _ = self.run_wizard("install", fail="once", script=[["The install stopped", "__yes__"]])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.installs, 2)
+        self.assertIn("Nothing saved: Ticket label", dialogs)
+        self.assertIn("Setup complete", dialogs)
 
 
 if __name__ == "__main__":
