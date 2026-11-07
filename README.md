@@ -4,7 +4,7 @@
 
 Layer 8 is a self-hosted IT service desk where tickets, people, devices and the network are connected instead of filed in separate places. A device that drops off the network opens a ticket, and its recovery shows up on it. A ticket shows the workaround from the problem it belongs to. A device's page tells its whole story. It runs on one Linux appliance you control, installs offline, and works with local accounts alone; every integration is optional.
 
-> **Version 1.18.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
+> **Version 1.19.** Free software under the [GNU AGPL-3.0](LICENSE) (or later). In use on real desks; back up before upgrading.
 
 ![The technician's queue](screenshots/02-queue.png)
 
