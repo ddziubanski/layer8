@@ -21,9 +21,12 @@ class FirstbootTests(unittest.TestCase):
                 (root / name).chmod(0o755)
             if answers:
                 (root / "answers.json").write_text("{}")
-            env = {**os.environ, "LAYER8_ANSWERS": str(root / "answers.json"), "LAYER8_INSTALL_LOG": str(root / "install.log")}
+            env = {**os.environ, "LAYER8_ANSWERS": str(root / "answers.json"), "LAYER8_INSTALL_LOG": str(root / "install.log"),
+                   "LAYER8_ISSUE_DIR": str(root / "issue.d")}
             result = subprocess.run(["sh", str(root / "firstboot.sh")], capture_output=True, text=True, env=env)
             log = (root / "install.log").read_text() if (root / "install.log").exists() else ""
+            issue = root / "issue.d" / "layer8-install.issue"
+            self.issue = issue.read_text() if issue.exists() else ""
             return result, log
 
     def test_success_is_logged(self):
@@ -32,6 +35,7 @@ class FirstbootTests(unittest.TestCase):
         self.assertIn("== Done", log)
         self.assertIn("--answers", log)
         self.assertNotIn("stopped", result.stdout)
+        self.assertEqual(self.issue, "")
 
     def test_failure_says_why_and_keeps_the_status(self):
         result, log = self.run_firstboot('echo "== Database schema"; echo "install: the database schema update failed (alembic exit 1)" >&2; exit 1')
@@ -39,6 +43,12 @@ class FirstbootTests(unittest.TestCase):
         self.assertIn("install: the database schema update failed", log)
         self.assertIn("the install stopped before it finished", result.stdout)
         self.assertIn("install: the database schema update failed (alembic exit 1)", result.stdout)
+        # Kept for the sign-in screen, which clears the console.
+        self.assertIn("install: the database schema update failed (alembic exit 1)", self.issue)
+
+    def test_settings_rejected_is_the_reason_shown(self):
+        result, _ = self.run_firstboot('echo "== Settings, first admin"; echo "Nothing saved: Accept email from: expected list"; exit 1')
+        self.assertIn("Nothing saved: Accept email from: expected list", self.issue)
 
     def test_no_answers_runs_the_wizard(self):
         result, _ = self.run_firstboot("echo INSTALL", answers=False)

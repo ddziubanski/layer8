@@ -320,6 +320,7 @@ esac
 sync
 
 say "Done"
+rm -f /etc/issue.d/layer8-install.issue  # a failed first boot's note on the sign-in screen
 echo "Open https://$HOST/"
 if [ -n "$TLS_PROBLEM" ]; then
   echo "HTTPS: a self-signed certificate is in use, because $TLS_PROBLEM."
