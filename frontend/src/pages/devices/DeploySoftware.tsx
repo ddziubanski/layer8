@@ -83,7 +83,7 @@ export function DeploySoftware({ me }: { me: Me }) {
   const busy = previewM.isPending || submitM.isPending;
 
   return <div className="stack">
-    <section className="card stack" aria-label="Deploy software through Action1">
+    <section className="card stack deploy-form" aria-label="Deploy software through Action1">
       <h2>Deploy software through Action1</h2>
       <p className="muted small">Choose machines or an Action1 group, the software, and when. Review checks everything with Action1 and sends nothing; <strong>Deploy</strong> is the one step that does. Machines aren't restarted automatically.</p>
       {(orgs.data?.length ?? 0) > 1 && <label className="field">Organization<select value={org} onChange={e => { setOrg(e.target.value); setPicked([]); setGroup(""); setChosen([]); setBundle(""); changed(); }}>
