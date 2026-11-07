@@ -65,6 +65,9 @@ for k in sys.argv[2].split("."):
     v = v.get(k) if isinstance(v, dict) else None
 print("" if v is None else (v if isinstance(v, str) else json.dumps(v)))' "$ANSWERS" "$1"; }
 HOST=$(ans hostname); HOST=${HOST:-$(hostname -f 2>/dev/null || hostname)}
+# It goes into nginx's config, the certificate and URLs: stop now, before anything changes.
+printf '%s\n' "$HOST" | grep -Eqx '[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*' && [ "${#HOST}" -le 253 ] ||
+  die "install.hostname isn't a DNS name: '$HOST' (letters, digits and hyphens, with dots between the parts)"
 TLS=$(ans tls); TLS=${TLS:-self-signed}
 # A real install names its first admin: a service desk with no admin would let whoever reaches it
 # first become one (admin / admin). Only the offline demo, which has its own admin, goes without.

@@ -40,6 +40,8 @@ import os, sys
 args = sys.argv[1:]
 with open(os.environ['QA_LOG'], 'a') as log:
     log.write(repr(args) + '\\n')
+# Like the real whiptail, draw the box on stdout: inside $(...) that would end up in the answer.
+sys.stdout.write('\\x1b[H<box>\\x1b[0m'); sys.stdout.flush()
 def answer(value):
     print(value, file=sys.stderr, end='')
 import json
@@ -60,6 +62,10 @@ if '--inputbox' in args or '--yesno' in args:
         sys.exit(1)
     if reply == '__yes__':
         sys.exit(0)
+    if reply is not None:
+        answer(reply); sys.exit(0)
+if '--passwordbox' in args:
+    reply = scripted(args[args.index('--passwordbox') + 1])
     if reply is not None:
         answer(reply); sys.exit(0)
 if '--menu' in args:
@@ -226,6 +232,31 @@ echo "== Done"
         self.assertNotEqual(result.returncode, 0)
         self.assertIsNone(call)
         self.assertIn("restart the server to start it again", result.stderr)
+
+    def test_every_box_reaches_the_screen_and_answers_stay_clean(self):
+        # Found in a VM: boxes shown inside $(...) (Leave setup?, a wrong answer, passwords that didn't
+        # match) never reached the screen, and their screen codes became part of the answer.
+        result, dialogs, _, answers = self.run_wizard("install", script=[
+            ["Password for the OS administrator", "Os-password-one"], ["Once more", "Os-password-two"],
+            ["Admin's email or username:", "__cancel__"], ["Leave setup?", "__no__"],
+            ["First ticket number:", "abc"]])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("They didn't match", dialogs)
+        self.assertIn("Leave setup?", dialogs)
+        self.assertIn("Use a whole number", dialogs)
+        self.assertEqual(result.stdout.count("<box>"), dialogs.count("\n"))
+        self.assertEqual(answers["install"]["os_password"], "Synthetic-password-123")
+        self.assertEqual(answers["install"]["admin"]["email"], "admin@example.com")
+        self.assertEqual(answers["general"]["ticket_first_number"], 1000)
+        self.assertNotIn("\x1b", json.dumps(answers))
+
+    def test_host_name_must_be_a_dns_name(self):
+        result, dialogs, _, answers = self.run_wizard("install", script=[
+            ["The service desk's DNS name", "bad_name.example"], ["The service desk's DNS name", "help desk"],
+            ["The service desk's DNS name", "helpdesk.corp.example"]])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(dialogs.count("isn't a DNS name"), 2)
+        self.assertEqual(answers["install"]["hostname"], "helpdesk.corp.example")
 
     def test_failed_install_offers_to_start_again(self):
         result, dialogs, _, _ = self.run_wizard("install", fail="once", script=[["The install stopped", "__yes__"]])

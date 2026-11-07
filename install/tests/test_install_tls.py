@@ -24,7 +24,7 @@ def make_cert(directory: Path, name: str) -> tuple[Path, Path]:
 
 @unittest.skipUnless(os.name == "posix" and shutil.which("openssl"), "needs a POSIX shell and openssl")
 class InstallTlsCheckTests(unittest.TestCase):
-    def run_install(self, tls):
+    def run_install(self, tls, hostname="helpdesk.corp.example"):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             binaries = root / "bin"
@@ -34,7 +34,7 @@ class InstallTlsCheckTests(unittest.TestCase):
                 (binaries / name).chmod(0o755)
             tls_value = tls(root) if callable(tls) else tls
             answers = root / "answers.json"
-            answers.write_text(json.dumps({"install": {"hostname": "helpdesk.corp.example", "tls": tls_value,
+            answers.write_text(json.dumps({"install": {"hostname": hostname, "tls": tls_value,
                                                        "admin": {"email": "admin@example.com", "password": "Synthetic-password-123"}}}))
             return subprocess.run(["sh", str(INSTALL), "--answers", str(answers)], capture_output=True, text=True,
                                   env={**os.environ, "PATH": f"{binaries}:{os.environ['PATH']}"})
@@ -75,6 +75,13 @@ class InstallTlsCheckTests(unittest.TestCase):
         result = self.run_install("self-signed")
         self.assertEqual(result.returncode, 42, result.stderr)
         self.assertNotIn("HTTPS certificate", result.stderr)
+
+    def test_host_name_that_isnt_a_dns_name_stops_before_anything_changes(self):
+        for bad in ("help desk", "a/b.example", "bad_name.example", "x&y"):
+            result = self.run_install("self-signed", hostname=bad)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("install.hostname isn't a DNS name", result.stderr)
+            self.assertNotIn("STOPPED-AT-PACKAGES", result.stderr)
 
 
 if __name__ == "__main__":
