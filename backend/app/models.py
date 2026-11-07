@@ -1063,6 +1063,23 @@ class SoftwareDeployment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Batch deployments (several machines or an Action1 group; app/software_batch.py).
+    schedule_id: Mapped[str | None] = mapped_column(String(200))
+    results: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
+
+
+class SoftwareBundle(Base):
+    """A named set of exact package versions in one Action1 organization, e.g. "New starter"."""
+
+    __tablename__ = "software_bundles"
+    __table_args__ = (UniqueConstraint("organization_id", "name", name="uq_software_bundles_org_name"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[str] = mapped_column(String(200))
+    name: Mapped[str] = mapped_column(String(100))
+    platform: Mapped[str] = mapped_column(String(20))
+    packages: Mapped[list] = mapped_column(JSONB, default=list)
+    updated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class Vlan(Base):

@@ -11,6 +11,7 @@ import { DeviceIps } from "../../components/DeviceIps";
 import { DeviceVms, NutanixVmList } from "../../components/Nutanix";
 import { PatchStatus } from "../../components/PatchStatus";
 import { SoftwareDeployment } from "../../components/SoftwareDeployment";
+import { DeploySoftware } from "./DeploySoftware";
 import { UserPicker } from "../../components/UserPicker";
 import { when } from "../../format";
 import { can, uses } from "../../permissions";
@@ -29,6 +30,7 @@ export function DevicesPage({ me }: { me: Me }) {
         ["unknown", "Unknown on the network"],
         ["lifecycle", "Lifecycle"],
         ...(uses(me, "nutanix") ? [["vms", "Virtual machines"]] : []),
+        ...(uses(me, "action1") && can(me, "action1_deploy") ? [["deploy", "Deploy software"]] : []),
       ].map(([key, label]) => (
         <Link key={key} to={key === "all" ? "/devices" : `/devices?view=${key}`} role="tab" aria-selected={view === key} className={view === key ? "active" : undefined}>
           {label}
@@ -36,6 +38,16 @@ export function DevicesPage({ me }: { me: Me }) {
       ))}
     </div>
   );
+  if (view === "deploy" && uses(me, "action1") && can(me, "action1_deploy"))
+    return (
+      <>
+        <div className="page-head row-gap">
+          <WorkspaceTitle title="Devices" area="ASSET OPERATIONS" />
+        </div>
+        {tabs}
+        <DeploySoftware me={me} />
+      </>
+    );
   if (view === "lifecycle")
     return (
       <>

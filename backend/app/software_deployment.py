@@ -247,14 +247,15 @@ def poll(session):
     count = 0
     api = client()
     try:
-        ids = session.scalars(select(SoftwareDeployment.id).where(SoftwareDeployment.instance_id.is_not(None),
-            SoftwareDeployment.state.in_(ACTIVE)).order_by(SoftwareDeployment.checked_at.asc().nullsfirst()).limit(10)).all()
+        from app import software_batch
+
+        ids = session.scalars(software_batch.waiting(session).order_by(SoftwareDeployment.checked_at.asc().nullsfirst()).limit(10)).all()
         for id in ids:
             row = session.scalar(select(SoftwareDeployment).where(SoftwareDeployment.id == id).with_for_update(skip_locked=True))
             if row is None:
                 continue
             try:
-                refresh(session, row, api)
+                (software_batch.refresh if row.snapshot.get("kind") == "batch" else refresh)(session, row, api)
                 count += 1
             except action1.Action1Error:
                 session.rollback()
