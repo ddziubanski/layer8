@@ -43,6 +43,8 @@ WIDTH, HEIGHT = 1440, 900
 # A wallboard made for the run (and removed after), so its link is known.
 WALLBOARD_TOKEN = "l8w_screenshot-wallboard-token-for-dev-only"
 
+from screenshot_fakes import FAKE_ACTION1_JS, FILL_DEPLOY_JS  # noqa: E402
+
 
 
 
@@ -209,6 +211,9 @@ def shots(ticket_id: int | None, device_id: int | None, ad_ticket: int | None = 
         ("09n-settings-problems", "admin", "/settings/problems", "Settings > Problems: when tickets that share a device model, system, switch, subnet, site or wording are suggested as one problem"),
         ("09o-settings-proactive", "admin", "/settings/proactive", "Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time"),
     ]
+    out.append(("04e-devices-deploy", "admin", "/devices?view=deploy&demo-action1=1",
+                "Devices > Deploy software: machines or an Action1 group, packages or a bundle, now or once later; review checks everything with Action1 before the one step that sends it, and each run shows its result per machine",
+                FILL_DEPLOY_JS))
     if trackit_job:
         out.append(("09p-settings-import-trackit", "admin", f"/settings/imports?trackit={trackit_job}",
                      "Settings > Imports > Track-It!: the fields found in an export, where tickets go, keep or rename each field, and the dry run before importing",
@@ -282,6 +287,7 @@ async def capture(tokens: dict[str, str], plan, out: Path = OUT) -> list[tuple[s
             await tab.call("Page.enable")
             await tab.call("Network.enable")
             await tab.call("Emulation.setDeviceMetricsOverride", width=WIDTH, height=HEIGHT, deviceScaleFactor=1, mobile=False)
+            await tab.call("Page.addScriptToEvaluateOnNewDocument", source=FAKE_ACTION1_JS)
             for name, who, path, caption, *before in plan:
                 await tab.call("Network.clearBrowserCookies")
                 if who != "none":
