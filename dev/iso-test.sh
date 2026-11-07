@@ -4,6 +4,7 @@
 # service desk answers on https://localhost:8443 (the VM's 443).
 #
 #   dev/iso-test.sh iso/build/layer8-<version>.iso [bios|uefi]
+#   ISO_TEST_OFFLINE=1 dev/iso-test.sh ...   # no outbound network at all (the port forwards still work)
 #
 # Build it with iso/build.sh --demo --test (or --answers a.json --test): --test boots straight into
 # the ERASE entry after 5 seconds and adds the serial console; --demo/--answers skip the wizard.
@@ -24,7 +25,7 @@ fi
 # shellcheck disable=SC2086
 qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 $FIRMWARE \
   -drive file="$DISK",if=virtio,format=qcow2 -cdrom "$ISO" -boot once=d \
-  -netdev user,id=n0,hostfwd=tcp:127.0.0.1:8443-:443,hostfwd=tcp:127.0.0.1:2222-:22 -device virtio-net-pci,netdev=n0 \
+  -netdev user,id=n0${ISO_TEST_OFFLINE:+,restrict=on},hostfwd=tcp:127.0.0.1:8443-:443,hostfwd=tcp:127.0.0.1:2222-:22 -device virtio-net-pci,netdev=n0 \
   -display none -serial file:"$LOG" -monitor unix:"$DIR/vm-$FW.mon",server,nowait -daemonize -pidfile "$DIR/vm.pid"
 echo "VM started (pid $(cat "$DIR/vm.pid")); installing. Serial log: $LOG"
 health() {  # the API itself answers: HTTP 200 and its own JSON. Nginx's maintenance page (502/503

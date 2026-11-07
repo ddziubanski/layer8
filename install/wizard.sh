@@ -22,14 +22,68 @@ command -v whiptail >/dev/null || apt-get install -y -q whiptail >/dev/null
 
 # --- Small helpers around whiptail (answers come back on stderr)
 
+WIZARD_PID=$$
+trap 'echo "Setup left. Nothing was installed; restart the server to start it again." >&2; exit 1' TERM
+# Cancel or Esc in a question asks first: leaving by accident used to drop straight to the sign-in prompt.
+leave_or_stay() {
+  if dialog --defaultno --yesno "Leave setup?\n\nNothing has been installed yet. Restart the server to start setup again." 10 70; then
+    kill -TERM "$WIZARD_PID"
+    exit 1
+  fi
+}
 ask() { # ask "Question" "default" -> stdout
-  dialog --inputbox "$1" 12 76 "${2:-}" 3>&1 1>&2 2>&3
+  while :; do
+    if a=$(dialog --inputbox "$1" 12 76 "${2:-}" 3>&1 1>&2 2>&3); then
+      printf '%s' "$a"
+      return
+    fi
+    leave_or_stay
+  done
+}
+# Why an answer won't do, by the app's own rules (app/configstore.py, app/numbering.py), or nothing.
+problem() { # problem KIND VALUE
+  python3 - "$1" "$2" <<'PY'
+import re, sys
+kind, v = sys.argv[1], sys.argv[2].strip()
+token = re.compile(r"\{(n(?::0?(\d{1,2}))?|yyyy|yy)\}")
+if kind == "number":
+    ok = v.isdigit() and 1 <= int(v) <= 10**12
+    print("" if ok else "Use a whole number, e.g. 1000.")
+elif kind == "label":
+    numbers = [m for m in token.finditer(v) if m.group(1).startswith("n")]
+    rest = token.sub("", v)
+    print("At most 30 characters." if len(v) > 30 else
+          "Put the number in once: {n}, or {n:06} for six digits with leading zeros." if len(numbers) != 1 else
+          "Only {n}, {n:06}, {yyyy} and {yy} can go in braces." if "{" in rest or "}" in rest else
+          "Use letters, digits, spaces and # _ . / - around the number." if not re.fullmatch(r"[A-Za-z0-9 #_./-]*", rest) else "")
+elif kind == "email":
+    print("" if re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", v) else "That isn't an email address, e.g. helpdesk@example.com.")
+elif kind == "domains":
+    bad = [d for d in (x.strip() for x in v.split(",")) if d and not re.fullmatch(r"@?[a-z0-9-]+(\.[a-z0-9-]+)+", d.lower())]
+    print(f"{bad[0]!r} isn't a domain name, e.g. example.com." if bad else "" if v else "Give at least one domain, e.g. example.com.")
+elif kind == "time":
+    print("" if re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", v) else "Use a 24-hour time like 02:00.")
+elif kind == "ldap":
+    bad = [u for u in (x.strip() for x in v.split(",")) if u and not re.fullmatch(r"ldaps?://[A-Za-z0-9.-]+(:\d+)?", u)]
+    print(f"{bad[0]!r} isn't a server address like ldaps://dc1.corp.example." if bad or not v else "")
+elif kind == "dn":
+    print("" if re.fullmatch(r"[A-Za-z]+=[^,]+(,[A-Za-z]+=[^,]+)*", v) else "That isn't a DN, e.g. DC=corp,DC=example.")
+PY
+}
+ask_valid() { # ask_valid KIND "Question" "default" -> stdout: asked again until the app would accept it
+  value=${3:-}
+  while :; do
+    value=$(ask "$2" "$value")
+    why=$(problem "$1" "$value")
+    [ -z "$why" ] && { printf '%s' "$value"; return; }
+    dialog --msgbox "$why" 9 70 || true
+  done
 }
 secret() { # secret "Question" -> stdout (asked twice when $2 = twice)
   while :; do
-    a=$(dialog --passwordbox "$1" 10 76 3>&1 1>&2 2>&3)
+    a=$(dialog --passwordbox "$1" 10 76 3>&1 1>&2 2>&3) || { leave_or_stay; continue; }
     [ "${2:-}" = twice ] || { printf '%s' "$a"; return; }
-    b=$(dialog --passwordbox "Once more, to check:" 10 76 3>&1 1>&2 2>&3)
+    b=$(dialog --passwordbox "Once more, to check:" 10 76 3>&1 1>&2 2>&3) || { leave_or_stay; continue; }
     [ "$a" = "$b" ] && { printf '%s' "$a"; return; }
     dialog --msgbox "They didn't match. Try again." 8 50
   done
@@ -49,12 +103,14 @@ run_install() {
   { "$HERE/install.sh" "$@" 2>&1 && echo 0 > "$rc_file" || echo $? > "$rc_file"; } | tee -a "$INSTALL_LOG" || true
   rc=$(cat "$rc_file"); rm -f "$rc_file"
   [ "$rc" = 0 ] && return 0
-  why=$(grep '^install: ' "$INSTALL_LOG" 2>/dev/null | tail -1 || true)
+  why=$(grep -E '^(install: |Nothing saved: )' "$INSTALL_LOG" 2>/dev/null | tail -1 || true)
   TITLE="Layer 8 | Install stopped"
   msg="The install stopped before it finished:\n\n${why:-install.sh exited with status $rc}\n\nThe full output is in $INSTALL_LOG.\nFix the problem, then run it again (sign in as sdadmin):\n\n  sudo $HERE/install.sh $*"
   [ "$1" = --answers ] && msg="$msg\n\nThe answers file is kept for that, with its passwords: delete it once the install is done."
-  note "$msg" || true
   printf '\n%b\n' "$msg" >&2
+  if dialog --yes-button "Start again" --no-button "Exit" --yesno "$msg\n\nStart setup again now? Your answers are asked again; the parts already installed are kept." 22 76; then
+    exec sh "$0"
+  fi
   exit "$rc"
 }
 
@@ -171,8 +227,8 @@ step 5 "Ticket numbers"
 
 # --- 4. Ticket numbers
 
-put general.ticket_first_number "$(ask "First ticket number:" "1000")"
-put general.ticket_label_format "$(ask "How ticket numbers are shown and put in email subjects.\n{n} is the number, {n:06} pads it to six digits, {yyyy} is the year.\n\nExamples: #{n}   HD-{n}   INC{n:06}   {yyyy}-{n}" "#{n}")"
+put general.ticket_first_number "$(ask_valid number "First ticket number:" "1000")"
+put general.ticket_label_format "$(ask_valid label "How ticket numbers are shown and put in email subjects.\n{n} is the number, {n:06} pads it to six digits, {yyyy} is the year.\n\nExamples: #{n}   HD-{n}   INC{n:06}   {yyyy}-{n}" "#{n}")"
 
 step 6 "Optional integrations"
 
@@ -187,18 +243,18 @@ if yesno "Microsoft Entra / Exchange Online: should tickets come in by email and
   put email.graph_tenant_id "$(ask "Directory (tenant) ID, from the app registration in the Entra admin center:")"
   put email.graph_client_id "$(ask "Application (client) ID:")"
   put email.graph_client_secret "$(secret "Client secret (its value, not its ID):")"
-  put email.mailbox "$(ask "Service desk mailbox, e.g. helpdesk@example.com:")"
-  put email.mail_allowed_domains "$(ask "Accept email from these domains (comma-separated), e.g. example.com:")"
+  put email.mailbox "$(ask_valid email "Service desk mailbox, e.g. helpdesk@example.com:")"
+  put email.mail_allowed_domains "$(ask_valid domains "Accept email from these domains (comma-separated), e.g. example.com:")"
   CHECK_EMAIL=1
 fi
 
 # --- 6. Active Directory
 
 if yesno "Active Directory: sync people, groups and computers, and let staff sign in with their AD password?\n\nYou need LDAPS to a domain controller and a read-only service account.\n\nYou can also do this later in Settings > Directory."; then
-  put directory.ldap_url "$(ask "Domain controllers (comma-separated), e.g. ldaps://dc1.corp.example,ldaps://dc2.corp.example:")"
-  put directory.ldap_bind_dn "$(ask "Service account (DN), e.g. CN=svc-helpdesk,OU=Service Accounts,DC=corp,DC=example:")"
+  put directory.ldap_url "$(ask_valid ldap "Domain controllers (comma-separated), e.g. ldaps://dc1.corp.example,ldaps://dc2.corp.example:")"
+  put directory.ldap_bind_dn "$(ask_valid dn "Service account (DN), e.g. CN=svc-helpdesk,OU=Service Accounts,DC=corp,DC=example:")"
   put directory.ldap_bind_password "$(secret "Service account password:")"
-  put directory.ldap_base_dn "$(ask "Search base, e.g. DC=corp,DC=example:")"
+  put directory.ldap_base_dn "$(ask_valid dn "Search base, e.g. DC=corp,DC=example:")"
   ca=$(ask "CA certificate for the domain controllers' LDAPS (PEM file path). Empty: the system's trusted CAs." "")
   [ -n "$ca" ] && put directory.ldap_ca_file "@file:$ca"
   if yesno "Are your distribution lists in their own OU?\n\nIf so, every group in that OU is offered as tick boxes when technicians add someone to groups (on a ticket, a new account, a template), and technicians may add and remove people in those groups.\n\nIf not, Settings > Directory > Group lists can match them by name instead (e.g. names starting with [EMAIL])."; then
@@ -249,7 +305,7 @@ if yesno "Nightly encrypted backups to a network share?\n\nThe share is mounted 
     put install.backup.share "$(ask "NFS export, e.g. nas.corp.example:/export/helpdesk:")"
   fi
   put backup.backup_dir /mnt/helpdesk-backup
-  put backup.backup_time "$(ask "Back up daily at (24-hour):" "02:00")"
+  put backup.backup_time "$(ask_valid time "Back up daily at (24-hour):" "02:00")"
   while :; do
     bp=$(secret "Backup passphrase (12+ characters). Keep a copy somewhere safe away from this server: without it a backup can't be restored." twice)
     [ "${#bp}" -ge 12 ] && break
