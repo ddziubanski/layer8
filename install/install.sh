@@ -99,6 +99,17 @@ if [ -n "$TZ_WANTED" ] && [ -f "/usr/share/zoneinfo/$TZ_WANTED" ]; then
   timedatectl set-timezone "$TZ_WANTED" 2>/dev/null || { ln -sf "/usr/share/zoneinfo/$TZ_WANTED" /etc/localtime; echo "$TZ_WANTED" > /etc/timezone; }
 fi
 
+# The OS administrator (sdadmin, made locked by the ISO): its password, if one was chosen. First, so
+# that if a later step stops the install, someone can sign in to read the log and run it again.
+OS_PW=$(ans os_password)
+if id sdadmin >/dev/null 2>&1; then
+  if [ -n "$OS_PW" ]; then
+    printf 'sdadmin:%s\n' "$OS_PW" | chpasswd
+  elif ! passwd -S sdadmin | grep -q ' P '; then
+    echo "OS administrator: no password given (install.os_password), so sdadmin stays locked."
+  fi
+fi
+
 # --- Packages
 
 say "Installing packages"
@@ -289,15 +300,6 @@ elif ! passwd -S layer8 | grep -q ' P '; then
   # No password chosen: locked, never a default (anyone on the network could log in first).
   passwd -l layer8 >/dev/null
   echo "Recovery console: no password given (install.recovery.password), so the layer8 account stays locked."
-fi
-# The OS administrator (sdadmin, made locked by the ISO): its password, if one was chosen.
-OS_PW=$(ans os_password)
-if id sdadmin >/dev/null 2>&1; then
-  if [ -n "$OS_PW" ]; then
-    printf 'sdadmin:%s\n' "$OS_PW" | chpasswd
-  elif ! passwd -S sdadmin | grep -q ' P '; then
-    echo "OS administrator: no password given (install.os_password), so sdadmin stays locked."
-  fi
 fi
 # Only the helper's fixed commands, nothing else, with no password (the login was the check).
 install -m 440 "$BUNDLE/install/files/sudoers-layer8" /etc/sudoers.d/layer8-recovery
