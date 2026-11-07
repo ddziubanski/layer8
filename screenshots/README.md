@@ -1,6 +1,6 @@
 # Screenshots
 
-From the dev app, 2026-11-05. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
+From the dev app, 2026-11-06. Regenerate with `backend/.venv/bin/python dev/screenshots.py`.
 
 ## Sign-in page with branding (product name, message)
 
@@ -301,6 +301,10 @@ From the dev app, 2026-11-05. Regenerate with `backend/.venv/bin/python dev/scre
 ## Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time
 
 ![Settings > Proactive tickets: warranties, contracts, service accounts, silent runners and failing backups, each with a lead time](09o-settings-proactive.png)
+
+## Devices > Deploy software: machines or an Action1 group, packages or a bundle, now or once later; review checks everything with Action1 before the one step that sends it, and each run shows its result per machine
+
+![Devices > Deploy software: machines or an Action1 group, packages or a bundle, now or once later; review checks everything with Action1 before the one step that sends it, and each run shows its result per machine](04e-devices-deploy.png)
 
 ## Settings > Imports > Track-It!: the fields found in an export, where tickets go, keep or rename each field, and the dry run before importing
 
