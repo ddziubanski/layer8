@@ -14,8 +14,12 @@ ANSWERS=/root/helpdesk-answers.json
 INSTALL_LOG=/var/log/layer8-install.log
 TITLE="Layer 8 | 1 of 8 | Welcome"
 export NEWT_COLORS='root=white,blue window=black,lightgray border=blue,lightgray title=blue,lightgray button=black,cyan actbutton=black,brightcyan checkbox=black,lightgray actcheckbox=black,cyan entry=black,white label=black,lightgray listbox=black,lightgray actlistbox=black,cyan sellistbox=black,lightgray actsellistbox=black,cyan textbox=black,lightgray'
+# whiptail draws on stdout and answers on stderr. Many questions run inside $(...), where stdout is
+# the answer being captured: a box drawn there never reaches the screen (the wizard looks frozen)
+# and its screen codes end up in the answer. So every box draws on the console, kept as fd 4.
+exec 4>&1
 # Backtitle remains visible across every dialog, including optional integrations.
-dialog() { whiptail --backtitle "Layer 8 | Appliance setup | Tab: move  Space: select  Enter: continue" --title "$TITLE" "$@"; }
+dialog() { whiptail --backtitle "Layer 8 | Appliance setup | Tab: move  Space: select  Enter: continue" --title "$TITLE" "$@" >&4; }
 step() { TITLE="Layer 8 | $1 of 8 | $2"; }
 [ "$(id -u)" = 0 ] || { echo "Run as root (sudo)." >&2; exit 1; }
 command -v whiptail >/dev/null || apt-get install -y -q whiptail >/dev/null
@@ -61,6 +65,10 @@ elif kind == "email":
 elif kind == "domains":
     bad = [d for d in (x.strip() for x in v.split(",")) if d and not re.fullmatch(r"@?[a-z0-9-]+(\.[a-z0-9-]+)+", d.lower())]
     print(f"{bad[0]!r} isn't a domain name, e.g. example.com." if bad else "" if v else "Give at least one domain, e.g. example.com.")
+elif kind == "hostname":
+    label = r"[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+    ok = len(v) <= 253 and re.fullmatch(rf"{label}(\.{label})*", v)
+    print("" if ok else f"{v!r} isn't a DNS name: letters, digits and hyphens, with dots between the parts, e.g. helpdesk.corp.example.")
 elif kind == "time":
     print("" if re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", v) else "Use a 24-hour time like 02:00.")
 elif kind == "ldap":
@@ -167,7 +175,7 @@ step 3 "Address and HTTPS"
 
 # --- 2. Address and HTTPS
 
-HOST=$(ask "The service desk's DNS name. People open https://<this name>, and Windows sign-in needs it.\n\nExample: helpdesk.corp.example" "$(hostname -f 2>/dev/null || hostname)")
+HOST=$(ask_valid hostname "The service desk's DNS name. People open https://<this name>, and Windows sign-in needs it.\n\nExample: helpdesk.corp.example" "$(hostname -f 2>/dev/null || hostname)")
 put install.hostname "$HOST"
 put general.portal_url "https://$HOST"
 # Self-signed is the default: Enter mustn't send the install looking for files that aren't there.
