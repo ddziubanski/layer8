@@ -7,6 +7,12 @@
 .import-report { white-space:pre-wrap; overflow-wrap:anywhere; max-height:28rem; overflow:auto; }
 .row-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .deploy-machines { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 16px; max-height:18rem; overflow:auto; }
+.deploy-form .row-actions > :is(input, select) { width:auto; flex:0 1 auto; }
+.deploy-form .row-actions > input:not([type=radio]):not([type=checkbox]):not([type=datetime-local]) { flex:1 1 16rem; max-width:32rem; }
+.deploy-form .row-actions > input[type=datetime-local] { flex:0 0 auto; }
+.deploy-form .field > input[inputmode=numeric] { max-width:10rem; }
+.deploy-form .row-actions > span:first-child { flex:0 1 20rem; }
+.deploy-form > :is(input, .field), .deploy-form .field > :is(input, select) { max-width:32rem; }
 .deploy-run { border-top:1px solid var(--line, #ddd); padding-top:8px; }
 /* Ported from gui-sample/. Desktop first; usable on a tablet. */
 :root, .theme-preview[data-theme="light"] {
