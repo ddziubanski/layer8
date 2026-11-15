@@ -1,0 +1,107 @@
+# Public-exposure security review
+
+What an outsider can reach on a Layer 8 server that is open to the internet, what was checked, and what is still open. Report security problems privately: see [SECURITY.md](../SECURITY.md).
+
+| | |
+|---|---|
+| Reviewed | Layer 8 1.19.1 (`7d6e873`), 14 November 2026 |
+| Kind | Source review plus targeted tests against the application. Not a penetration test. |
+| Verdict | **Not ready to face the internet directly.** No way in without credentials was found, but the open findings below (F1 to F4 first) need fixing or a gateway in front. |
+
+Layer 8 is built for an internal network: the same site holds the agent console, admin settings, the script runner and, on some installs, rights to change Active Directory. Until the open findings are closed, put it behind something that checks identity first (a VPN, Entra application proxy or a similar access gateway).
+
+## Scope
+
+**Reviewed**
+
+- Every route that answers without a signed-in user (30 of 448), read one by one.
+- The 27 routes any signed-in user can call, requesters included, for access to other people's tickets, files and comments.
+- Sign-in: passwords, lockout, two-factor, sessions, cookies, CSRF, the first-run admin, the development sign-in header.
+- The nginx site the installer writes (`install/files/nginx-helpdesk.conf`) and how the API service is started.
+- Known vulnerabilities in the shipped dependencies: the 52 Python wheels in the 1.19.1 bundle (`pip-audit`) and the frontend's runtime packages (`npm audit --omit=dev`).
+
+**Not reviewed**
+
+- The other 391 routes, which need an agent or admin. A staff account that is stolen or misused is outside this review; the October 2026 review covered script, queue and permission checks as they were then.
+- Features added since that review beyond their sign-in checks: Action1 batch deployment, the Track-It!, KACE and Spiceworks imports, problem management, live updates.
+- The operating system, the installer and ISO, backups, the updater, the relay (runner) program, and email intake.
+- The frontend, beyond confirming it never renders raw HTML and that the content security policy blocks inline and third-party scripts.
+- No scanner, fuzzer or load test was run, and nothing was tested from outside against a deployed appliance.
+
+## What an outsider can reach
+
+These 30 routes are the whole surface without a user session. `backend/tests/test_public_surface.py` pins the list: a new route without sign-in fails the test until it is reviewed and added here.
+
+| Route | What guards it | Result |
+|---|---|---|
+| `GET /api/health`, `/api/about`, `/api/source` | Nothing; liveness, version and the AGPL source offer | OK; see F7 |
+| `GET /{path}` | Static files; the path must stay inside the frontend folder | OK |
+| `POST /api/auth/login` | Argon2 passwords; 5 wrong tries lock an account for 15 minutes; 30 failures per address per 15 minutes; one answer for every failure | OK; see F1, F3, F4 |
+| `POST /api/auth/logout`, `GET /api/auth/options`, `GET /api/branding`, `GET /api/branding/files/{name}` | Nothing sensitive; image names are fixed slots | OK |
+| `POST /api/auth/sso` | A Kerberos ticket; 404 unless Windows sign-in is set up; the session is portal-only | OK |
+| `GET /api/auth/entra/start`, `/callback` | Random state bound to the browser by a cookie; accounts matched by object ID, not the email claim | OK |
+| `GET /api/live` | Checks the session itself, staff only, again every minute | OK |
+| `GET/POST /api/integrations/tickets…` | API key (256-bit, stored hashed) or a staff session | OK |
+| `GET /api/meraki/oauth/callback` | Hashed single-use state | OK |
+| `POST /api/meraki/webhooks` | Shared secret of 32+ characters, constant-time compare; 503 unless configured; body and rate limits | OK |
+| `POST /api/public/receiving/*` | PO number plus a 6-character receiving code; 10 wrong tries per address per 15 minutes | See F5 |
+| `GET /api/public/wallboard` | Bearer token (256-bit, stored hashed), revocable | OK |
+| `POST /api/remote-sessions/{id}/end` | One-time token (stored hashed) | OK |
+| `POST /api/runner/*` | Relay token (256-bit, stored hashed); a relay can only touch its own runs | OK |
+| `GET/POST /api/surveys/answer/{token}` | 192-bit link token | OK |
+| `GET /api/update-progress/{id}.json` | Unguessable ID; holds no secrets | OK |
+
+Also checked and found sound:
+
+- **Development sign-in header.** `X-Dev-User` works only when `HELPDESK_DEV_AUTH` is set in the environment; it is off by default, can't be turned on from Settings, and the installer never sets it. A test confirms the header is ignored.
+- **Client address.** The API trusts `X-Forwarded-For` only from nginx on the same machine, and takes the address nginx saw, so an outsider can't fake an address to dodge the limits.
+- **Cookies and CSRF.** The session cookie is HttpOnly, Secure and SameSite=Lax; sessions last 12 hours from last use and are stored hashed. Requests that change data need a custom header that another site can't send, and there is no CORS allowance.
+- **Requesters.** A signed-in requester reaches only their own tickets, public comments and the files on them; internal notes and their files are staff-only; a requester can't post an internal note or attach to someone else's comment.
+- **Directory look-ups.** Login names are escaped before they go into LDAP filters.
+- **Uploaded files** are served as downloads or in a sandbox, never as pages of this site.
+- **Port 80** only redirects to HTTPS; HTTPS sends HSTS.
+- **Dependencies.** No known vulnerabilities in the shipped Python wheels or the frontend's runtime packages on the review date.
+
+## Open findings
+
+| # | Severity | Finding |
+|---|---|---|
+| F1 | High | Anyone can make the server read a very large request before it checks who is asking |
+| F2 | High | Two-factor sign-in is optional, and can only be required of local admins |
+| F3 | Medium | An outsider who knows a login can keep that account locked out |
+| F4 | Medium | Sign-in and receiving limits are per worker process and forgotten on restart |
+| F5 | Medium | The no-sign-in receiving page is on by default |
+| F6 | Medium | A server exposed before setup is finished accepts `admin` / `admin` |
+| F7 | Low | The API description and exact version are public |
+| F8 | Low | Up to 25 MB per attachment, unscanned, from any signed-in user |
+
+**F1. Large requests are read before sign-in is checked (high).** nginx accepts bodies up to 1 GB on every path, and the API reads and parses a JSON body before it looks at the session. In a test, a 200 MB body sent to `/api/auth/login` with no session was read in full and grew the process by about 800 MB before it was refused. A handful of such requests at once can exhaust the server's memory. *Fix:* cap request bodies in nginx at a few megabytes by default and allow the large limit only on the upload, import and restore paths; reject oversized JSON in the API before parsing.
+
+**F2. Two-factor sign-in is optional (high for an internet-facing server).** Settings > Sign-in can require two-factor only of admins with a local password, and it is off by default. Agents and directory accounts sign in with a password alone, and a directory password that leaks elsewhere then opens the console. *Fix:* allow requiring two-factor of every agent and admin, directory accounts included, and turn it on before exposure; or sign staff in through Entra with conditional access.
+
+**F3. Account lockout can be used against you (medium).** Five wrong passwords lock an account for 15 minutes, whoever sent them. Someone who knows an admin's email can keep them locked out, and the per-address limit of 30 failures still allows six lockouts per address per window. The recovery console still works. *Fix:* slow down instead of locking outright, or lock per address and account pair; alert on repeated lockouts.
+
+**F4. Limits live in memory, per worker (medium).** The API runs two worker processes, each counting failures on its own, and a restart clears the counts. The real limits are about double what the code says. *Fix:* keep the counts in the database, and add `limit_req` in nginx for the sign-in and public routes.
+
+**F5. Public receiving page on by default (medium).** `/receive` lets anyone with a PO number and its 6-character code (about 887 million possibilities) mark items received and upload a file of up to 15 MB. Guessing is limited per address, so a guess is unlikely to land, but PO numbers run in sequence and the page serves no purpose on the internet for most sites. *Fix:* turn it off in Settings > Purchasing before exposure unless it is needed; consider a longer code.
+
+**F6. First-run sign-in (medium).** Until a real admin exists, `admin` / `admin` signs in and must then set a password. Whoever reaches a fresh server first owns it. ISO installs set the admin during setup, so this concerns manual installs. Demo installs also carry a published demo sign-in and must never be exposed. *Fix:* finish setup before opening the firewall; consider allowing first-run sign-in only from the local network.
+
+**F7. API description and version are public (low).** `/docs`, `/redoc` and `/openapi.json` answer without sign-in, and `/api/about` gives the exact version. The source is public anyway, but this tells an outsider precisely which release to look up. *Fix:* require sign-in for the API description; consider leaving the version out of `/api/about` for visitors who aren't signed in.
+
+**F8. Unscanned uploads (low; an accepted risk on an internal network).** Portal and agent uploads aren't scanned for malware. Internally that was accepted because email is scanned before delivery. With the portal on the internet, anyone with an account can hand staff a file. *Fix:* decide again for an exposed portal; restrict file types or add scanning at the gateway.
+
+## Before exposing a server
+
+1. Put an access gateway or VPN in front, or close F1 to F4 first.
+2. Use a certificate browsers trust, and open port 80 only together with 443.
+3. Require two-factor sign-in for every admin and agent.
+4. Turn off the public receiving page unless you need it.
+5. Finish setup (a real admin, no demo data) before opening the firewall.
+6. Keep the server updated from Settings > Updates, and keep backups off the server.
+
+## Keeping this current
+
+- `backend/tests/test_public_surface.py` fails when a route without sign-in is added or removed, and calls each one as an outsider with no or made-up credentials.
+- Update the table above in the same change that adds such a route.
+- Repeat the review, and the dependency audit, before any release that is meant to face the internet.
