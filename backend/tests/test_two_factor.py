@@ -171,7 +171,7 @@ def test_wrong_codes_add_up_to_a_lockout_even_with_the_right_password(client, db
     for _ in range(auth.MAX_FAILED_LOGINS):
         assert _login(client, user.email, code="000000").status_code == 401
     db.expire_all()
-    assert db.get(User, user.id).locked_until is not None
+    assert auth.locked_out(db, db.get(User, user.id), auth.sla.utcnow(), "testclient")
     # Locked: even the right code doesn't get in until the lockout ends.
     assert _login(client, user.email, code=totp.code_at(secret, used + 1)).status_code == 401
 
@@ -183,7 +183,7 @@ def test_wrong_codes_on_two_factor_off_count_toward_lockout(client, db):
     for _ in range(auth.MAX_FAILED_LOGINS):
         assert client.post("/api/auth/two-factor/off", json={"password": PASSWORD, "code": "000000"}, headers=h).status_code == 422
     db.expire_all()
-    assert db.get(User, user.id).locked_until is not None
+    assert auth.locked_out(db, db.get(User, user.id), auth.sla.utcnow(), "testclient")
 
 
 def test_recovery_codes_are_long(client, db):

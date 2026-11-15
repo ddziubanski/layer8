@@ -4,9 +4,9 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import select, update
 
-from app import auth
+from app import attempts, auth
 from app.config import settings
-from app.models import AuthSource, User, UserRole, UserSession
+from app.models import AuthSource, SignInAttempt, User, UserRole, UserSession
 from tests.conftest import as_user, make_user
 
 PASSWORD = "correct horse battery"
@@ -67,9 +67,34 @@ def test_lockout_after_repeated_failures(client, db, local_agent):
     r = login(client)
     # Locked: even the right password is refused, with the same answer as a wrong one (no account enumeration).
     assert r.status_code == 401 and r.json()["detail"] == "Wrong email or password"
-    db.execute(update(User).values(locked_until=auth.sla.utcnow() - timedelta(seconds=1)))
+    # ...until the tries are older than the lockout.
+    db.execute(update(SignInAttempt).values(at=auth.sla.utcnow() - auth.LOCKOUT - timedelta(seconds=1)))
     db.commit()
     assert login(client).status_code == 200
+
+
+def test_a_stranger_cannot_lock_someone_out_of_their_usual_address(client, db, local_agent):
+    assert login(client).status_code == 200  # the agent's usual address
+    client.cookies.clear()
+    now = auth.sla.utcnow()
+    # Wrong passwords from many other addresses: more than the whole-account limit.
+    for i in range(auth.ACCOUNT_MAX_FAILED):
+        auth._failed(db, db.get(User, local_agent.id), now, f"203.0.113.{i}")
+    db.expire_all()
+    user = db.get(User, local_agent.id)
+    assert user.locked_until is not None
+    # A new address is refused even with the right password; the usual one still gets in.
+    assert auth.locked_out(db, user, now, "198.51.100.7")
+    assert not auth.locked_out(db, user, now, "testclient")
+    assert login(client).status_code == 200
+
+
+def test_failed_sign_ins_are_counted_in_the_database(client, db, local_agent):
+    login(client, password="wrong password!!")
+    kinds = sorted(db.scalars(select(SignInAttempt.kind)))
+    assert kinds == ["address", "sign-in"]
+    # IPv6 clients are counted by /64.
+    assert attempts.key("2001:db8:1:2:aaaa:bbbb:cccc:dddd") == attempts.key("2001:db8:1:2::1") == "2001:db8:1:2::/64"
 
 
 def test_csrf_header_required_for_cookie_writes(client, local_agent, service_desk):
@@ -215,12 +240,10 @@ def test_failed_sign_ins_from_one_address_are_slowed(client, db, monkeypatch):
     from app.api import auth as auth_api
 
     monkeypatch.setattr(auth_api, "MAX_FAILURES", 3)
-    auth_api._failures.clear()
     for i in range(3):
         assert login(client, email=f"nobody{i}@corp.local", password="wrong password!!").status_code == 401
     r = login(client, email="other@corp.local", password="wrong password!!")
     assert r.status_code == 429 and "Too many failed sign-ins" in r.json()["detail"]
-    auth_api._failures.clear()
 
 
 def test_storage_keys_stay_in_the_storage_folder():

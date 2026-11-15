@@ -141,7 +141,6 @@ def test_public_receiving_page(client, db, agent, setup, ordered, monkeypatch):
     from app.api import receiving
     from app.models import OutboundEmail, POAttachment
 
-    receiving._failures.clear()
     code = ordered["receiving_code"]
     look = client.post("/api/public/receiving/lookup", json={"po": "PO-00001", "code": code.lower()})
     assert look.status_code == 200, look.text
@@ -166,12 +165,10 @@ def test_public_receiving_page(client, db, agent, setup, ordered, monkeypatch):
 def test_public_receiving_needs_the_code_and_limits_guesses(client, ordered, monkeypatch):
     from app.api import receiving
 
-    receiving._failures.clear()
     for _ in range(receiving.MAX_FAILURES):
         assert client.post("/api/public/receiving/lookup", json={"po": "PO-00001", "code": "WRONG1"}).status_code == 404
     # Locked out now, even with the right code.
     assert client.post("/api/public/receiving/lookup", json={"po": "PO-00001", "code": ordered["receiving_code"]}).status_code == 429
-    receiving._failures.clear()
     monkeypatch.setattr(settings, "public_receiving", False)
     assert "turned off" in client.post("/api/public/receiving/lookup", json={"po": "PO-00001", "code": ordered["receiving_code"]}).json()["detail"]
 

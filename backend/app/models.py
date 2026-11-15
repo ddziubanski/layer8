@@ -229,6 +229,24 @@ class UserEmail(Base):
     __table_args__ = (Index("uq_user_emails_email_lower", text("lower(email)"), unique=True),)
 
 
+class SignInAttempt(Base):
+    """A try at sign-in or the receiving page (app/attempts.py). Rows older than 30 days are removed."""
+
+    __tablename__ = "sign_in_attempts"
+    __table_args__ = (
+        Index("ix_sign_in_attempts_address", "kind", "address", "at"),
+        Index("ix_sign_in_attempts_user", "user_id", "at"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    kind: Mapped[str] = mapped_column(String(16))
+    # An IPv4 address or an IPv6 /64.
+    address: Mapped[str] = mapped_column(String(64))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    ok: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+
+
 class UserSession(Base):
     """A signed-in browser. The cookie holds a random token; only its SHA-256 is stored."""
 
