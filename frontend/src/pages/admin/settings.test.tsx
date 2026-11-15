@@ -52,28 +52,28 @@ function mountApp(path: string) {
   );
 }
 
-test("configuration lives under Settings, with tabs by role", async () => {
+test("configuration lives under Settings, with category bar, scoped rail, and search across categories", async () => {
   mockApi({ "GET /api/auth/me": ADMIN, "GET /api/settings/windows-sign-in": EMPTY });
   const view = mountApp("/settings/windows-sign-in");
   expect(await screen.findByRole("heading", { name: "Windows sign-in" })).toBeInTheDocument();
   const tabs = screen.getByRole("navigation", { name: "Settings" });
+  const categories = within(tabs).getByRole("tablist", { name: "Setup categories" });
+  expect([...categories.querySelectorAll("[role=tab]")].map((b) => b.textContent?.replace(/\s+\d+$/, ""))).toEqual(
+    ["Helpdesk", "Workflows", "Monitoring", "API / Integrations", "People and access", "Look and feel", "System"],
+  );
+  // Only the active category's pages are shown in the left rail until searching.
+  expect(within(categories).getByRole("tab", { name: /^People and access/ })).toHaveAttribute("aria-selected", "true");
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
-    "Queues", "Ticket rules", "Ticket fields", "Canned replies", "Ticket templates", "Library", "Requester emails", "Desk hours and SLA", "Surveys", "Notices",
-    "Checklists", "Onboarding templates", "Changes", "Problems", "Purchasing",
-    "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps", "Proactive tickets",
-    "API keys", "Relays", "Mailbox (Microsoft 365)", "Teams", "Action1", "Warranty lookups",
     "Users", "Groups", "Permissions", "Directory (AD)", "Sign-in", "Windows sign-in",
-    "Branding", "Modules", "Remote displays",
-    "General", "Updates", "Backup", "Imports", "Status", "Log",
   ]);
-  expect([...tabs.querySelectorAll("[role=group]")].map((g) => g.getAttribute("aria-label"))).toEqual(
-    ["Helpdesk", "Workflows", "Monitoring", "API / Integrations", "People and access", "Look and feel", "System"]);
-  // Finding a page narrows the menu; a category's name keeps its pages.
+  // Finding a page searches across every category; a category's name shows all its pages.
   await userEvent.type(within(tabs).getByLabelText("Find a setting"), "uni");
   expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["UniFi", "Juniper"]);
   await userEvent.clear(within(tabs).getByLabelText("Find a setting"));
   await userEvent.type(within(tabs).getByLabelText("Find a setting"), "monitoring");
-  expect(tabs.querySelectorAll("a")).toHaveLength(7);
+  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
+    "Meraki", "UniFi", "Juniper", "Nutanix", "IP address scans", "Device sweeps", "Proactive tickets",
+  ]);
   expect(screen.getByRole("link", { name: "Settings" })).toHaveClass("active");
   view.unmount();
 
@@ -81,7 +81,8 @@ test("configuration lives under Settings, with tabs by role", async () => {
   mountApp("/admin/groups"); // an old bookmark
   await waitFor(() => expect(window.location.pathname).toBe("/settings/groups"));
   const agentTabs = await screen.findByRole("navigation", { name: "Settings" });
-  expect([...agentTabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Canned replies", "Users", "Groups"]);
+  expect([...agentTabs.querySelectorAll("[role=tab]")].map((b) => b.textContent?.replace(/\s+\d+$/, ""))).toEqual(["Helpdesk", "People and access"]);
+  expect([...agentTabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Users", "Groups"]);
 });
 
 test("upload a keytab, then turn Windows sign-in on", async () => {
@@ -397,16 +398,44 @@ test("a technician who was handed areas sees their tabs", async () => {
   mockApi({ "GET /api/auth/me": { ...ME, permissions: [...(ME.permissions ?? []), "rules_manage", "notices_manage"] }, "GET /api/notices/all": [] });
   mountApp("/settings/groups");
   const tabs = await screen.findByRole("navigation", { name: "Settings" });
-  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Ticket rules", "Canned replies", "Notices", "Users", "Groups"]);
+  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Users", "Groups"]);
+  await userEvent.click(within(tabs).getByRole("tab", { name: /^Helpdesk/ }));
+  expect([...tabs.querySelectorAll("a")].map((a) => a.textContent)).toEqual(["Queues", "Ticket rules", "Canned replies", "Notices"]);
 });
 
 test("Action1's tab shows only while Action1 is in use", async () => {
   mockApi({ "GET /api/auth/me": { ...ADMIN, features: [] }, "GET /api/settings/windows-sign-in": EMPTY });
   mountApp("/settings/windows-sign-in");
   await screen.findByRole("heading", { name: "Windows sign-in" });
-  const tabs = [...screen.getByRole("navigation", { name: "Settings" }).querySelectorAll("a")].map((a) => a.textContent);
-  expect(tabs).not.toContain("Action1");
-  expect(tabs).toContain("Device sweeps");
+  const nav = screen.getByRole("navigation", { name: "Settings" });
+  await userEvent.click(within(nav).getByRole("tab", { name: /^API \/ Integrations/ }));
+  const integrationTabs = [...nav.querySelectorAll("a")].map((a) => a.textContent);
+  expect(integrationTabs).not.toContain("Action1");
+  await userEvent.click(within(nav).getByRole("tab", { name: /^Monitoring/ }));
+  const monitoringTabs = [...nav.querySelectorAll("a")].map((a) => a.textContent);
+  expect(monitoringTabs).toContain("Device sweeps");
+});
+
+test("Connectors hub displays integration cards and opens the selected connector", async () => {
+  mockApi({
+    "GET /api/auth/me": ADMIN,
+    "GET /api/settings/windows-sign-in": EMPTY,
+    "GET /api/settings/meraki": { section: "meraki", fields: [] },
+    "GET /api/system/integrations": {
+      checked_at: new Date().toISOString(),
+      worker_state: "running",
+      items: [{ key: "meraki", label: "Meraki observations", state: "ok", enabled: true, configured: true, summary: "Last sync 6m ago", next_step: "", settings_path: "/settings/meraki", job_name: "meraki", evidence: "Worker pass", last_attempt_at: null, last_success_at: null, next_due_at: null }],
+      relays: [],
+    },
+  });
+  mountApp("/settings/windows-sign-in");
+  await screen.findByRole("heading", { name: "Windows sign-in" });
+  await userEvent.click(screen.getByRole("button", { name: "Connectors hub" }));
+  const hub = await screen.findByRole("region", { name: "Connectors hub" });
+  expect(within(hub).getByRole("heading", { name: "Cisco Meraki" })).toBeInTheDocument();
+  expect(within(hub).getByText("Connected")).toBeInTheDocument();
+  await userEvent.click(within(hub).getByRole("button", { name: "Configure" }));
+  await waitFor(() => expect(window.location.pathname).toBe("/settings/meraki"));
 });
 
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router";
+import { Link, NavLink } from "react-router";
 
 import { api, type User } from "../../api/client";
 import { SettingsForm } from "./SettingsForm";
@@ -16,6 +16,10 @@ export function EmailAdmin({ me }: { me: User }) {
         <h1>Email</h1>
       </div>
       <div className="stack">
+        <nav className="sub-tabs" aria-label="Email sections">
+          <NavLink to="/settings/email" end>Mailbox &amp; intake (Microsoft 365)</NavLink>
+          <NavLink to="/settings/requester-emails">Requester email templates</NavLink>
+        </nav>
         <section className="card stack" style={{ margin: 0 }}>
           <div className="lbl">Connection</div>
           <p className="muted" style={{ margin: 0 }}>
