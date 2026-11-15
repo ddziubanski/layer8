@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { NavLink } from "react-router";
 import type { User } from "../../api/client";
 import { SettingsForm } from "./SettingsForm";
 
@@ -21,22 +22,28 @@ const TEMPLATES: [string, string, string | null][] = [
 /** Settings > Requester emails: the wording of emails to requesters, with a preview as you type. */
 export function RequesterEmailsAdmin({ me }: { me: User }) {
   return (
-    <SettingsForm
-      me={me}
-      section="requester_emails"
-      title="Requester emails"
-      intro="What requesters get by email. Technicians' replies are sent as they write them; these are the automatic ones. The ticket tag goes in the subject, so replies land on the ticket."
-      preview={(values) => (
-        <div className="stack" aria-label="Preview" style={{ gap: 8 }}>
-          <div className="lbl" style={{ margin: 0 }}>Preview, with a sample ticket</div>
-          {TEMPLATES.map(([field, label, toggle]) => (
-            <div key={field} className="card" style={{ padding: 10 }}>
-              <strong className="small">{label}{toggle && !values[toggle] ? " (off)" : ""}</strong>
-              <pre className="email-preview">{fillSample(String(values[field] ?? ""))}</pre>
-            </div>
-          ))}
-        </div>
-      )}
-    />
+    <div className="stack">
+      <nav className="sub-tabs" aria-label="Email sections">
+        <NavLink to="/settings/email" end>Mailbox &amp; intake (Microsoft 365)</NavLink>
+        <NavLink to="/settings/requester-emails">Requester email templates</NavLink>
+      </nav>
+      <SettingsForm
+        me={me}
+        section="requester_emails"
+        title="Requester emails"
+        intro="What requesters get by email. Technicians' replies are sent as they write them; these are the automatic ones. The ticket tag goes in the subject, so replies land on the ticket."
+        preview={(values) => (
+          <div className="stack" aria-label="Preview" style={{ gap: 8 }}>
+            <div className="lbl" style={{ margin: 0 }}>Preview, with a sample ticket</div>
+            {TEMPLATES.map(([field, label, toggle]) => (
+              <div key={field} className="card" style={{ padding: 10 }}>
+                <strong className="small">{label}{toggle && !values[toggle] ? " (off)" : ""}</strong>
+                <pre className="email-preview">{fillSample(String(values[field] ?? ""))}</pre>
+              </div>
+            ))}
+          </div>
+        )}
+      />
+    </div>
   );
 }

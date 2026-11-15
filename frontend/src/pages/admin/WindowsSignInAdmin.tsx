@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
+import { NavLink } from "react-router";
 
 import { api, type User, type WindowsSignIn } from "../../api/client";
 import { useDropFiles } from "../../components/useDropFiles";
@@ -41,6 +42,11 @@ export function WindowsSignInAdmin({ me }: { me: User }) {
         <h1>Windows sign-in</h1>
       </div>
       <div className="stack">
+        <nav className="sub-tabs" aria-label="Sign-in sections">
+          <NavLink to="/settings/sign-in" end>Two-factor &amp; Microsoft Entra ID</NavLink>
+          <NavLink to="/settings/windows-sign-in">Windows sign-in (Kerberos keytab)</NavLink>
+          <NavLink to="/settings/branding">Sign-in page appearance</NavLink>
+        </nav>
         <p className="muted" style={{ margin: 0 }}>
           People opening the portal on a domain PC are signed in as their Windows user, with no password. It only signs in to the portal: the
           agent console always asks for a password.

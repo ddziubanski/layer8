@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Layer 8 — Setup Redesign Sample</title>
+<style>
+  :root {
+    --bg: #edf5f2;
+    --surface: #f8fdfb;
+    --ink: #172522;
+    --muted: #52655f;
+    --line: #bfcec8;
+    --line-soft: #e4efeb;
+    --brand: #006b61;
+    --on-brand: #ffffff;
+    --link: #006b61;
+    --material-low: #e4efeb;
+    --material-high: #d9e8e3;
+    --material-container: #9ff2df;
+    --material-on-container: #00382f;
+    --chip-g-bg: #b6f1e4;
+    --chip-g: #005449;
+    --chip-a-bg: #ffdf91;
+    --chip-a: #674700;
+    --chip-r-bg: #ffdad3;
+    --chip-r: #8b392f;
+    --chip-n-bg: #d9e8e3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  /* Demo switcher bar at very top */
+  .demo-bar {
+    background: #101b18;
+    color: #e2eee7;
+    padding: 10px 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    border-bottom: 1px solid #2b3c35;
+  }
+  .demo-bar strong { color: #79d8c5; margin-right: 6px; letter-spacing: .02em; }
+  .demo-bar button {
+    background: #20302a;
+    color: #b9ccc1;
+    border: 1px solid #40584b;
+    border-radius: 14px;
+    padding: 6px 13px;
+    font: 500 12px inherit;
+    cursor: pointer;
+  }
+  .demo-bar button.on {
+    background: #79d8c5;
+    color: #00382f;
+    border-color: #79d8c5;
+    font-weight: 600;
+  }
+
+  /* Material Console Shell */
+  .material-console {
+    padding: 0 28px 20px;
+  }
+  .material-topbar {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    min-height: 78px;
+    max-width: 1520px;
+    margin: auto;
+    padding: 12px 4px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.04em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--brand);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .command-trigger {
+    flex: 1;
+    max-width: 520px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 24px;
+    background: var(--material-high);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    font: inherit;
+  }
+  .command-trigger kbd {
+    background: var(--surface);
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 11px;
+    border: 1px solid var(--line);
+  }
+  .material-account {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .me-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--material-container);
+    color: var(--material-on-container);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+  }
+  .material-workspaces {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px 14px;
+    max-width: 1520px;
+    margin: auto;
+  }
+  .material-workspaces a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .material-workspaces a.active {
+    background: var(--material-container);
+    color: var(--material-on-container);
+    font-weight: 600;
+  }
+  .material-workspaces .portal-link {
+    margin-left: auto;
+    font-size: 12px;
+  }
+
+  .material-main {
+    background: var(--surface);
+    padding: 24px 28px 32px;
+    border-radius: 26px;
+    max-width: 1520px;
+    margin: auto;
+    min-height: 680px;
+  }
+  .material-workspace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .workspace-area {
+    color: var(--link);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+  .material-workspace-header h1 {
+    font-size: 26px;
+    letter-spacing: -.035em;
+    margin: 2px 0 0;
+  }
+
+  /* Category Bar (Proposed replacement for the single "Settings" local-nav pill) */
+  .setup-category-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .setup-category-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .setup-category-pills button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font: 500 13.5px inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .setup-category-pills button:hover {
+    background: var(--material-low);
+    color: var(--ink);
+  }
+  .setup-category-pills button.active {
+    background: var(--material-container);
+    color: var(--material-on-container);
+    font-weight: 600;
+  }
+  .pill-count {
+    font-size: 11px;
+    opacity: .75;
+    font-weight: 500;
+  }
+  .setup-find-wrap {
+    position: relative;
+    min-width: 240px;
+  }
+  .setup-find {
+    width: 100%;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    font: 13px inherit;
+    color: var(--ink);
+  }
+
+  /* Scoped Left Rail + Content Grid */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .settings-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: var(--material-low);
+    border-radius: 18px;
+  }
+  .settings-group-title {
+    padding: 4px 10px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .settings-navigation a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .settings-navigation a:hover {
+    background: var(--material-high);
+  }
+  .settings-navigation a.active {
+    background: var(--surface);
+    color: var(--brand);
+    font-weight: 600;
+    box-shadow: inset 3px 0 var(--brand), 0 1px 2px #0000000d;
+  }
+  .nav-sub {
+    display: block;
+    font-size: 11.5px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+
+  /* Content cards & controls */
+  .page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-head h2 {
+    margin: 0;
+    font-size: 21px;
+    letter-spacing: -.02em;
+  }
+  .page-head p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 20px;
+  }
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .lbl {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .chip.g { background: var(--chip-g-bg); color: var(--chip-g); }
+  .chip.a { background: var(--chip-a-bg); color: var(--chip-a); }
+  .chip.r { background: var(--chip-r-bg); color: var(--chip-r); }
+  .chip.n { background: var(--chip-n-bg); color: var(--muted); }
+
+  .btn {
+    background: var(--brand);
+    color: var(--on-brand);
+    border: 0;
+    border-radius: 20px;
+    padding: 9px 18px;
+    font: 600 13.5px inherit;
+    min-height: 38px;
+    cursor: pointer;
+  }
+  .btn2 {
+    background: var(--material-low);
+    color: var(--ink);
+    border: 1px solid transparent;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font: 500 13px inherit;
+    min-height: 38px;
+    cursor: pointer;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-weight: 500;
+    font-size: 13.5px;
+  }
+  .field input, .field select, .field textarea {
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    font: 13.5px inherit;
+    color: var(--ink);
+  }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .row-gap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  /* Sub-tabs inside a consolidated page */
+  .sub-tabs {
+    display: inline-flex;
+    background: var(--material-low);
+    padding: 4px;
+    border-radius: 14px;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .sub-tabs button {
+    border: 0;
+    background: transparent;
+    padding: 7px 14px;
+    border-radius: 10px;
+    font: 500 13px inherit;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .sub-tabs button.active {
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: 0 1px 2px #00000014;
+  }
+
+  /* Connector Hub Grid */
+  .connector-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .connector-card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .connector-card.active-card {
+    border-color: var(--brand);
+    background: #f2faf7;
+  }
+  .connector-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .connector-top h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+  .connector-meta {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  /* BEFORE view styles */
+  .before-local-nav {
+    display: flex;
+    gap: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .before-local-nav span {
+    background: var(--material-container);
+    color: var(--material-on-container);
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 12px;
+  }
+  .before-rail {
+    font-size: 13px;
+  }
+  .before-rail .settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-bottom: 10px;
+  }
+  .before-rail .settings-group-name {
+    padding: 4px 10px 6px;
+    font-size: 13px;
+    font-weight: 750;
+    text-transform: uppercase;
+    color: var(--link);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
+  }
+  .before-rail a {
+    color: var(--link);
+    text-decoration: underline;
+    padding: 2px 4px;
+  }
+  .callout-badge {
+    display: inline-block;
+    background: #ffdad3;
+    color: #8b392f;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <strong>SETUP GUI SAMPLE</strong>
+  <button id="btn-after-helpdesk" class="on" onclick="showView('after-helpdesk')">1. Proposed: Category Bar + Scoped Rail (Helpdesk)</button>
+  <button id="btn-after-integrations" onclick="showView('after-integrations')">2. Proposed: Integrations &amp; Monitoring Hub</button>
+  <button id="btn-after-auth" onclick="showView('after-auth')">3. Proposed: Consolidated Page (Sign-in &amp; SSO)</button>
+  <button id="btn-before" onclick="showView('before')">4. Current ("Before" — 44-item rail + CSS bug)</button>
+</div>
+
+<div class="material-console">
+  <header class="material-topbar">
+    <a href="#" class="brand"><span class="brand-mark">L8</span>Layer 8</a>
+    <div class="command-trigger"><span>Find a page, ticket, device, or setting…</span><kbd>Ctrl K</kbd></div>
+    <div class="material-account">
+      <span class="me-avatar">D</span>
+      <span><strong>Dan Dziubanski</strong><br><small class="muted">Administrator</small></span>
+      <button class="btn2">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="material-workspaces">
+    <a href="#">Helpdesk</a>
+    <a href="#">People &amp; devices</a>
+    <a href="#">Operations</a>
+    <a href="#">Library</a>
+    <a href="#" class="active">Setup</a>
+    <a href="#" class="portal-link">Self-service portal ↗</a>
+  </nav>
+
+  <main class="material-main">
+
+    <!-- ================= VIEW 1: PROPOSED HELPDESK CATEGORY ================= -->
+    <div id="view-after-helpdesk">
+      <div class="material-workspace-header">
+        <div>
+          <span class="workspace-area">YOUR WORKSPACE</span>
+          <h1>Setup</h1>
+        </div>
+        <span class="small muted">Layer 8 v1.19.2</span>
+      </div>
+
+      <!-- Category bar replaces the single "Settings" pill -->
+      <div class="setup-category-bar">
+        <div class="setup-category-pills" role="tablist" aria-label="Setup categories">
+          <button class="active" onclick="showView('after-helpdesk')">Helpdesk <span class="pill-count">8</span></button>
+          <button>Workflows <span class="pill-count">5</span></button>
+          <button onclick="showView('after-integrations')">Connectors &amp; Monitoring <span class="pill-count">10</span></button>
+          <button onclick="showView('after-auth')">People &amp; access <span class="pill-count">5</span></button>
+          <button>Look &amp; feel <span class="pill-count">3</span></button>
+          <button>System <span class="pill-count">6</span></button>
+        </div>
+        <div class="setup-find-wrap">
+          <input type="search" class="setup-find" placeholder="Filter all 37 settings…">
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <nav class="settings-navigation" aria-label="Helpdesk settings">
+          <div class="settings-group-title">Helpdesk</div>
+          <a href="#">
+            <div>Queues<span class="nav-sub">Routing, owners &amp; queue hours</span></div>
+            <span class="chip n">6</span>
+          </a>
+          <a href="#" class="active">
+            <div>Email &amp; replies<span class="nav-sub">Microsoft 365 intake &amp; templates</span></div>
+            <span class="chip g">OK</span>
+          </a>
+          <a href="#">
+            <div>Ticket rules<span class="nav-sub">Auto-triage, triggers &amp; SQL</span></div>
+            <span class="chip n">14</span>
+          </a>
+          <a href="#">
+            <div>Fields &amp; templates<span class="nav-sub">Departments, categories &amp; forms</span></div>
+          </a>
+          <a href="#">
+            <div>Canned replies<span class="nav-sub">Reusable technician snippets</span></div>
+          </a>
+          <a href="#">
+            <div>Desk hours &amp; SLA<span class="nav-sub">Schedules, holidays &amp; alerts</span></div>
+          </a>
+          <a href="#">
+            <div>Surveys<span class="nav-sub">Post-resolution CSAT</span></div>
+          </a>
+          <a href="#">
+            <div>Service notices<span class="nav-sub">Outage banners &amp; sign-in alerts</span></div>
+          </a>
+        </nav>
+
+        <div class="settings-content stack">
+          <div class="page-head">
+            <div>
+              <h2>Email &amp; automated replies</h2>
+              <p>Shared Microsoft 365 mailbox intake, allowed sender domains, and automated requester notifications.</p>
+            </div>
+            <div class="row-gap">
+              <button class="btn2">Test connection</button>
+              <button class="btn2">Check mailbox now</button>
+            </div>
+          </div>
+
+          <div class="sub-tabs" role="tablist">
+            <button class="active">Mailbox &amp; intake (Microsoft 365)</button>
+            <button>Requester email templates (3)</button>
+          </div>
+
+          <div class="card stack" style="max-width: 880px;">
+            <div class="row-gap" style="justify-content: space-between;">
+              <div>
+                <div class="lbl">Connection status</div>
+                <div><strong>helpdesk@corp.example</strong> · Checked 42 seconds ago · 0 queued</div>
+              </div>
+              <span class="chip g">Connected</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="field">Service desk mailbox
+                <input value="helpdesk@corp.example">
+              </label>
+              <label class="field">Check mailbox every (seconds)
+                <input type="number" value="60">
+              </label>
+              <label class="field">Directory (tenant) ID
+                <input value="8f4b2c10-55b4-4a1e-9d2a-001122334455">
+              </label>
+              <label class="field">Application (client) ID
+                <input value="2a91c800-12c9-4f00-b811-998877665544">
+              </label>
+            </div>
+
+            <label class="field">Accept email from domains (one per line)
+              <textarea rows="2">corp.example
+subsidiary.example</textarea>
+              <span class="muted small">Senders from these domains become requesters automatically; others are rejected unless they already have an account.</span>
+            </label>
+
+            <div class="row-gap" style="padding-top: 6px;">
+              <button class="btn">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: PROPOSED INTEGRATIONS & MONITORING HUB ================= -->
+    <div id="view-after-integrations" style="display:none">
+      <div class="material-workspace-header">
+        <div>
+          <span class="workspace-area">YOUR WORKSPACE</span>
+          <h1>Setup</h1>
+        </div>
+        <span class="small muted">Layer 8 v1.19.2</span>
+      </div>
+
+      <div class="setup-category-bar">
+        <div class="setup-category-pills">
+          <button onclick="showView('after-helpdesk')">Helpdesk <span class="pill-count">8</span></button>
+          <button>Workflows <span class="pill-count">5</span></button>
+          <button class="active" onclick="showView('after-integrations')">Connectors &amp; Monitoring <span class="pill-count">10</span></button>
+          <button onclick="showView('after-auth')">People &amp; access <span class="pill-count">5</span></button>
+          <button>Look &amp; feel <span class="pill-count">3</span></button>
+          <button>System <span class="pill-count">6</span></button>
+        </div>
+        <div class="setup-find-wrap">
+          <input type="search" class="setup-find" placeholder="Filter all 37 settings…">
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <nav class="settings-navigation" aria-label="Connectors navigation">
+          <div class="settings-group-title">Overview &amp; Agents</div>
+          <a href="#" class="active">
+            <div>All connectors<span class="nav-sub">Health &amp; configuration hub</span></div>
+            <span class="chip g">5 on</span>
+          </a>
+          <a href="#">
+            <div>Relays (Runners)<span class="nav-sub">LAN pull agents for AD/SNMP</span></div>
+            <span class="chip g">2 online</span>
+          </a>
+          <a href="#">
+            <div>API keys<span class="nav-sub">External scripts &amp; webhooks</span></div>
+            <span class="chip n">3</span>
+          </a>
+          <div class="settings-group-title" style="margin-top:8px;">Discovery &amp; Alerts</div>
+          <a href="#">
+            <div>IP address scans<span class="nav-sub">DHCP, DNS, SNMP &amp; stale IPs</span></div>
+          </a>
+          <a href="#">
+            <div>Sweeps &amp; lifecycle<span class="nav-sub">Stale devices &amp; Dell/Lenovo API</span></div>
+          </a>
+          <a href="#">
+            <div>Proactive tickets<span class="nav-sub">Expiring warranties &amp; contracts</span></div>
+          </a>
+        </nav>
+
+        <div class="settings-content stack">
+          <div class="page-head">
+            <div>
+              <h2>Connectors &amp; network integrations</h2>
+              <p>Instead of 8 separate vendor tabs in the sidebar, configure active and optional connectors from one hub.</p>
+            </div>
+          </div>
+
+          <div class="connector-grid">
+            <div class="connector-card active-card">
+              <div class="connector-top">
+                <div>
+                  <h3>Cisco Meraki</h3>
+                  <div class="muted small">Client observations, port diagnostics &amp; outage webhooks</div>
+                </div>
+                <span class="chip g">Connected</span>
+              </div>
+              <div class="connector-meta">
+                <span>4 networks · Last sync 6m ago (184 clients)</span>
+                <button class="btn2" style="min-height:32px;padding:5px 12px;">Configure</button>
+              </div>
+            </div>
+
+            <div class="connector-card active-card">
+              <div class="connector-top">
+                <div>
+                  <h3>Action1 Patching &amp; Remote</h3>
+                  <div class="muted small">Endpoint patch status, change windows &amp; remote desktop</div>
+                </div>
+                <span class="chip g">Connected</span>
+              </div>
+              <div class="connector-meta">
+                <span>North America · 312 endpoints synced</span>
+                <button class="btn2" style="min-height:32px;padding:5px 12px;">Configure</button>
+              </div>
+            </div>
+
+            <div class="connector-card active-card">
+              <div class="connector-top">
+                <div>
+                  <h3>Microsoft Teams &amp; Copilot</h3>
+                  <div class="muted small">Technician chat links, queue summaries &amp; SharePoint Library</div>
+                </div>
+                <span class="chip g">Connected</span>
+              </div>
+              <div class="connector-meta">
+                <span>Delegated app + Workflows webhook active</span>
+                <button class="btn2" style="min-height:32px;padding:5px 12px;">Configure</button>
+              </div>
+            </div>
+
+            <div class="connector-card active-card">
+              <div class="connector-top">
+                <div>
+                  <h3>Nutanix Prism Central</h3>
+                  <div class="muted small">VM inventory, power actions &amp; critical VM outage tickets</div>
+                </div>
+                <span class="chip a">1 warning</span>
+              </div>
+              <div class="connector-meta">
+                <span>prism.corp.example · 88 VMs (12 critical)</span>
+                <button class="btn2" style="min-height:32px;padding:5px 12px;">Configure</button>
+              </div>
+            </div>
+
+            <div class="connector-card">
+              <div class="connector-top">
+                <div>
+                  <h3>Ubiquiti UniFi</h3>
+                  <div class="muted small">Gateways, switches, APs &amp; guest Wi-Fi hotspot vouchers</div>
+                </div>
+                <span class="chip n">Off</span>
+              </div>
+              <div class="connector-meta">
+                <span>Cloud (api.ui.com) or local UniFi OS console</span>
+                <button class="btn2" style="min-height:32px;padding:5px 12px;">Set up</button>
+              </div>
+            </div>
+
+            <div class="connector-card">
+              <div class="connector-top">
+                <div>
+                  <h3>Juniper Junos Switches</h3>
+                  <div class="muted small">Switch MAC/ARP tables via LAN relay REST API</div>
+                </div>
+                <span class="chip n">Off</span>
+              </div>
+              <div class="connector-meta">
+                <span>No switches configured</span>
+                <button class="btn2" style="min-height:32px;padding:5px 12px;">Set up</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 3: CONSOLIDATED SIGN-IN & SSO ================= -->
+    <div id="view-after-auth" style="display:none">
+      <div class="material-workspace-header">
+        <div>
+          <span class="workspace-area">YOUR WORKSPACE</span>
+          <h1>Setup</h1>
+        </div>
+        <span class="small muted">Layer 8 v1.19.2</span>
+      </div>
+
+      <div class="setup-category-bar">
+        <div class="setup-category-pills">
+          <button onclick="showView('after-helpdesk')">Helpdesk <span class="pill-count">8</span></button>
+          <button>Workflows <span class="pill-count">5</span></button>
+          <button onclick="showView('after-integrations')">Connectors &amp; Monitoring <span class="pill-count">10</span></button>
+          <button class="active" onclick="showView('after-auth')">People &amp; access <span class="pill-count">5</span></button>
+          <button>Look &amp; feel <span class="pill-count">3</span></button>
+          <button>System <span class="pill-count">6</span></button>
+        </div>
+        <div class="setup-find-wrap">
+          <input type="search" class="setup-find" placeholder="Filter all 37 settings…">
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <nav class="settings-navigation" aria-label="People and access settings">
+          <div class="settings-group-title">People &amp; access</div>
+          <a href="#">
+            <div>Users<span class="nav-sub">Technicians, admins &amp; requesters</span></div>
+            <span class="chip n">310</span>
+          </a>
+          <a href="#">
+            <div>Groups<span class="nav-sub">Local &amp; synced AD groups</span></div>
+            <span class="chip n">18</span>
+          </a>
+          <a href="#">
+            <div>Permissions<span class="nav-sub">Delegated technician roles</span></div>
+          </a>
+          <a href="#">
+            <div>Directory (Active Directory)<span class="nav-sub">LDAPS sync, OUs &amp; account creation</span></div>
+            <span class="chip g">OK</span>
+          </a>
+          <a href="#" class="active">
+            <div>Sign-in &amp; SSO<span class="nav-sub">2FA, Entra ID &amp; Windows Kerberos</span></div>
+          </a>
+        </nav>
+
+        <div class="settings-content stack">
+          <div class="page-head">
+            <div>
+              <h2>Sign-in &amp; Single Sign-On</h2>
+              <p>Combines local two-factor policy, Microsoft Entra ID, and Windows integrated Kerberos sign-in on one page.</p>
+            </div>
+          </div>
+
+          <div class="sub-tabs" role="tablist">
+            <button class="active">Two-factor &amp; Microsoft Entra ID</button>
+            <button>Windows sign-in (Kerberos keytab)</button>
+            <button>Sign-in page appearance</button>
+          </div>
+
+          <div class="card stack" style="max-width: 880px;">
+            <div class="lbl">Two-factor authentication (TOTP)</div>
+            <label class="row-gap"><input type="checkbox" checked> Require two-factor sign-in for admins with a local password</label>
+            <label class="row-gap"><input type="checkbox" checked> Require two-factor sign-in for every agent and admin</label>
+            <hr style="border:0;border-top:1px solid var(--line);margin:4px 0;">
+            <div class="lbl">Microsoft Entra ID (OIDC)</div>
+            <label class="row-gap"><input type="checkbox" checked> Enable "Sign in with Microsoft" button</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="field">Tenant ID
+                <input value="8f4b2c10-55b4-4a1e-9d2a-001122334455">
+              </label>
+              <label class="field">Application (client) ID
+                <input value="9012f3a1-77e1-4c9a-8812-334455667788">
+              </label>
+            </div>
+            <div class="row-gap" style="padding-top:6px;">
+              <button class="btn">Save sign-in settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 4: CURRENT ("BEFORE") ================= -->
+    <div id="view-before" style="display:none">
+      <div class="material-workspace-header">
+        <div>
+          <span class="workspace-area">YOUR WORKSPACE</span>
+          <h1>Setup <span class="callout-badge">Current UI: Redundant bar + 44-item rail + broken .main CSS selector</span></h1>
+        </div>
+        <span class="small muted">Layer 8</span>
+      </div>
+
+      <nav class="before-local-nav">
+        <span>Settings</span>
+      </nav>
+
+      <div class="settings-grid">
+        <nav class="before-rail" aria-label="Settings">
+          <input type="search" placeholder="Find a setting" style="width:100%;padding:8px;border-radius:10px;border:1px solid var(--line);margin-bottom:10px;">
+          <div class="settings-group">
+            <div class="settings-group-name">Helpdesk</div>
+            <a href="#">Queues</a><a href="#">Ticket rules</a><a href="#">Ticket fields</a><a href="#">Canned replies</a><a href="#">Ticket templates</a><a href="#">Library</a><a href="#">Requester emails</a><a href="#">Desk hours and SLA</a><a href="#">Surveys</a><a href="#">Notices</a>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-name">Workflows</div>
+            <a href="#">Checklists</a><a href="#">Onboarding templates</a><a href="#">Changes</a><a href="#">Problems</a><a href="#">Purchasing</a>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-name">Monitoring</div>
+            <a href="#">Meraki</a><a href="#">UniFi</a><a href="#">Juniper</a><a href="#">Nutanix</a><a href="#">IP address scans</a><a href="#">Device sweeps</a><a href="#">Proactive tickets</a>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-name">API / Integrations</div>
+            <a href="#">API keys</a><a href="#">Relays</a><a href="#">Mailbox (Microsoft 365)</a><a href="#">Teams</a><a href="#">Action1</a><a href="#">Warranty lookups</a>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-name">People and access</div>
+            <a href="#">Users</a><a href="#">Groups</a><a href="#">Permissions</a><a href="#">Directory (AD)</a><a href="#">Sign-in</a><a href="#">Windows sign-in</a>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-name">Look and feel</div>
+            <a href="#">Branding</a><a href="#">Modules</a><a href="#">Remote displays</a>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-name">System</div>
+            <a href="#">General</a><a href="#">Updates</a><a href="#">Backup</a><a href="#">Imports</a><a href="#">Status</a><a href="#">Log</a>
+          </div>
+        </nav>
+
+        <div class="settings-content stack">
+          <div class="page-head">
+            <h2>General</h2>
+          </div>
+          <div class="card stack" style="max-width:880px;">
+            <p class="muted" style="margin:0">How people reach the service desk, ticket numbers, and app-wide limits.</p>
+            <label class="field">Portal address<input value="https://helpdesk.corp.example"></label>
+            <label class="field">Sign-in lasts (hours)<input value="12"></label>
+            <label class="field">Largest attachment (MB)<input value="25"></label>
+            <label class="field">Ticket label<input value="#{n}"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function showView(name) {
+  for (const id of ['after-helpdesk', 'after-integrations', 'after-auth', 'before']) {
+    document.getElementById('view-' + id).style.display = (id === name) ? 'block' : 'none';
+    document.getElementById('btn-' + id).classList.toggle('on', id === name);
+  }
+}
+const initial = new URLSearchParams(location.search).get('view');
+if (initial) showView(initial);
+</script>
+</body>
+</html>
