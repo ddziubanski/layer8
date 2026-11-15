@@ -44,12 +44,14 @@ STATUS_LABELS = {
 
 # Receiving codes: easy to read out and type (no 0/O, 1/I/L).
 CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+# 31^8: about 850 billion. Older POs keep their 6-character codes.
+CODE_LENGTH = 8
 
 
 def new_code() -> str:
     import secrets
 
-    return "".join(secrets.choice(CODE_ALPHABET) for _ in range(6))
+    return "".join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
 
 
 def find_by_number(session: Session, text: str) -> PurchaseOrder | None:

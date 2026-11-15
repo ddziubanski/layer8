@@ -55,6 +55,7 @@ def isolated_settings(monkeypatch, tmp_path):
     # SQL features are opt-in (Settings > General); most tests exercise them.
     monkeypatch.setattr(settings, "sql_enabled", True)
     monkeypatch.setattr(settings, "portal_url", "")
+    monkeypatch.setattr(settings, "public_receiving", True)  # off by default; its tests use it
     monkeypatch.setattr(settings, "storage_dir", tmp_path / "storage")
     monkeypatch.setattr(settings, "secrets_dir", tmp_path / "secrets")
     # Most tests identify users with X-Dev-User; test_auth.py covers real sign-in.

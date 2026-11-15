@@ -158,7 +158,7 @@ npm run dev
 
 Open:
 
-- API docs: `http://localhost:8000/docs`
+- API description (OpenAPI): `http://localhost:8000/api/openapi.json` once signed in as a technician, or `python -m app.cli openapi`
 - Frontend: `http://localhost:5173`
 
 ## 7. First-run checklist after install

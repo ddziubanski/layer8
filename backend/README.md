@@ -18,7 +18,7 @@ cp ../.env.example .env
 .venv/bin/uvicorn app.main:app --reload
 ```
 
-API docs: http://localhost:8000/docs. Sign in with `POST /api/auth/login`; requests that change data through the session cookie must send `X-Helpdesk-CSRF: 1`. With `HELPDESK_DEV_AUTH=true` (development only), an `X-Dev-User: <email>` header also works, without a password.
+API description (OpenAPI): `GET /api/openapi.json` as a signed-in technician, or `python -m app.cli openapi`. Sign in with `POST /api/auth/login`; requests that change data through the session cookie must send `X-Helpdesk-CSRF: 1`. With `HELPDESK_DEV_AUTH=true` (development only), an `X-Dev-User: <email>` header also works, without a password.
 
 ## Agent UI
 

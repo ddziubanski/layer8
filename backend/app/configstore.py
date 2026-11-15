@@ -350,6 +350,7 @@ SECTIONS: dict[str, list[Field]] = {
         Field("source_repository", "Source code address", "Where people can get Layer 8's source, linked in the console, portal and sign-in page beside the source download (the AGPL asks you to offer the source of what you run). A modified copy should point at its own repository. Empty: the download link only.", check=_http_url),
         Field("session_hours", "Sign-in lasts (hours)", "People are signed out after this long without using the app.", check=_between(1, 720)),
         Field("max_upload_mb", "Largest attachment (MB)", "Per file, from the portal and the agent console.", check=_between(1, 1024)),
+        Field("portal_blocked_file_types", "File types requesters can't attach", "Extensions, separated by commas, refused when a requester attaches a file in the portal: programs, scripts and disk images by default. Uploads aren't scanned for malware, so this keeps the riskiest kinds away from staff. Technicians aren't limited, and email attachments are left to your mail filtering. Empty: no limit.", check=_length(0, 1000)),
         Field("ticket_first_number", "First ticket number", "The number the next ticket gets, e.g. 10000. Can only move forward once there are tickets.", check=_between(1, 10**12)),
         Field("po_first_number", "First purchase order number", "The number the next purchase order gets. Can only move forward once there are POs.", check=_between(1, 10**12)),
         Field("po_label_format", "Purchase order label", "How PO numbers are shown, like the ticket label: e.g. PO-{n:05}, {yyyy}-PO{n}.", check=_label_format),
@@ -426,7 +427,7 @@ SECTIONS: dict[str, list[Field]] = {
         ),
     ],
     "purchasing": [
-        Field("public_receiving", "Receiving page without signing in", "The receiving clerk opens /receive (or scans the QR code on a PO's receiving sheet), enters the PO number and its receiving code, and marks what arrived. Off: receiving only in the console."),
+        Field("public_receiving", "Receiving page without signing in", "The receiving clerk opens /receive (or scans the QR code on a PO's receiving sheet), enters the PO number and its receiving code, and marks what arrived. Off (the default): receiving only in the console. It answers anyone who can reach this server, so leave it off on a server open to the internet unless you need it."),
         Field("receiving_email", "Receiving's email address", "The receiving dock or clerk. They get a heads-up when a PO is ordered: what's coming, when, and the receiving page link and code.", check=_email),
         Field("receiving_heads_up", "Send receiving a heads-up when a PO is ordered", "Also possible from each PO with \"Send heads-up\"."),
         Field("receiving_notify", "Also tell this address when something arrives", "E.g. the service desk mailbox. The PO's requester and approver are always told.", check=_email),

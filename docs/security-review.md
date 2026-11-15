@@ -6,8 +6,8 @@ What an outsider can reach on a Layer 8 server that is open to the internet, wha
 |---|---|
 | Reviewed | Layer 8 1.19.1 (`7d6e873`), 14 November 2026 |
 | Kind | Source review plus targeted tests against the application. Not a penetration test. |
-| Fixed in | 1.19.2: F1 to F4. F5 to F8 are settings, setup steps or low-severity items and remain open. |
-| Verdict | No way in without credentials was found. With 1.19.2 and the checklist below, the application's own weaknesses found here are closed or have a setting. **An access gateway or VPN in front is still the recommended way to expose it**: this was a source review, not a penetration test, and most of the application sits behind a staff sign-in that this review did not cover. |
+| Fixed in | 1.19.2: F1 to F4. 1.19.3: F5 to F7, and a mitigation for F8. |
+| Verdict | No way in without credentials was found. With 1.19.3 and the checklist below, the weaknesses found here are closed, have a setting, or are accepted with the reason given. **An access gateway or VPN in front is still the recommended way to expose it**: this was a source review, not a penetration test, and most of the application sits behind a staff sign-in that this review did not cover. |
 
 Layer 8 is built for an internal network: the same site holds the agent console, admin settings, the script runner and, on some installs, rights to change Active Directory. Prefer putting it behind something that checks identity first (a VPN, Entra application proxy or a similar access gateway).
 
@@ -36,6 +36,7 @@ These 30 routes are the whole surface without a user session. `backend/tests/tes
 | Route | What guards it | Result |
 |---|---|---|
 | `GET /api/health`, `/api/about`, `/api/source` | Nothing; liveness, version and the AGPL source offer | OK; see F7 |
+| `GET /api/openapi.json` (from 1.19.3) | Staff sign-in; not one of the 30 | OK |
 | `GET /{path}` | Static files; the path must stay inside the frontend folder | OK |
 | `POST /api/auth/login` | Argon2 passwords; 5 wrong tries lock an account for that address for 15 minutes; 30 failures per address per 15 minutes; one answer for every failure | OK; F1, F3 and F4 fixed in 1.19.2 |
 | `POST /api/auth/logout`, `GET /api/auth/options`, `GET /api/branding`, `GET /api/branding/files/{name}` | Nothing sensitive; image names are fixed slots | OK |
@@ -45,7 +46,7 @@ These 30 routes are the whole surface without a user session. `backend/tests/tes
 | `GET/POST /api/integrations/tickets…` | API key (256-bit, stored hashed) or a staff session | OK |
 | `GET /api/meraki/oauth/callback` | Hashed single-use state | OK |
 | `POST /api/meraki/webhooks` | Shared secret of 32+ characters, constant-time compare; 503 unless configured; body and rate limits | OK |
-| `POST /api/public/receiving/*` | PO number plus a 6-character receiving code; 10 wrong tries per address per 15 minutes | See F5 |
+| `POST /api/public/receiving/*` | Off by default from 1.19.3. PO number plus a receiving code (8 characters from 1.19.3); 10 wrong tries per address per 15 minutes | OK; F5 fixed in 1.19.3 |
 | `GET /api/public/wallboard` | Bearer token (256-bit, stored hashed), revocable | OK |
 | `POST /api/remote-sessions/{id}/end` | One-time token (stored hashed) | OK |
 | `POST /api/runner/*` | Relay token (256-bit, stored hashed); a relay can only touch its own runs | OK |
@@ -71,10 +72,10 @@ Also checked and found sound:
 | F2 | High | Two-factor sign-in is optional, and can only be required of local admins | Setting added in 1.19.2; turn it on |
 | F3 | Medium | An outsider who knows a login can keep that account locked out | Fixed in 1.19.2 |
 | F4 | Medium | Sign-in and receiving limits are per worker process and forgotten on restart | Fixed in 1.19.2 |
-| F5 | Medium | The no-sign-in receiving page is on by default | Open: a setting |
-| F6 | Medium | A server exposed before setup is finished accepts `admin` / `admin` | Open: a setup step |
-| F7 | Low | The API description and exact version are public | Open |
-| F8 | Low | Up to 25 MB per attachment, unscanned, from any signed-in user | Open: accepted risk to revisit |
+| F5 | Medium | The no-sign-in receiving page is on by default | Fixed in 1.19.3 |
+| F6 | Medium | A server exposed before setup is finished accepts `admin` / `admin` | Fixed in 1.19.3 |
+| F7 | Low | The API description and exact version are public | Description fixed in 1.19.3; version accepted |
+| F8 | Low | Up to 25 MB per attachment, unscanned, from any signed-in user | Mitigated in 1.19.3; scanning stays out of scope |
 
 **F1. Large requests are read before sign-in is checked (high).** nginx accepts bodies up to 1 GB on every path, and the API reads and parses a JSON body before it looks at the session. In a test, a 200 MB body sent to `/api/auth/login` with no session was read in full and grew the process by about 800 MB before it was refused. A handful of such requests at once can exhaust the server's memory. *Fixed in 1.19.2:* the API refuses anything over 4 MB before reading it unless the path is an upload, and doesn't read an upload until the caller is signed in (`backend/app/bodylimit.py`). New installs also get an Nginx site that allows large requests only on the upload paths, unbuffered. **Servers installed before 1.19.2 keep their Nginx site**, which still accepts 1 GB on every path and stores it on disk before the API refuses it: copy the `client_max_body_size` line and the uploads `location` from `install/files/nginx-helpdesk.conf` into `/etc/nginx/sites-available/helpdesk`, then `nginx -t && systemctl reload nginx`.
 
@@ -84,21 +85,21 @@ Also checked and found sound:
 
 **F4. Limits live in memory, per worker (medium).** The API runs two worker processes, each counting failures on its own, and a restart clears the counts. The real limits are about double what the code says. *Fixed in 1.19.2:* counts are kept in the database (`sign_in_attempts`), shared by the workers and kept across restarts; IPv6 clients are counted by /64. Not done: `limit_req` in Nginx as a second layer.
 
-**F5. Public receiving page on by default (medium).** `/receive` lets anyone with a PO number and its 6-character code (about 887 million possibilities) mark items received and upload a file of up to 15 MB. Guessing is limited per address, so a guess is unlikely to land, but PO numbers run in sequence and the page serves no purpose on the internet for most sites. *Fix:* turn it off in Settings > Purchasing before exposure unless it is needed; consider a longer code.
+**F5. Public receiving page on by default (medium).** `/receive` lets anyone with a PO number and its 6-character code (about 887 million possibilities) mark items received and upload a file of up to 15 MB. Guessing is limited per address, so a guess is unlikely to land, but PO numbers run in sequence and the page serves no purpose on the internet for most sites. *Fixed in 1.19.3:* the page is off unless turned on in Settings > Purchasing. An installation that already has purchase orders and never chose keeps it on, so printed receiving sheets go on working: **turn it off there if you don't use it.** New receiving codes are 8 characters (about 850 billion possibilities); older POs keep theirs.
 
-**F6. First-run sign-in (medium).** Until a real admin exists, `admin` / `admin` signs in and must then set a password. Whoever reaches a fresh server first owns it. ISO installs set the admin during setup, so this concerns manual installs. Demo installs also carry a published demo sign-in and must never be exposed. *Fix:* finish setup before opening the firewall; consider allowing first-run sign-in only from the local network.
+**F6. First-run sign-in (medium).** Until a real admin exists, `admin` / `admin` signs in and must then set a password. Whoever reaches a fresh server first owns it. ISO installs set the admin during setup, so this concerns manual installs. Demo installs also carry a published demo sign-in and must never be exposed. *Fixed in 1.19.3:* first-run sign-in is accepted only from a loopback, private or link-local address, never from the internet. A server with only a public address is set up with `python -m app.cli create-admin` on the server itself. The demo sign-in is unchanged: never expose a demo install.
 
-**F7. API description and version are public (low).** `/docs`, `/redoc` and `/openapi.json` answer without sign-in, and `/api/about` gives the exact version. The source is public anyway, but this tells an outsider precisely which release to look up. *Fix:* require sign-in for the API description; consider leaving the version out of `/api/about` for visitors who aren't signed in.
+**F7. API description and version are public (low).** `/docs`, `/redoc` and `/openapi.json` answer without sign-in, and `/api/about` gives the exact version. The source is public anyway, but this tells an outsider precisely which release to look up. *In 1.19.3:* `/docs`, `/redoc` and `/openapi.json` are gone; the description is at `/api/openapi.json` for signed-in staff. *Accepted:* `/api/about` still gives the version without sign-in. Open browsers use it to notice an update and reload, the AGPL source offer sits beside it, and releases are public anyway.
 
-**F8. Unscanned uploads (low; an accepted risk on an internal network).** Portal and agent uploads aren't scanned for malware. Internally that was accepted because email is scanned before delivery. With the portal on the internet, anyone with an account can hand staff a file. *Fix:* decide again for an exposed portal; restrict file types or add scanning at the gateway.
+**F8. Unscanned uploads (low; an accepted risk on an internal network).** Portal and agent uploads aren't scanned for malware. Internally that was accepted because email is scanned before delivery. With the portal on the internet, anyone with an account can hand staff a file. *In 1.19.3:* Settings > General has **File types requesters can't attach**: programs, scripts and disk images are refused by default when a requester uploads in the portal. Staff aren't limited. *Accepted:* files still aren't scanned; malware scanning is deliberately not part of Layer 8, so for an exposed portal scan at the gateway or on the workstations that open the files.
 
 ## Before exposing a server
 
-1. Run 1.19.2 or later. Put an access gateway or VPN in front if you can.
+1. Run 1.19.3 or later. Put an access gateway or VPN in front if you can.
 1. On a server installed before 1.19.2, update the Nginx site by hand (see F1).
 2. Use a certificate browsers trust, and open port 80 only together with 443.
 3. Turn on **Require two-factor sign-in for every agent and admin** (Settings > Sign-in).
-4. Turn off the public receiving page unless you need it.
+4. Check that the public receiving page is off (Settings > Purchasing) unless you need it.
 5. Finish setup (a real admin, no demo data) before opening the firewall.
 6. Keep the server updated from Settings > Updates, and keep backups off the server.
 

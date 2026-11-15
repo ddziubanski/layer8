@@ -44,6 +44,8 @@ def upload_attachment(
     comment_id: int | None = Form(default=None),
 ):
     ticket, staff = ticket_access(session, ticket_id, user)
+    if not staff and blocked_type(file.filename or ""):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "That kind of file can't be attached here. If the service desk needs it, ask them how to send it")
     comment = session.get(Comment, comment_id) if comment_id is not None else None
     if comment_id is not None and comment is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Comment not found")
@@ -67,6 +69,14 @@ def upload_attachment(
     )
     session.commit()
     return attachment
+
+
+def blocked_type(filename: str) -> bool:
+    """Settings > General: file types requesters can't attach, by the last extension. Trailing dots
+    and spaces are ignored, as Windows drops them ("setup.exe." opens as setup.exe)."""
+    blocked = {t.strip().lstrip(".").lower() for t in settings.portal_blocked_file_types.replace(";", ",").split(",") if t.strip()}
+    parts = [p.strip().lower() for p in filename.strip().rstrip(". ").split(".")[1:]]
+    return bool(blocked and parts and parts[-1] in blocked)
 
 
 def _load_file(session, attachment_id: uuid.UUID, user):
