@@ -203,7 +203,8 @@ function ProblemRecord({ problemId }: { problemId: string }) {
   }
   if (isNew) return <ProblemEditor />;
   if (!Number.isSafeInteger(id) || id < 1) return <p className="error">Problem not found.</p>;
-  if (problem.error) return <p className="error" role="alert">{problem.error.message}</p>;
+  // A failed background refetch keeps the problem on screen; only a failed first load shows the error.
+  if (!problem.data && problem.error) return <p className="error" role="alert">{problem.error.message}</p>;
   if (!problem.data) return <p className="muted">Loading problem…</p>;
   return <ProblemEditor key={problem.data.updated_at} problem={problem.data} />;
 }

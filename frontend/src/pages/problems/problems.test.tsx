@@ -58,6 +58,12 @@ test("create a problem, link a visible ticket and retain it on save", async () =
   await userEvent.click(screen.getByRole("button", { name: "Create problem" }));
   await waitFor(() => expect(calls.find((call) => call.method === "POST")!.body).toMatchObject({ title: "Wi-Fi drops after resume", ticket_ids: [4821] }));
   expect(await screen.findByRole("heading", { name: /PRB-00009 Wi-Fi drops after resume/ })).toBeInTheDocument();
+  // The record page refetches the new problem; that request isn't mocked here and fails.
+  // A failed refetch must not replace the problem already on screen.
+  await waitFor(() => expect(calls.some((call) => call.method === "GET" && call.path.startsWith("/api/problems/9"))).toBe(true));
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  expect(screen.getByRole("heading", { name: /PRB-00009 Wi-Fi drops after resume/ })).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
 
 test("problem updates are posted as internal investigation notes", async () => {
