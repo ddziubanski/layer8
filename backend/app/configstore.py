@@ -322,6 +322,7 @@ SECTIONS: dict[str, list[Field]] = {
     ],
     "signin": [
         Field("totp_required_admins", "Require two-factor sign-in for admins with a local password", "They set up an authenticator app (My preferences > Two-factor sign-in) the next time they sign in, before they can do anything else. Anyone can turn two-factor on for themselves either way."),
+        Field("totp_required_staff", "Require two-factor sign-in for every agent and admin", "Directory accounts too: anyone with console access who signs in with a password sets up an authenticator app the next time they sign in, before they can do anything else. Signing in with Microsoft is left to Entra's own MFA and Conditional Access. Turn this on before the service desk can be reached from the internet."),
         Field("entra_sign_in_enabled", "Sign in with Microsoft (Entra ID)", "Adds a Sign in with Microsoft button. Only people who already have an account here can use it, matched by their Entra ID object or by UPN (not the email claim); accounts with a local password (the break-glass admin) can't. Entra's own MFA and Conditional Access apply. See docs/entra-sign-in.md."),
         Field("entra_tenant_id", "Tenant ID", "Your Microsoft Entra tenant (directory) ID.", check=_guid),
         Field("entra_client_id", "Application (client) ID", "A separate app registration for sign-in, with the redirect URI https://<portal address>/api/auth/entra/callback (Web).", check=_guid),

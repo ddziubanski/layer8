@@ -20,7 +20,7 @@ from fastapi import Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app import sla
+from app import attempts, sla
 from app.config import settings
 from app.db import get_session
 from app.models import AuthSource, User, UserRole, UserSession
@@ -34,7 +34,11 @@ COOKIE = "helpdesk_session"
 CSRF_HEADER = "X-Helpdesk-CSRF"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 MIN_PASSWORD = 12
+# Wrong passwords (or codes) for one account from one address before that pair is locked out.
 MAX_FAILED_LOGINS = 5
+# ...and from all addresses together before the account is: then it only opens from addresses it
+# has signed in from in the last 30 days, so a stranger can't lock someone out of their own desk.
+ACCOUNT_MAX_FAILED = 20
 LOCKOUT = timedelta(minutes=15)
 # Only write last_seen_at this often, not on every request.
 TOUCH_EVERY = timedelta(minutes=5)
@@ -92,6 +96,7 @@ def set_password(session: Session, user: User, password: str) -> None:
     user.must_change_password = False
     user.failed_logins = 0
     user.locked_until = None
+    attempts.forget(session, user.id)
     end_sessions(session, user)
 
 
@@ -113,17 +118,30 @@ def _find_login(session: Session, login: str) -> User | None:
     )
 
 
-def _failed(session: Session, user: User | None, now: datetime) -> None:
+def _failed(session: Session, user: User | None, now: datetime, address: str | None = None) -> None:
     if user is None:
         return
-    user.failed_logins += 1
-    if user.failed_logins >= MAX_FAILED_LOGINS:
+    attempts.record(session, attempts.SIGN_IN, address, now, user_id=user.id)
+    if attempts.account_failures(session, user.id, now - LOCKOUT) >= ACCOUNT_MAX_FAILED:
         user.locked_until = now + LOCKOUT
-        user.failed_logins = 0
     session.commit()
 
 
-def authenticate(session: Session, login: str, password: str, now: datetime) -> User:
+def locked_out(session: Session, user: User, now: datetime, address: str | None = None) -> bool:
+    """Too many wrong tries: by this account from this address, or by this account from anywhere
+    while the caller's address isn't one it has signed in from lately."""
+    if attempts.pair_failures(session, user.id, address, now - LOCKOUT) >= MAX_FAILED_LOGINS:
+        return True
+    return bool(user.locked_until and user.locked_until > now and not attempts.known(session, user.id, address, now))
+
+
+def signed_in(session: Session, user: User, now: datetime, address: str | None = None) -> None:
+    """A complete sign-in (password, and code if there is one) from this address."""
+    attempts.record(session, attempts.SIGN_IN, address, now, user_id=user.id, ok=True)
+    attempts.prune(session, now)
+
+
+def authenticate(session: Session, login: str, password: str, now: datetime, address: str | None = None) -> User:
     """The user for these credentials, or AuthError with a message safe to show.
 
     Local accounts check their Argon2 hash. Everyone else signs in against the
@@ -135,7 +153,7 @@ def authenticate(session: Session, login: str, password: str, now: datetime) -> 
         if first is not None:
             return first
     user = _find_login(session, login)
-    if user is not None and user.locked_until and user.locked_until > now:
+    if user is not None and locked_out(session, user, now, address):
         # The same answer as a wrong password: a lockout mustn't show which accounts exist.
         raise generic
 
@@ -143,27 +161,25 @@ def authenticate(session: Session, login: str, password: str, now: datetime) -> 
         try:
             _hasher.verify(user.password_hash, password)
         except (VerificationError, InvalidHashError):
-            _failed(session, user, now)
+            _failed(session, user, now, address)
             raise generic from None
         if not user.is_active:
             raise generic
         if _hasher.check_needs_rehash(user.password_hash):
             user.password_hash = _hasher.hash(password)
-        user.failed_logins = 0
-        user.locked_until = None
         return user
 
-    return _directory_sign_in(session, user, login, password, now, generic)
+    return _directory_sign_in(session, user, login, password, now, generic, address)
 
 
-def _directory_sign_in(session: Session, user: User | None, login: str, password: str, now: datetime, generic: AuthError) -> User:
+def _directory_sign_in(session: Session, user: User | None, login: str, password: str, now: datetime, generic: AuthError, address: str | None = None) -> User:
     from app.directory import sync
     from app.directory.types import DirectoryError
 
     directory = sync.get_directory() if password else None
     if directory is None and password and user is not None and user.local_fallback:
         # Directory settings removed: same as the directory being down.
-        return _fallback(session, user, password, now, generic)
+        return _fallback(session, user, password, now, generic, address)
     if directory is None:
         # Same work as a real check, so timing doesn't reveal which logins exist.
         try:
@@ -179,29 +195,25 @@ def _directory_sign_in(session: Session, user: User | None, login: str, password
     except DirectoryError as exc:
         log.warning("Directory unavailable for %s's sign-in: %s", login, exc)
         if user is not None and user.local_fallback:
-            return _fallback(session, user, password, now, generic)
+            return _fallback(session, user, password, now, generic, address)
         raise AuthError("Sign-in is unavailable right now. Try again shortly.") from None
     if not ok or user is None:
         session.rollback()
-        _failed(session, _find_login(session, login), now)
+        _failed(session, _find_login(session, login), now, address)
         raise generic
-    user.failed_logins = 0
-    user.locked_until = None
     return user
 
 
-def _fallback(session: Session, user: User, password: str, now: datetime, generic: AuthError) -> User:
+def _fallback(session: Session, user: User, password: str, now: datetime, generic: AuthError, address: str | None = None) -> User:
     """The directory can't be reached: a technician with a fallback password may still sign in."""
     if not (user.is_active and user.password_hash and user.role in (UserRole.agent, UserRole.admin)):
         raise AuthError("Sign-in is unavailable right now. Try again shortly.")
     try:
         _hasher.verify(user.password_hash, password)
     except (VerificationError, InvalidHashError):
-        _failed(session, user, now)
+        _failed(session, user, now, address)
         raise generic from None
     log.warning("Directory unavailable: %s signed in with their local fallback password", user.email)
-    user.failed_logins = 0
-    user.locked_until = None
     return user
 
 
@@ -274,17 +286,20 @@ def set_sign_in(session: Session, user: User, mode: str, password: str | None) -
         raise AuthError(f"Unknown sign-in mode {mode!r}")
     user.failed_logins = 0
     user.locked_until = None
+    attempts.forget(session, user.id)
     end_sessions(session, user)
 
 
-def start_session(session: Session, user: User, response: Response, now: datetime, *, portal_only: bool = False) -> None:
+def start_session(session: Session, user: User, response: Response, now: datetime, *, portal_only: bool = False, via_microsoft: bool = False) -> None:
     token = secrets.token_urlsafe(32)
     session.add(
         UserSession(
-            token_hash=_hash_token(token), user_id=user.id, expires_at=now + timedelta(hours=settings.session_hours), portal_only=portal_only
+            token_hash=_hash_token(token), user_id=user.id, expires_at=now + timedelta(hours=settings.session_hours), portal_only=portal_only,
+            via_microsoft=via_microsoft,
         )
     )
     user.portal_only = portal_only
+    user.via_microsoft = via_microsoft
     response.set_cookie(
         COOKIE,
         token,
@@ -319,19 +334,27 @@ def _user_from_cookie(session: Session, request: Request) -> User | None:
         session.commit()
     if row.user.must_change_password and not request.url.path.startswith("/api/auth/"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Change your password first")
+    row.user.portal_only, row.user.via_microsoft = row.portal_only, row.via_microsoft
     if must_set_up_two_factor(row.user) and not request.url.path.startswith("/api/auth/"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Set up two-factor sign-in first")
-    if row.portal_only:
-        if not PORTAL_ONLY_PATHS.match(request.url.path):
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
-        row.user.portal_only = True
+    if row.portal_only and not PORTAL_ONLY_PATHS.match(request.url.path):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
     return row.user
 
 
-def must_set_up_two_factor(user: User) -> bool:
-    """Settings > Sign-in requires it of admins with a local password, and it isn't on yet."""
+def two_factor_required(user: User) -> bool:
+    """Settings > Sign-in requires it of this account: every agent and admin, or only admins with
+    a local password."""
+    if settings.totp_required_staff and user.role in (UserRole.agent, UserRole.admin):
+        return True
     return (settings.totp_required_admins and user.role == UserRole.admin and user.auth_source == AuthSource.local
-            and user.password_hash is not None and user.totp_enabled_at is None)
+            and user.password_hash is not None)
+
+
+def must_set_up_two_factor(user: User) -> bool:
+    """Required of this account and not on yet. Not asked of a portal-only session (requester
+    access, and it can't set it up) or one started through Microsoft (Entra's MFA applied)."""
+    return two_factor_required(user) and user.totp_enabled_at is None and not user.portal_only and not user.via_microsoft
 
 
 def current_user(

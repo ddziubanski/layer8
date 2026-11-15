@@ -28,7 +28,8 @@ class ProxyRecoveryTests(unittest.TestCase):
         self.assertIn("location = /__layer8_maintenance.html", result)
         self.assertIn("/api/update-progress/", result)
         self.assertNotIn(proxy.OLD_GATE, result)
-        self.assertEqual(result.count("if ($layer8_maintenance = 1) { return 503; }"), 2)
+        # The OAuth callback, the uploads location and everything else.
+        self.assertEqual(result.count("if ($layer8_maintenance = 1) { return 503; }"), 3)
         self.assertEqual(proxy.updated(result, self.template), result)
 
     def test_pre_updater_proxy_gets_gate_and_recovery(self):

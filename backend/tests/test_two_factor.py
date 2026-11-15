@@ -97,6 +97,24 @@ def test_admins_with_a_local_password_must_set_it_up_when_required(client, db, m
     assert db.get(User, boss.id).totp_enabled_at is None
 
 
+def test_every_agent_and_admin_must_set_it_up_when_required_of_staff(client, db, monkeypatch):
+    agent = _local(db, UserRole.agent, "tech@example.com")
+    requester = _local(db, UserRole.requester, "pat@example.com")
+    monkeypatch.setattr(settings, "totp_required_staff", True)
+    # Requesters aren't asked.
+    assert _login(client, requester.email).json()["must_set_up_two_factor"] is False
+    client.cookies.clear()
+    signed_in = _login(client, agent.email)
+    assert signed_in.status_code == 200 and signed_in.json()["must_set_up_two_factor"] is True
+    assert client.get("/api/tickets", headers={"X-Helpdesk-CSRF": "1"}).json()["detail"] == "Set up two-factor sign-in first"
+    _turn_on(client, db, agent)
+    assert client.get("/api/tickets", headers={"X-Helpdesk-CSRF": "1"}).status_code == 200
+    assert client.post("/api/auth/two-factor/off", json={"password": PASSWORD, "code": "000000"}, headers=_h(agent)).status_code == 403
+    # Directory accounts count too: no local password, still required.
+    dana = User(email="dana@corp.example", display_name="Dana Cole", role=UserRole.agent, auth_source=AuthSource.directory)
+    assert auth.two_factor_required(dana) and auth.must_set_up_two_factor(dana)
+
+
 # Sign in with Microsoft
 
 TENANT = "11111111-2222-3333-4444-555555555555"
@@ -143,6 +161,13 @@ def test_microsoft_sign_in_matches_an_existing_directory_account(client, db, mic
     assert client.get("/api/auth/me").json()["email"] == "dana@corp.example"
     db.expire_all()
     assert db.get(User, dana.id).entra_id == "aaaaaaaa-0000-0000-0000-000000000001"
+    # Two-factor required of staff: Microsoft's own MFA covers this session, so nothing to set up.
+    settings.totp_required_staff = True
+    try:
+        assert client.get("/api/auth/me").json()["must_set_up_two_factor"] is False
+        assert client.get("/api/tickets").status_code == 200
+    finally:
+        settings.totp_required_staff = False
     # The same state can't be used twice.
     again = client.get(f"/api/auth/entra/callback?code=x&state={state}", follow_redirects=False)
     assert "expired" in again.headers["location"]
@@ -171,7 +196,7 @@ def test_wrong_codes_add_up_to_a_lockout_even_with_the_right_password(client, db
     for _ in range(auth.MAX_FAILED_LOGINS):
         assert _login(client, user.email, code="000000").status_code == 401
     db.expire_all()
-    assert db.get(User, user.id).locked_until is not None
+    assert auth.locked_out(db, db.get(User, user.id), auth.sla.utcnow(), "testclient")
     # Locked: even the right code doesn't get in until the lockout ends.
     assert _login(client, user.email, code=totp.code_at(secret, used + 1)).status_code == 401
 
@@ -183,7 +208,7 @@ def test_wrong_codes_on_two_factor_off_count_toward_lockout(client, db):
     for _ in range(auth.MAX_FAILED_LOGINS):
         assert client.post("/api/auth/two-factor/off", json={"password": PASSWORD, "code": "000000"}, headers=h).status_code == 422
     db.expire_all()
-    assert db.get(User, user.id).locked_until is not None
+    assert auth.locked_out(db, db.get(User, user.id), auth.sla.utcnow(), "testclient")
 
 
 def test_recovery_codes_are_long(client, db):

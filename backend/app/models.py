@@ -147,6 +147,9 @@ class User(Base):
     # Not stored. True for a request made with a portal-only (single sign-on) session,
     # which gets requester access whatever the role. Set by auth.current_user.
     portal_only = False
+    # Not stored. True for a request made with a session started through Microsoft (Entra), whose
+    # own MFA applies instead of ours. Set by auth.current_user.
+    via_microsoft = False
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(320))
@@ -229,6 +232,24 @@ class UserEmail(Base):
     __table_args__ = (Index("uq_user_emails_email_lower", text("lower(email)"), unique=True),)
 
 
+class SignInAttempt(Base):
+    """A try at sign-in or the receiving page (app/attempts.py). Rows older than 30 days are removed."""
+
+    __tablename__ = "sign_in_attempts"
+    __table_args__ = (
+        Index("ix_sign_in_attempts_address", "kind", "address", "at"),
+        Index("ix_sign_in_attempts_user", "user_id", "at"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    kind: Mapped[str] = mapped_column(String(16))
+    # An IPv4 address or an IPv6 /64.
+    address: Mapped[str] = mapped_column(String(64))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    ok: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+
+
 class UserSession(Base):
     """A signed-in browser. The cookie holds a random token; only its SHA-256 is stored."""
 
@@ -242,6 +263,8 @@ class UserSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     # Signed in by single sign-on: the portal only, as a requester. The console needs a password.
     portal_only: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # Signed in with Microsoft (Entra): its MFA and Conditional Access applied, not our two-factor.
+    via_microsoft: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
     user: Mapped[User] = relationship()
 

@@ -49,9 +49,13 @@ async def lifespan(_: FastAPI):
 
 
 from app.meraki_oauth import RedactCallbackQuery
+from app.bodylimit import BodyLimit
+from app.db import get_session_factory
 
 app = FastAPI(title="Layer 8", version=VERSION, lifespan=lifespan, license_info={"name": LICENSE, "identifier": LICENSE})
 app.add_middleware(RedactCallbackQuery)
+# Outermost: sizes are checked before anything else reads a request (app/bodylimit.py).
+app.add_middleware(BodyLimit, session_factory=lambda: app.dependency_overrides.get(get_session_factory, get_session_factory)())
 app.include_router(updates_api.router)
 app.include_router(imports_api.router)
 app.include_router(library_api.router)

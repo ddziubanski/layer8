@@ -5,18 +5,17 @@ The PO number alone isn't enough: each PO has a receiving code, printed on its r
 (with a QR code and the address). The clerk sees what's expected (no prices), enters what
 arrived and their name, and can add a photo of the packing slip; the PO, its tickets and the
 people on it hear about it. Settings > Purchasing turns the page off. Wrong codes from one
-address are limited (MAX_FAILURES in WINDOW) so codes can't be guessed.
+address are limited (MAX_FAILURES in WINDOW, counted in the database) so codes can't be guessed.
 """
 
 import logging
 import secrets
-import time
-from collections import defaultdict, deque
+from datetime import timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 
-from app import purchasing, services, storage
+from app import attempts, purchasing, services, sla, storage
 from app.auth import SessionDep
 from app.config import settings
 from app.models import POAttachment, PurchaseOrder
@@ -26,10 +25,9 @@ router = APIRouter(prefix="/api/public/receiving", tags=["receiving (public)"])
 log = logging.getLogger("app.api.purchasing")
 
 MAX_FAILURES = 10
-WINDOW = 15 * 60
+WINDOW = timedelta(minutes=15)
 PHOTO_TYPES = {"image/jpeg", "image/png", "image/heic", "image/webp", "application/pdf"}
 PHOTO_MAX = 15 * 1024 * 1024
-_failures: dict[str, deque] = defaultdict(deque)
 
 
 def _client(request: Request) -> str:
@@ -40,15 +38,14 @@ def _po(session, request: Request, number: str, code: str) -> PurchaseOrder:
     if not settings.public_receiving:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Receiving here is turned off; ask the service desk")
     who = _client(request)
-    recent = _failures[who]
-    while recent and recent[0] < time.monotonic() - WINDOW:
-        recent.popleft()
-    if len(recent) >= MAX_FAILURES:
+    now = sla.utcnow()
+    if attempts.failures(session, attempts.RECEIVING, who, now - WINDOW) >= MAX_FAILURES:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many wrong tries. Wait a few minutes, or ask the service desk")
     po = purchasing.find_by_number(session, number)
     given = code.strip().upper().replace("-", "").replace(" ", "")
     if po is None or not po.receiving_code or not secrets.compare_digest(po.receiving_code, given):
-        recent.append(time.monotonic())
+        attempts.record(session, attempts.RECEIVING, who, now)
+        session.commit()
         log.warning("Receiving page: wrong PO number or code from %s", who, extra={"source": "settings"})
         raise HTTPException(status.HTTP_404_NOT_FOUND, "That PO number and code don't match. Check the receiving sheet")
     if po.status not in purchasing.OPEN_FOR_RECEIVING:

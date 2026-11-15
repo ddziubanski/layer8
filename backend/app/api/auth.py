@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 import base64
 import logging
-import time
-from collections import defaultdict, deque
+from datetime import timedelta
 from typing import Annotated, get_args
 
 from urllib.parse import quote
@@ -12,7 +11,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from pydantic import ValidationError
 
-from app import auth, entra, kerberos, permissions, sla, totp, workspace
+from app import attempts, auth, entra, kerberos, permissions, sla, totp, workspace
 from app.auth import CurrentUser, SessionDep
 from app.config import settings
 from app.schemas import (
@@ -64,40 +63,44 @@ def sign_in_options(session: SessionDep):
 
 
 # Failed sign-ins per client address: password spraying across accounts is slowed down too, not
-# only guesses at one account (which locks it).
+# only guesses at one account (which locks it for that address). Counted in the database, so the
+# worker processes share it.
 MAX_FAILURES = 30
-WINDOW = 15 * 60
-_failures: dict[str, deque] = defaultdict(deque)
+WINDOW = timedelta(minutes=15)
+
+
+def _address(request: Request) -> str | None:
+    return request.client.host if request.client else None
 
 
 @router.post("/login", response_model=MeOut)
 def login(body: LoginIn, request: Request, response: Response, session: SessionDep):
     now = sla.utcnow()
-    recent = _failures[request.client.host if request.client else "?"]
-    while recent and recent[0] < time.monotonic() - WINDOW:
-        recent.popleft()
-    if len(recent) >= MAX_FAILURES:
+    address = _address(request)
+    if attempts.failures(session, attempts.SIGN_IN_ADDRESS, address, now - WINDOW) >= MAX_FAILURES:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed sign-ins from here. Wait a few minutes and try again")
-    # A right password alone mustn't clear the failed-attempt count of an account with two-factor
-    # sign-in, or wrong codes would never add up to a lockout.
-    known = auth._find_login(session, body.email)
-    before = (known.failed_logins, known.locked_until) if known is not None and known.totp_enabled_at is not None else None
+
+    def failed() -> None:
+        session.rollback()
+        attempts.record(session, attempts.SIGN_IN_ADDRESS, address, now)
+        session.commit()
+
     try:
-        user = auth.authenticate(session, body.email, body.password, now)
+        user = auth.authenticate(session, body.email, body.password, now, address)
     except auth.AuthError as exc:
-        recent.append(time.monotonic())
+        failed()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from None
     if user.totp_enabled_at is not None:
-        if before is not None and known is user:
-            user.failed_logins, user.locked_until = before
         if not body.code:
             # The password was right; the sign-in page now asks for the code (nothing is counted yet).
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, TWO_FACTOR_NEEDED)
         if not _second_factor(user, body.code):
-            recent.append(time.monotonic())
-            auth._failed(session, user, now)
+            # Wrong codes count like wrong passwords: a right password alone never clears them.
+            session.rollback()
+            auth._failed(session, user, now, address)
+            failed()
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "That code didn't work. Use the newest one in your authenticator app, or a recovery code")
-        user.failed_logins, user.locked_until = 0, None
+    auth.signed_in(session, user, now, address)
     auth.start_session(session, user, response, now)
     session.commit()
     return me_out(session, user)
@@ -168,7 +171,7 @@ def change_password(body: PasswordChangeIn, user: CurrentUser, request: Request,
     if user.portal_only:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password first")
     try:
-        auth.authenticate(session, user.email, body.current_password, sla.utcnow())
+        auth.authenticate(session, user.email, body.current_password, sla.utcnow(), _address(request))
         auth.set_password(session, user, body.new_password)
     except auth.AuthError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
@@ -265,19 +268,16 @@ def two_factor_confirm(body: TwoFactorConfirmIn, user: CurrentUser, session: Ses
 def two_factor_off(body: TwoFactorOffIn, user: CurrentUser, request: Request, session: SessionDep):
     if user.portal_only:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password first")
-    if auth.must_set_up_two_factor(user) or (settings.totp_required_admins and user.role == UserRole.admin and user.password_hash is not None):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Two-factor sign-in is required for admins here (Settings > Sign-in)")
+    if auth.two_factor_required(user) or (settings.totp_required_admins and user.role == UserRole.admin and user.password_hash is not None):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Two-factor sign-in is required here (Settings > Sign-in)")
     now = sla.utcnow()
-    before = (user.failed_logins, user.locked_until)
     try:
-        auth.authenticate(session, user.email, body.password, now)
+        auth.authenticate(session, user.email, body.password, now, _address(request))
     except auth.AuthError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from None
-    user.failed_logins, user.locked_until = before
     if user.totp_enabled_at is None or not _second_factor(user, body.code):
-        auth._failed(session, user, now)
+        auth._failed(session, user, now, _address(request))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That code didn't work")
-    user.failed_logins, user.locked_until = 0, None
     clear_two_factor(user)
     log.warning("%s turned off two-factor sign-in", user.email, extra={"source": "auth"})
     session.commit()
@@ -313,7 +313,7 @@ def entra_callback(request: Request, session: SessionDep):
         response = RedirectResponse("/?signin_error=" + quote(str(exc)), status_code=303)
     else:
         response = RedirectResponse("/", status_code=303)
-        auth.start_session(session, user, response, sla.utcnow())
+        auth.start_session(session, user, response, sla.utcnow(), via_microsoft=True)
         log.info("%s signed in with Microsoft", user.email, extra={"source": "auth"})
     session.commit()
     response.delete_cookie(entra.COOKIE, path="/api/auth/entra")
