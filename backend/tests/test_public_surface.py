@@ -6,6 +6,7 @@ makes every addition to the unauthenticated surface a reviewed change (docs/secu
 Each pinned route is then called with no credentials and with made-up tokens, as an outsider would.
 """
 
+import re
 import uuid
 
 import pytest
@@ -121,3 +122,56 @@ def test_outsider_is_refused(client, monkeypatch, method, path, kwargs, expected
     monkeypatch.setattr(settings, "dev_auth", False)
     r = client.request(method, path, follow_redirects=False, **kwargs)
     assert r.status_code in expected, (method, path, r.status_code, r.text[:200])
+
+
+# Request sizes (app/bodylimit.py): nothing large is read for a caller who isn't signed in.
+
+def test_large_json_is_refused_before_it_is_read(client):
+    big = b'{"email":"a","password":"' + b"x" * (5 * 1024 * 1024) + b'"}'
+    r = client.post("/api/auth/login", content=big, headers={"content-type": "application/json"})
+    assert r.status_code == 413, r.text[:200]
+
+
+def test_chunked_body_is_cut_off_at_the_limit(client):
+    def chunks():
+        for _ in range(6):
+            yield b"x" * (1024 * 1024)
+
+    r = client.post("/api/auth/login", content=chunks(), headers={"content-type": "application/json"})
+    assert r.status_code == 413
+
+
+def test_upload_needs_sign_in_before_the_file_is_read(client, monkeypatch):
+    monkeypatch.setattr(settings, "dev_auth", False)
+    sent = []
+
+    def chunks():
+        for _ in range(3):
+            sent.append(1)
+            yield b"x" * (1024 * 1024)
+
+    r = client.post("/api/tickets/1/attachments", content=chunks(), headers={"content-type": "multipart/form-data; boundary=x"})
+    assert r.status_code == 401
+    assert not sent, "the body was read before the sign-in check"
+
+
+def test_upload_limit_follows_the_attachment_setting(client, admin, monkeypatch):
+    from tests.conftest import as_user
+
+    monkeypatch.setattr(settings, "max_upload_mb", 1)
+    r = client.post("/api/tickets/1/attachments", headers=as_user(admin), files={"file": ("a.bin", b"y" * (3 * 1024 * 1024))})
+    assert r.status_code == 413
+    # Within the limit it gets as far as the route (no such ticket).
+    r = client.post("/api/tickets/1/attachments", headers=as_user(admin), files={"file": ("a.bin", b"y" * 1024)})
+    assert r.status_code == 404
+
+
+def test_every_upload_route_has_a_size_rule():
+    from app import bodylimit
+
+    for prefix, route in _routes(app.routes):
+        if any(type(p.field_info).__name__ == "File" for p in route.dependant.body_params):
+            path = re.sub(r"\{[^}]+\}", "1", prefix + route.path)
+            if path == "/api/settings/windows-sign-in/keytab":
+                continue  # a keytab is a few kilobytes: the default limit
+            assert bodylimit.limit_for(path)[0] > bodylimit.DEFAULT_LIMIT, f"{path}: add it to bodylimit.UPLOADS (and Nginx)"
