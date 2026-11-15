@@ -50,9 +50,14 @@ async def lifespan(_: FastAPI):
 
 from app.meraki_oauth import RedactCallbackQuery
 from app.bodylimit import BodyLimit
+from app.auth import Agent
 from app.db import get_session_factory
 
-app = FastAPI(title="Layer 8", version=VERSION, lifespan=lifespan, license_info={"name": LICENSE, "identifier": LICENSE})
+# The API description is for signed-in staff (/api/openapi.json below), not for anyone who asks.
+app = FastAPI(
+    title="Layer 8", version=VERSION, lifespan=lifespan, license_info={"name": LICENSE, "identifier": LICENSE},
+    docs_url=None, redoc_url=None, openapi_url=None,
+)
 app.add_middleware(RedactCallbackQuery)
 # Outermost: sizes are checked before anything else reads a request (app/bodylimit.py).
 app.add_middleware(BodyLimit, session_factory=lambda: app.dependency_overrides.get(get_session_factory, get_session_factory)())
@@ -150,6 +155,12 @@ def about():
         "source_download": "/api/source" if settings.source_archive.is_file() else None,
         "source_repository": settings.source_repository or None,
     }
+
+
+@app.get("/api/openapi.json", include_in_schema=False)
+def api_description(_: Agent):
+    """The OpenAPI description of this API, for staff building against it."""
+    return JSONResponse(app.openapi())
 
 
 @app.get("/api/source", tags=["meta"])

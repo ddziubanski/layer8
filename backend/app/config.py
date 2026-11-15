@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     # Per-file cap for uploads from the portal and agent UI.
     max_upload_mb: int = 25
+    # File types requesters can't attach in the portal (uploads aren't scanned). Staff aren't limited.
+    portal_blocked_file_types: str = "exe, msi, msp, bat, cmd, com, scr, pif, ps1, vbs, vbe, js, jse, wsf, wsh, hta, lnk, jar, dll, reg, iso, img, vhd, vhdx"
 
     # Global console modules; existing data, APIs and worker controls are independent.
     workspace_dashboard_enabled: bool = True
@@ -237,7 +239,8 @@ class Settings(BaseSettings):
     po_first_number: int = 1
     po_label_format: str = "PO-{n:05}"
     # The public receiving page (/receive): on/off, and who else hears when something arrives.
-    public_receiving: bool = True
+    # Off unless turned on: it answers without sign-in (docs/security-review.md, F5).
+    public_receiving: bool = False
     receiving_notify: str = ""
     # Receiving (the dock / clerk): told what's coming when a PO is ordered.
     receiving_email: str = ""

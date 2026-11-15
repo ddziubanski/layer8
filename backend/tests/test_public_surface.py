@@ -175,3 +175,54 @@ def test_every_upload_route_has_a_size_rule():
             if path == "/api/settings/windows-sign-in/keytab":
                 continue  # a keytab is a few kilobytes: the default limit
             assert bodylimit.limit_for(path)[0] > bodylimit.DEFAULT_LIMIT, f"{path}: add it to bodylimit.UPLOADS (and Nginx)"
+
+
+# Findings F5 to F8 of the review.
+
+def test_api_description_needs_a_staff_sign_in(client, agent, requester, monkeypatch):
+    from tests.conftest import as_user
+
+    for path in ("/docs", "/redoc", "/openapi.json"):
+        r = client.get(path)
+        assert "openapi" not in r.text.lower() and "swagger" not in r.text.lower(), path
+    assert client.get("/api/openapi.json", headers=as_user(requester)).status_code == 403
+    assert "/api/tickets" in client.get("/api/openapi.json", headers=as_user(agent)).json()["paths"]
+    monkeypatch.setattr(settings, "dev_auth", False)
+    assert client.get("/api/openapi.json").status_code == 401
+
+
+def test_first_run_sign_in_only_from_a_private_address(db):
+    from app import auth, sla
+
+    now = sla.utcnow()
+    for public in ("203.0.113.9", "8.8.8.8", "100.64.0.1", "2001:4860:4860::8888", "::ffff:8.8.8.8"):
+        with pytest.raises(auth.AuthError):
+            auth.authenticate(db, "admin", "admin", now, public)
+    assert auth.authenticate(db, "admin", "admin", now, "10.20.30.40").must_change_password
+
+
+def test_receiving_page_is_off_unless_turned_on(client):
+    from app.config import Settings
+
+    assert Settings.model_fields["public_receiving"].default is False
+    settings.public_receiving = False
+    try:
+        r = client.post("/api/public/receiving/lookup", json={"po": "1", "code": "AAAAAAAA"})
+        assert r.status_code == 404 and "turned off" in r.json()["detail"]
+    finally:
+        settings.public_receiving = True
+
+
+def test_requesters_cannot_attach_programs(client, db, requester, agent, service_desk):
+    from app.api.attachments import blocked_type
+    from tests.conftest import ANSWERS, as_user
+
+    assert blocked_type("setup.EXE") and blocked_type("invoice.pdf.js") and blocked_type("run.ps1. ")
+    assert not blocked_type("photo.jpg") and not blocked_type("exe") and not blocked_type("notes.exe.txt")
+    made = client.post("/api/portal/tickets", json={"subject": "Printer", "description": "Jams", **ANSWERS}, headers=as_user(requester))
+    assert made.status_code == 201, made.text
+    url = f"/api/tickets/{made.json()['id']}/attachments"
+    assert client.post(url, files={"file": ("fix.exe", b"MZ")}, headers=as_user(requester)).status_code == 415
+    assert client.post(url, files={"file": ("screen.png", b"\x89PNG")}, headers=as_user(requester)).status_code == 201
+    # Staff aren't limited.
+    assert client.post(url, files={"file": ("fix.exe", b"MZ")}, headers=as_user(agent)).status_code == 201

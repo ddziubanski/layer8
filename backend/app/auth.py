@@ -8,6 +8,7 @@ everything else only depends on `current_user`.
 """
 
 import hashlib
+import ipaddress
 import logging
 import re
 import secrets
@@ -60,6 +61,23 @@ class AuthError(Exception):
 # console), so losing the admins never reopens the door.
 FIRST_RUN_LOGIN = FIRST_RUN_PASSWORD = "admin"
 FIRST_RUN_EMAIL = "admin@localhost"
+
+
+LOCAL_NETWORKS = [ipaddress.ip_network(n) for n in (
+    "127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "::1/128", "fc00::/7", "fe80::/10",
+)]
+
+
+def _local_network(address: str | None) -> bool:
+    """First-run sign-in is for whoever is setting the server up, on its own network: only from a
+    loopback, private or link-local address, never from the internet."""
+    try:
+        ip = ipaddress.ip_address(address or "")
+    except ValueError:
+        return True  # no network address at all: the CLI, or a test client
+    if ip.version == 6 and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    return any(ip in net for net in LOCAL_NETWORKS if net.version == ip.version)
 
 
 def _first_run_admin(session: Session) -> User | None:
@@ -148,7 +166,7 @@ def authenticate(session: Session, login: str, password: str, now: datetime, add
     directory (AD/LDAP) when one is configured, and is synced at that moment.
     """
     generic = AuthError("Wrong email or password")
-    if login.strip().lower() == FIRST_RUN_LOGIN and password == FIRST_RUN_PASSWORD:
+    if login.strip().lower() == FIRST_RUN_LOGIN and password == FIRST_RUN_PASSWORD and _local_network(address):
         first = _first_run_admin(session)
         if first is not None:
             return first
