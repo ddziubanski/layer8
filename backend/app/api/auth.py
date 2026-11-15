@@ -268,8 +268,8 @@ def two_factor_confirm(body: TwoFactorConfirmIn, user: CurrentUser, session: Ses
 def two_factor_off(body: TwoFactorOffIn, user: CurrentUser, request: Request, session: SessionDep):
     if user.portal_only:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password first")
-    if auth.must_set_up_two_factor(user) or (settings.totp_required_admins and user.role == UserRole.admin and user.password_hash is not None):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Two-factor sign-in is required for admins here (Settings > Sign-in)")
+    if auth.two_factor_required(user) or (settings.totp_required_admins and user.role == UserRole.admin and user.password_hash is not None):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Two-factor sign-in is required here (Settings > Sign-in)")
     now = sla.utcnow()
     try:
         auth.authenticate(session, user.email, body.password, now, _address(request))
@@ -313,7 +313,7 @@ def entra_callback(request: Request, session: SessionDep):
         response = RedirectResponse("/?signin_error=" + quote(str(exc)), status_code=303)
     else:
         response = RedirectResponse("/", status_code=303)
-        auth.start_session(session, user, response, sla.utcnow())
+        auth.start_session(session, user, response, sla.utcnow(), via_microsoft=True)
         log.info("%s signed in with Microsoft", user.email, extra={"source": "auth"})
     session.commit()
     response.delete_cookie(entra.COOKIE, path="/api/auth/entra")

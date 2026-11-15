@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     # Sign-in: two-factor required for admins who sign in with a local password; Microsoft Entra ID
     # sign-in (OpenID Connect, its own app registration; the secret is a file in the secrets folder).
     totp_required_admins: bool = False
+    # Every agent and admin, directory accounts included (sessions through Microsoft excepted).
+    totp_required_staff: bool = False
     entra_sign_in_enabled: bool = False
     entra_tenant_id: str = ""
     entra_client_id: str = ""

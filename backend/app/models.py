@@ -147,6 +147,9 @@ class User(Base):
     # Not stored. True for a request made with a portal-only (single sign-on) session,
     # which gets requester access whatever the role. Set by auth.current_user.
     portal_only = False
+    # Not stored. True for a request made with a session started through Microsoft (Entra), whose
+    # own MFA applies instead of ours. Set by auth.current_user.
+    via_microsoft = False
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(320))
@@ -260,6 +263,8 @@ class UserSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     # Signed in by single sign-on: the portal only, as a requester. The console needs a password.
     portal_only: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # Signed in with Microsoft (Entra): its MFA and Conditional Access applied, not our two-factor.
+    via_microsoft: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
     user: Mapped[User] = relationship()
 

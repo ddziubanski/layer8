@@ -108,7 +108,7 @@ export function TwoFactorSection() {
   );
 }
 
-/** Settings > Sign-in requires it of admins with a local password: set it up before anything else. */
+/** Settings > Sign-in requires it of this account: set it up before anything else. */
 export function TwoFactorFirst({ me }: { me: Me }) {
   const brand = useBranding();
   const queryClient = useQueryClient();
@@ -117,7 +117,7 @@ export function TwoFactorFirst({ me }: { me: Me }) {
       <div className="card login-card stack">
         <p className="workspace-area">ACCOUNT SETUP</p>
         <h1>Set up two-factor sign-in</h1>
-        <p className="muted" style={{ margin: 0 }}>{me.display_name}, this service desk requires two-factor sign-in for admins who sign in with a password.</p>
+        <p className="muted" style={{ margin: 0 }}>{me.display_name}, this service desk requires two-factor sign-in for your account.</p>
         <TwoFactorSetup onDone={() => void queryClient.invalidateQueries({ queryKey: ME_KEY })} />
       </div>
     </div>

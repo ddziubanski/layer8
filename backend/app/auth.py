@@ -290,14 +290,16 @@ def set_sign_in(session: Session, user: User, mode: str, password: str | None) -
     end_sessions(session, user)
 
 
-def start_session(session: Session, user: User, response: Response, now: datetime, *, portal_only: bool = False) -> None:
+def start_session(session: Session, user: User, response: Response, now: datetime, *, portal_only: bool = False, via_microsoft: bool = False) -> None:
     token = secrets.token_urlsafe(32)
     session.add(
         UserSession(
-            token_hash=_hash_token(token), user_id=user.id, expires_at=now + timedelta(hours=settings.session_hours), portal_only=portal_only
+            token_hash=_hash_token(token), user_id=user.id, expires_at=now + timedelta(hours=settings.session_hours), portal_only=portal_only,
+            via_microsoft=via_microsoft,
         )
     )
     user.portal_only = portal_only
+    user.via_microsoft = via_microsoft
     response.set_cookie(
         COOKIE,
         token,
@@ -332,19 +334,27 @@ def _user_from_cookie(session: Session, request: Request) -> User | None:
         session.commit()
     if row.user.must_change_password and not request.url.path.startswith("/api/auth/"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Change your password first")
+    row.user.portal_only, row.user.via_microsoft = row.portal_only, row.via_microsoft
     if must_set_up_two_factor(row.user) and not request.url.path.startswith("/api/auth/"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Set up two-factor sign-in first")
-    if row.portal_only:
-        if not PORTAL_ONLY_PATHS.match(request.url.path):
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
-        row.user.portal_only = True
+    if row.portal_only and not PORTAL_ONLY_PATHS.match(request.url.path):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in with your password to use the service desk console")
     return row.user
 
 
-def must_set_up_two_factor(user: User) -> bool:
-    """Settings > Sign-in requires it of admins with a local password, and it isn't on yet."""
+def two_factor_required(user: User) -> bool:
+    """Settings > Sign-in requires it of this account: every agent and admin, or only admins with
+    a local password."""
+    if settings.totp_required_staff and user.role in (UserRole.agent, UserRole.admin):
+        return True
     return (settings.totp_required_admins and user.role == UserRole.admin and user.auth_source == AuthSource.local
-            and user.password_hash is not None and user.totp_enabled_at is None)
+            and user.password_hash is not None)
+
+
+def must_set_up_two_factor(user: User) -> bool:
+    """Required of this account and not on yet. Not asked of a portal-only session (requester
+    access, and it can't set it up) or one started through Microsoft (Entra's MFA applied)."""
+    return two_factor_required(user) and user.totp_enabled_at is None and not user.portal_only and not user.via_microsoft
 
 
 def current_user(

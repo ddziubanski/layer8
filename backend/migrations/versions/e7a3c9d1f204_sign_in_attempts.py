@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Sign-in and receiving-page attempts, counted in the database (shared by the API's workers).
+"""Sign-in and receiving-page attempts, counted in the database (shared by the API's workers);
+sessions remember whether they were started through Microsoft.
 
 Revision ID: e7a3c9d1f204
 Revises: d4f8a2c6e913
@@ -27,5 +28,9 @@ def upgrade():
     op.create_index("ix_sign_in_attempts_user", "sign_in_attempts", ["user_id", "at"])
 
 
+    op.add_column("user_sessions", sa.Column("via_microsoft", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+
+
 def downgrade():
+    op.drop_column("user_sessions", "via_microsoft")
     op.drop_table("sign_in_attempts")
